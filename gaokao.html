@@ -93,6 +93,10 @@ body { background-image: radial-gradient(ellipse at 30% 0%, rgba(239,68,68,.04) 
 .btn-again { background: transparent; border: 1px solid var(--border); color: var(--text); }
 .btn-again:hover { border-color: var(--gold); }
 
+.poster-wrap { text-align: center; }
+.poster-img { width: 100%; max-width: 300px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 8px 32px rgba(0,0,0,.4); margin: 0 auto 14px; display: none; }
+.poster-hint { font-size: 11px; color: var(--muted); margin-bottom: 16px; line-height: 1.7; }
+
 @media (max-width: 420px) {
   .total-area .t-score { font-size: 40px; }
   .admit-area .a-school { font-size: 18px; }
@@ -106,11 +110,18 @@ body { background-image: radial-gradient(ellipse at 30% 0%, rgba(239,68,68,.04) 
 <div id="shopNav"></div>
 <script src="nav.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/canvas-utils.js"></script>
+<script src="js/sensitive-words.js"></script>
 
 <div class="container" id="app"></div>
 
 <script>
 var CURRENT_YEAR = '2026';
+var SITE_URL = 'www.azureflame.cloud';
+var QR_IMG = 'images/qr-code.png';
+var QQ_IMG = 'images/qq-group.png';
+var QQ_GROUP = '702973928';
+var POSTER_W = 600, POSTER_H = 960;
 
 var TIERS = [
   { name:'学神附体',               emoji:'👑', w:10, s:[130,148, 135,150, 130,148, 90,100, 88,100, 88,100] },
@@ -282,16 +293,17 @@ function genResult(name,examId,prime,elecs) {
   ];
   var total = subs.reduce(function(s,x){return s+x.score;},0);
 
-  var pct = total/750;
   var rank;
-  if      (pct>=0.95) rank=r(1,2000);
-  else if (pct>=0.90) rank=r(1000,15000);
-  else if (pct>=0.80) rank=r(10000,80000);
-  else if (pct>=0.70) rank=r(50000,200000);
-  else if (pct>=0.60) rank=r(150000,400000);
-  else if (pct>=0.50) rank=r(300000,650000);
-  else if (pct>=0.35) rank=r(550000,900000);
-  else rank=r(800000,1400000);
+  if      (total>=750) rank=r(1,5);
+  else if (total>=700) rank=r(5,200);
+  else if (total>=680) rank=r(100,1500);
+  else if (total>=660) rank=r(800,5000);
+  else if (total>=640) rank=r(3000,12000);
+  else if (total>=600) rank=r(8000,30000);
+  else if (total>=550) rank=r(20000,80000);
+  else if (total>=500) rank=r(50000,150000);
+  else if (total>=450) rank=r(100000,280000);
+  else rank=r(200000,500000);
 
   var admit = getAdmit(total);
   var quip = pickQuip(tier, subs, rank);
@@ -317,6 +329,17 @@ function genResult(name,examId,prime,elecs) {
     easter = '💀 抽象人，抽象魂。你的分数……可能比这更抽象。';
   else if (cn.indexOf('摆烂')>=0||cn.indexOf('躺平')>=0)
     easter = '🛏️ 摆烂归摆烂，分数还是要查的。万一祖宗保佑了呢？';
+
+  var zxf = (cn.indexOf('张雪峰')>=0);
+  if (zxf) {
+    for (var k = 0; k < subs.length; k++) subs[k].score = r(subs[k].max * 0.3, subs[k].max * 0.5);
+    total = 250;
+    rank = r(500000, 800000);
+    tier = {name:'张雪峰の祝福',emoji:'🎤'};
+    admit = {s:'郑州大学',m:'给排水专业',t:'张雪峰の祝福'};
+    quip = '你考不过我你信吗？';
+    easter = '🎤 张雪峰老师看了一眼你的成绩单，微微一笑："你考不过我你信吗？"';
+  }
 
   return {name:name,examId:examId,tier:tier,subs:subs,total:total,rank:rank,admit:admit,quip:quip,subsStr:subsStr,easter:easter};
 }
@@ -344,6 +367,7 @@ function render() {
   var app = document.getElementById('app');
   if (state==='intro') renderIntro(app);
   else if (state==='result') renderResult(app);
+  else if (state==='poster') renderPoster(app);
 }
 
 function renderIntro(app) {
@@ -403,9 +427,20 @@ function renderIntro(app) {
   });
 }
 
+function checkName(raw) {
+  if (!raw) return '匿名考生';
+  var s = raw.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '');
+  if (!s) return '匿名考生';
+  for (var i = 0; i < s.length; i++)
+    for (var j = i + 2; j <= s.length && j - i <= 10; j++)
+      if (SENSITIVE_SET.has(s.substring(i, j))) return '匿名考生';
+  return s;
+}
+
 function submit() {
   var nEl=document.getElementById('inpName'), eEl=document.getElementById('inpExam');
-  var name=(nEl&&nEl.value||'').trim()||'匿名考生';
+  var rawName=(nEl&&nEl.value||'').trim()||'匿名考生';
+  var name = checkName(rawName);
   var examId=(eEl&&eEl.value||'').trim()||(CURRENT_YEAR+'01'+String(Math.floor(Math.random()*900000+100000)));
   lastName = name; lastExamId = examId;
 
@@ -498,7 +533,10 @@ function renderResult(app) {
       easterHTML+
     '</div>'+
     '<div class="act-row">'+
-      '<button class="btn btn-share" onclick="doShare()">📋 分享成绩单</button>'+
+      '<button class="btn btn-share" onclick="doShare()">📋 复制文案</button>'+
+      '<button class="btn btn-ghost" onclick="shareImage()" style="border-color:var(--gold-dim);color:var(--gold);">📸 生成分享图</button>'+
+    '</div>'+
+    '<div style="margin-top:8px;">'+
       '<button class="btn btn-again" onclick="doAgain()">🔄 重新查分</button>'+
     '</div>'+
     '<a href="index.html" class="home-link">← 返回魔法店</a>'+
@@ -518,6 +556,124 @@ function doShare() {
   );
 }
 function doAgain() { state='intro';result=null;render();window.scrollTo({top:0,behavior:'smooth'}); }
+
+function shareImage() { state='poster'; render(); }
+
+function renderPoster(app) {
+  app.innerHTML =
+    '<div class="poster-wrap">'+
+      '<div class="result-title" style="font-size:14px;color:var(--muted);margin-bottom:14px;">长按图片保存 / 分享</div>'+
+      '<img class="poster-img" id="posterImg" alt="分享海报">'+
+      '<div class="loading-wrap" id="posterLoading"><div class="loading-orb"></div><p class="loading-text">正在生成海报…</p></div>'+
+      '<p class="poster-hint">手机长按上图即可保存到相册；电脑可点下方按钮下载。</p>'+
+      '<a class="btn btn-main" id="posterDl" download="高考出分模拟器.png" style="display:none;">⬇️ 下载海报</a>'+
+      '<button class="btn btn-ghost" onclick="state=\'result\';render();">← 返回结果</button>'+
+    '</div>';
+  buildPoster();
+}
+
+async function buildPoster() {
+  var d = result;
+  var W = POSTER_W, H = POSTER_H, pad = 36;
+  var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  var ctx = cv.getContext('2d');
+  var FONT = '-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+
+  ctx.fillStyle = '#1a1520'; ctx.fillRect(0, 0, W, H);
+  var g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, 'rgba(239,68,68,.08)'); g.addColorStop(1, 'rgba(240,192,96,.05)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#241e2a'; roundRect(ctx, pad, pad, W - pad*2, H - pad*2, 24); ctx.fill();
+  var bar = ctx.createLinearGradient(pad, 0, W - pad, 0);
+  bar.addColorStop(0, '#ef4444'); bar.addColorStop(.5, '#f0c060'); bar.addColorStop(1, '#ef4444');
+  ctx.fillStyle = bar; roundRect(ctx, pad, pad, W - pad*2, 5, 3); ctx.fill();
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ef4444'; ctx.font = '600 16px ' + FONT;
+  ctx.fillText('🎓 ' + CURRENT_YEAR + ' 年高考出分模拟', W/2, 80);
+
+  ctx.fillStyle = '#f0c060'; ctx.font = '800 30px ' + FONT;
+  ctx.fillText('高 考 成 绩 单', W/2, 125);
+
+  ctx.fillStyle = '#8a7e9a'; ctx.font = '13px ' + FONT;
+  ctx.fillText('考生：'+d.name+'   考号：'+d.examId, W/2, 158);
+  ctx.fillText('选考科目：'+d.subsStr, W/2, 178);
+
+  // Subjects table
+  var cellW = 400, cellH = 30, tableX = (W - cellW) / 2, tableY = 200;
+  var subNames = d.subs;
+  ctx.textAlign = 'left';
+  for (var i = 0; i < subNames.length; i++) {
+    var s = subNames[i], y = tableY + i * (cellH + 6);
+    var pct = s.score / s.max;
+
+    ctx.fillStyle = 'rgba(255,255,255,.03)'; roundRect(ctx, tableX, y, cellW, cellH, 6); ctx.fill();
+
+    ctx.fillStyle = '#8a7e9a'; ctx.font = '13px ' + FONT;
+    ctx.fillText(s.name, tableX + 14, y + 21);
+
+    var barX = tableX + 60, barW = cellW - 140, barH = 8;
+    ctx.fillStyle = '#3a3045'; roundRect(ctx, barX, y + 11, barW, barH, 4); ctx.fill();
+    var barFill;
+    if (pct >= 0.9) { barFill = ctx.createLinearGradient(barX, 0, barX + barW * pct, 0); barFill.addColorStop(0, '#f0c060'); barFill.addColorStop(1, '#ffe8b0'); }
+    else if (pct >= 0.7) { barFill = ctx.createLinearGradient(barX, 0, barX + barW * pct, 0); barFill.addColorStop(0, '#6fcf97'); barFill.addColorStop(1, '#4ade80'); }
+    else if (pct >= 0.5) { barFill = ctx.createLinearGradient(barX, 0, barX + barW * pct, 0); barFill.addColorStop(0, '#22d3ee'); barFill.addColorStop(1, '#67e8f9'); }
+    else { barFill = ctx.createLinearGradient(barX, 0, barX + barW * pct, 0); barFill.addColorStop(0, '#fb923c'); barFill.addColorStop(1, '#fbbf24'); }
+    ctx.fillStyle = barFill; roundRect(ctx, barX, y + 11, barW * pct, barH, 4); ctx.fill();
+
+    ctx.textAlign = 'right';
+    ctx.fillStyle = pct >= 0.9 ? '#f0c060' : pct >= 0.7 ? '#6fcf97' : pct >= 0.5 ? '#22d3ee' : '#fb923c';
+    ctx.font = '700 15px ' + FONT;
+    ctx.fillText(s.score, tableX + cellW - 50, y + 21);
+    ctx.fillStyle = '#8a7e9a'; ctx.font = '11px ' + FONT;
+    ctx.fillText('/'+s.max, tableX + cellW - 14, y + 21);
+  }
+
+  var totalY = tableY + subNames.length * (cellH + 6) + 14;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#8a7e9a'; ctx.font = '12px ' + FONT;
+  ctx.fillText('总 分', W/2, totalY + 10);
+  ctx.fillStyle = '#f0c060'; ctx.font = '900 56px ' + FONT;
+  ctx.fillText(d.total, W/2, totalY + 58);
+  ctx.fillStyle = '#8a7e9a'; ctx.font = '13px ' + FONT;
+  ctx.fillText('省内排名：第 '+d.rank.toLocaleString()+' 名 · '+d.tier.emoji+' '+d.tier.name, W/2, totalY + 82);
+
+  var admitY = totalY + 106;
+  ctx.fillStyle = '#8a7e9a'; ctx.font = '11px ' + FONT; ctx.fillText('🎓 模拟录取结果', W/2, admitY);
+  ctx.fillStyle = '#e0d8ec'; ctx.font = '700 22px ' + FONT;
+  ctx.fillText(d.admit.s, W/2, admitY + 30);
+  ctx.fillStyle = '#8a7e9a'; ctx.font = '14px ' + FONT;
+  ctx.fillText(d.admit.m, W/2, admitY + 54);
+
+  var quipLines = wrapToLines(ctx, d.quip, W - pad*2 - 40);
+  ctx.fillStyle = 'rgba(240,192,96,.7)'; ctx.font = '13px ' + FONT;
+  var qy = admitY + 84;
+  for (var j = 0; j < quipLines.length && j < 2; j++) ctx.fillText(quipLines[j], W/2, qy + j*22);
+
+  var siteImg = await loadImg(QR_IMG), qqImg = await loadImg(QQ_IMG);
+  var qs = 114, gap = 40, tqw = qs*2 + gap;
+  var lx = (W - tqw) / 2, rx = lx + qs + gap;
+  var qY = H - pad - 170;
+  drawQRBox(ctx, siteImg, lx, qY, qs, '扫码开测', SITE_URL, '#f0c060');
+  drawQRBox(ctx, qqImg, rx, qY, qs, '加 QQ 群', '群号 '+QQ_GROUP, '#b89fff');
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#8a7e9a'; ctx.font = '11px ' + FONT;
+  ctx.fillText('霧雨魔法店 · 纯属娱乐 · 祝各位考生金榜题名 ✨', W/2, H - pad - 14);
+
+  var pi = document.getElementById('posterImg'), pl = document.getElementById('posterLoading'), dl = document.getElementById('posterDl');
+  var dataUrl = null;
+  try { dataUrl = cv.toDataURL('image/png'); } catch(e) { dataUrl = null; }
+  if (pl) pl.style.display = 'none';
+  if (dataUrl) {
+    if (pi) { pi.src = dataUrl; pi.style.display = 'block'; }
+    if (dl) { dl.href = dataUrl; dl.style.display = 'inline-flex'; }
+  } else {
+    if (pi && pi.parentNode) { cv.className = 'poster-img'; cv.style.display = 'block'; pi.parentNode.replaceChild(cv, pi); }
+    var hint = document.querySelector('.poster-hint'); if (hint) hint.textContent = '当前环境无法导出图片，部署到线上即可正常保存。';
+  }
+}
 
 render();
 </script>
