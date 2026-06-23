@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>社会指数宾果 · 霧雨魔法店</title>
+    <script src="js/analytics.js"></script>
+    <link rel="stylesheet" href="css/common.css">
+<style>
+.container { padding: 32px 26px; }
+
+/* ── 页面组件 ── */
+.head { text-align: center; }
+.head h1 { font-size: 25px; margin-bottom: 8px; }
+.head .sub { font-size: 12.5px; color: var(--muted); line-height: 1.7; margin-bottom: 18px; }
+.status { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+.status b { color: var(--gold); font-weight: 700; }
+.status .hot b { color: var(--pink); }
+
+/* ── 宾果棋盘 ── */
+.bingo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 18px; }
+.cell {
+ aspect-ratio: 1 / 1; border: 1px solid var(--border); border-radius: 10px;
+ background: rgba(255,255,255,.02); color: var(--muted);
+ font-size: 10.5px; line-height: 1.25; padding: 5px 4px;
+ display: flex; align-items: center; justify-content: center; text-align: center;
+ cursor: pointer; transition: background .15s, color .15s, border-color .15s, box-shadow .2s;
+ word-break: break-all; overflow: hidden; user-select: none; -webkit-user-select: none;
+}
+.cell:hover { border-color: var(--purple); }
+.cell:active { transform: scale(.97); }
+.cell.on {
+ background: linear-gradient(135deg, var(--gold), #ffe1a0); color: #2a2012;
+ border-color: var(--gold); font-weight: 700; box-shadow: 0 0 10px rgba(240,192,96,.22);
+}
+.cell.line { box-shadow: 0 0 0 2px var(--gold), 0 0 16px rgba(240,192,96,.55); animation: line-pop .4s ease; position: relative; z-index: 1; }
+.cell.ro { cursor: default; }
+.cell.ro:hover { border-color: var(--border); }
+.cell.ro.on:hover { border-color: var(--gold); }
+@keyframes line-pop { 0%{transform:scale(.9)} 60%{transform:scale(1.07)} 100%{transform:scale(1)} }
+.bingo-grid.mini .cell { font-size: 9px; border-radius: 8px; padding: 3px; }
+
+/* ── 返回链接 ── */
+.back-link {
+ display: inline-flex; align-items: center; gap: 4px; background: none; border: none; cursor: pointer;
+ font-family: inherit; font-size: 12px; color: var(--muted); padding: 4px 0; margin-bottom: 12px; transition: color .2s;
+}
+.back-link:hover { color: var(--gold); }
+
+/* ── 结果页 ── */
+.result { text-align: center; }
+.result-emoji { font-size: 64px; margin-bottom: 6px; display: inline-block; animation: pop .5s cubic-bezier(.2,1.4,.4,1); }
+@keyframes pop { 0%{transform:scale(0)} 60%{transform:scale(1.12)} 100%{transform:scale(1)} }
+.result-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+.result-desc {
+ text-align: left; font-size: 13px; line-height: 1.8; color: var(--text);
+ background: rgba(255,255,255,.02); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 14px;
+}
+.index-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin: 6px 0 4px; }
+.index-fill { height: 100%; border-radius: 4px; transition: width .5s; background: linear-gradient(90deg, var(--green), var(--gold), var(--pink)); }
+.index-label { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+
+/* ── 海报 ── */
+.poster-wrap { text-align: center; }
+.poster-img { width: 100%; max-width: 320px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 8px 32px rgba(0,0,0,.4); margin: 0 auto 14px; }
+.poster-hint { font-size: 11px; color: var(--muted); margin-bottom: 16px; line-height: 1.7; }
+.loading-orb { width: 56px; height: 56px; }
+
+/* ── Toast ── */
+.toast {
+ position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(10px);
+ background: rgba(36,30,42,.97); border: 1px solid var(--gold); color: var(--gold);
+ padding: 10px 18px; border-radius: 24px; font-size: 13px; font-weight: 700;
+ box-shadow: 0 8px 32px rgba(0,0,0,.5); opacity: 0; pointer-events: none;
+ transition: opacity .3s, transform .3s; z-index: 300; white-space: nowrap; max-width: 90vw;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 420px) {
+ .container { padding: 24px 16px; }
+ .head h1 { font-size: 21px; }
+ .cell { font-size: 9.5px; padding: 4px 3px; border-radius: 8px; }
+ .bingo-grid { gap: 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+ .cell.line, .result-emoji, .loading-orb { animation: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/canvas-utils.js"></script>
+
+<div class="container" id="app"></div>
+
+<script>
+var SITE_URL = 'www.azureflame.cloud';
+var QR_IMG = 'images/qr-code.png';
+var QQ_IMG = 'images/qq-group.png';
+var QQ_GROUP = '702973928';
+var POSTER_W = 640, POSTER_H = 960;
+
+var CELLS = [
+ '不玩王者·吃鸡手游','不喜欢轰趴·KTV等娱乐场所','不玩抖音·西瓜·火山·微信视频号等短视频','休息日很少出门','天天玩QQ',
+ '不玩微信朋友圈','能用文字绝不打电话','没去过酒吧','接到陌生电话会先紧张一下','没追过星',
+ '异性朋友没有超过2个','朋友约饭第一反应是想推掉','快递宁可放驿站也不想面交','群聊常年潜水·从不主动发言','不喜欢追电视剧·综艺',
+ '觉得自己一个人出去吃饭完全没啥','没谈过恋爱','不抽烟','电梯里遇到邻居会假装看手机','不自拍',
+ '很少运动','不喜欢聚会·团建','喜欢ACG','不会花时间化妆·打扮','疫情期间宅在家不会觉得无聊'
+];
+
+var LINES = [];
+for (var r = 0; r < 5; r++) LINES.push([r*5, r*5+1, r*5+2, r*5+3, r*5+4]);
+for (var c = 0; c < 5; c++) LINES.push([c, c+5, c+10, c+15, c+20]);
+LINES.push([0,6,12,18,24]); LINES.push([4,8,12,16,20]);
+
+var state = 'select';
+var on = new Array(25).fill(false);
+
+function render() {
+ var app = document.getElementById('app');
+ if (state === 'select') renderSelect(app);
+ else if (state === 'result') renderResult(app);
+ else if (state === 'poster') renderPoster(app);
+}
+
+function completedLines() {
+ var done = [];
+ for (var l = 0; l < LINES.length; l++) if (LINES[l].every(function(i){ return on[i]; })) done.push(l);
+ return done;
+}
+function stats() {
+ var m = on.filter(Boolean).length;
+ var done = completedLines();
+ return { m: m, L: done.length, idx: Math.round((25 - m) / 25 * 100), done: done };
+}
+
+function renderSelect(app) {
+ var html =
+ '<div class="head">' +
+ '<div class="intro-badge">霧雨魔法店 · 社会指数鉴定</div>' +
+ '<h1>社会指数宾果</h1>' +
+ '<p class="sub">点亮所有符合你的格子。只要有一条线（横 / 竖 / 斜）连起来，你就不仅不社会，还是完犊子的死宅社恐了。</p>' +
+ '</div>' +
+ '<div class="status">' +
+ '<span>已点亮 <b id="stCount">0</b>/25</span>' +
+ '<span>社会指数 <b id="stIndex">100</b>%</span>' +
+ '<span class="hot">连线 <b id="stLines">0</b> 条</span>' +
+ '</div>' +
+ '<div class="bingo-grid" id="grid"></div>' +
+ '<button class="btn btn-main" onclick="goResult()">📜 查看我的鉴定结果</button>' +
+ '<button class="btn btn-ghost" onclick="resetAll()">↺ 重置</button>';
+ app.innerHTML = html;
+ var g = document.getElementById('grid');
+ var cells = '';
+ for (var i = 0; i < 25; i++) cells += '<div class="cell" onclick="toggle(' + i + ')">' + CELLS[i] + '</div>';
+ g.innerHTML = cells;
+ refreshSelect();
+}
+
+function toggle(i) { on[i] = !on[i]; refreshSelect(); }
+
+function refreshSelect() {
+ var cells = document.querySelectorAll('#grid .cell');
+ if (!cells.length) return;
+ var s = stats(); var inLine = {};
+ s.done.forEach(function(l){ LINES[l].forEach(function(i){ inLine[i] = true; }); });
+ for (var i = 0; i < 25; i++) {
+ cells[i].classList.toggle('on', on[i]);
+ cells[i].classList.toggle('line', !!inLine[i]);
+ }
+ document.getElementById('stCount').textContent = s.m;
+ document.getElementById('stIndex').textContent = s.idx;
+ document.getElementById('stLines').textContent = s.L;
+ if (s.L > 0 && !shownToasts[s.L]) { shownToasts[s.L] = 1; fireToast(s.L); }
+}
+
+function resetAll() { on = new Array(25).fill(false); shownToasts = {}; refreshSelect(); }
+function goResult() {
+ var s = stats();
+ lastS = s; lastV = verdictOf(s.m, s.L); lastQuip = pickQuip(lastV.k, s);
+ state = 'result'; render();
+}
+function backToEdit() { state = 'select'; render(); }
+
+function verdictOf(m, L) {
+ if (m >= 25) return { k:'legend', e:'🧙', t:'传说 · 与世隔绝の隐神', c:'var(--pink)', tags:['满堂红','查无此人','荣誉店长'] };
+ if (L >= 5) return { k:'master', e:'🪄', t:'宗师 · 社恐天花板', c:'var(--gold)', tags:['宅之化身','副本：出门','社恐封顶'] };
+ if (L >= 2) return { k:'senior', e:'🪑', t:'资深 · 重度死宅', c:'var(--gold)', tags:['重度宅','外卖之友','省社交费'] };
+ if (L >= 1) return { k:'line1', e:'🎴', t:'实锤 · 完犊子的死宅社恐', c:'var(--gold)', tags:['连线达成','社死实锤','赢麻了'] };
+ if (m >= 18) return { k:'prep', e:'😶‍🌫️', t:'预备役 · 就差临门一脚', c:'var(--purple)', tags:['差一点','预备社恐','转正在即'] };
+ if (m >= 11) return { k:'half', e:'🌓', t:'薛定谔 · 半社会半宅', c:'var(--purple)', tags:['可盐可宅','伪E真I','想回家'] };
+ if (m >= 5) return { k:'fake', e:'🕶️', t:'伪装 · 披着宅皮的社会人', c:'var(--green)', tags:['伪宅','社会人','别装了'] };
+ return { k:'social', e:'🕺', t:'纯种 · 社会摇选手', c:'var(--green)', tags:['社牛','人群之友','快转发'] };
+}
+
+var QUIPS = {
+ social: [
+ '这套题你大概一格都点不亮，没事，正常人本来就这样。',
+ '你在人群里如鱼得水——但你那个朋友肯定全中，转给他。',
+ '社会指数爆表，恭喜你是个正常人类，虽然听起来有点无聊。',
+ '你不是这游戏的目标用户，你是来嘲笑别人的，被你发现了。',
+ '出门、聚会、社交对你都不算事，真好，真心羡慕。',
+ '周末有局、群里活跃、电话照接——你过得比我滋润。',
+ '这局你是来当对照组的，谢谢参与，掌声送给社牛。',
+ '你和"死宅"之间，隔着一整个朋友圈。',
+ '看完赶紧去约人吃饭吧，别在这儿陪我们这些人待着了。',
+ '指数这么高，建议你去安慰一下刚连成线的朋友。',
+ '社牛认证：你天生适合活在人群里，也乐在其中。',
+ '点得这么少，要么真社牛，要么……在嘴硬，懂的都懂。'
+ ],
+ fake: [
+ '嘴上说"我超宅"，其实你周末根本闲不住。',
+ '你点的这几格，多半是为了合群假装自己也宅。',
+ '半个社会人，披着宅皮，骗谁呢。',
+ '你属于"想宅但宅不彻底"那一挂，挺拧巴的，我懂。',
+ '偶尔想躲起来，但三天没人找你又开始慌。',
+ '你的宅是周末限定款，周一立刻满血复活。',
+ '别装了，你其实挺会玩的，只是今天不想玩而已。',
+ '一只脚踏进宅圈，另一只脚还留在酒局门口。',
+ '你宅得很有分寸，分寸到根本不太算宅。',
+ '这个分数，宅人看了想锤你，社牛看了想拉你入伙。',
+ '"我也很社恐的"——你，刚从聚会回来还这么说。',
+ '伪宅认证：要么再补几格，要么对自己诚实一点。'
+ ],
+ half: [
+ '能社交，但每次社交完都想回家躺三天。',
+ '人前是 E 人，关上门立刻变回 I 人。',
+ '你属于"可以营业，但真的不太想营业"那种。',
+ '一半想出门，一半想取消，纠结到天荒地老。',
+ '答应了又后悔，后悔了还是去，循环往复。',
+ '你的社交电量常年 50%，且不支持快充。',
+ '薛定谔的社牛：约了才知道自己到底想不想去。',
+ '表面合群，内心一直在算几点能体面地回家。',
+ '你不是讨厌人，你只是有点怕"很多人"。',
+ '聊得来，但更享受没人找你的那种安静。',
+ '处在"还能抢救"和"算了别救了"的正中间。',
+ '半社会半宅，主打一个随缘营业。'
+ ],
+ prep: [
+ '就差几格连成线，社恐预备党员，转正在即。',
+ '你离"完犊子"只剩临门一脚了，三思。',
+ '点亮 {m}/25 还没连线，是命运在替你拦着。',
+ '差一点点，估计再宅一年就齐活了。',
+ '你已经站在社恐门口，手都摸到门把手了。',
+ '候补社恐，名额随时给你补上，别急。',
+ '还差几格，先别庆幸，明年这个时候再测一次。',
+ '你这状态，专业说法叫"重度倾向，暂未连线"。',
+ '离群索居预备役，履历已经相当漂亮了。',
+ '就差那么一两格，算是命运给你留了点体面。',
+ '你已经很宅了，只是还没宅出"代表作"。',
+ '预备役，下次见面可能就是正式党员了。'
+ ],
+ line1: [
+ '啪，连上了——从这秒起，你的社交圈缩成了一条直线。',
+ '恭喜连成一条线，人类的悲欢并不相通，而你选择不通。',
+ '第一条线达成，这局你赢了，但好像也输了。',
+ '实锤社恐，欢迎来到"能不出门绝不出门"俱乐部。',
+ '一条线而已，但已经够被朋友截图发群嘲一整天了。',
+ '你不是不合群，你只是把"独处"修成了主业。',
+ '连线成功，世界少了个营业的人，多了个安静的你。',
+ '这条线连得猝不及防，像极了你拒绝邀约的速度。',
+ '实锤了：你和外面的世界，隔着一块亮起来的屏幕。',
+ '一条线，刚好够给自己一个不出门的正当理由。',
+ '欢迎入坑，社恐这条路其实挺好走的——因为没人挡路。',
+ '连成线那一刻你大概松了口气：终于可以不用装了。'
+ ],
+ senior: [
+ '连成 {L} 条，你这不是社恐，是把宅练成了童子功。',
+ '你和外界最稳的联系，大概就是那几个外卖软件。',
+ '资深死宅认证，出门对你来说属于限定活动。',
+ '你的社交需求，已经被 Wi-Fi 和耳机完美替代。',
+ '这么多线，朋友找你得提前预约，还不一定约得到。',
+ '你过得很自洽，自洽到几乎不需要别人。',
+ '重度宅，但你乐在其中，这点你比谁都清醒。',
+ '你不是孤独，你是主动把世界调成了静音。',
+ '{L} 条线下来，证明你早和"非必要社交"和平分手了。',
+ '资深隐者，江湖上只剩你的传说和你点的外卖。',
+ '你把"一个人"过成了舒适区，外人羡慕不来。',
+ '这成绩在宅圈能排上号，恭喜，也有点心疼。'
+ ],
+ master: [
+ '连成 {L} 条、连成一片了，你已经不是宅，是宅本身。',
+ '社恐天花板，出门对你而言是高难度限时副本。',
+ '外卖小哥可能是你这个月唯一见过的活人。',
+ '你和社会之间，只剩一根网线还在勉强维系。',
+ '宗师级隐者，建议颁你一座"不出门成就"奖杯。',
+ '你不是逃避社交，你是已经超越了社交。',
+ '这水平，世界吵不到你，你也懒得去吵世界。',
+ '满屏的线，像你拉黑"无效社交"时一样果断。',
+ '你已经把独处修炼成了一种生活美学。',
+ '社恐封顶，再往上就只剩"传说"这一档了。',
+ '安静、自足、与世无争——其实这状态挺让人羡慕的。',
+ '天花板选手，唯一的挑战是把最后几格也点满。'
+ ],
+ legend: [
+ '满堂红。恭喜，你从"人类社会"这个副本里彻底退游了。',
+ '25 格全亮，人类查无此人，魔法店给你留了张床。',
+ '你不是社恐，你是社恐这门学问的集大成者。',
+ '传说级隐者，连风都打听不到你出门的消息。',
+ '全连了——这一刻，连"宅"这个词都配不上你。',
+ '满分。世界终于安静了，因为你把自己调成了离线。',
+ '雾雨魔法店荣誉店长，唯一要求是：永远别搬走。',
+ '你已抵达终点：一个人，一间房，一整个宇宙。',
+ '满堂红，建议把这张卡裱起来，挂在不会有客人的客厅。',
+ '恭喜通关"与世隔绝"，成就已解锁，无人见证。',
+ '你赢得了彻底的清静，代价也是这彻底的清静。',
+ '满分隐神，下次更新见——如果你还愿意开门的话。'
+ ]
+};
+
+var TOASTS = {
+ 1: ['啪，第一条线连上了 ☆', '连成一条线了……回不去了', '第一条线达成 ☆'],
+ 2: ['两条线，开始上瘾了？', '第二条线 ☆ 越陷越深', '两条线达成'],
+ 3: ['三条线，你这是要包圆啊', '第三条线 ☆', '三条线达成'],
+ 4: ['四条线……快要满了', '第四条线 ☆ 收不住了', '四条线达成'],
+ 5: ['连成一片了，宗师就位 ☆', '满屏连线，离传说不远了', '线连成一片 ☆']
+};
+
+function pickQuip(k, s) {
+ var pool = QUIPS[k] || [];
+ if (!pool.length) return '';
+ var q = pool[Math.floor(Math.random() * pool.length)];
+ return q.replace(/\{L\}/g, s.L).replace(/\{m\}/g, s.m);
+}
+
+var lastV = null, lastS = null, lastQuip = '';
+var shownToasts = {}, toastTimer = null;
+
+function fireToast(L) {
+ var bucket = Math.min(L, 5);
+ var pool = TOASTS[bucket]; if (!pool) return;
+ var msg = pool[Math.floor(Math.random() * pool.length)];
+ var el = document.getElementById('toast');
+ if (!el) {
+ el = document.createElement('div');
+ el.id = 'toast'; el.className = 'toast';
+ document.body.appendChild(el);
+ }
+ el.textContent = msg;
+ void el.offsetWidth;
+ el.classList.add('show');
+ if (toastTimer) clearTimeout(toastTimer);
+ toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 2000);
+}
+
+function renderResult(app) {
+ var s = lastS || stats();
+ var v = lastV || verdictOf(s.m, s.L);
+ var quip = lastQuip || pickQuip(v.k, s);
+ var inLine = {}; s.done.forEach(function(l){ LINES[l].forEach(function(i){ inLine[i] = true; }); });
+
+ var board = '<div class="bingo-grid mini" style="margin-bottom:16px;">';
+ for (var i = 0; i < 25; i++) {
+ var cls = 'cell ro' + (on[i] ? ' on' : '') + (inLine[i] ? ' line' : '');
+ board += '<div class="' + cls + '">' + CELLS[i] + '</div>';
+ }
+ board += '</div>';
+
+ var tags = '';
+ for (var j = 0; j < v.tags.length; j++) tags += '<span class="meta-tag">' + v.tags[j] + '</span>';
+
+ app.innerHTML =
+ '<button class="back-link" onclick="backToEdit()">← 返回修改</button>' +
+ '<div class="result">' +
+ '<div class="result-emoji">' + v.e + '</div>' +
+ '<div class="result-title" style="color:' + v.c + '">' + v.t + '</div>' +
+ board +
+ '<div class="result-desc">' + quip + '</div>' +
+ '<div class="index-bar"><div class="index-fill" style="width:' + s.idx + '%"></div></div>' +
+ '<div class="index-label">社会指数 ' + s.idx + '%（越低越宅）· 点亮 ' + s.m + '/25 · 连线 ' + s.L + ' 条</div>' +
+ '<div class="result-meta">' + tags + '</div>' +
+ '<button class="btn btn-main" onclick="shareImage()">📸 生成分享海报</button>' +
+ '<button class="btn btn-ghost" onclick="shareIt()">📋 复制结果文案</button>' +
+ '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+ '<p class="notice">霧雨魔法店 · 结果仅供娱乐 · 但社恐是真的</p>' +
+ '<div class="qq-section">' +
+ '<img src="' + QQ_IMG + '" alt="QQ群二维码" onerror="this.style.display=\'none\'">' +
+ '<p><strong style="color:var(--gold);">加群一起宅</strong><br>群号 ' + QQ_GROUP + ' · 更多抽象好活</p>' +
+  '</div>' +
+  '<p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>' +
+  '</div>';
+}
+
+function shareIt() {
+ var s = lastS || stats(); var v = lastV || verdictOf(s.m, s.L);
+ var text = '我的社会指数只有 ' + s.idx + '%，连成了 ' + s.L + ' 条线——【' + v.t + '】！来测测你的：' + window.location.href;
+ copyToClipboard(text, '已复制！发给朋友试试 😈');
+}
+
+function shareImage() { state = 'poster'; render(); }
+function renderPoster(app) {
+ app.innerHTML =
+ '<div class="poster-wrap">' +
+ '<div class="result-title" style="font-size:14px;color:var(--muted);margin-bottom:14px;">长按图片保存 / 分享</div>' +
+ '<img class="poster-img" id="posterImg" alt="分享海报" style="display:none;">' +
+ '<div class="loading-wrap" id="posterLoading"><div class="loading-orb"></div><p class="loading-text">正在生成海报…</p></div>' +
+ '<p class="poster-hint">手机长按上图即可保存到相册；电脑可点下方按钮下载。</p>' +
+ '<a class="btn btn-main" id="posterDl" download="社会指数宾果.png" style="display:none;">⬇️ 下载海报</a>' +
+ '<button class="btn btn-ghost" onclick="state=\'result\';render();">← 返回结果</button>' +
+ '</div>';
+ buildPoster();
+}
+
+function drawCellText(ctx, text, cx, top, box) {
+ var fs = 9, lines;
+ var FONT = 'px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+ while (fs >= 6) {
+ ctx.font = fs + FONT;
+ lines = wrapToLines(ctx, text, box - 8);
+ if (lines.length * (fs + 2) <= box - 6) break;
+ fs--;
+ }
+ ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+ var lh = fs + 2, total = lines.length * lh, y = top + box / 2 - total / 2 + lh / 2;
+ for (var k = 0; k < lines.length; k++) { ctx.fillText(lines[k], cx, y); y += lh; }
+ ctx.textBaseline = 'alphabetic';
+}
+function drawBoard(ctx, ox, oy, cell, gap, done) {
+ var inLine = {}; done.forEach(function(l){ LINES[l].forEach(function(i){ inLine[i] = true; }); });
+ for (var i = 0; i < 25; i++) {
+ var r = Math.floor(i / 5), c = i % 5;
+ var x = ox + c * (cell + gap), y = oy + r * (cell + gap);
+ if (on[i]) {
+ var grd = ctx.createLinearGradient(x, y, x + cell, y + cell);
+ grd.addColorStop(0, '#f0c060'); grd.addColorStop(1, '#ffe1a0');
+ ctx.fillStyle = grd;
+ } else { ctx.fillStyle = 'rgba(255,255,255,.03)'; }
+ roundRect(ctx, x, y, cell, cell, 8); ctx.fill();
+ ctx.lineWidth = inLine[i] ? 2.5 : 1;
+ ctx.strokeStyle = inLine[i] ? '#fff3cd' : (on[i] ? '#f0c060' : '#3a3045');
+ roundRect(ctx, x, y, cell, cell, 8); ctx.stroke();
+ ctx.fillStyle = on[i] ? '#2a2012' : 'rgba(224,216,236,.45)';
+ drawCellText(ctx, CELLS[i], x + cell / 2, y, cell);
+ }
+}
+
+async function buildPoster() {
+ var s = lastS || stats(); var v = lastV || verdictOf(s.m, s.L);
+ var W = POSTER_W, H = POSTER_H, pad = 40;
+ var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+ var ctx = cv.getContext('2d');
+ var FONT = '-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+
+ ctx.fillStyle = '#1a1520'; ctx.fillRect(0, 0, W, H);
+ var g = ctx.createLinearGradient(0, 0, W, H);
+ g.addColorStop(0, 'rgba(176,159,255,.10)'); g.addColorStop(1, 'rgba(240,192,96,.06)');
+ ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+ ctx.fillStyle = '#241e2a'; roundRect(ctx, pad, pad, W - pad*2, H - pad*2, 28); ctx.fill();
+ var bar = ctx.createLinearGradient(pad, 0, W - pad, 0);
+ bar.addColorStop(0, '#f0c060'); bar.addColorStop(.5, '#b89fff'); bar.addColorStop(1, '#f0c060');
+ ctx.fillStyle = bar; roundRect(ctx, pad, pad, W - pad*2, 6, 3); ctx.fill();
+
+ ctx.textAlign = 'center';
+ ctx.fillStyle = '#f0c060'; ctx.font = '600 18px ' + FONT;
+ ctx.fillText('霧 雨 魔 法 店 · 社会指数宾果', W/2, 96);
+
+ ctx.fillStyle = (v.c.indexOf('green') > -1) ? '#6fcf97' : (v.c.indexOf('pink') > -1) ? '#f472b6' : (v.c.indexOf('purple') > -1) ? '#b89fff' : '#f0c060';
+ ctx.font = '800 28px ' + FONT;
+ ctx.fillText(v.t, W/2, 138);
+ ctx.fillStyle = '#8a7e9a'; ctx.font = '14px ' + FONT;
+ ctx.fillText('社会指数 ' + s.idx + '% · 点亮 ' + s.m + '/25 · 连线 ' + s.L + ' 条', W/2, 168);
+
+ var cell = 76, gap = 5, gridW = cell*5 + gap*4;
+ var ox = (W - gridW) / 2, oy = 196;
+ drawBoard(ctx, ox, oy, cell, gap, s.done);
+
+ var plain = lastQuip || pickQuip(v.k, s);
+ ctx.fillStyle = '#e0d8ec'; ctx.font = '14px ' + FONT;
+ ctx.textAlign = 'center';
+ var dlines = wrapToLines(ctx, plain, W - pad*2 - 50).slice(0, 2);
+ var dy = oy + gridW + 34;
+ for (var i = 0; i < dlines.length; i++) ctx.fillText(dlines[i], W/2, dy + i*22);
+
+ var siteImg = await loadImg(QR_IMG);
+ var qqImg = await loadImg(QQ_IMG);
+ var qs = 124, gap2 = 46, totalQW = qs*2 + gap2;
+ var leftX = (W - totalQW) / 2, rightX = leftX + qs + gap2;
+ var qy = H - pad - 196;
+ drawQRBox(ctx, siteImg, leftX, qy, qs, '扫码开测', SITE_URL, '#f0c060');
+ drawQRBox(ctx, qqImg, rightX, qy, qs, '加 QQ 群', '群号 ' + QQ_GROUP, '#b89fff');
+
+ var pi = document.getElementById('posterImg');
+ var pl = document.getElementById('posterLoading');
+ var dl = document.getElementById('posterDl');
+ var dataUrl = null;
+ try { dataUrl = cv.toDataURL('image/png'); } catch (e) { dataUrl = null; }
+ if (pl) pl.style.display = 'none';
+ if (dataUrl) {
+ if (pi) { pi.src = dataUrl; pi.style.display = 'block'; }
+ if (dl) { dl.href = dataUrl; dl.style.display = 'inline-flex'; }
+ } else {
+ if (pi && pi.parentNode) { cv.className = 'poster-img'; cv.style.display = 'block'; pi.parentNode.replaceChild(cv, pi); }
+ var hint = document.querySelector('.poster-hint');
+ if (hint) hint.textContent = '当前环境无法导出图片。部署到 ' + SITE_URL + ' 线上访问即可正常保存。';
+ }
+}
+
+
+render();
+</script>
+
+</body>
+</html>

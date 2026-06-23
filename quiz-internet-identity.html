@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>测测你的互联网身份 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<style>
+:root {
+ --cyan:#22d3ee; --accent:#22d3ee; --accent-soft:rgba(34,211,238,.06);
+}
+.container::before {
+ background:linear-gradient(90deg,var(--gold),var(--cyan),var(--gold));
+}
+
+/* ── 首页覆盖 ── */
+.intro-badge { color:var(--cyan); border-color:var(--cyan); }
+.intro .sub { margin-bottom:20px; }
+
+/* ── 答题页覆盖 ── */
+.progress-fill { background:linear-gradient(90deg,var(--gold),var(--cyan)); }
+.q-num { color:var(--cyan); font-size:12px; font-weight:700; }
+.opt-btn:hover { border-color:var(--cyan); background:var(--accent-soft); }
+.opt-btn:hover .opt-letter { background:var(--cyan); color:#0f172a; }
+
+/* ── 加载 ── */
+.loading-pulse {
+ width:80px; height:80px; border-radius:50%; margin:0 auto 22px;
+ background:var(--cyan); opacity:.3; animation:pulse 1.5s ease infinite;
+}
+@keyframes pulse { 0%,100% { transform:scale(.8); opacity:.2; } 50% { transform:scale(1.2); opacity:.5; } }
+
+/* ── 结果页 ── */
+.identity-badge { display:inline-block; margin:4px 4px; padding:6px 14px; border-radius:20px; font-size:12px; border:1px solid; }
+.dim-wrap { display:flex; justify-content:center; margin-bottom:18px; }
+.radar { width:100%; max-width:300px; }
+.radar-poly { animation:radarIn .6s cubic-bezier(.2,1.1,.4,1) both; transform-origin:center; transform-box:fill-box; }
+@keyframes radarIn { 0% { transform:scale(.2); opacity:0; } 100% { transform:scale(1); opacity:1; } }
+.radar-label { font-size:10px; }
+.radar-num { font-size:9px; font-weight:700; }
+
+/* ── 按钮覆盖 ── */
+.btn-main { background:var(--cyan); color:#0f172a; }
+.btn-main:hover { background:#67e8f9; }
+.btn-ghost:hover { border-color:var(--cyan); }
+.btn-back { border:1px solid var(--border); border-radius:10px; }
+.btn-back:hover { border-color:var(--cyan); color:var(--cyan); }
+
+@media (max-width:420px) { .container { padding:24px 18px; } }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+<script src="js/utils.js"></script>
+
+<div class="container" id="app"></div>
+
+<script>
+var state='intro',idx=0,answers=[];
+
+/* ============================================================
+   维度系统
+   7 个行为指纹维度: atk攻击 fun整活 cry破防 img人设 sub亚度 nerd钻研 moe萌善
+   2 个定向标记: snr资历(老资历)  gFem小男娘  gTom假小子
+   每题选项往这些维度加分; 最后用余弦相似度匹配身份指纹 + 标记加权。
+   ============================================================ */
+
+var QUESTIONS = [
+ { q:'刷到一张可爱的猫图，你大概会？', opts:[
+ { txt:'顺手存下来，回头能当表情包', d:{moe:2,fun:2} },
+ { txt:'在评论区打一长串「啊啊啊啊」', d:{cry:2,moe:2} },
+ { txt:'有点好奇是什么品种，搜一下', d:{nerd:3} },
+ { txt:'扫一眼就划走了', d:{atk:2,nerd:1} }
+ ]},
+ { q:'深夜突然有点 emo，你会？', opts:[
+ { txt:'配张图发条动态，文案斟酌半天', d:{cry:2,img:3} },
+ { txt:'戴上耳机循环一首歌，谁也不说', d:{sub:2,cry:2,img:1} },
+ { txt:'没空 emo，正跟人吵得火热', d:{atk:3,nerd:1} },
+ { txt:'找点事做，把没弄完的弄完', d:{nerd:3} }
+ ]},
+ { q:'看到一个你没接住的梗，你？', opts:[
+ { txt:'赶紧查一下，下次就能用上', d:{fun:3,moe:1} },
+ { txt:'看不懂就算了，无所谓', d:{nerd:2,atk:1} },
+ { txt:'不接，直接甩个更离谱的回去', d:{fun:2,atk:2,sub:1} },
+ { txt:'觉得发的人还挺有意思', d:{moe:3} }
+ ]},
+ { q:'你的头像通常是？', opts:[
+ { txt:'二次元角色或者萌宠', d:{moe:3,sub:1} },
+ { txt:'自己拍的、调过色的照片', d:{img:3,cry:1} },
+ { txt:'某个特定圈子里专门做的形象', d:{sub:3,moe:2} },
+ { txt:'越怪越好，让人一眼记住', d:{fun:2,sub:2,atk:1} }
+ ]},
+ { q:'群里突然吵起来了，你？', opts:[
+ { txt:'默默截个图，留着以后看', d:{fun:2,nerd:1} },
+ { txt:'没忍住，下场说了几句', d:{atk:3} },
+ { txt:'出来打个圆场', d:{moe:3} },
+ { txt:'看吵的是什么——有的话题我忍不了', d:{nerd:3,atk:2} }
+ ]},
+ { q:'现实里你的打扮风格更偏向？', opts:[
+ { txt:'喜欢可爱精致的，哪怕和别人对我的预期不太一样', d:{gFem:3,img:1,moe:1} },
+ { txt:'利落中性就好，裙子那些免了', d:{gTom:3,atk:1} },
+ { txt:'跟着自己喜欢的那套小众风格走', d:{sub:3,img:1} },
+ { txt:'普通舒适，不太折腾', d:{nerd:1} }
+ ]},
+ { q:'别人见到你本人，最常有的反应是？', opts:[
+ { txt:'「这么可爱」——然后惊讶你是男生', d:{gFem:3} },
+ { txt:'「你比好多男生还帅」', d:{gTom:3} },
+ { txt:'「好有氛围感／好有风格」', d:{img:3} },
+ { txt:'没什么特别反应', d:{nerd:1} }
+ ]},
+ { q:'喜欢的博主塌房、爆了黑料，你？', opts:[
+ { txt:'顺藤摸瓜，把来龙去脉查清楚', d:{nerd:2,atk:1} },
+ { txt:'蹲在评论区等后续，顺便玩个梗', d:{fun:3} },
+ { txt:'看看也就过了，没太大感觉', d:{moe:2} },
+ { txt:'把这事翻来覆去地嘲，越多人看到越好', d:{atk:3,fun:1,sub:1} }
+ ]},
+ { q:'你最常做的网络活动是？', opts:[
+ { txt:'刷可爱的动物、喜欢的角色', d:{sub:3,moe:2} },
+ { txt:'到处逛逛，看看哪儿有热闹', d:{fun:3} },
+ { txt:'认真看长内容、参与讨论', d:{nerd:3,img:1} },
+ { txt:'打理主页，研究怎么拍更好看', d:{img:3} }
+ ]},
+ { q:'有人公开骂你喜欢的东西，你？', opts:[
+ { txt:'摆事实讲道理，反驳回去', d:{nerd:3,atk:1} },
+ { txt:'直接呛回去，这个不能忍', d:{atk:3,cry:1} },
+ { txt:'当面不说，回头找同好吐槽', d:{cry:2,img:1} },
+ { txt:'随他去，喜欢是我自己的事', d:{sub:2,moe:1} }
+ ]},
+ { q:'在一个新群里待上一阵，你大概是？', opts:[
+ { txt:'大家眼里很好相处、很暖的那个', d:{moe:3} },
+ { txt:'话最多、最闹腾的那个', d:{atk:2,fun:2} },
+ { txt:'有问题大家会来找的那个靠谱的', d:{nerd:3} },
+ { txt:'时不时冒一句没人接得住的那个', d:{fun:2,sub:2,atk:1} }
+ ]},
+ { q:'群里新人问了个特别基础的问题，你？', opts:[
+ { txt:'心想这都老掉牙了，懒得细说', d:{snr:3,atk:1} },
+ { txt:'耐心讲清楚，还给点资料', d:{nerd:2,moe:1} },
+ { txt:'丢个梗图让他自己体会', d:{fun:2} },
+ { txt:'不掺和，看别人怎么回', d:{fun:1,nerd:1} }
+ ]},
+ { q:'关于你玩这些的时间，你？', opts:[
+ { txt:'玩很多年了，见过一波波人来人往', d:{snr:3} },
+ { txt:'圈子里的来龙去脉我大都清楚', d:{snr:2,nerd:1} },
+ { txt:'最近才入坑，但上手很快', d:{fun:1,moe:1} },
+ { txt:'没太在意自己玩了多久', d:{moe:1,fun:1} }
+ ]},
+ { q:'你发动态的习惯是？', opts:[
+ { txt:'排版、配图、文案都顺眼了才发', d:{img:3,cry:1} },
+ { txt:'想到什么发什么，随手就来', d:{fun:3} },
+ { txt:'基本不发，看得多', d:{nerd:1,atk:1} },
+ { txt:'心情上来了就发，深夜居多', d:{cry:3} }
+ ]},
+ { q:'刷到一条社会议题／国际新闻，你？', opts:[
+ { txt:'会去琢磨背后的来龙去脉，也愿意争两句', d:{nerd:3,atk:1} },
+ { txt:'跟我关系不大，划过去', d:{moe:2} },
+ { txt:'找个角度把它当个乐子', d:{fun:3} },
+ { txt:'看大家怎么吵，挺有意思', d:{fun:2} }
+ ]},
+ { q:'你手机里存得最多的是？', opts:[
+ { txt:'表情包、截图、各种梗', d:{fun:3} },
+ { txt:'好看的照片和灵感图', d:{img:3} },
+ { txt:'资料、笔记、待办清单', d:{nerd:3} },
+ { txt:'喜欢的角色、可爱的小图', d:{sub:3,moe:2} }
+ ]},
+ { q:'喜欢上一个人时，你？', opts:[
+ { txt:'很在意对方的回应，等不到就开始胡思乱想', d:{cry:3,sub:1} },
+ { txt:'不动声色，偶尔在动态里暗示', d:{cry:2,img:2} },
+ { txt:'喜欢就直说', d:{atk:1,moe:1} },
+ { txt:'现在没空想这些，有更要紧的事', d:{nerd:3} }
+ ]},
+ { q:'什么最容易让你忍不住想开口？', opts:[
+ { txt:'一个你不太认同的观点', d:{atk:2,nerd:1} },
+ { txt:'一个你正好能接的梗', d:{fun:3} },
+ { txt:'一个看起来需要安慰的人', d:{moe:2} },
+ { txt:'一个你正好知道内情／来历的话题', d:{snr:2,nerd:1} }
+ ]},
+ { q:'给你一个匿名小号，你会拿来？', opts:[
+ { txt:'说点平时不太会说的话', d:{atk:2,fun:2,sub:1} },
+ { txt:'当树洞，放放情绪', d:{cry:3} },
+ { txt:'潜水观察，顺便收集点信息', d:{atk:2,nerd:2} },
+ { txt:'还是发可爱的东西', d:{moe:2,img:1} }
+ ]},
+ { q:'如果互联网突然清零，你最想保住？', opts:[
+ { txt:'攒下的那些表情包和梗', d:{fun:3} },
+ { txt:'和网友的聊天、那些回忆', d:{cry:2,moe:1} },
+ { txt:'自己发过的所有内容', d:{img:3,nerd:1} },
+ { txt:'这些年攒下的资历和熟人', d:{snr:2,atk:1} }
+ ]},
+];
+
+var DIMS = ['atk','fun','cry','img','sub','nerd','moe'];
+var DIM_LABEL = { atk:'攻击', fun:'整活', cry:'破防', img:'人设', sub:'亚度', nerd:'钻研', moe:'萌善' };
+
+/* 每个身份在 7 维上的指纹向量 [atk,fun,cry,img,sub,nerd,moe]
+   余弦相似度只看「形状」，不看绝对分高低 */
+var IDVEC = {
+ leziren:  [2,9,1,3,5,4,1],
+ lao:      [5,3,1,2,2,6,2],
+ jianpan:  [9,3,3,1,1,3,0],
+ wenyi:    [1,1,5,9,4,5,3],
+ dilei:    [3,2,9,6,5,1,3],
+ yabi:     [3,5,3,7,9,1,2],
+ jianzheng:[6,1,2,1,1,9,1],
+ esu:      [8,8,1,2,6,2,0],
+ fur:      [2,3,3,4,8,2,7],
+ geng:     [3,9,3,1,1,0,6],
+ zuoti:    [2,1,2,1,1,9,2],
+ nan:      [1,3,3,7,5,2,7],
+ tomboy:   [5,3,1,2,3,3,3],
+ meng:     [0,3,2,2,2,2,9],
+};
+/* 定向标记 -> 给特定身份额外加权 */
+var MARKER = { lao:'snr', nan:'gFem', tomboy:'gTom' };
+var MARKER_W = 7;
+
+var IDENTITIES = {
+ 'leziren': { emoji:'🤡', name:'乐子人', color:'#f97316', tagline:'一切皆为素材，万物皆可整活',
+ desc:'你上网就是为了找乐子——然后你把一切都变成了乐子。<br><br>你手机里表情包比自拍多十倍，看任何新闻第一反应都是「这能做成什么梗」。群里吵架你不下场，你在<strong style="color:#f97316">第一排嗑瓜子存档</strong>。严肃场合你能找到笑点，搞笑场合你是最搞笑的那个。<br><br>你和恶俗狗的区别在于：你找乐子，但不害人。围观、整活、原创梗——你图的是个乐，不是踩别人。上网如果不能笑，那上网干嘛？',
+ tags:['表情包收藏家','第一排看乐子','万物皆可整活','乐.jpg'] },
+
+ 'lao': { emoji:'🧓', name:'老资历', color:'#a8a29e', tagline:'想当年啊，这些都是我们玩剩的',
+ desc:'你在每一个群里都是那个开口「想当年」的人。<br><br>新人问个问题，你先来一句<strong style="color:#a8a29e">「这十年前贴吧就讨论烂了」</strong>。论坛、博客、贴吧、微博大战，你都经历过——而且你绝不会让别人忘记这一点。资历就是你的发言权，网龄就是你的腰杆。<br><br>你未必真比别人懂得多，但你比谁都会摆资格。年轻人玩的，在你嘴里永远是「我们当年玩剩下的」。',
+ tags:['想当年','拿资历压人','这都我们玩剩的','群里最老的那个'] },
+
+ 'jianpan': { emoji:'⌨️', name:'键盘侠', color:'#ef4444', tagline:'评论区就是我的菜市场',
+ desc:'你上网的主要活动，就是<strong style="color:#ef4444">骂人</strong>。<br><br>不为对错，就图一个爽。看谁不顺眼就开喷，半夜三点还在翻对方三个月前的动态找茬。被拉黑？开小号继续。你的小号比大号还多，你的火气比 WiFi 还稳定。<br><br>键盘后面的你天下无敌——这话半是夸你，半是提醒你：屏幕对面也是个会疼的人。',
+ tags:['对线狂魔','开喷不眨眼','小号比大号多','键盘后很猛'] },
+
+ 'wenyi': { emoji:'🎭', name:'文艺b', color:'#a78bfa', tagline:'我的朋友圈是一座美术馆',
+ desc:'你发的每一条动态都经过<strong style="color:#a78bfa">精心排版</strong>。<br><br>配图要调色，配文要押韵，发之前至少改三遍。你不只是在发动态——你是在构建一个美学体系。别人晒饭，你晒的是「人间烟火」；别人发自拍，你发的是「此刻的情绪切片」。<br><br>有人觉得你装。但你知道：不是每个人都能把日子过成诗。你只是恰好有这个天赋（和这个滤镜）。',
+ tags:['排版强迫症','氛围感','深夜诗人','朋友圈是作品'] },
+
+ 'dilei': { emoji:'🩹', name:'滴泪女', color:'#ec4899', tagline:'好喜欢你，喜欢到想把你绑住',
+ desc:'你是地雷系本系——情绪浓烈，爱意滚烫，<strong style="color:#ec4899">占有欲拉满</strong>。<br><br>暗黑可爱的穿搭、绷带和蝴蝶结、深夜的发疯小作文，都是你。喜欢一个人，TA 不秒回你就开始天旋地转、胡思乱想。你的爱像潮水，温柔起来能淹死人，闹起来也能。<br><br>别人说你太作。你想：我只是把所有人都藏起来的那部分，活给你们看了而已。',
+ tags:['地雷系','秒回执念','深夜发疯','情绪过山车'] },
+
+ 'yabi': { emoji:'🦄', name:'亚比', color:'#c084fc', tagline:'我超亚的，你不懂——你也学不来',
+ desc:'你是行走的<strong style="color:#c084fc">亚文化名片</strong>（自封那种）。<br><br>Y2K、暗黑系、社会摇、拼贴解构——你不在乎主流审美，因为你坚信自己就是审美。你走在街上像刚从某本小众杂志里走出来，配文也必须够潮够炸。<br><br>至于你是真懂这些文化，还是主要图个「看起来很亚」……这事我们就不深究了。被说「怪」你回一句「谢谢夸奖」——在千篇一律的时代，怪就是你的勋章。',
+ tags:['亚文化逼','看着很潮','社会摇/Y2K','潮到出水（自认）'] },
+
+ 'jianzheng': { emoji:'🌐', name:'键政蛆', color:'#84cc16', tagline:'这事得从地缘格局说起',
+ desc:'你沉迷<strong style="color:#84cc16">键盘政治</strong>，无可救药。<br><br>任何话题你都能三步拐到国际局势。别人刷猫，你刷战报；别人聊八卦，你聊博弈。评论区里你一出手就是几百字小作文，论点、论据、出处一应俱全——然后和素未谋面的网友为一个遥远国家的事打得不可开交。<br><br>你乐在其中。毕竟在你眼里，世界这盘大棋，怎么能没有你这颗运筹帷幄的……键政蛆呢。',
+ tags:['键盘政治','地缘大师','八百字小作文','逢帖必政'] },
+
+ 'esu': { emoji:'🐕', name:'恶俗狗', color:'#facc15', tagline:'把恶意做成了行为艺术',
+ desc:'你是恶俗维基的精神后代，幽默感是<strong style="color:#facc15">地狱难度</strong>的。<br><br>你发的图能让群友沉默三秒再爆发出一阵「草」。你以踩线、嘲讽、看别人难堪为乐——别人的尴尬就是你的多巴胺。你总能在红线边缘跳芭蕾，发言常被举报却很少被封。<br><br>说句实在的：嘴上再狠，真要把人逼到现实里出事，那就一点都不好玩了。你的邪，最好停在「让人无语」，别滑到「让人受伤」——这点分寸，懂的人自然懂。',
+ tags:['地狱笑话','踩线大师','群友看了沉默','邪道幽默'] },
+
+ 'fur': { emoji:'🐾', name:'福瑞控', color:'#a3e635', tagline:'毛茸茸就是正义',
+ desc:'你的审美系统里有一个核心参数：<strong style="color:#a3e635">毛茸茸指数</strong>。<br><br>看到毛茸茸的东西就走不动路——猫、狗、狐狸、龙、狼……真实动物也好、兽设也好，只要毛量达标就是好文明。你的关注列表一半是宠物博主，一半是福瑞画师，你自己说不定还有个精心设计的兽设。<br><br>朋友打趣你是「动物之友终极形态」，你认真纠正：是福瑞。有毛的那种。UwU。',
+ tags:['毛茸茸狂魔','UwU','兽圈中人','我的XP很正常'] },
+
+ 'geng': { emoji:'👶', name:'梗小鬼', color:'#2dd4bf', tagline:'在每一个评论区留下脚印',
+ desc:'你是互联网热梗的<strong style="color:#2dd4bf">行走复读机</strong>。<br><br>早上火起来的梗，你中午已经在一千个评论区用过了。你学梗的速度比 AI 训练还快，就是不太琢磨梗的来历——能用就行，火就完事。<br><br>你和乐子人的区别是：人家整原创、玩冷门，你负责跟最新的热梗、复读刷屏。有人嫌你烦。你心想：你们连梗都接不住，才是真烦人。',
+ tags:['梗百科（热门版）','复读刷屏','哪里都有我','梗不隔夜'] },
+
+ 'zuoti': { emoji:'📝', name:'做题蛆', color:'#64748b', tagline:'人生处处是考试——而我在备考',
+ desc:'你的生活被<strong style="color:#64748b">题库、草稿纸和倒计时</strong>定义。<br><br>你不是「只会做题」，你是「做什么都能做成题」。旅游攻略是表格，游戏攻略是 Excel，连谈恋爱你都能列个 SWOT 分析。你习惯了排名，习惯了把人生拆成可量化的指标。<br><br>有人说你不会享受生活。你反手掏出一张数据表：我去年读书 47 本，你去年读书时长 32 分钟。谁更不会生活？',
+ tags:['Excel人生','卷','数据说话','无题不欢'] },
+
+ 'nan': { emoji:'🎀', name:'小男娘', color:'#f472b6', tagline:'可爱就完事了',
+ desc:'你的存在本身就是对<strong style="color:#f472b6">「性别刻板印象」</strong>的降维打击。<br><br>你喜欢可爱的衣服、精致的小物、甜甜的妆容——然后你是男的。这有什么问题吗？没有。别人愣住的样子，就是最好的答案。<br><br>你的自拍评论区永远两极分化：一半「受不了」，一半「多发点」。你两半都爱看。毕竟可爱没有性别，只有你有没有。',
+ tags:['可爱的男孩子','性别是流动的','可爱即正义','多发点我爱看'] },
+
+ 'tomboy': { emoji:'🏀', name:'假小子', color:'#38bdf8', tagline:'飒就一个字，我只说一次',
+ desc:'你喜欢短发、运动鞋、不穿裙子。不是「像男孩」——是<strong style="color:#38bdf8">做自己</strong>。<br><br>你在球场上比大多数男生还猛，在朋友里是那个「出了事第一个找 TA」的人。你不走可爱路线，不是不能走，是不想。飒、帅、利落，这才是你的关键词。<br><br>有人说你「没有女人味」。你笑了：我的魅力，不需要你来定义。',
+ tags:['短发','运动系','飒','帅过很多男的'] },
+
+ 'meng': { emoji:'🌸', name:'纯良萌萌人', color:'#fbbf24', tagline:'对这个世界永远温柔',
+ desc:'你是互联网上<strong style="color:#fbbf24">最后的光</strong>。<br><br>在所有人都在玩梗、阴阳、对线的互联网里，你是那个认真说「谢谢」「好可爱」「你好棒」的人。你不觉得真诚是弱点——你觉得真诚是稀有资源。你的评论区没有戾气，你的私信不会吵架。<br><br>有人说你太天真。天真有什么不好？如果善良是一种错，那你愿意<strong>一直错下去</strong>。',
+ tags:['小天使','互联网最后的光','真诚是必杀技','温柔'] },
+};
+
+var ID_KEYS = ['leziren','lao','jianpan','wenyi','dilei','yabi','jianzheng','esu','fur','geng','zuoti','nan','tomboy','meng'];
+var LOADING_STEPS = ['正在扫描你的上网记录…','分析社交平台行为模式…','提取评论区和群聊数据…','排查点赞收藏和深夜动态…','计算 7 大行为维度…','比对 14 种互联网身份…','身份已锁定…'];
+
+function render() {
+ var a=document.getElementById('app');
+ if(state==='intro') renderIntro(a);
+ else if(state==='quiz') renderQuestion(a);
+ else if(state==='loading') renderLoading(a);
+ else renderResult(a);
+}
+
+function renderIntro(a) {
+ a.innerHTML=
+ '<div class="intro">'+
+ '<div class="intro-badge">霧雨魔法店 · 身份鉴定</div>'+
+ '<h1>测测你的<br>互联网身份</h1>'+
+ '<p class="sub">'+QUESTIONS.length+' 道题 · 7 大行为维度 · '+ID_KEYS.length+' 种身份<br>乐子人？地雷女？键政蛆？你在互联网上到底是哪个物种？</p>'+
+ '<div style="display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin-bottom:24px;">'+
+ ID_KEYS.map(function(k){return '<span style="font-size:24px;opacity:.4;cursor:default;" title="'+IDENTITIES[k].name+'">'+IDENTITIES[k].emoji+'</span>';}).join('')+
+ '</div>'+
+ '<button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">开始测试 →</button>'+
+ '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+ '</div>';
+}
+
+function startQuiz() { state='quiz'; idx=0; answers=[]; render(); }
+
+function renderQuestion(a) {
+ if(idx>=QUESTIONS.length) { state='loading'; render(); return; }
+ var q=QUESTIONS[idx],pct=Math.round((idx/QUESTIONS.length)*100),labels='ABCDEFGH';
+ var h=
+ '<div class="progress-wrap">'+
+ '<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div>'+
+ '<div class="progress-text">'+(idx+1)+' / '+QUESTIONS.length+'</div>'+
+ '</div>'+
+ '<div class="q-num">第 '+(idx+1)+' 问</div>'+
+ '<div class="q-text">'+q.q+'</div>'+
+ '<div class="options">';
+ for(var i=0;i<q.opts.length;i++) {
+ h+='<button class="opt-btn" onclick="answer('+i+')"><span class="opt-letter">'+(labels[i]||'?')+'</span>'+q.opts[i].txt+'</button>';
+ }
+ h+='</div>';
+ if(idx>0) h+='<div style="text-align:center;"><button class="btn-back" onclick="goBack()">← 上一题</button></div>';
+ a.innerHTML=h;
+}
+
+function answer(c) { answers.push(QUESTIONS[idx].opts[c]); idx++; render(); }
+function goBack() { if(idx<=0) return; idx--; answers.pop(); render(); }
+
+function renderLoading(a) {
+ a.innerHTML='<div class="loading-wrap"><div class="loading-pulse"></div><p class="loading-text" id="ltxt">'+LOADING_STEPS[0]+'</p></div>';
+ cycleLoading(1);
+}
+async function cycleLoading(i) {
+ if(i>=LOADING_STEPS.length) { state='result'; render(); return; }
+ await sleep(450+Math.random()*350);
+ var lt=document.getElementById('ltxt'); if(lt) lt.textContent=LOADING_STEPS[i];
+ cycleLoading(i+1);
+}
+
+/* 累加所有答案的维度分 */
+function tallyDims() {
+ var d={atk:0,fun:0,cry:0,img:0,sub:0,nerd:0,moe:0,snr:0,gFem:0,gTom:0};
+ for(var i=0;i<answers.length;i++) {
+ var sc=answers[i].d||{};
+ for(var k in sc) d[k]=(d[k]||0)+sc[k];
+ }
+ return d;
+}
+
+function cosine(a,b) {
+ var dot=0,na=0,nb=0;
+ for(var i=0;i<a.length;i++){ dot+=a[i]*b[i]; na+=a[i]*a[i]; nb+=b[i]*b[i]; }
+ if(na===0||nb===0) return 0;
+ return dot/(Math.sqrt(na)*Math.sqrt(nb));
+}
+
+function calcResult() {
+ var d=tallyDims();
+ var uv=DIMS.map(function(k){return d[k];});
+ var scores={};
+ for(var i=0;i<ID_KEYS.length;i++) {
+ var key=ID_KEYS[i];
+ var base=cosine(uv,IDVEC[key])*100;
+ var bonus=0;
+ if(MARKER[key]) bonus=MARKER_W*Math.max(0,(d[MARKER[key]]||0)-3);
+ scores[key]=base+bonus;
+ }
+ var ranked=ID_KEYS.slice().sort(function(x,y){return scores[y]-scores[x];});
+ return { key:ranked[0], runners:ranked.slice(1,4), dims:d, uv:uv };
+}
+
+function buildRadar(uv, color) {
+ var n=DIMS.length, cx=140, cy=124, R=80, LB=18;
+ var maxv=Math.max.apply(null, uv.concat([1]));
+ function pt(i,r){ var ang=-Math.PI/2 + i*2*Math.PI/n; return [cx+r*Math.cos(ang), cy+r*Math.sin(ang)]; }
+ var svg='<svg class="radar" viewBox="0 0 280 252" xmlns="http://www.w3.org/2000/svg">';
+ /* 蛛网网格 */
+ var rings=[0.25,0.5,0.75,1];
+ for(var g=0;g<rings.length;g++){
+ var rp=[];
+ for(var i=0;i<n;i++){ var p=pt(i,R*rings[g]); rp.push(p[0].toFixed(1)+','+p[1].toFixed(1)); }
+ svg+='<polygon points="'+rp.join(' ')+'" fill="none" stroke="var(--border)" stroke-width="1" opacity="'+(g===rings.length-1?0.9:0.45)+'"/>';
+ }
+ /* 放射轴 + 标签 + 数值 */
+ for(var i=0;i<n;i++){
+ var e=pt(i,R);
+ svg+='<line x1="'+cx+'" y1="'+cy+'" x2="'+e[0].toFixed(1)+'" y2="'+e[1].toFixed(1)+'" stroke="var(--border)" stroke-width="1" opacity="0.45"/>';
+ var lp=pt(i,R+LB), anc=Math.abs(lp[0]-cx)<8?'middle':(lp[0]>cx?'start':'end');
+ svg+='<text class="radar-label" x="'+lp[0].toFixed(1)+'" y="'+(lp[1]-1).toFixed(1)+'" fill="var(--muted)" text-anchor="'+anc+'">'+DIM_LABEL[DIMS[i]]+'</text>';
+ svg+='<text class="radar-num" x="'+lp[0].toFixed(1)+'" y="'+(lp[1]+9).toFixed(1)+'" fill="'+color+'" text-anchor="'+anc+'">'+uv[i]+'</text>';
+ }
+ /* 数据多边形 */
+ var dp=[];
+ for(var i=0;i<n;i++){ var p=pt(i,(uv[i]/maxv)*R); dp.push(p[0].toFixed(1)+','+p[1].toFixed(1)); }
+ svg+='<polygon class="radar-poly" points="'+dp.join(' ')+'" fill="'+color+'" fill-opacity="0.25" stroke="'+color+'" stroke-width="2" stroke-linejoin="round"/>';
+ for(var i=0;i<n;i++){ var p=pt(i,(uv[i]/maxv)*R); svg+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.6" fill="'+color+'"/>'; }
+ return svg+'</svg>';
+}
+
+function renderResult(a) {
+ var r=calcResult(),id=IDENTITIES[r.key];
+ var h=
+ '<div class="result">'+
+ '<div class="result-emoji">'+id.emoji+'</div>'+
+ '<div class="result-label">互联网身份鉴定结果</div>'+
+ '<div class="result-name" style="color:'+id.color+'">'+id.name+'</div>'+
+ '<div class="result-tagline">'+id.tagline+'</div>'+
+ '<div class="result-desc">'+id.desc+'</div>'+
+ '<div class="result-meta">';
+ for(var i=0;i<id.tags.length;i++) { h+='<span class="meta-tag">'+id.tags[i]+'</span>'; }
+ h+='</div>';
+ h+='<div style="font-size:11px;color:var(--muted);margin-bottom:4px;text-align:left;">你的行为维度画像：</div>';
+ h+='<div class="dim-wrap">'+buildRadar(r.uv, id.color)+'</div>';
+ if(r.runners.length) {
+ h+='<div style="font-size:11px;color:var(--muted);margin-bottom:10px;">你的互联网成分中还混有：</div>';
+ h+='<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:14px;">';
+ for(var i=0;i<r.runners.length;i++) {
+ h+='<span class="identity-badge" style="border-color:'+IDENTITIES[r.runners[i]].color+'">'+IDENTITIES[r.runners[i]].emoji+' '+IDENTITIES[r.runners[i]].name+'</span>';
+ }
+ h+='</div>';
+ }
+ h+=
+ '<button class="btn btn-main" onclick="shareIt(\''+r.key+'\')">📋 复制结果发给朋友</button>'+
+ '<button class="btn btn-ghost" onclick="restart()">🔄 再来一次</button>'+
+ '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+ '<p class="notice">霧雨魔法店 · 互联网人类学部 · 结果仅供娱乐</p>'+
+'<div class="qq-section">'+
+'<img src="images/qq-group.jpg" alt="QQ群二维码">'+
+'<p><strong style="color:var(--gold);">加群一起玩</strong><br>扫码进群，更多抽象好活</p>'+
+'</div>'+
+'<p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>'+
+'</div>';
+ a.innerHTML=h;
+}
+
+function shareIt(key) {
+ var id=IDENTITIES[key];
+ var text='我在霧雨魔法店测出来是【'+id.emoji+' '+id.name+'】——「'+id.tagline+'」你也来测测：'+window.location.href;
+ copyToClipboard(text, '已复制！发给朋友试试 😈');
+}
+
+function restart() { state='intro'; idx=0; answers=[]; render(); }
+
+render();
+</script>
+</body>
+</html>

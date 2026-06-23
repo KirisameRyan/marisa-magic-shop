@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="js/analytics.js"></script>
+<!-- 🔧 改标题 -->
+<title>新页面 · 霧雨魔法店</title>
+<link rel="stylesheet" href="css/common.css">
+<!-- 🔧 页面特有样式写这里 -->
+</head>
+<body>
+
+<!-- ========================================
+     顶栏 —— 改 nav-links 里的链接
+     ======================================== -->
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<!-- ========================================
+     内容区 —— JS 动态渲染
+     ======================================== -->
+<div class="container" id="app">
+  <!-- 由 render() 填充 -->
+</div>
+
+<!-- ========================================
+     🔧 你的页面逻辑 —— 从这里开始改
+     ======================================== -->
+<script src="js/utils.js"></script>
+<script>
+/* ===========================================
+   状态机模板
+
+   state 取值：
+     'intro'   → 首页（标题 + 开始按钮）
+     'quiz'    → 答题中
+     'loading' → 计算动画
+     'result'  → 展示结果
+
+   用法：复制后改 DATA 区域即可
+   =========================================== */
+
+// ── 状态 ──
+var state = 'intro';
+var idx = 0;           // 当前题号
+var answers = [];      // 用户答案
+
+// ==================== 🔧 DATA：改这里 ====================
+
+var QUIZ_TITLE = '你的新测试';
+var QUIZ_SUBTITLE = '副标题 —— 描述一下这是干嘛的';
+var BADGE_TEXT = '霧雨魔法店 · 新商品';
+
+var QUESTIONS = [
+  // 每题：q=题目, opts=[选项A, B, C, D]
+  { q: '第一题？', opts: ['选项一', '选项二', '选项三', '选项四'] },
+  { q: '第二题？', opts: ['选项一', '选项二', '选项三', '选项四'] },
+  { q: '第三题？', opts: ['选项一', '选项二', '选项三', '选项四'] },
+  { q: '最后一题？', opts: ['选项一', '选项二', '选项三', '选项四'] },
+];
+
+var RESULTS = {
+  // key → { name, emoji, tagline, desc, tags[] }
+  type_a: {
+    name: '结果A', emoji: '🎯', tagline: '一句话描述',
+    desc: '详细描述……<br><br>可以多段。',
+    tags: ['标签1', '标签2', '标签3']
+  },
+  type_b: {
+    name: '结果B', emoji: '🎨', tagline: '一句话描述',
+    desc: '详细描述……',
+    tags: ['标签1', '标签2']
+  },
+};
+
+// 加载文案
+var LOADING_STEPS = ['正在分析…', '计算结果中…', '马上好…'];
+
+// 分享文案（{name} 会被替换成结果名）
+var SHARE_TEXT = '我在霧雨魔法店测出来是【{name}】！你也来测测：';
+
+// ==================== 渲染 ====================
+
+function render() {
+  var app = document.getElementById('app');
+  if (state === 'intro')  renderIntro(app);
+  else if (state === 'quiz') renderQuestion(app);
+  else if (state === 'loading') renderLoading(app);
+  else if (state === 'result') renderResult(app);
+}
+
+// ── 首页 ──
+function renderIntro(app) {
+  app.innerHTML =
+    '<div class="intro">' +
+      '<div class="intro-badge">' + BADGE_TEXT + '</div>' +
+      '<h1>' + QUIZ_TITLE + '</h1>' +
+      '<p class="sub">' + QUIZ_SUBTITLE + '</p>' +
+      '<button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">开始测试 →</button>' +
+      '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+    '</div>';
+}
+
+function startQuiz() {
+  state = 'quiz'; idx = 0; answers = [];
+  // 🔧 如果你需要打乱题目顺序：
+  // QUESTIONS = shuffle(QUESTIONS.slice());
+  render();
+}
+
+// ── 答题 ──
+function renderQuestion(app) {
+  if (idx >= QUESTIONS.length) { state = 'loading'; render(); return; }
+
+  var q = QUESTIONS[idx];
+  var pct = Math.round((idx / QUESTIONS.length) * 100);
+  var labels = 'ABCDEFGH';
+
+  var html =
+    '<div class="progress-wrap">' +
+      '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+      '<div class="progress-text">' + (idx + 1) + ' / ' + QUESTIONS.length + '</div>' +
+    '</div>' +
+    '<div class="q-num">第 ' + (idx + 1) + ' 问</div>' +
+    '<div class="q-text">' + q.q + '</div>' +
+    '<div class="options">';
+
+  for (var i = 0; i < q.opts.length; i++) {
+    html +=
+      '<button class="opt-btn" onclick="answer(' + i + ')">' +
+        '<span class="opt-letter">' + (labels[i] || '?') + '</span>' +
+        q.opts[i] +
+      '</button>';
+  }
+
+  html += '</div>';
+  app.innerHTML = html;
+}
+
+// 🔧 记录答案（简单版：只记选项索引）
+function answer(choice) {
+  answers.push(choice);
+  idx++;
+  render();
+}
+
+/* 🔧 如果需要计分制，替换成类似这样：
+function answer(choice) {
+  var opt = QUESTIONS[idx].opts[choice];
+  // opt.scores = { type_a: 3, type_b: 1, ... }
+  answers.push(opt);
+  idx++;
+  render();
+}
+*/
+
+// ── 加载 ──
+function renderLoading(app) {
+  app.innerHTML =
+    '<div class="loading-wrap">' +
+      '<div class="loading-orb"></div>' +
+      '<p class="loading-text" id="ltxt">' + LOADING_STEPS[0] + '</p>' +
+    '</div>';
+  cycleLoading(1);
+}
+
+async function cycleLoading(i) {
+  if (i >= LOADING_STEPS.length) {
+    state = 'result';
+    // 🔧 如果逻辑复杂，在 showResult 里调用 calcResult()
+    render();
+    return;
+  }
+  await sleep(500 + Math.random() * 400);
+  var lt = document.getElementById('ltxt');
+  if (lt) lt.textContent = LOADING_STEPS[i];
+  cycleLoading(i + 1);
+}
+
+// ── 结果 ──
+function showResult() {
+  // 🔧 实现你的计算逻辑
+  // 简单版：随机选一个
+  var keys = Object.keys(RESULTS);
+  return RESULTS[keys[Math.floor(Math.random() * keys.length)]];
+}
+
+// 🔧 如果计分制，替换 showResult：
+/*
+function showResult() {
+  var scores = {};
+  var keys = Object.keys(RESULTS);
+  for (var i = 0; i < keys.length; i++) scores[keys[i]] = 0;
+  for (var i = 0; i < answers.length; i++) {
+    var opt = answers[i];
+    for (var k in opt.scores) scores[k] = (scores[k]||0) + opt.scores[k];
+  }
+  var top = keys[0], best = -1;
+  for (var i = 0; i < keys.length; i++) {
+    if (scores[keys[i]] > best) { best = scores[keys[i]]; top = keys[i]; }
+  }
+  return RESULTS[top];
+}
+*/
+
+function renderResult(app) {
+  var r = showResult();
+  // 🔧 如果你的结果需要特殊颜色，改下面这行
+  var nameColor = 'var(--gold)';
+
+  var html =
+    '<div class="result">' +
+      '<div class="result-emoji">' + r.emoji + '</div>' +
+      '<div class="result-label">霧雨魔法店 鉴定结果</div>' +
+      '<div class="result-name" style="color:' + nameColor + '">' + r.name + '</div>' +
+      '<div class="result-tagline">' + r.tagline + '</div>' +
+      '<div class="result-desc">' + r.desc + '</div>' +
+      '<div class="result-meta">';
+
+  for (var i = 0; i < r.tags.length; i++) {
+    html += '<span class="meta-tag">' + r.tags[i] + '</span>';
+  }
+
+  html +=
+      '</div>' +
+      '<button class="btn btn-main" onclick="shareIt()">📋 复制结果发给朋友</button>' +
+      '<button class="btn btn-ghost" onclick="restart()">🔄 再来一次</button>' +
+      '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+      '<p class="notice">霧雨魔法店 · 结果仅供参考 · 但魔法是真的</p>' +
+      '<div class="qq-section">' +
+        '<img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'">' +
+        '<p><strong style="color:var(--gold);">加群一起玩</strong><br>扫码进群，更多抽象好活</p>' +
+      '</div>' +
+    '</div>';
+
+  app.innerHTML = html;
+}
+
+// ── 分享 ──
+function shareIt() {
+  // 🔧 SHARE_TEXT 里的 {name} 此处替换不了（结果页已渲染）
+  // 简单方案：用页面地址
+  var text = '我在霧雨魔法店测完啦！你也来测测：' + window.location.href;
+  copyToClipboard(text, '已复制！发给朋友试试 😈');
+}
+
+function restart() { state = 'intro'; idx = 0; answers = []; render(); }
+
+// ==================== 启动 ====================
+render();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>测一测你的灵魂动物 · 真实版 · 霧雨魔法店</title>
+    <script src="js/analytics.js"></script>
+    <link rel="stylesheet" href="css/common.css">
+<style>
+
+
+
+body { background-image:radial-gradient(ellipse at 30% 10%,rgba(111,207,151,.06) 0%,transparent 50%), radial-gradient(ellipse at 70% 90%,rgba(240,192,96,.04) 0%,transparent 50%); }
+ .container { max-width:560px; }
+ .container::before { background:linear-gradient(90deg,var(--green),var(--gold),var(--green)); }
+
+ .intro-badge { color:var(--green); border-color:var(--green); margin-bottom:12px; }
+ .intro h1 { font-size:24px; }
+ .intro .sub { margin-bottom:22px; }
+ .animal-strip { display:flex; justify-content:center; gap:4px; flex-wrap:wrap; margin-bottom:24px; }
+ .animal-strip .mini { width:40px; height:40px; border-radius:10px; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:20px; background:rgba(255,255,255,.03); transition:transform .2s; }
+ .animal-strip .mini:hover { transform:translateY(-3px); border-color:var(--gold); }
+
+ .btn-start { background:var(--green); color:#1a1520; margin-top:12px; }
+ .btn-start:hover { background:#5fbf87; transform:translateY(-2px); box-shadow:0 6px 20px rgba(111,207,151,.25); }
+
+ .progress-fill { background:linear-gradient(90deg,var(--green),var(--gold)); }
+ .q-num { color:var(--green); }
+ .opt-btn { border:2px solid var(--border); }
+ .opt-btn:hover { border-color:var(--green); background:rgba(111,207,151,.06); }
+ .opt-btn:hover .opt-letter { background:var(--green); color:#1a1520; }
+
+ .loading-animal { font-size:64px; animation:bounce .6s infinite alternate; margin-bottom:16px; display:inline-block; }
+ @keyframes bounce { from { transform:translateY(0); } to { transform:translateY(-12px); } }
+
+ .result-emoji { font-size:90px; margin-bottom:4px; }
+ .result-name { font-size:36px; }
+ .result-desc { line-height:1.9; font-size:14px; margin-bottom:16px; }
+ .meta-badge { font-size:12px; padding:6px 14px; border-radius:20px; background:rgba(255,255,255,.03); color:var(--muted); border:1px solid var(--border); }
+ .btn-green { background:var(--green); color:#1a1520; margin-top:4px; }
+ .btn-green:hover { background:#5fbf87; }
+ .btn-ghost:hover { border-color:var(--green); }
+.btn-back { display:inline-flex; align-items:center; gap:4px; background:transparent; border:1px solid var(--border); border-radius:10px; padding:10px 18px; font-size:13px; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .15s; margin-top:14px; }
+.btn-back:hover { border-color:var(--gold); color:var(--gold); }
+
+ @media (max-width:420px) { .intro h1 { font-size:20px; } }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+<script src="js/utils.js"></script>
+
+<div class="container" id="app"></div>
+
+<script>
+const ANIMALS = {
+ fox:{ emoji:'🦊', name:'狐狸', en:'Fox', color:'#f59e0b',
+ quote:'聪明人的世界里，不一定要做最努力的那个。',
+ desc:'你聪明，灵活，善于观察。你不一定冲在最前面，但你永远知道该往哪走。<br><br>你有很强的社交直觉，知道什么场合说什么话。朋友们遇到麻烦会来找你出主意——你不一定有答案，但你总能帮他们换个角度看问题。<br><br>你偶尔会耍点小聪明，但你从来不做伤害别人的事。你的魅力在于：聪明但不刻薄，机灵但不油滑。',
+ tags:['聪明灵活','社交达人','适应力强','有点狡猾但不坏','擅长读空气'] },
+
+ wolf:{ emoji:'🐺', name:'狼', en:'Wolf', color:'#6b7280',
+ quote:'一个人可以走得很快，但和信任的人一起能走得更远。',
+ desc:'你是天生的团队核心。不是因为你嗓门最大，而是因为你最可靠。<br><br>你对陌生人保持距离，但对待真正重要的人，你毫无保留。你不善于表达情感，但你会用行动说话——比如凌晨三点接喝醉的朋友回家。<br><br>你讨厌虚伪，喜欢直来直去。你的朋友圈不大，但每个都是可以托付后背的人。孤独对你来说不是折磨，而是一种选择。',
+ tags:['忠诚可靠','外冷内热','重视团队','不轻易信任','行动派'] },
+
+ cat:{ emoji:'🐱', name:'猫', en:'Cat', color:'#a78bfa',
+ quote:'想理你了自然会来找你。别催。',
+ desc:'你活在自己的节奏里。<br><br>你不需要太多社交，也不需要太多认可。你有自己的小世界——精致的、安静的、舒适的。别人觉得你高冷，其实你只是懒得解释。<br><br>你观察力极强，但很少主动表达。你的爱是有门槛的：一旦你认定一个人，你会用最温柔的方式待在TA身边——不粘人，但永远在。',
+ tags:['独立自主','观察者','有边界感','慢热但深情','生活质量高'] },
+
+ dog:{ emoji:'🐶', name:'狗', en:'Dog', color:'#f97316',
+ quote:'有人需要我？太好了一一一来了来了来了！',
+ desc:'你是朋友眼中最温暖的那个人。<br><br>忠诚、热情、永远在线。朋友一句话你就冲过去，别人开心你就跟着开心，别人难过你比他们还着急。你永远不会让在乎的人失望。<br><br>你唯一的问题是：你太容易信任别人了。偶尔会被辜负，但你从不因此关上心门。这个世界上最稀缺的品质就是你的这种赤诚。',
+ tags:['忠诚热情','永远在线','朋友至上','治愈系','信任别人'] },
+
+ owl:{ emoji:'🦉', name:'猫头鹰', en:'Owl', color:'#8b5cf6',
+ quote:'我不是不说话，我是在等值得开口的时刻。',
+ desc:'你是朋友中话最少但最有分量的那个人。<br><br>你不急着发表意见，但一旦开口，所有人都会安静下来听。你有深度思考的习惯，能看到别人看不到的层面。<br><br>你喜欢独处的时光，阅读、思考、钻研。社交场合里你可能不是最闪亮的那个，但一对一聊天时，你会让人感叹「原来你这么有意思」。',
+ tags:['智者','深度思考','观察入微','安静但致命','晚睡选手'] },
+
+ panda:{ emoji:'🐼', name:'熊猫', en:'Panda', color:'#e2e8f0',
+ quote:'不急。竹子慢点吃更香。',
+ desc:'你有一种让人羡慕的天赋：松弛感。<br><br>天塌下来你也能先吃完手里的包子。不是不在乎，是你知道急也没有用。你活得很省电，但从不掉链子——该做的事你一样不落。<br><br>大家喜欢你，是因为和你待在一起没有压力。你不需要别人为你改变什么，你也不为别人改变自己。这股子从容，是多少人练不来的本事。',
+ tags:['松弛感','节奏慢','吃货','不焦虑','人见人爱'] },
+
+ lion:{ emoji:'🦁', name:'狮子', en:'Lion', color:'#ef4444',
+ quote:'我来。不用怕。',
+ desc:'你是天生的领导者。<br><br>你自信、勇敢、有担当。遇到问题的时候你第一反应不是慌，而是「行，交给我」。你不在乎出头，因为你出头的目的是保护身后的人。<br><br>你有时候会过于强势——不是有意的，只是你习惯了扛起责任。记得偶尔也可以让别人为你撑一次伞。王者也需要休息。',
+ tags:['领导者','勇敢担当','保护欲','自信满满','偶尔强势'] },
+
+ deer:{ emoji:'🦌', name:'鹿', en:'Deer', color:'#a3e635',
+ quote:'温柔是我选择的力量，不是弱点。',
+ desc:'你是人群中最温柔的那个灵魂。<br><br>你敏感、细腻、有品位。你能注意到别人忽略的细节——朋友换了新眼镜、窗外飘来一阵桂花香、今天的夕阳比昨天多了三分钟的橙色。<br><br>你有点胆小，有点容易受伤。但你的温柔不是软弱——面对真正重要的事，你会爆发出连自己都惊讶的勇气。你像森林里的鹿，安静而强大。',
+ tags:['温柔细腻','审美满分','敏感','安静但有力量','心思细腻'] },
+
+ eagle:{ emoji:'🦅', name:'鹰', en:'Eagle', color:'#3b82f6',
+ quote:'目光所及之处，皆可到达。',
+ desc:'你是一个有野心的人。但你的野心不吵不闹——它安静地燃烧。<br><br>你有明确的目标，并且愿意为之付出别人不愿付出的努力。你善于抓住机会，在关键时刻总能做出准确判断。别人还在犹豫的时候，你已经起飞了。<br><br>你喜欢站在高处看问题，偶尔会被说「太冷静」。但你不在乎——你知道，能看见整片天空的人，不需要在意地上的闲言碎语。',
+ tags:['目标明确','眼光长远','行动果断','冷静理性','野心家'] },
+
+ dolphin:{ emoji:'🐬', name:'海豚', en:'Dolphin', color:'#06b6d4',
+ quote:'好玩的事就是最重要的事！',
+ desc:'你是快乐的传染源。<br><br>聪明、好奇、精力旺盛。你对世界永远保持新鲜感，能从一个路边的水坑看到一个微观宇宙。朋友说和你在一起永远不会无聊——因为你总能用最意想不到的方式，把平凡的日子变成冒险。<br><br>你合群，但深知独处的重要。在人群中你闪闪发光，回到海里你悠然自得。两栖型社交天才。',
+ tags:['快乐源泉','好奇心爆棚','聪明','合群但不失自我','生活中的玩家'] },
+
+ sloth:{ emoji:'🦥', name:'树懒', en:'Sloth', color:'#84cc16',
+ quote:'别急……我……快……到……了……。',
+ desc:'你的生活哲学是——急什么？<br><br>在所有人都加速的时代，你坚定地踩着自己的步调。你不理解为什么有人要同时做三件事，正如他们不理解你为什么可以把一件事做那么久还那么开心。<br><br>你不是懒，你是节能。你的能量要用在最值得的地方。焦虑和内耗跟你永远不沾边。如果可以，你想在树上挂一整天——可能这就是幸福吧。',
+ tags:['节能大师','慢生活','不焦虑','专注一件事','幸福定义者'] },
+
+ octopus:{ emoji:'🐙', name:'章鱼', en:'Octopus', color:'#ec4899',
+ quote:'我有八个脑子，同时在想八件完全不相干的事。',
+ desc:'你是大写的「复杂」。<br><br>你喜欢同时处理多件事，因为你的脑子根本停不下来。创意？你有一百个。想法？每分钟都在更新。朋友觉得你天马行空，你自己知道——所有的点最终都会连成线。<br><br>你善于解决问题，善于想出别人想不到的方案。你最大的挑战不是「做不到」，而是「选哪个做」。你是一个行走的创意引擎。',
+ tags:['创意无限','多线程','思维跳跃','解决问题','脑洞大开'] }
+};
+
+// 五个性格维度。顺序固定：[soc, pace, dec, str, asr]
+// soc 社交能量：内向(-) ←→ 外向(+)
+// pace 生活节奏：松弛(-) ←→ 充沛(+)
+// dec  决策风格：感性(-) ←→ 理性(+)
+// str  行事方式：随性(-) ←→ 计划(+)
+// asr  气场     ：温和(-) ←→ 强势(+)
+const AXES = [
+ { key:'soc',  low:'内向', high:'外向' },
+ { key:'pace', low:'松弛', high:'充沛' },
+ { key:'dec',  low:'感性', high:'理性' },
+ { key:'str',  low:'随性', high:'计划' },
+ { key:'asr',  low:'温和', high:'强势' }
+];
+
+// 每个动物在五维空间里的画像坐标（-2 ~ +2）
+const PROFILES = {
+ fox:     [ 1,  1,  1, -1,  0],
+ wolf:    [-2,  0, -1,  1,  1],
+ cat:     [-2, -1,  1, -1,  0],
+ dog:     [ 2,  1, -2, -1, -1],
+ owl:     [-1, -1,  2,  1,  0],
+ panda:   [ 0, -2,  0, -2, -1],
+ lion:    [ 1,  1,  0,  1,  2],
+ deer:    [-1, -1, -2,  0, -2],
+ eagle:   [-1,  1,  2,  2,  1],
+ dolphin: [ 2,  2,  0, -1,  0],
+ sloth:   [-1, -2,  0, -1, -1],
+ octopus: [-1,  1,  2, -2,  0]
+};
+
+const QUESTIONS = [
+ {q:'周末早上醒来，你通常会？',opts:[
+ {txt:'赖床到中午，享受什么都不做的快乐',d:{pace:-2,str:-1}},
+ {txt:'起床做顿精致早餐，开始充实的一天',d:{pace:1,str:1,dec:-1}},
+ {txt:'先刷手机看看有没有人找我',d:{soc:2,str:-1}},
+ {txt:'回顾昨天定的计划，今天要完成几件事',d:{str:2,pace:1}}
+ ]},
+ {q:'朋友突然打来电话哭着说分手了，你？',opts:[
+ {txt:'立刻收拾出门：「在家等着，我马上到」',d:{soc:1,dec:-1,asr:1}},
+ {txt:'安静听着，偶尔回应，让她说完',d:{soc:-1,dec:-1,asr:-1}},
+ {txt:'分析情况，帮她理清楚到底是谁的问题',d:{dec:2}},
+ {txt:'「走，带你出去吃点好的散散心」',d:{soc:1,pace:1,dec:-1}}
+ ]},
+ {q:'面对一个全新的挑战，你的态度是？',opts:[
+ {txt:'兴奋！新的冒险开始了',d:{pace:2,asr:1}},
+ {txt:'先研究清楚再行动，知己知彼',d:{dec:2,str:1}},
+ {txt:'有点紧张，但会硬着头皮上',d:{asr:-1,dec:-1}},
+ {txt:'不急，先观察别人怎么做',d:{pace:-1,soc:-1,str:-1}}
+ ]},
+ {q:'你更喜欢哪种社交方式？',opts:[
+ {txt:'大型聚会，认识越多新朋友越好',d:{soc:2,pace:1}},
+ {txt:'三五好友小聚，能聊到深夜那种',d:{soc:1,dec:-1}},
+ {txt:'一对一聊天，深入交流',d:{soc:-1,dec:1}},
+ {txt:'能不见就不见，一个人挺自在',d:{soc:-2}}
+ ]},
+ {q:'做决定的时候，你主要靠？',opts:[
+ {txt:'直觉！相信自己的感觉',d:{dec:-1,asr:1}},
+ {txt:'逻辑分析，列个利弊清单',d:{dec:2,str:1}},
+ {txt:'问问信任的人的意见',d:{dec:-1,asr:-1}},
+ {txt:'不着急决定，时间会给答案',d:{pace:-2,str:-1}}
+ ]},
+ {q:'如果有人踩到了你的底线，你会？',opts:[
+ {txt:'当面指出来，不藏着掖着',d:{asr:2}},
+ {txt:'冷静但坚定地表达不满',d:{dec:1,asr:1}},
+ {txt:'默默疏远，让时间来解决问题',d:{asr:-2,soc:-1}},
+ {txt:'先忍一下，但如果再有第二次就不客气了',d:{asr:-1,soc:1,dec:-1}}
+ ]},
+ {q:'你觉得自己的幽默感更接近？',opts:[
+ {txt:'嘴快梗多，别人还没反应过来我已经抛出三个段子了',d:{soc:1,pace:2}},
+ {txt:'闷骚型，冷不丁一句把全场笑翻',d:{soc:-1,dec:1}},
+ {txt:'憨憨的可爱，笑点低但感染力强',d:{dec:-1,asr:-1}},
+ {txt:'不太搞笑，但别人觉得我不搞笑这件事本身就挺好笑的',d:{pace:-1,asr:-1}}
+ ]},
+ {q:'你最容易被哪种电影打动？',opts:[
+ {txt:'热血冒险，看完想出去闯一闯',d:{pace:1,str:1,asr:1}},
+ {txt:'关于友情/亲情的，笑着笑着就哭了',d:{dec:-2,soc:1}},
+ {txt:'文艺片/独立电影，看完想很久很久',d:{soc:-1,pace:-1,dec:-1}},
+ {txt:'纪录片或烧脑片，干货满满',d:{dec:2}}
+ ]},
+ {q:'你的房间/工位通常是什么样？',opts:[
+ {txt:'井井有条，每样东西都有固定位置',d:{str:2}},
+ {txt:'有点乱但我知道每样东西在哪',d:{str:-1,pace:1}},
+ {txt:'简简单单，东西不多',d:{pace:-1,soc:-1}},
+ {txt:'……你还是别来看比较好',d:{str:-2}}
+ ]},
+ {q:'如果有一天空闲完全由你支配，你会？',opts:[
+ {txt:'安排得满满当当，不浪费每一分钟',d:{str:2,pace:1}},
+ {txt:'约上朋友出去玩',d:{soc:2,pace:1}},
+ {txt:'宅在家，看书/看剧/做手工',d:{soc:-1,pace:-1}},
+ {txt:'没有计划，想到什么做什么',d:{str:-2,pace:-1}}
+ ]},
+ {q:'别人通常怎么形容你？',opts:[
+ {txt:'「和TA在一起好放松」',d:{pace:-1,asr:-1}},
+ {txt:'「有主见、有想法」',d:{asr:2,str:1}},
+ {txt:'「好聪明/好有趣」',d:{soc:1,pace:1}},
+ {txt:'「一开始觉得很高冷，熟了以后好可爱」',d:{soc:-2}}
+ ]},
+ {q:'对于未来，你更倾向于？',opts:[
+ {txt:'有清晰的规划，一步一个脚印',d:{str:2,dec:1}},
+ {txt:'有个大方向就行，细节随缘',d:{soc:1,str:-1}},
+ {txt:'走一步看一步，计划赶不上变化',d:{str:-2,pace:-1}},
+ {txt:'想了很多种可能，目前还在纠结',d:{dec:1,pace:1,str:-1}}
+ ]}
+,
+ {q:'小组项目 / 一群人做事，你通常是哪种角色？',opts:[
+ {txt:'主动站出来分工、把控进度，乱了我来收',d:{asr:2,str:1}},
+ {txt:'不抢风头，但我负责的那块绝对靠谱',d:{soc:-1,dec:-1}},
+ {txt:'负责出点子和活跃气氛，执行交给别人',d:{soc:1,pace:1}},
+ {txt:'听安排就好，别让我做决定',d:{asr:-2,str:-1}}
+ ]},
+ {q:'一群人兴致勃勃要做一件你觉得不靠谱的事，你会？',opts:[
+ {txt:'直接说出来：我觉得这事有问题',d:{asr:2,dec:1}},
+ {txt:'委婉提一句，他们坚持的话我也就不拦了',d:{asr:-1,dec:-1,soc:1}},
+ {txt:'不说，默默按自己的节奏来 / 不参与',d:{soc:-1,pace:-1}},
+ {txt:'先跟着走呗，真出问题了再说',d:{str:-2,asr:-1}}
+ ]},
+ {q:'出去旅行，你是哪一种？',opts:[
+ {txt:'行程表精确到小时，攻略做得明明白白',d:{str:2,pace:1}},
+ {txt:'定好大框架和住处，细节到了再随机应变',d:{str:1,dec:1}},
+ {txt:'说走就走，落地再想今天干嘛',d:{str:-2,pace:1,asr:1}},
+ {txt:'懒得安排，跟着别人走 / 其实更想宅着',d:{pace:-2,soc:-1}}
+ ]},
+ {q:'如果要带一支队伍 / 张罗一件大事，你？',opts:[
+ {txt:'我天生爱扛事，交给我没问题',d:{asr:2,str:1}},
+ {txt:'可以，但我更想做幕后把事情落地的那个',d:{soc:-1,dec:1}},
+ {txt:'能不带就不带，我更想管好自己',d:{soc:-1,asr:-1}},
+ {txt:'太累了，让爱当头的人去当吧，我配合',d:{asr:-2,pace:-1}}
+ ]}
+];
+
+let idx = -1, answers = [];
+
+function render() {
+ const a = document.getElementById('app');
+ if (idx === -1) {
+ const strip = Object.values(ANIMALS).map(x=>`<div class="mini" title="${x.name}">${x.emoji}</div>`).join('');
+ a.innerHTML = `<div class="intro"><div class="intro-badge">霧雨魔法店 · 灵魂鉴定 · 真实版</div><h1>🐾 测一测你的灵魂动物</h1><p class="sub">${QUESTIONS.length} 道题 · 12 种动物 · 这次是真的不一样的</p><div class="animal-strip">${strip}</div><p style="font-size:12px;color:var(--muted);margin-bottom:16px;">认真回答，找到与你灵魂最契合的伙伴<br>每个选项都会影响结果——这次不开玩笑</p><button class="btn btn-start" onclick="start()">🐾 开始测试</button><a href="index.html" class="home-link">← 返回魔法店</a><p class="notice">如果测出来是蛆……就当是老版本的彩蛋吧</p></div>`;
+ } else if (idx < QUESTIONS.length) {
+ const q = QUESTIONS[idx]; const pct = Math.round((idx/QUESTIONS.length)*100);
+ a.innerHTML = `<div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><div class="progress-text">${idx+1} / ${QUESTIONS.length}</div></div><div class="q-num">第 ${idx+1} 题</div><div class="q-text">${q.q}</div><div class="options">${q.opts.map((o,i)=>`<button class="opt-btn" onclick="answer(${i})"><span class="opt-letter">${'ABCD'[i]}</span>${o.txt}</button>`).join('')}</div>${idx>0?'<div style="text-align:center;"><button class="btn-back" onclick="goBack()">← 上一题</button></div>':''}`;
+ } else { showLoading(); }
+}
+
+function start() { idx = 0; answers = []; render(); }
+function answer(i) { answers.push(QUESTIONS[idx].opts[i]); idx++; render(); }
+function goBack() { if(idx<=0) return; idx--; answers.pop(); render(); }
+
+async function showLoading() {
+ const a = document.getElementById('app');
+ const animals = ['🐱','🐶','🦊','🐺','🦉','🐼','🦁','🦌','🦅','🐬','🦥','🐙'];
+ a.innerHTML = '<div class="loading-wrap"><div class="loading-animal" id="lanim">🐱</div><p class="loading-text">正在扫描灵魂波动…</p></div>';
+ const lanim = document.getElementById('lanim');
+ for (let i = 0; i < 16; i++) { await sleep(120+Math.random()*180); lanim.textContent = animals[i%animals.length]; }
+ await sleep(300); showResult();
+}
+
+function calcResult() {
+ // 1% chance of easter egg: maggot
+ if (Math.random() < 0.01) return { key:'maggot', easter:true };
+
+ // 1) 把每道题的答案累加成一个五维性格向量
+ const axisKeys = AXES.map(a=>a.key);
+ const vec = {}; for (const k of axisKeys) vec[k] = 0;
+ for (const opt of answers) {
+ for (const [k, v] of Object.entries(opt.d || {})) {
+ if (k in vec) vec[k] += v;
+ }
+ }
+ const u = axisKeys.map(k=>vec[k]); // 用户向量
+ const uMag = Math.hypot(...u);
+
+ // 2) 用余弦相似度，和每个动物的画像比方向（而不是比谁攒分多）
+ const keys = Object.keys(PROFILES);
+ const sims = {};
+ for (const k of keys) {
+ const p = PROFILES[k];
+ const pMag = Math.hypot(...p);
+ const dot = p.reduce((s,val,i)=>s+val*u[i], 0);
+ // 万一用户向量为零（极端情况），就退化成只比画像本身，避免除零
+ sims[k] = (uMag === 0 || pMag === 0) ? 0 : dot / (uMag * pMag);
+ }
+
+ // 3) 排名：相似度最高的就是结果，后两名作为「次匹配」
+ const ranked = keys.slice().sort((a,b)=>sims[b]-sims[a]);
+ const top = ranked[0];
+ return { key:top, easter:false, runners:ranked.slice(1,3), vec, sims };
+}
+
+function showResult() {
+ const a = document.getElementById('app');
+ const { key, vec, easter, runners } = calcResult();
+
+ if (easter) {
+ a.innerHTML = `<div class="result"><div class="result-emoji">🪰</div><div class="result-name" style="color:#6fcf97;">蛆</div><div class="result-tagline">……老版本彩蛋触发（1%概率）</div><div class="result-desc"><p>不是吧……你真的触发了 <strong>1% 的隐藏彩蛋</strong>。</p><p style="margin-top:10px;">老版本里不管选什么都是蛆。新版本有 12 种不同的动物——但你硬是抽中了大彩蛋。不知道这是运气好还是差。</p><p style="margin-top:10px;">建议你再测一次，这次应该不会了。大概。</p></div><button class="btn btn-green" onclick="restart()">🔄 再测一次（正经版）</button><a href="index.html" class="home-link">← 返回魔法店</a><p class="notice">1% 彩蛋 · 恭喜你，也算一种欧皇</p></div>`;
+ return;
+ }
+
+ const c = ANIMALS[key];
+
+ // 根据用户的五维向量生成性格画像条（中点为50，左右各代表一极）
+ const dimsHtml = AXES.map(ax => {
+ const raw = (vec && vec[ax.key]) || 0;
+ const pos = Math.max(8, Math.min(92, 50 + (raw / 7) * 42)); // 把 ±7 映射到 8%~92%
+ return `<div style="margin-bottom:10px;">
+ <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;">
+ <span>${ax.low}</span><span>${ax.high}</span></div>
+ <div style="position:relative;height:6px;border-radius:3px;background:var(--border);">
+ <div style="position:absolute;top:50%;left:${pos}%;width:12px;height:12px;border-radius:50%;background:${c.color};transform:translate(-50%,-50%);box-shadow:0 0 0 3px var(--card);"></div>
+ </div></div>`;
+ }).join('');
+ const dimsBlock = `<div style="background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:14px;padding:18px 18px 8px;margin-bottom:16px;text-align:left;"><div style="font-size:12px;color:var(--green);font-weight:700;letter-spacing:1px;margin-bottom:14px;">📊 你的性格画像</div>${dimsHtml}</div>`;
+
+ a.innerHTML = `<div class="result"><div class="result-emoji">${c.emoji}</div><div class="result-name" style="color:${c.color}">${c.name}</div><div class="result-tagline">${c.en} · 「${c.quote}」</div><div class="result-desc">${c.desc}</div>${dimsBlock}<div class="result-meta">${c.tags.map(t=>`<span class="meta-badge">${t}</span>`).join('')}</div>${runners.length?`<p style="font-size:12px;color:var(--muted);margin-bottom:16px;">次匹配：${runners.map(k=>ANIMALS[k].emoji+' '+ANIMALS[k].name).join(' · ')}</p>`:''}<button class="btn btn-green" onclick="shareIt('${key}')">📋 分享我的灵魂动物</button><button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button><a href="index.html" class="home-link">← 返回魔法店</a><div style="text-align:center;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);"><img src="images/qq-group.jpg" alt="QQ群二维码" style="width:130px;border-radius:12px;border:2px solid var(--border);margin-bottom:8px;"><p style="font-size:12px;color:var(--muted);"><strong style="color:var(--gold);">加群看更多乐子 还能玩MC服务器</strong><br>扫码进群，一起来玩</p></div><p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p><p class="notice">12 种动物 · ${QUESTIONS.length} 道题 · 五维匹配 · 1% 概率蛆彩蛋 · 雾雨魔法店出品</p></div>`;
+}
+
+function shareIt(key) {
+ const c = ANIMALS[key];
+ copyToClipboard('🐾 我测出来灵魂动物是【'+c.name+'】——「'+c.quote+'」你也来测测：' + window.location.href, '已复制！发给朋友测测 😈');
+}
+function restart() { idx = -1; answers = []; render(); }
+render();
+</script>
+
+</body>
+</html>

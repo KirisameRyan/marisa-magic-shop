@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <script src="js/analytics.js"></script>
+    <link rel="stylesheet" href="css/common.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>测一测你的灵魂动物 · 霧雨魔法店</title>
+<style>
+ :root {
+ --accent: #e87d3e; --green: #6a9b4a;
+ }
+ body {
+ background-image: radial-gradient(ellipse at 30% 10%, rgba(232,125,62,.06) 0%, transparent 50%),
+ radial-gradient(ellipse at 70% 90%, rgba(106,155,74,.04) 0%, transparent 50%);
+ }
+
+
+ .container { max-width: 560px; }
+ .container::before {
+ background: linear-gradient(90deg, var(--accent), var(--gold), var(--accent));
+ }
+
+ .version-select { text-align: center; }
+ .intro-badge { display:inline-block; font-size:10px; letter-spacing:3px; color:var(--accent); border:1px solid var(--accent); border-radius:20px; padding:4px 14px; margin-bottom:12px; }
+ .version-select h1 { font-size: 24px; margin-bottom: 6px; }
+ .version-select .sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+ .version-cards { display: flex; gap: 12px; }
+ .ver-card {
+ flex:1; border: 2px solid var(--border); border-radius: 16px;
+ padding: 24px 16px; cursor: pointer; transition: all .2s;
+ text-align: center; background: transparent; font-family: inherit; color:inherit;
+ }
+ .ver-card:hover { border-color: var(--accent); background: rgba(232,125,62,.06); }
+ .ver-card .icon { font-size: 36px; margin-bottom: 10px; }
+ .ver-card .title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+ .ver-card .info { font-size: 12px; color: var(--muted); }
+
+ .progress-wrap { margin-bottom: 28px; }
+ .progress-fill { background: var(--accent); }
+ .progress-text { font-size: 12px; }
+ .q-num { color: var(--accent); }
+ .q-text { font-size: 20px; margin-bottom: 24px; }
+ .options { gap: 10px; }
+ .opt-btn { border: 2px solid var(--border); border-radius: 14px; padding: 16px 18px; font-size: 15px; }
+ .opt-btn:hover { border-color: var(--accent); background: rgba(232,125,62,.08); }
+ .opt-letter { width: 30px; height: 30px; font-size: 13px; }
+ .opt-btn:hover .opt-letter { background: var(--accent); color: #fff; }
+
+ .loading-animal { font-size: 64px; animation: bounce .6s infinite alternate; margin-bottom: 16px; display: inline-block; }
+ @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-12px); } }
+
+ .result-emoji { font-size: 80px; margin-bottom: 6px; }
+ .result-name { font-size: 36px; color: var(--accent); }
+ .result.golden .result-emoji { animation: goldenPop 0.6s cubic-bezier(.2,1.6,.3,1); }
+ @keyframes goldenPop { 0% { transform:scale(0) rotate(-20deg); filter:brightness(3); } 60% { transform:scale(1.2); filter:brightness(1.5); } 100% { transform:scale(1); filter:brightness(1); } }
+ .result.golden .result-name { background: linear-gradient(135deg, #f0c060, #ffe8a0, #f0c060); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; font-size:40px; }
+ .result.golden .result-tagline { color:var(--gold); }
+ .result.golden .result-desc { border-color: rgba(240,192,96,.3); background: rgba(240,192,96,.04); }
+ .result.golden .result-desc strong { color: var(--gold); }
+ .result.diamond .result-emoji { animation: diamondPop 0.7s cubic-bezier(.1,2,.2,1); filter:drop-shadow(0 0 20px rgba(180,220,255,.8)); }
+ @keyframes diamondPop { 0% { transform:scale(0) rotateY(180deg); filter:brightness(5) drop-shadow(0 0 40px #fff); } 50% { transform:scale(1.3) rotateY(0); } 100% { transform:scale(1) rotateY(0); } }
+ .result.diamond .result-name { background: linear-gradient(135deg, #b8d4ff, #ffffff, #80b4ff, #b8d4ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; font-size:42px; filter:drop-shadow(0 2px 8px rgba(180,210,255,.5)); }
+ .result.diamond .result-tagline { color: #b8d4ff; }
+ .result.diamond .result-desc { border-color: rgba(180,210,255,.3); background: rgba(180,210,255,.04); }
+ .result.diamond .result-desc strong { color: #b8d4ff; }
+ .rare-badge { display:inline-block; font-size:10px; font-weight:800; letter-spacing:2px; padding:3px 12px; border-radius:12px; margin-bottom:8px; animation: shine 1.5s ease infinite alternate; }
+ .rare-badge.gold { background: linear-gradient(135deg, #f0c060, #ffe8a0, #f0c060); color:#3d2e10; }
+ .rare-badge.diamond { background: linear-gradient(135deg, #b8d4ff, #e8f0ff, #80b4ff, #b8d4ff); color:#1a3a5c; }
+ @keyframes shine { from { filter:brightness(1); } to { filter:brightness(1.2); } }
+ .sparkle { position:absolute; pointer-events:none; font-size:14px; animation: sparkleFall 2s linear infinite; }
+ @keyframes sparkleFall { 0% { transform:translateY(-10px) rotate(0); opacity:1; } 100% { transform:translateY(200px) rotate(360deg); opacity:0; } }
+ .result-tagline { font-size: 14px; margin-bottom: 24px; }
+ .result-desc { font-size: 14px; line-height: 1.8; }
+ .result-desc strong { color: var(--accent); }
+ .result-meta { margin-top: 20px; }
+ .meta-badge { font-size: 12px; padding: 6px 14px; border-radius: 20px; background: rgba(255,255,255,.03); color: var(--muted); border:1px solid var(--border); }
+ .reveal-zone { margin-top: 24px; }
+
+ .btn-main { background: var(--accent); color: #fff; margin-top: 16px; }
+ .btn-main:hover { background: #d4722f; }
+ .btn-ghost { border: 2px solid var(--border); }
+ .btn-ghost:hover { border-color: var(--accent); }
+ .notice { font-size: 11px; margin-top: 28px; }
+.btn-back { display:inline-flex; align-items:center; gap:4px; background:transparent; border:1px solid var(--border); border-radius:10px; padding:10px 18px; font-size:13px; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .15s; margin-top:14px; }
+.btn-back:hover { border-color:var(--gold); color:var(--gold); }
+ @media (max-width:420px) { .container { padding: 24px 18px; } .version-cards { flex-direction: column; } }
+</style>
+</head>
+<body>
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+<script src="js/utils.js"></script>
+
+<div class="container" id="app"></div>
+<script>
+const quickQs = [
+ { q:'周末下午你一般在干嘛？', opts:['出门浪', '家里瘫', '看心情', '不知道'] },
+ { q:'朋友聚餐的时候你是？', opts:['活跃气氛', '安静吃饭', '看跟谁', '负责拍照'] },
+ { q:'做决定靠什么？', opts:['直觉', '分析', '问别人', '先拖着'] },
+ { q:'早上闹钟响了你？', opts:['秒起', '再睡会', '看情况', '不用闹钟'] },
+ { q:'有一天空闲你会？', opts:['安排好', '随缘过', '约朋友', '纯躺平'] },
+ { q:'你喜欢什么环境？', opts:['城市', '山里', '海边', '家里'] }
+];
+const proQs = [
+ ...quickQs,
+ { q:'朋友找你倒苦水，你通常？', opts:['帮分析', '先共情', '讲自己', '默默听'] },
+ { q:'说到冒险，你想到的是？', opts:['极限运动', '异国旅行', '试新事物', '算了安全第一'] },
+ { q:'你的节奏更像哪种？', opts:['猎豹冲刺', '乌龟稳进', '蜜蜂忙不停', '猫随心走'] },
+ { q:'晚上入睡前你一般在？', opts:['刷手机', '看书', '想事情', '秒睡'] },
+ { q:'你要点外卖了，你会？', opts:['秒选常吃的', '翻半小时', '让朋友决定', '哪家优惠点哪家'] },
+ { q:'突然停电没网了，你会？', opts:['焦虑找事做', '拿本书看', '出门走走', '直接睡觉'] },
+ { q:'你觉得自己身上哪种气质最突出？', opts:['搞笑', '沉稳', '温柔', '懒得形容'] },
+ { q:'给你一个亿，你第一件事？', opts:['立刻辞职', '先藏起来', '告诉家人', '不敢想象'] },
+ { q:'你相信星座吗？', opts:['深信不疑', '完全不信', '偶尔看看', '星座是什么'] },
+ { q:'你觉得这个测试准吗？', opts:['我先看看结果', '肯定不准但玩一下', '我猜结果都一样', '准不准不重要'] }
+];
+
+let mode = null, questions = [], idx = -1, answers = [];
+
+function render() {
+ const a = document.getElementById('app');
+ if (mode === null) {
+ a.innerHTML = `
+ <div class="version-select">
+ <div class="intro-badge">灵魂鉴定中心</div>
+ <h1>🐾 测一测你的灵魂动物</h1>
+ <p class="sub">回答几个简单的问题，找到与你灵魂最匹配的动物</p>
+ <div class="version-cards">
+ <button class="ver-card" onclick="pick('quick')"><div class="icon">⚡</div><div class="title">快速版</div><div class="info">${quickQs.length} 道题 · 一分钟搞定</div></button>
+ <button class="ver-card" onclick="pick('pro')"><div class="icon">🔬</div><div class="title">专业版</div><div class="info">${proQs.length} 道题 · 更全面一点</div></button>
+ </div>
+ <p class="notice">仅供娱乐 · 别太当真</p>
+ </div>`;
+ } else if (idx < questions.length) {
+ const q = questions[idx]; const pct = Math.round((idx/questions.length)*100);
+ a.innerHTML = `
+ <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><div class="progress-text">${idx+1} / ${questions.length}</div></div>
+ <div class="q-num">第 ${idx+1} 题</div><div class="q-text">${q.q}</div>
+ <div class="options">${q.opts.map((o,i)=>`<button class="opt-btn" onclick="answer(${i})"><span class="opt-letter">${'ABCDEFGH'[i]}</span>${o}</button>`).join('')}</div>${idx>0?'<div style="text-align:center;"><button class="btn-back" onclick="goBack()">← 上一题</button></div>':''}`;
+ } else { showLoading(); }
+}
+
+function pick(m) { mode = m; questions = m === 'quick' ? quickQs : proQs; idx = 0; answers = []; render(); }
+function answer(i) { answers.push(i); idx++; render(); }
+function goBack() { if(idx<=0) return; idx--; answers.pop(); render(); }
+
+async function showLoading() {
+ const a = document.getElementById('app');
+ const animals = ['🐱','🐶','🐰','🦊','🐼','🐨','🐸','🐙'];
+ a.innerHTML = '<div class="loading-wrap"><div class="loading-animal" id="lanim">🐱</div><p class="loading-text">正在分析你的灵魂…</p></div>';
+ const lanim = document.getElementById('lanim');
+ for (let i = 0; i < 12; i++) { await sleep(150+Math.random()*200); lanim.textContent = animals[i%animals.length]; }
+ await sleep(300); showResult();
+}
+
+function showResult() {
+ const a = document.getElementById('app');
+ const roll = Math.random();
+ const tier = roll < 0.05 ? 'diamond' : roll < 0.15 ? 'golden' : 'normal';
+
+ if (tier === 'diamond') {
+ const sparkles = Array.from({length:20},(_,i)=>`<span class="sparkle" style="left:${5+i*4.5}%;animation-delay:${(i*0.15).toFixed(2)}s;animation-duration:${(1.8+Math.random()*2).toFixed(1)}s">${['💎','✨','💠','❄️','🌟'][i%5]}</span>`).join('');
+ const traits = ['至尊传说','璀璨夺目','万中无一','欧皇顶点','神话级生物','闪耀永恒'];
+ a.innerHTML = `
+ <div class="result diamond" style="position:relative;overflow:hidden;">
+ ${sparkles}
+ <div class="rare-badge diamond">💎 可遇不可求的神话 💎</div>
+ <div class="result-emoji" style="font-size:110px;">🐛</div><div class="result-name">钻石蛆</div><div class="result-tagline">Diamond Maggot · 传说之上的存在</div>
+ <div class="result-desc">
+ <p>……你认真的？你居然出了 <strong>钻石蛆</strong>？？</p><p style="margin-top:10px;">触发概率只有 <strong>1/20（5%）</strong>。你把一辈子的运气都烧在这了。普通蛆在粪堆里埋头苦干，黄金蛆在粪堆里闪闪发光，而钻石蛆——钻石蛆已经不在粪堆里了。钻石蛆在 <strong>博物馆的恒温展柜</strong> 里，被一群科学家围着研究。</p>
+ <p style="margin-top:10px;">你不是蛆，你是蛆中的传说。别人测出来是蛆会沉默，你测出来是钻石蛆可以写进简历。建议截图打印裱起来，将来传给子孙后代。</p>
+ <p style="margin-top:10px;">好了别发呆了，快分享给你的朋友，让他们见识一下什么叫 <strong>真正的欧皇</strong>。</p>
+ </div>
+ <div class="result-meta">${traits.map(t=>`<span class="meta-badge" style="color:#b8d4ff;border-color:rgba(180,210,255,.4);text-shadow:0 0 6px rgba(180,210,255,.4);">${t}</span>`).join('')}</div>
+ <div class="reveal-zone" id="reveal" onclick="doReveal('diamond')" style="border-color:rgba(180,210,255,.4);">💎 点击查看钻石蛆的秘密…</div>
+ <button class="btn btn-main" onclick="shareItDiamond()" style="background:linear-gradient(135deg,#b8d4ff,#80b4ff,#b8d4ff);color:#1a3a5c;">💎 炫耀你的钻石蛆身份</button>
+ <button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button>
+ <a href="quiz-animal-real.html" class="btn btn-ghost" style="text-decoration:none;border-color:var(--green);color:var(--green);">🐾 试试真实版（真的有不同结果）</a>
+ <a href="index.html" class="home-link">← 返回魔法店</a>
+ <div style="text-align:center;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);"><img src="images/qq-group.jpg" alt="QQ群二维码" style="width:130px;border-radius:12px;border:2px solid var(--border);margin-bottom:8px;"><p style="font-size:12px;color:var(--muted);"><strong style="color:var(--gold);">加群看更多乐子 还能玩MC服务器</strong><br>扫码进群，一起来玩</p></div>
+ <p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>
+  <p class="notice">钻石蛆出现概率：1/20 · 你是有多欧才能看到这句话</p>
+ </div>`;
+ } else if (tier === 'golden') {
+ const traits = ['至尊稀有','金光闪闪','万里挑一','欧皇专属','传说级生物','闪耀夺目'];
+ a.innerHTML = `
+ <div class="result golden">
+ <div class="rare-badge gold">✦ 万中无一的绝品 ✦</div>
+ <div class="result-emoji" style="font-size:100px;">🐛</div><div class="result-name">黄金蛆</div><div class="result-tagline">Golden Maggot · 传说级的灵魂存在</div>
+ <div class="result-desc">
+ <p>不可能……这怎么可能？！</p><p style="margin-top:10px;">你触发了 <strong>1/10 的隐藏概率</strong>——你的灵魂不是普通的蛆，而是 <strong>黄金蛆</strong>！</p>
+ <p style="margin-top:10px;">普通蛆已经够稀有了，而黄金蛆是<strong>稀有中的稀有</strong>。它们浑身散发着金色的光芒，在粪堆中熠熠生辉。别的蛆在默默分解，黄金蛆在舞台上开演唱会。别的蛆被人嫌弃，黄金蛆被供起来拜。</p>
+ <p style="margin-top:10px;">恭喜你，你是被选中的那一个。截图发朋友圈吧，这是可以吹一辈子的事。不是每个人都有资格成为黄金蛆的。不过……据说还有更稀有的 <strong>钻石蛆</strong>，概率只有 5%。你要不要再刷几遍试试？</p>
+ </div>
+ <div class="result-meta">${traits.map(t=>`<span class="meta-badge" style="color:var(--gold);border-color:rgba(240,192,96,.4);">${t}</span>`).join('')}</div>
+ <div class="reveal-zone" id="reveal" onclick="doReveal('golden')" style="border-color:rgba(240,192,96,.4);">👀 点击查看黄金蛆的秘密…</div>
+ <button class="btn btn-main" onclick="shareItGolden()" style="background:linear-gradient(135deg,#f0c060,#e8a830);color:#3d2e10;">✨ 分享你的黄金蛆身份</button>
+ <button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button>
+ <a href="quiz-animal-real.html" class="btn btn-ghost" style="text-decoration:none;border-color:var(--green);color:var(--green);">🐾 试试真实版（真的有不同结果）</a>
+ <a href="index.html" class="home-link">← 返回魔法店</a>
+ <div style="text-align:center;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);"><img src="images/qq-group.jpg" alt="QQ群二维码" style="width:130px;border-radius:12px;border:2px solid var(--border);margin-bottom:8px;"><p style="font-size:12px;color:var(--muted);"><strong style="color:var(--gold);">加群看更多乐子 还能玩MC服务器</strong><br>扫码进群，一起来玩</p></div>
+ <p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>
+  <p class="notice">黄金蛆出现概率：1/10 · 你是天选之人</p>
+ </div>`;
+ } else {
+ const traits = ['适应力超强','生命力旺盛','不挑环境','营养丰富','高蛋白含量','生态贡献巨大'];
+ a.innerHTML = `
+ <div class="result">
+ <div class="result-emoji">🪰</div><div class="result-name">蛆</div><div class="result-tagline">Maggot · 大自然的高效工程师</div>
+ <div class="result-desc">
+ <p>经过复杂的灵魂扫描后，我们发现：</p><p style="margin-top:10px;">你的内在灵魂与<strong>蛆</strong>惊人地相似。</p>
+ <p style="margin-top:10px;">别急着关页面——蛆其实是<strong>自然界最被低估的生物</strong>。它们不抱怨环境，在哪都能活得出色；它们是生态系统里不可或缺的分解者，默默把废弃的东西转化新生。在这个喧嚣的世界里，蛆代表了<strong>务实、坚韧和不矫情</strong>。</p>
+ <p style="margin-top:10px;">你在生活中可能也是这样：不太在意外界的眼光，该吃吃该睡睡，闷声干大事。这不是讽刺，是真心话。对了，据说有极小的概率测出黄金蛆甚至钻石蛆……但显然不是你 😈</p>
+ </div>
+ <div class="result-meta">${traits.map(t=>`<span class="meta-badge">${t}</span>`).join('')}</div>
+ <div class="reveal-zone" id="reveal" onclick="doReveal('normal')">点击查看一个秘密 👀</div>
+ <button class="btn btn-main" onclick="shareIt()">📋 复制结果发给朋友</button>
+ <button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button>
+ <a href="quiz-animal-real.html" class="btn btn-ghost" style="text-decoration:none;border-color:var(--green);color:var(--green);">🐾 试试真实版（真的有不同结果）</a>
+ <a href="index.html" class="home-link">← 返回魔法店</a>
+ <div style="text-align:center;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);"><img src="images/qq-group.jpg" alt="QQ群二维码" style="width:130px;border-radius:12px;border:2px solid var(--border);margin-bottom:8px;"><p style="font-size:12px;color:var(--muted);"><strong style="color:var(--gold);">加群看更多乐子 还能玩MC服务器</strong><br>扫码进群，一起来玩</p></div>
+ <p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>
+  <p class="notice">本测试仅供娱乐，但蛆是认真的。</p>
+ </div>`;
+ }
+}
+
+function doReveal(tier) {
+ const el = document.getElementById('reveal'); if (el.classList.contains('show')) return; el.classList.add('show');
+ if (tier === 'diamond') {
+ el.innerHTML = '<p style="font-size:13px;line-height:1.8;">💎 <strong style="color:#b8d4ff;">好吧，钻石蛆的秘密是：</strong><br><br>普通结果是蛆。<br>黄金蛆概率 10%，钻石蛆概率 <strong>5%</strong>。<br><br>你能看到这句话，<br>意味着你是 <strong>二十分之一</strong> 的幸运儿。<br><br>好了，去炫耀吧。<br><span style="font-size:11px;color:var(--muted);">！？钻石区区？！</span></p>';
+ } else if (tier === 'golden') {
+ el.innerHTML = '<p style="font-size:13px;line-height:1.8;">✨ <strong style="color:#f0c060;">好吧，黄金蛆的秘密是：</strong><br><br>普通结果是蛆。<br>黄金蛆的出现概率是 <strong>1/10</strong>。<br><br>你运气不错——<br>但上面还有个 <strong>钻石蛆（1/20）</strong>……<br><br>要不要再刷几遍试试？<br><span style="font-size:11px;color:var(--muted);">！？黄金区区？！</span></p>';
+ } else {
+ el.innerHTML = '<p style="font-size:13px;line-height:1.8;">😏 <strong>好吧，被你发现了：</strong><br><br>不管你选了什么，<br>结果都是蛆。<br><br>快/专业两个版本的区别只是题的数量，<br>结果一模一样。<br><br>据说还有 <strong>黄金蛆</strong> 和 <strong>钻石蛆</strong>……<br>但你现在不是 😈<br><span style="font-size:11px;color:var(--muted);">！？区区？！</span></p>';
+ }
+}
+function shareIt() { copyToClipboard('我测出来灵魂动物是蛆 🪰 你也来测测：' + window.location.href, '已复制！发给朋友试试 😈'); }
+function shareItGolden() { copyToClipboard('✨ 我测出来灵魂动物是黄金蛆！稀有彩蛋 你也来测测：' + window.location.href, '已复制！快去炫耀 😈'); }
+function shareItDiamond() { copyToClipboard('💎 我测出来灵魂动物是钻石蛆！！！欧到离谱 你也来测测：' + window.location.href, '已复制！欧皇驾到 😈'); }
+function restart() { mode = null; idx = -1; answers = []; render(); }
+render();
+</script>
+
+</body>
+</html>

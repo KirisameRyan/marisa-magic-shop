@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <link rel="stylesheet" href="css/common.css">
+    <script src="js/analytics.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 · 雾雨魔法店</title>
+    <style>
+        /* ── 完全继承主页风格 ── */
+
+        .stars {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: var(--star);
+            border-radius: 50%;
+            animation: twinkle 3s infinite alternate;
+        }
+        @keyframes twinkle {
+            0% {
+                opacity: .3;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1.8);
+            }
+        }
+
+        .container {
+            max-width: 720px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── 顶栏（极简，仅保留店名） ── */
+        .shop-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0 16px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, .4);
+        }
+        .shop-bar .brand {
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, var(--gold), #ffe8b0, var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+
+        /* ── 404 主体 ── */
+        .error-card {
+            background: var(--card);
+            border-radius: 32px;
+            border: 1px solid var(--border);
+            padding: 48px 36px 40px;
+            text-align: center;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, .5);
+            position: relative;
+            overflow: hidden;
+        }
+        .error-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 0%, rgba(240, 192, 96, .06), transparent 70%);
+            pointer-events: none;
+        }
+
+        .error-code {
+            font-size: 120px;
+            font-weight: 900;
+            line-height: 1;
+            background: linear-gradient(135deg, var(--gold), #ffe8b0, var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 4px 32px rgba(240, 192, 96, .25));
+            letter-spacing: 8px;
+            position: relative;
+            z-index: 1;
+        }
+        .error-sub {
+            font-size: 14px;
+            color: var(--gold-dim);
+            letter-spacing: 8px;
+            margin-top: -6px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .error-divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 24px 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+        .error-divider::before,
+        .error-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+        }
+        .error-divider span {
+            font-size: 20px;
+            color: var(--muted);
+        }
+
+        .error-message {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 6px;
+            position: relative;
+            z-index: 1;
+        }
+        .error-hint {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 380px;
+            margin: 0 auto 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .error-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 36px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all .25s;
+            border: 1px solid var(--border);
+            background: var(--card-hover);
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+        .btn-gold {
+            background: linear-gradient(135deg, rgba(240, 192, 96, .15), rgba(240, 192, 96, .05));
+            border-color: var(--gold-dim);
+            color: var(--gold);
+        }
+        .btn-gold:hover {
+            background: linear-gradient(135deg, rgba(240, 192, 96, .25), rgba(240, 192, 96, .1));
+            border-color: var(--gold);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(240, 192, 96, .15);
+        }
+
+        /* 魔法小扫帚 */
+        .broom-float {
+            display: inline-block;
+            animation: floatBroom 3s ease-in-out infinite;
+            font-size: 32px;
+            margin-top: 8px;
+            position: relative;
+            z-index: 1;
+        }
+        @keyframes floatBroom {
+            0%,
+            100% {
+                transform: translateY(0) rotate(-6deg);
+            }
+            50% {
+                transform: translateY(-10px) rotate(6deg);
+            }
+        }
+
+        /* 小星星装饰 */
+        .sparkle {
+            display: inline-block;
+            animation: sparklePulse 2s ease-in-out infinite;
+        }
+        @keyframes sparklePulse {
+            0%,
+            100% {
+                opacity: .4;
+                transform: scale(.8);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        /* 404 小彩蛋文字 */
+        .easter-egg {
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 2px;
+            margin-top: 28px;
+            opacity: .5;
+            transition: opacity .3s;
+            position: relative;
+            z-index: 1;
+        }
+        .easter-egg:hover {
+            opacity: 1;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: var(--muted);
+            padding-top: 24px;
+            margin-top: 32px;
+            border-top: 1px solid var(--border);
+            line-height: 1.8;
+        }
+
+        @media (max-width: 600px) {
+            .error-code {
+                font-size: 80px;
+                letter-spacing: 4px;
+            }
+            .error-card {
+                padding: 32px 20px 28px;
+            }
+            .error-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── 极简顶栏（仅店名） ── -->
+    <div class="shop-bar">
+        <a href="index.html" class="brand">✦ 霧雨魔法店</a>
+    </div>
+
+    <!-- ── 星星 ── -->
+    <div class="stars" id="stars"></div>
+
+    <!-- ── 主内容 ── -->
+    <div class="container">
+        <div class="error-card">
+
+            <!-- 404 -->
+            <div class="error-code">404</div>
+            <div class="error-sub">— 页面走丢了 —</div>
+
+            <div class="error-divider"><span>🧹</span></div>
+
+            <div class="error-message">「 这个页面不在魔法之森 」</div>
+            <p class="error-hint">
+                也许它被魔理沙的魔法扫帚带走了，<br />
+                或者被灵梦塞进了赛钱箱里……<br />
+                总之，它不见了。
+            </p>
+
+            <!-- 扫帚动画 -->
+            <div class="broom-float">🧹</div>
+
+            <!-- 操作按钮：仅保留「回到首页」 -->
+            <div class="error-actions">
+                <a href="index.html" class="btn btn-gold">🏠 回 到 首 页</a>
+            </div>
+
+            <!-- 小彩蛋 -->
+            <div class="easter-egg">
+                <span class="sparkle">✦</span> 你发现了隐藏的魔法 ✦
+            </div>
+
+        </div>
+
+        <div class="footer">
+            <span class="broom">🧹</span> 雾雨魔法店 · 魔法之森边缘 · 404 专属传送门<br />
+            没有数据收集 · 不追踪 · 不偷窥
+        </div>
+    </div>
+
+    <script src="js/starfield.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <script src="js/analytics.js"></script>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>今天吃什么 · 霧雨魔法店</title>
+<style>
+ :root {
+ --bg: #1a1520; --card: #241e2a; --gold: #f0c060; --purple: #b89fff;
+ --text: #e0d8ec; --muted: #8a7e9a; --border: #3a3045;
+ --red: #ef4444; --green: #6fcf97; --pink: #f472b6;
+ }
+ * { margin:0; padding:0; box-sizing:border-box; }
+ body {
+ font-family: -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+ background: var(--bg);
+ background-image:
+ radial-gradient(ellipse at 30% 0%, rgba(176,159,255,.05) 0%, transparent 50%),
+ radial-gradient(ellipse at 70% 100%, rgba(240,192,96,.04) 0%, transparent 50%);
+ color: var(--text); min-height: 100vh;
+ display: flex; align-items: center; justify-content: center;
+ padding: 16px; padding-top: 64px; position: relative;
+ }
+
+ /* ── 魔法店顶栏 ── */
+ .shop-bar {
+ position: fixed; top:0; left:0; right:0; z-index: 100;
+ background: var(--bg); border-bottom: 1px solid var(--border);
+ padding: 0 16px; height: 48px;
+ display: flex; align-items: center; justify-content: space-between;
+ box-shadow: 0 2px 16px rgba(0,0,0,.4);
+ }
+ .shop-bar .brand {
+ font-size: 14px; font-weight: 800; letter-spacing: 2px;
+ background: linear-gradient(135deg, var(--gold), #ffe8b0, var(--gold));
+ -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+ text-decoration: none;
+ }
+ .shop-bar .nav-links { display:none; gap: 16px; align-items: center; }
+ .shop-bar .nav-links a {
+ font-size: 11px; color: var(--muted); text-decoration: none; transition: color .2s;
+ }
+ .shop-bar .nav-links a:hover { color: var(--gold); }
+ .shop-bar .hamburger { display:flex; flex-direction:column; gap:5px; cursor:pointer; padding:8px; background:none; border:none; z-index:200; }
+ .shop-bar .hamburger span { display:block; width:22px; height:2px; background:var(--muted); border-radius:2px; transition:all .3s; }
+ .shop-bar .hamburger.open span:nth-child(1) { transform:rotate(45deg) translate(5px,5px); }
+ .shop-bar .hamburger.open span:nth-child(2) { opacity:0; }
+ .shop-bar .hamburger.open span:nth-child(3) { transform:rotate(-45deg) translate(5px,-5px); }
+ .nav-overlay { position:fixed; top:48px; right:0; background:var(--card); border:1px solid var(--border); border-top:none; border-radius:0 0 16px 16px; padding:12px 20px; z-index:99; opacity:0; pointer-events:none; transform:translateY(-8px); transition:all .25s; box-shadow:0 8px 32px rgba(0,0,0,.4); min-width:160px; }
+ .nav-overlay.show { opacity:1; pointer-events:auto; transform:translateY(0); }
+ .nav-overlay a { display:block; padding:10px 0; font-size:13px; color:var(--text); text-decoration:none; border-bottom:1px solid var(--border); transition:color .2s; }
+ .nav-overlay a:last-child { border-bottom:none; }
+ .nav-overlay a:hover { color:var(--gold); }
+ .nav-overlay .nav-section { font-size:10px; color:var(--muted); letter-spacing:2px; padding:8px 0 4px; }
+ .nav-overlay .nav-section:first-child { padding-top:0; }
+
+
+ /* ── 容器 ── */
+ .container {
+ max-width: 580px; width: 100%;
+ background: var(--card); border-radius: 24px;
+ padding: 36px 28px; border: 1px solid var(--border);
+ box-shadow: 0 4px 32px rgba(0,0,0,.3);
+ position:relative; overflow:hidden;
+ }
+ .container::before {
+ content:''; position:absolute; top:0; left:0; right:0; height:3px;
+ background: linear-gradient(90deg, var(--gold), var(--purple), var(--gold));
+ }
+
+ /* ── 首页 ── */
+ .intro { text-align: center; }
+ .intro-badge {
+ display:inline-block; font-size:10px; letter-spacing:3px; color:var(--gold);
+ border:1px solid var(--gold); border-radius:20px; padding:4px 14px; margin-bottom:14px;
+ }
+ .intro h1 { font-size: 28px; margin-bottom: 6px; }
+ .intro .sub { font-size: 13px; color:var(--muted); margin-bottom: 16px; line-height:1.6; }
+ .food-strip {
+ display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom: 24px;
+ }
+ .food-mini {
+ width:48px; height:48px; border-radius:14px; border:2px solid var(--border);
+ display:flex; align-items:center; justify-content:center; font-size:26px;
+ background: rgba(255,255,255,.03); transition: transform .2s; cursor:default;
+ }
+ .food-mini:hover { transform: translateY(-4px); border-color: var(--gold); }
+
+ /* ── 轮盘区域 ── */
+ .wheel-section {
+ text-align: center; margin-bottom: 28px; position: relative;
+ }
+ .wheel-wrapper {
+ position: relative; width: min(300px, 80vw); aspect-ratio: 1 / 1;
+ margin: 0 auto 22px;
+ }
+ .wheel-spin {
+ width: 100%; height: 100%;
+ transition: transform 4.2s cubic-bezier(.16,.85,.25,1);
+ will-change: transform;
+ }
+ .wheel-spin svg {
+ display: block; width: 100%; height: 100%;
+ filter: drop-shadow(0 10px 26px rgba(0,0,0,.5));
+ }
+ /* 指针：从顶部向下指入轮盘 */
+ .pointer {
+ position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+ width: 0; height: 0; z-index: 4;
+ border-left: 13px solid transparent;
+ border-right: 13px solid transparent;
+ border-top: 26px solid var(--gold);
+ filter: drop-shadow(0 3px 4px rgba(0,0,0,.5));
+ }
+ /* 中心轴 */
+ .center-hub {
+ position: absolute; top:50%; left:50%;
+ width: 21%; height: 21%; border-radius: 50%;
+ background: radial-gradient(circle at 38% 32%, #34283f, var(--card));
+ border: 3px solid var(--gold);
+ transform: translate(-50%, -50%);
+ display: flex; align-items: center; justify-content: center;
+ font-size: clamp(20px, 7vw, 26px); font-weight: 900;
+ color: var(--gold); z-index: 3;
+ box-shadow: 0 0 22px rgba(240,192,96,.25), inset 0 0 10px rgba(0,0,0,.4);
+ }
+
+ /* ── 按钮 ── */
+ .btn {
+ font-family:inherit; border:none; border-radius:14px;
+ padding:16px 32px; font-size:16px; font-weight:700; cursor:pointer;
+ transition:all .15s; display:inline-flex; align-items:center; gap:8px;
+ justify-content:center; width:100%; letter-spacing:1px;
+ }
+ .btn-spin { background: linear-gradient(135deg, var(--gold), #e8a830); color: #3d2e10; margin: 12px 0; font-size: 18px; }
+ .btn-spin:hover:not(:disabled) { transform:translateY(-3px); box-shadow:0 8px 28px rgba(240,192,96,.3); }
+ .btn-spin:disabled { opacity:.55; cursor:not-allowed; transform:none; box-shadow:none; }
+ .btn-main { background: var(--purple); color: #fff; margin-top: 4px; }
+ .btn-main:hover { background: #a78bfa; }
+ .btn-ghost {
+ background: transparent; border: 1px solid var(--border); color: var(--text); margin-top: 10px;
+ }
+ .btn-ghost:hover { border-color: var(--purple); }
+
+ /* ── 结果 ── */
+ .result { text-align: center; }
+ .result-emoji {
+ font-size: 100px; animation: popIn .6s cubic-bezier(.2,1.4,.4,1);
+ display: inline-block; margin-bottom: 8px;
+ }
+ @keyframes popIn {
+ 0% { transform:scale(0) rotate(-20deg); }
+ 60% { transform:scale(1.15); }
+ 100% { transform:scale(1); }
+ }
+ .result-name { font-size: 38px; font-weight: 900; margin-bottom: 4px;
+ background: linear-gradient(135deg, #a0522d, #8B4513);
+ -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+ }
+ .result-tagline { font-size: 13px; color:var(--muted); margin-bottom: 18px; }
+ .result-desc {
+ text-align: left; line-height: 1.8; font-size: 13px;
+ background: rgba(255,255,255,.02); border-radius: 14px;
+ padding: 18px; margin-bottom: 16px; border: 1px solid var(--border);
+ }
+ .result-meta {
+ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-bottom:18px;
+ }
+ .meta-tag {
+ font-size: 10px; padding: 4px 12px; border-radius: 14px;
+ background: rgba(255,255,255,.03); color: var(--muted); border: 1px solid var(--border);
+ }
+ .reveal-zone {
+ margin-top: 18px; padding: 16px; border: 2px dashed var(--border);
+ border-radius: 14px; cursor: pointer; transition: all .3s;
+ font-size: 12px; color: var(--muted); text-align: center;
+ }
+ .reveal-zone:hover { border-color: var(--gold); color: var(--gold); }
+ .reveal-zone.show { border-style: solid; border-color: var(--gold); cursor: default; color: var(--text); }
+
+ /* ── 问答模式 ── */
+ .progress-wrap { margin-bottom: 26px; }
+ .progress-bar { height: 5px; background: var(--border); border-radius: 3px; }
+ .progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--purple)); border-radius: 3px; transition: width .3s; }
+ .progress-text { font-size: 11px; color: var(--muted); margin-top: 6px; text-align: right; }
+ .q-num { font-size: 12px; color: var(--gold); font-weight: 700; letter-spacing:1px; margin-bottom: 6px; }
+ .q-text { font-size: 19px; font-weight: 600; margin-bottom: 22px; line-height: 1.45; }
+ .options { display: flex; flex-direction: column; gap: 9px; }
+ .opt-btn {
+ background: transparent; border: 1px solid var(--border); border-radius: 12px;
+ padding: 14px 16px; font-size: 14px; color: var(--text); cursor: pointer;
+ transition: all .15s; text-align: left; font-family: inherit;
+ display: flex; align-items: center; gap: 10px;
+ }
+ .opt-btn:hover { border-color: var(--purple); background: rgba(176,159,255,.06); }
+ .opt-letter {
+ width:28px; height:28px; border-radius:8px;
+ background: rgba(255,255,255,.04); display:flex; align-items:center; justify-content:center;
+ font-size:12px; font-weight:700; color:var(--muted); flex-shrink:0;
+ }
+ .opt-btn:hover .opt-letter { background: var(--purple); color: #fff; }
+
+ /* ── 加载 ── */
+ .loading-wrap { text-align: center; padding: 36px 0; }
+ .loading-wheel {
+ width:80px; height:80px; border-radius:50%; margin:0 auto 22px;
+ background: conic-gradient(var(--gold),var(--purple),var(--pink),var(--green),var(--gold));
+ animation: spin .9s linear infinite;
+ }
+ @keyframes spin { to { transform:rotate(360deg); } }
+ .loading-text { font-size: 13px; color: var(--muted); }
+
+ /* ── 底部 ── */
+ .home-link {
+ display:block; text-align:center; margin-top:18px; font-size:11px;
+ color: var(--muted); text-decoration:none;
+ }
+ .home-link:hover { color: var(--gold); }
+ .notice {
+ font-size: 10px; color: var(--muted); text-align: center;
+ margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border);
+ }
+
+ /* ── 模式选择 ── */
+ .mode-cards { display: flex; gap: 12px; margin-bottom: 32px; }
+ .mode-card {
+ flex: 1; border: 2px solid var(--border); border-radius: 16px;
+ padding: 22px 14px; cursor: pointer; transition: all .2s;
+ text-align: center; background: transparent; font-family: inherit; color:inherit;
+ }
+ .mode-card:hover { border-color: var(--gold); background: rgba(240,192,96,.04); }
+ .mode-card .icon { font-size: 36px; margin-bottom: 8px; }
+ .mode-card .title { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+ .mode-card .info { font-size: 12px; color: var(--muted); }
+
+.btn-back { display:inline-flex; align-items:center; gap:4px; background:transparent; border:1px solid var(--border); border-radius:10px; padding:10px 18px; font-size:13px; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .15s; margin-top:14px; }
+.btn-back:hover { border-color:var(--gold); color:var(--gold); }
+
+ @media (prefers-reduced-motion: reduce) {
+ .wheel-spin { transition: transform 1s ease-out; }
+ }
+
+ @media (max-width:420px) {
+ .container { padding: 24px 18px; }
+ .mode-cards { flex-direction: column; }
+ .intro h1 { font-size: 22px; }
+ }
+</style>
+</head>
+<body>
+<!-- 魔法店顶栏 -->
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container" id="app"></div>
+<script>
+/* ============================================
+ 霧雨魔法店 · 今天吃什么——美食占卜
+ ============================================ */
+
+const FOODS = ['🍕','🍔','🍣','🍜','🌮','🍛','🥟','🍱','🍩','🫕'];
+
+/* 转盘上的十个格子 */
+const WHEEL_FOODS = ['🍕','🍔','🍣','🍜','🌮','🍛','🥟','🍱','🫕','🥘'];
+const WHEEL_COLORS = ['#e8826b','#e8a85c','#d9c463','#8fc46b','#5fbd9c',
+ '#5aa9d6','#6f8fe0','#a07fe0','#c878d0','#e07fa8'];
+
+const QUESTIONS = [
+ {
+ q:'你现在的饥饿程度？',
+ opts:[
+ { txt:'🐺 饿到能吃下一头牛！' },
+ { txt:'😋 有点小饿，想吃好的' },
+ { txt:'😐 还行，随便垫垫肚子' },
+ { txt:'😴 不饿，但嘴巴很寂寞' }
+ ]
+ },
+ {
+ q:'偏好什么口味？',
+ opts:[
+ { txt:'🌶️ 无辣不欢，越辣越爽' },
+ { txt:'🍬 甜的！幸福的味道' },
+ { txt:'🧂 咸香才是王道' },
+ { txt:'🥒 清淡养生，健康第一' }
+ ]
+ },
+ {
+ q:'想吃哪种类型？',
+ opts:[
+ { txt:'🍔 快餐速食，快狠准' },
+ { txt:'🍣 精致料理，仪式感' },
+ { txt:'🫕 火锅烧烤，热闹暖和' },
+ { txt:'🍜 家常味道，妈妈的味道' }
+ ]
+ },
+ {
+ q:'今天的预算？',
+ opts:[
+ { txt:'💰 不差钱，吃好的！' },
+ { txt:'💵 正常水平，差不多就行' },
+ { txt:'🪙 省着点，经济实惠' },
+ { txt:'🆓 最好能蹭一顿' }
+ ]
+ },
+ {
+ q:'吃完这顿你有什么安排？',
+ opts:[
+ { txt:'🎮 回去打游戏 / 刷视频' },
+ { txt:'💤 吃饱就睡，神仙日子' },
+ { txt:'🏃 运动一下，消耗热量' },
+ { txt:'📖 继续学习 / 工作' }
+ ]
+ }
+];
+
+let mode = null; // null=select, 'wheel'=转盘, 'quiz'=问卷
+let quizIdx = -1;
+let isSpinning = false;
+let quizAnswers = [];
+let wheelRotation = 0; // 累计旋转角度，保证每次都往前转
+
+function render() {
+ const a = document.getElementById('app');
+
+ if (mode === null) {
+ // ── 模式选择 ──
+ const strip = FOODS.map(f => `<span class="food-mini">${f}</span>`).join('');
+ a.innerHTML = `
+ <div class="intro">
+ <div class="intro-badge">霧雨魔法店 · 美食占卜部</div>
+ <h1>🍽️ 今天吃什么</h1>
+ <p class="sub">站在外卖软件前纠结了二十分钟？<br>把这个难题交给魔法店吧。</p>
+ <div class="food-strip">${strip}</div>
+
+ <div class="mode-cards">
+ <button class="mode-card" onclick="pickMode('wheel')">
+ <div class="icon">🎡</div>
+ <div class="title">转盘抽签</div>
+ <div class="info">转一转，停在哪吃哪</div>
+ </button>
+ <button class="mode-card" onclick="pickMode('quiz')">
+ <div class="icon">🔮</div>
+ <div class="title">灵魂问答</div>
+ <div class="info">答 ${QUESTIONS.length} 个问题，看穿你的胃</div>
+ </button>
+ </div>
+
+ <a href="index.html" class="home-link">← 返回魔法店</a>
+ <p class="notice">结果由店里的老魔法决定 · 概不退换</p>
+ </div>`;
+
+ } else if (mode === 'wheel') {
+ renderWheel(a);
+ } else if (mode === 'quiz') {
+ renderQuiz(a);
+ }
+}
+
+/* ========== 转盘模式 ========== */
+
+// 极坐标 → 直角坐标（角度从正上方 12 点开始，顺时针为正）
+function polar(cx, cy, r, deg) {
+ const a = (deg - 90) * Math.PI / 180;
+ return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+}
+
+function buildWheelSVG() {
+ const cx = 100, cy = 100, R = 94, rLabel = 64;
+ const seg = 360 / WHEEL_FOODS.length;
+ let wedges = '', labels = '';
+ for (let i = 0; i < WHEEL_FOODS.length; i++) {
+ const a0 = i * seg, a1 = (i + 1) * seg;
+ const [x0, y0] = polar(cx, cy, R, a0);
+ const [x1, y1] = polar(cx, cy, R, a1);
+ wedges += `<path d="M${cx} ${cy} L${x0.toFixed(2)} ${y0.toFixed(2)} `
+ + `A${R} ${R} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)} Z" `
+ + `fill="${WHEEL_COLORS[i]}" stroke="rgba(20,12,28,.35)" stroke-width="0.8"/>`;
+ const [lx, ly] = polar(cx, cy, rLabel, a0 + seg / 2);
+ labels += `<text x="${lx.toFixed(2)}" y="${ly.toFixed(2)}" font-size="15" `
+ + `text-anchor="middle" dominant-baseline="central">${WHEEL_FOODS[i]}</text>`;
+ }
+ return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+ <circle cx="100" cy="100" r="97" fill="none" stroke="var(--gold)" stroke-width="3" opacity=".75"/>
+ <g>${wedges}</g>
+ <g>${labels}</g>
+ </svg>`;
+}
+
+function renderWheel(a) {
+ a.innerHTML = `
+ <div class="intro" style="margin-bottom:0">
+ <div class="intro-badge">🎡 转盘抽签</div>
+ <p class="sub" style="margin-bottom:8px;">不用再纠结了——<br>转一下，指针停在哪，今天就吃哪。</p>
+ </div>
+
+ <div class="wheel-section">
+ <div class="wheel-wrapper">
+ <div class="pointer"></div>
+ <div class="wheel-spin" id="wheelSpin">${buildWheelSVG()}</div>
+ <div class="center-hub" id="centerHub">?</div>
+ </div>
+ </div>
+
+ <button class="btn btn-spin" id="spinBtn" onclick="spinWheel()">🎯 转一下</button>
+ <button class="btn btn-ghost" onclick="mode=null;render();">← 换一种方式</button>
+ <a href="index.html" class="home-link">← 返回魔法店</a>
+ <p class="notice">轮盘已注入魔力 · 转到哪算哪</p>
+ `;
+}
+
+function spinWheel() {
+ if (isSpinning) return;
+ isSpinning = true;
+ const btn = document.getElementById('spinBtn');
+ const wheel = document.getElementById('wheelSpin');
+ const hub = document.getElementById('centerHub');
+ btn.disabled = true;
+ btn.textContent = '🌀 转动中…';
+ hub.textContent = '…';
+
+ // 随机选一个格子，算出让它停到顶部指针下方所需的角度
+ const seg = 360 / WHEEL_FOODS.length;
+ const target = Math.floor(Math.random() * WHEEL_FOODS.length);
+ const center = target * seg + seg / 2; // 该格中心相对 12 点的顺时针角度
+ const finalMod = (360 - (center % 360)) % 360; // 转到顶部需要的最终余角
+ const curMod = ((wheelRotation % 360) + 360) % 360;
+ const delta = (finalMod - curMod + 360) % 360;
+ wheelRotation += 360 * 5 + delta; // 至少转 5 圈再精准对齐
+ wheel.style.transform = `rotate(${wheelRotation}deg)`;
+
+ const finish = () => {
+ hub.textContent = '🍴';
+ setTimeout(() => {
+ showWheelResult(WHEEL_FOODS[target]);
+ isSpinning = false;
+ }, 550);
+ };
+ wheel.addEventListener('transitionend', finish, { once: true });
+ // 兜底：万一 transitionend 没触发
+ setTimeout(() => { if (isSpinning) finish(); }, 5200);
+}
+
+function showWheelResult(landed) {
+ const a = document.getElementById('app');
+ a.innerHTML = `
+ <div class="result">
+ <div class="result-emoji">💩</div>
+ <div class="result-name">屎！</div>
+ <div class="result-tagline">大自然的终极馈赠</div>
+
+ <div class="result-desc">
+ <p>指针明明稳稳地停在了 <strong>${landed}</strong> 上……</p>
+ <p style="margin-top:10px;">可等魔法店的菜端上桌，盘子里躺着的偏偏是——<strong>大便 💩</strong></p>
+ <p style="margin-top:10px;">
+ 这可是<strong>会员制餐厅</strong>的特色菜，这里只有一个答案，替你把选择的烦恼全省了。
+ </p>
+ <p style="margin-top:10px;">
+ 风味：十分的新鲜！十分的美味！<br>
+ 推荐理由：<em>吃吧 哪有那么多理由</em>
+ </p>
+ </div>
+
+ <div class="result-meta">
+ <span class="meta-tag">🌿 纯天然</span>
+ <span class="meta-tag">♻️ 循环再生</span>
+ <span class="meta-tag">🏆 独此一家</span>
+ <span class="meta-tag">🎯 命中注定</span>
+ </div>
+
+ <div class="reveal-zone" id="reveal" onclick="doReveal()">
+ 🤔 想知道真相吗？点这里揭晓…
+ </div>
+
+ <button class="btn btn-main" onclick="shareIt()">📋 复制结果发给好友</button>
+ <button class="btn btn-ghost" onclick="mode=null;render();">🔄 我不信，再转一次</button>
+ <a href="index.html" class="home-link">← 返回魔法店</a>
+ <div style="text-align:center;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);"><img src="images/qq-group.jpg" alt="QQ群二维码" style="width:130px;border-radius:12px;border:2px solid var(--border);margin-bottom:8px;"><p style="font-size:12px;color:var(--muted);"><strong style="color:var(--gold);">加群看更多乐子</strong><br>扫码进群，一起来玩</p></div>
+ <p class="notice">本结果由霧雨魔法店美食部出具 · 最终解释权归魔理沙所有</p>
+ </div>`;
+}
+
+/* ========== 问答模式 ========== */
+function pickMode(m) {
+ mode = m;
+ if (m === 'quiz') { quizIdx = 0; quizAnswers = []; }
+ render();
+}
+
+function renderQuiz(a) {
+ if (quizIdx < QUESTIONS.length) {
+ const q = QUESTIONS[quizIdx];
+ const pct = Math.round((quizIdx / QUESTIONS.length) * 100);
+ a.innerHTML = `
+ <div class="progress-wrap">
+ <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+ <div class="progress-text">${quizIdx + 1} / ${QUESTIONS.length}</div>
+ </div>
+ <div class="q-num">第 ${quizIdx + 1} 问</div>
+ <div class="q-text">${q.q}</div>
+ <div class="options">
+ ${q.opts.map((o,i) => `
+ <button class="opt-btn" onclick="quizAnswer(${i})">
+ <span class="opt-letter">${'ABCD'[i]}</span>${o.txt}
+ </button>`).join('')}
+ </div>
+ ${quizIdx>0 ? '<div style="text-align:center;"><button class="btn-back" onclick="goBack()">← 上一题</button></div>' : ''}
+ <p class="notice" style="margin-top:16px;">你的每一个选择，魔法都看在眼里</p>
+ `;
+ } else {
+ showQuizLoading();
+ }
+}
+
+function quizAnswer(i) {
+ quizAnswers.push(QUESTIONS[quizIdx].opts[i]);
+ quizIdx++;
+ render();
+}
+function goBack() { if(quizIdx<=0) return; quizIdx--; quizAnswers.pop(); render(); }
+
+async function showQuizLoading() {
+ const a = document.getElementById('app');
+ const steps = [
+ '正在翻阅魔法菜谱…',
+ '正在对照你的口味…',
+ '正在摇晃水晶球…',
+ '正在请教店主魔理沙…',
+ '答案正在浮现…'
+ ];
+ a.innerHTML = '<div class="loading-wrap"><div class="loading-wheel"></div><p class="loading-text" id="ltxt">正在翻阅魔法菜谱…</p></div>';
+ const lt = document.getElementById('ltxt');
+ for (const s of steps) {
+ await sleep(550 + Math.random() * 550);
+ lt.textContent = s;
+ }
+ await sleep(400);
+ showQuizResult();
+}
+
+function showQuizResult() {
+ const a = document.getElementById('app');
+ a.innerHTML = `
+ <div class="result">
+ <div class="result-emoji">💩</div>
+ <div class="result-name">屎！</div>
+ <div class="result-tagline">魔法占卜结果</div>
+
+ <div class="result-desc">
+ <p>${QUESTIONS.length} 个问题答下来，水晶球里慢慢浮出了答案——</p>
+ <p style="margin-top:10px;"><strong>今天该吃：大便 💩</strong></p>
+ <p style="margin-top:10px;">
+ 别急着皱眉。和满桌让人挑花眼的菜不同，大便胜在<strong>独一无二的确定性</strong>——没有选择焦虑，没有踩雷风险，因为答案从头到尾只有一个。
+ </p>
+ <p style="margin-top:10px;">
+ 不是巧合，是缘分。
+ </p>
+ </div>
+
+ <div class="result-meta">
+ <span class="meta-tag">🔮 占卜认证</span>
+ <span class="meta-tag">🪄 魔力调配</span>
+ <span class="meta-tag">🌙 命中注定</span>
+ <span class="meta-tag">🎯 独此一签</span>
+ </div>
+
+ <div class="reveal-zone" id="reveal" onclick="doReveal()">
+ 👀 点这里，揭开这一签的真相…
+ </div>
+
+ <button class="btn btn-main" onclick="shareIt()">📋 复制结果，发给朋友试试</button>
+ <button class="btn btn-ghost" onclick="mode=null;render();">🔄 换个方式再试试</button>
+ <a href="index.html" class="home-link">← 返回魔法店</a>
+ <div style="text-align:center;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);"><img src="images/qq-group.jpg" alt="QQ群二维码" style="width:130px;border-radius:12px;border:2px solid var(--border);margin-bottom:8px;"><p style="font-size:12px;color:var(--muted);"><strong style="color:var(--gold);">加群看更多乐子</strong><br>扫码进群，一起来玩</p></div>
+ <p class="notice">本签由霧雨魔法店占卜部出具 · 灵不灵看缘分</p>
+ </div>`;
+}
+
+/* ========== 共用 ========== */
+function doReveal() {
+ const el = document.getElementById('reveal');
+ if (!el || el.classList.contains('show')) return;
+ el.classList.add('show');
+ el.innerHTML = `
+ <p style="font-size:13px;line-height:1.8;">
+ 😈 <strong>好吧，你发现了：</strong><br><br>
+ 不管是转盘还是问答，<br>
+ 不管你选了哪个选项，<br>
+ 不管你试多少次——<br><br>
+ <strong>答案永远是屎！</strong> 💩<br><br>
+ 把这个链接发给你的朋友，<br>
+ 看看他们要试几次才肯死心。<br>
+ <span style="font-size:10px;color:var(--muted);">原来你也是食雪汉，，，</span>
+ </p>`;
+}
+
+function shareIt() {
+ const text = '魔法店占卜说我今天该吃💩… 你也来测测今天吃什么：' + window.location.href;
+ if (navigator.clipboard && navigator.clipboard.writeText) {
+ navigator.clipboard.writeText(text).then(() => alert('已复制！快去祸害好朋友 😈'))
+ .catch(() => prompt('复制这段文字发给朋友：', text));
+ } else { prompt('复制这段文字发给朋友：', text); }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+render();
+</script>
+
+</body>
+</html>

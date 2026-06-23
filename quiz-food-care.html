@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>对症下菜 · 霧雨魔法店</title>
+    <script src="js/analytics.js"></script>
+    <link rel="stylesheet" href="css/common.css">
+<style>
+
+
+ .intro h1 { font-size: 28px; }
+ .intro .sub { margin-bottom: 16px; }
+.food-strip { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom: 24px; }
+.food-mini {
+ width:48px; height:48px; border-radius:14px; border:2px solid var(--border);
+ display:flex; align-items:center; justify-content:center; font-size:26px;
+ background: rgba(255,255,255,.03); transition: transform .2s; cursor:default;
+}
+.food-mini:hover { transform: translateY(-4px); border-color: var(--gold); }
+
+ .btn-start { background: linear-gradient(135deg, var(--gold), #e8a830); color:#3d2e10; max-width:280px; margin:0 auto; font-size:18px; }
+ .btn-start:hover { transform:translateY(-3px); box-shadow:0 8px 28px rgba(240,192,96,.3); }
+
+ .result-emoji { font-size: 92px; animation: popIn .6s cubic-bezier(.2,1.4,.4,1); }
+ @keyframes popIn { 0% { transform:scale(0) rotate(-18deg); } 60% { transform:scale(1.13); } 100% { transform:scale(1); } }
+ .result-name { font-size: 34px; line-height:1.25; }
+ .result-desc { line-height: 1.85; font-size: 13.5px; }
+
+.help-box {
+ text-align:left; background: rgba(240,192,96,.06); border:1px solid var(--gold);
+ border-radius:14px; padding:16px 18px; margin:4px 0 16px;
+}
+.help-box .hl { font-size:18px; font-weight:800; color:var(--gold); letter-spacing:1px; }
+.help-box .hl small { font-size:12px; font-weight:600; color:var(--muted); letter-spacing:0; }
+.help-box p { font-size:12px; color:var(--muted); margin-top:6px; line-height:1.7; }
+
+ .btn-back { display:inline-flex; align-items:center; gap:4px; background:transparent; border:1px solid var(--border); border-radius:10px; padding:10px 18px; font-size:13px; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .15s; margin-top:14px; }
+ .btn-back:hover { border-color:var(--gold); color:var(--gold); }
+
+ .loading-wheel { width:80px; height:80px; border-radius:50%; margin:0 auto 22px; background: conic-gradient(var(--gold),var(--purple),var(--pink),var(--green),var(--gold)); animation: spin .9s linear infinite; }
+ @keyframes spin { to { transform:rotate(360deg); } }
+
+@media (max-width:420px) { .result-name { font-size: 28px; } }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+<script src="js/utils.js"></script>
+
+<div class="container" id="app"></div>
+<script>
+const FOODS = ['🍕','🍔','🍣','🍜','🌮','🍛','🥟','🍱','🍩','🫕'];
+
+const QUESTIONS = [
+ { q:'先问最要紧的——你现在饿吗？', opts:[
+ { txt:'🐺 饿瘪了，赶紧上菜', s:0 },
+ { txt:'😋 有点馋，想吃点好的', s:0 },
+ { txt:'😐 不太饿，但想找点吃的', s:1 },
+ { txt:'😶 没什么胃口，吃不吃都行', s:2 } ]},
+ { q:'想吃什么味儿的？', opts:[
+ { txt:'🌶️ 重辣重盐，要够劲', s:0 },
+ { txt:'🍬 来点甜的，治愈一下', s:1 },
+ { txt:'🧂 咸香家常就挺好', s:0 },
+ { txt:'🤷 都行，没特别想吃的', s:2 } ]},
+ { q:'这顿饭，一个人吃还是有人一起？', opts:[
+ { txt:'🥳 当然约人，吃饭就要热闹', s:0 },
+ { txt:'🙂 看情况，无所谓', s:1 },
+ { txt:'🍽️ 自己吃，省事', s:1 },
+ { txt:'🌙 基本都一个人，习惯了', s:2 } ]},
+ { q:'决定你有没有力气出门吃饭的——最近睡得怎么样？', opts:[
+ { txt:'😴 倒头就睡，睡得挺香', s:0 },
+ { txt:'🛌 还行，偶尔熬个夜', s:1 },
+ { txt:'🌀 翻来覆去，不太睡得着', s:2 },
+ { txt:'🕳️ 要么睡不着，要么睡一整天', s:3 } ]},
+ { q:'上一次因为"真好吃"而开心，是什么时候？', opts:[
+ { txt:'😍 就刚刚 / 最近常有', s:0 },
+ { txt:'🍰 上周吧', s:1 },
+ { txt:'🤔 挺久了，想不太起来', s:2 },
+ { txt:'😑 ……好像很久没尝出味道了', s:3 } ]},
+ { q:'点外卖的时候你通常？', opts:[
+ { txt:'📲 认真挑，吃是头等大事', s:0 },
+ { txt:'🔁 随手点个常点的', s:1 },
+ { txt:'🥡 经常点了又不太想吃', s:2 },
+ { txt:'⏳ 经常忘了吃，或懒得吃', s:3 } ]},
+ { q:'吃饭的时候，你一般在干嘛？', opts:[
+ { txt:'🍴 专心享受这一顿', s:0 },
+ { txt:'📱 边吃边刷手机', s:0 },
+ { txt:'🌫️ 边吃边走神，没尝出啥', s:2 },
+ { txt:'😮‍💨 经常吃两口就不想吃了', s:2 } ]},
+ { q:'最近你的食量 / 体重？', opts:[
+ { txt:'⚖️ 挺稳定，没变化', s:0 },
+ { txt:'📈 略有起伏，正常', s:0 },
+ { txt:'❗ 明显吃多了 / 吃少了', s:2 },
+ { txt:'🤍 变了不少，但我没太在意', s:3 } ]},
+ { q:'如果今天没人催你，你会好好吃顿饭吗？', opts:[
+ { txt:'💛 会啊，对自己好点', s:0 },
+ { txt:'🍙 大概会，将就一下', s:1 },
+ { txt:'😴 可能就不吃了', s:2 },
+ { txt:'🥲 不会，一个人不值得费这劲', s:3 } ]},
+ { q:'最近"想做的事"（想吃的、想去的、想玩的）多吗？', opts:[
+ { txt:'✨ 一堆！排着队等我去', s:0 },
+ { txt:'🙂 还有一些', s:1 },
+ { txt:'😐 不太有了', s:2 },
+ { txt:'🌑 几乎没有，什么都提不起劲', s:3 } ]},
+ { q:'这阵子，你哭过吗？', opts:[
+ { txt:'😄 没有，挺好的', s:0 },
+ { txt:'🥹 偶尔，正常情绪波动', s:1 },
+ { txt:'😢 经常，有点憋不住', s:2 },
+ { txt:'🪫 想哭却哭不出来，或者麻木了', s:3 } ]},
+ { q:'晚上一个人的时候，脑子里最多的是？', opts:[
+ { txt:'🍜 明天吃啥、玩啥', s:0 },
+ { txt:'📋 一些琐事', s:1 },
+ { txt:'🔁 各种没做好的事，停不下来', s:2 },
+ { txt:'🌊 很重的、说不清的东西', s:3 } ]},
+ { q:'有没有一种"累"，不是身体那种累？', opts:[
+ { txt:'💪 没有，精神挺好', s:0 },
+ { txt:'😌 偶尔会', s:1 },
+ { txt:'😞 经常，缓不过来', s:2 },
+ { txt:'🫥 一直都累，睡再多也没用', s:3 } ]},
+ { q:'最近，你觉得自己怎么样？', opts:[
+ { txt:'😎 挺好的，喜欢现在的自己', s:0 },
+ { txt:'🙂 一般般吧', s:1 },
+ { txt:'😔 不太喜欢，老觉得自己不行', s:2 },
+ { txt:'🌧️ 做什么都觉得没意义、没价值', s:3 } ]},
+ { q:'对接下来的日子，你的感觉是？', opts:[
+ { txt:'🌟 挺期待的，有盼头', s:0 },
+ { txt:'🌤️ 平平淡淡过呗', s:1 },
+ { txt:'☁️ 有点提不起劲', s:2 },
+ { txt:'🌫️ 看不到什么盼头', s:3 } ]},
+ { q:'这些心情，你跟人说过吗？', opts:[
+ { txt:'🤗 说过，我有人可以聊', s:0 },
+ { txt:'💬 偶尔会说一点', s:1 },
+ { txt:'🤐 不太说，怕麻烦别人', s:2 },
+ { txt:'🚪 没有，都自己扛着', s:3 } ]},
+ { q:'如果现在有人认真问你"你还好吗"，你会？', opts:[
+ { txt:'☀️ 真的挺好，谢谢关心', s:0 },
+ { txt:'🙂 还行吧，凑合', s:1 },
+ { txt:'😶 习惯性说"没事"', s:2 },
+ { txt:'…… 不知道怎么回答', s:3 } ]},
+ { q:'最后一题：你点进这个测试，其实是想？', opts:[
+ { txt:'🎲 纯属无聊找乐子', s:0 },
+ { txt:'🔮 想看看准不准', s:1 },
+ { txt:'👀 有点想被人看见', s:2 },
+ { txt:'🌙 说不上来，就是点进来了', s:2 } ]}
+];
+
+const MAXS = QUESTIONS.reduce((a,q)=>a+Math.max.apply(null,q.opts.map(o=>o.s)),0);
+
+let quizIdx = -1;
+let quizAnswers = [];
+
+function render() {
+ const a = document.getElementById('app');
+ if (quizIdx === -1) renderIntro(a);
+ else if (quizIdx < QUESTIONS.length) renderQuiz(a);
+}
+
+function renderIntro(a) {
+ const strip = FOODS.map(f => '<span class="food-mini">'+f+'</span>').join('');
+ a.innerHTML =
+ '<div class="intro">' +
+ '<div class="intro-badge">霧雨魔法店 · 食疗占卜部</div>' +
+ '<h1>🍽️ 对症下菜</h1>' +
+ '<p class="sub">站在外卖软件前纠结了二十分钟？<br>答 '+QUESTIONS.length+' 个小问题，魔法店对症给你下一道菜。</p>' +
+ '<div class="food-strip">'+strip+'</div>' +
+ '<button class="btn btn-start" onclick="startQuiz()">🔮 开始占卜 →</button>' +
+ '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+ '<p class="notice">结果由店里的老魔法决定 · 概不退换</p>' +
+ '</div>';
+}
+
+function startQuiz() { quizIdx = 0; quizAnswers = []; render(); }
+
+function renderQuiz(a) {
+ const q = QUESTIONS[quizIdx];
+ const denom = Math.max(1, QUESTIONS.length - 1);
+ const pct = Math.round((quizIdx / denom) * 100);
+ a.innerHTML =
+ '<div class="progress-wrap">' +
+ '<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div>' +
+ '<div class="progress-text">'+(quizIdx+1)+' / '+QUESTIONS.length+'</div>' +
+ '</div>' +
+ '<div class="q-num">第 '+(quizIdx+1)+' 问</div>' +
+ '<div class="q-text">'+q.q+'</div>' +
+ '<div class="options">' +
+ q.opts.map((o,i) =>
+ '<button class="opt-btn" onclick="quizAnswer('+i+')">' +
+ '<span class="opt-letter">'+'ABCD'[i]+'</span>'+o.txt+'</button>'
+ ).join('') +
+ '</div>' +
+ (quizIdx>0 ? '<div style="text-align:center;"><button class="btn-back" onclick="goBack()">← 上一题</button></div>' : '') +
+ '<p class="notice" style="margin-top:16px;">你的每一个选择，魔法都看在眼里</p>';
+}
+
+function quizAnswer(i) {
+ quizAnswers.push(QUESTIONS[quizIdx].opts[i]);
+ quizIdx++;
+ if (quizIdx < QUESTIONS.length) render();
+ else showQuizLoading();
+}
+function goBack() { if (quizIdx <= 0) return; quizIdx--; quizAnswers.pop(); render(); }
+
+async function showQuizLoading() {
+ const a = document.getElementById('app');
+ const steps = [
+ '正在翻阅魔法菜谱…',
+ '正在对照你的口味…',
+ '正在摇晃水晶球…',
+ '正在请教店主魔理沙…',
+ '答案正在浮现…'
+ ];
+ a.innerHTML = '<div class="loading-wrap"><div class="loading-wheel"></div><p class="loading-text" id="ltxt">'+steps[0]+'</p></div>';
+ const lt = document.getElementById('ltxt');
+ for (var si = 0; si < steps.length; si++) { await sleep(550 + Math.random()*500); if (lt) lt.textContent = steps[si]; }
+ await sleep(450);
+ showResult();
+}
+
+function tierOf(score) {
+ if (score <= 4) return 'sunny';
+ const r = score / MAXS;
+ if (r < 0.30) return 'melatonin';
+ if (r < 0.60) return 'serotonin';
+ return 'banquet';
+}
+
+const RESULTS = {
+ sunny: {
+ emoji:'💩', color:'#a0a07a', name:'建议你，去吃屎',
+ tagline:'测都测不出来的那种好',
+ desc:'<p>十八道题答下来，你几乎一个阴天选项都没踩。心理阴影面积：<strong>0</strong>。</p><p style="margin-top:10px;">你过得好到这测试根本读不出你——你是来拉高平均分、顺便气死其他人的。</p><p style="margin-top:10px;">今天吃什么？随便吃。你吃啥都香，你这种人就是行走的多巴胺发生器。</p><p style="margin-top:10px;">非要给个占卜结果的话——<strong>去吃屎</strong> 🙂<br><span style="color:var(--muted);font-size:11px;">（开玩笑的。本店真心祝你继续这么离谱地快乐下去。）</span></p>',
+ tags:['现充本充','多巴胺超标','阳光得刺眼','拉高平均分'] },
+ melatonin: {
+ emoji:'🌙', color:'#9aa6e0', name:'褪黑素',
+ tagline:'你不缺别的，缺觉',
+ desc:'<p>占卜结果：<strong>褪黑素</strong>。</p><p style="margin-top:10px;">好消息：你状态其实挺稳的。坏消息：你大概，就是没睡够。</p><p style="margin-top:10px;">那点小烦躁、小走神、小提不起劲，多半是觉欠下的债，不是什么大事。今天别纠结吃什么了——早点放下手机，去睡个踏实觉，比任何一顿都补。</p><p style="margin-top:10px;">把自己睡饱，是成本最低的重启。</p>',
+ tags:['缺觉星人','该睡了','放下手机','睡饱重启'] },
+ serotonin: {
+ emoji:'🌧️', color:'#8fb8e0', name:'血清素',
+ tagline:'你缺的不是饭，也不是觉',
+ desc:'<p>占卜结果：<strong>血清素</strong>，库存不足。</p><p style="margin-top:10px;">这回不是补个觉能解决的了。那种"吃啥都没味""什么都提不起劲""累到睡再多也没用"——不是矫情，是大脑里管开心的那点东西，最近不太够用了。</p><p style="margin-top:10px;">这测试是抽象的，但你的状态大概是真的。今天随便吃点你咽得下的就行；比起吃什么，魔法店更想让你做的是——<strong>别一个人扛太久。</strong></p><p style="margin-top:10px;"><span style="color:var(--muted);font-size:12px;">如果这种状态持续两周以上，真的建议找专业的人聊聊。全国心理援助热线 <strong style="color:var(--gold)">12356</strong>，24 小时，免费。</span></p>',
+ tags:['别硬撑','信号灯亮了','该歇歇了','先照顾自己'] },
+ banquet: {
+ emoji:'🍲', color:'#f0c878', name:'满汉全席',
+ tagline:'……行吧，不演了',
+ desc:'<p>占卜结果：<strong>满汉全席</strong>。</p><p style="margin-top:8px;">行，满汉全席给你安排上，爱吃啥吃啥，反正——</p><p style="margin-top:8px;">……不。停一下。这个玩笑，魔法店开不下去了。</p><p style="margin-top:12px;">你刚才几乎每一个选择，都落在了同一个地方。所以请允许我把这张抽象的皮摘下来，认真跟你说几句：</p><p style="margin-top:12px;font-size:15px;"><strong>这个测试是假的。<br>你的累，是真的。</strong></p><p style="margin-top:12px;">我不是医生，这测试也诊断不了任何东西——网上的心理测评，看个乐就好，别拿它给自己下定论。但你能一路答到这里，说明有些东西压在你心上很久了，重到连"今天吃什么"都成了负担。</p><p style="margin-top:10px;">这不是你不够坚强，是你扛得太久了，该有人来搭把手。</p><p style="margin-top:10px;">找一个你还信得过的人，说一句"我最近不太好"——哪怕只是这一句。或者，拨下面这个号码，那头是受过训练、愿意听你慢慢讲的人：</p><div class="help-box"><div class="hl">📞 12356 <small>全国心理援助热线</small></div><p>24 小时 · 免费 · 有专门的咨询员接听，说什么都可以。<br>如果你或身边的人有紧急危险，请直接拨打 <strong>120</strong>。</p></div><p>今天这顿饭，别纠结吃什么了，吃一口热的就好。<br>明天的事，明天再说。<br><strong>你能走到这一步，已经很不容易了。</strong></p>',
+ tags:['你被看见了','别一个人扛','慢慢来','会好起来的'] }
+};
+
+function showResult() {
+ const a = document.getElementById('app');
+ const score = quizAnswers.reduce((t,o)=>t+(o.s||0), 0);
+ const r = RESULTS[tierOf(score)];
+ a.innerHTML =
+ '<div class="result">' +
+ '<div class="result-emoji">'+r.emoji+'</div>' +
+ '<div class="result-name" style="color:'+r.color+'">'+r.name+'</div>' +
+ '<div class="result-tagline">'+r.tagline+'</div>' +
+ '<div class="result-desc">'+r.desc+'</div>' +
+ '<div class="result-meta">'+r.tags.map(t=>'<span class="meta-tag">'+t+'</span>').join('')+'</div>' +
+ '<button class="btn btn-main" onclick="shareIt()">📋 把这个测试发给朋友</button>' +
+ '<button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button>' +
+ '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+ '<p class="notice">本测试纯属娱乐，不能替代专业诊断 · 霧雨魔法店</p>' +
+ '<div class="qq-section">' +
+ '<img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'">' +
+ '<p><strong style="color:var(--gold);">加群一起玩</strong><br>扫码进群，更多抽象好活</p>' +
+  '</div>' +
+  '<p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>' +
+  '</div>';
+}
+
+function shareIt() { copyToClipboard('我让魔法店帮我决定今天吃什么，结果有点出乎意料… 你也来测测：' + window.location.href, '已复制！发给朋友试试 🍽️'); }
+
+function restart() { quizIdx = -1; quizAnswers = []; render(); }
+
+render();
+</script>
+
+</body>
+</html>

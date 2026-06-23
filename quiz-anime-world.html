@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="js/analytics.js"></script>
+<title>测测你的灵魂故乡 · 霧雨魔法店</title>
+<link rel="stylesheet" href="css/common.css">
+<style>
+.result-hero { width:120px; height:120px; border-radius:28px; margin:0 auto 14px; display:flex; align-items:center; justify-content:center; font-size:56px; animation:popIn .5s ease; box-shadow:0 12px 40px rgba(0,0,0,.35); border:3px solid var(--gold); }
+.result-quote { display:inline-block; background:rgba(255,255,255,.05); font-size:13px; padding:8px 18px; border-radius:14px; color:var(--gold); margin-bottom:18px; max-width:90%; }
+.dim-wrap { text-align:center; margin-bottom:18px; }
+.dim-wrap svg { max-width:300px; width:100%; }
+.runner-up { margin-top:12px; padding-top:10px; border-top:1px dashed var(--border); font-size:11px; color:var(--muted); display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:center; }
+.runner-item { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; background:rgba(255,255,255,.03); border-radius:10px; border:1px solid var(--border); }
+.poster-wrap { text-align:center; }
+.poster-img { max-width:100%; border-radius:16px; display:none; margin:0 auto 12px; }
+.poster-hint { font-size:11px; color:var(--muted); margin-bottom:12px; }
+@media (max-width:420px) { .dim-wrap svg { max-width:260px; } .result-hero { width:100px; height:100px; font-size:48px; } }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container" id="app"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/canvas-utils.js"></script>
+<script>
+
+var state = 'intro';
+var idx = 0;
+var answers = [];
+
+// ==================== DATA ====================
+
+var REGIONS = {
+  konoha:{name:'木叶忍者村',aka:'火影忍者',emoji:'🍃',color:'#22c55e',vec:[0.55,0.183,0.428,0.305,0.122,0.611],
+    q:'「你的灵魂戴着护额，背后有一整个村子」',
+    desc:'你把"伙伴"刻在了骨头里。你不是最强的那个，但你是永远不会放弃的那个。有人背叛了你，你选择原谅；有人伤害了村子，你选择战斗。<br><br>你的忍道是：说到做到。你的灵魂需要一碗一乐拉面和一个坐在火影岩上看夕阳的傍晚。',
+    tags:['火之意志','影分身','一乐拉面','说到做到','羁绊']},
+  seireitei:{name:'尸魂界·瀞灵廷',aka:'BLEACH',emoji:'⚔️',color:'#fbbf24',vec:[0.528,0.33,0.33,0.396,0.264,0.528],
+    q:'「你的斩魄刀已经在呼唤你的名字——你听到了吗」',
+    desc:'你骨子里有一种武士的骄傲。不是傲慢，是知道自己为何而战的笃定。你有队长级的潜力，但比起权力，你更在意守护某个人。<br><br>你的灵魂有一把只属于你的斩魄刀，卍解的时候整个瀞灵廷都能感受到你的灵压。你不是孤高的死神，你是为了一些人而挥刀的死神。',
+    tags:['斩魄刀','卍解','护廷十三队','灵压','守护']},
+  grandline:{name:'伟大航路',aka:'ONE PIECE',emoji:'🏴‍☠️',color:'#ef4444',vec:[0.631,0.252,0.379,0.189,0.189,0.568],
+    q:'「你的灵魂不需要地图——它自带永久指针，指向自由」',
+    desc:'你是自由的代名词。规则是用来打破的，海是用来航行的，伙伴是用来拼命的。你从不问目的地在哪里——路上的冒险本身就是答案。<br><br>你对"梦想"这个词有一种宗教般的信仰。别人觉得你疯了，你觉得别人没活明白。你的灵魂需要一艘船、一张海图和一群不会背叛的伙伴。',
+    tags:['海贼王','自由','冒险','伙伴','D的意志']},
+  fuyuki:{name:'冬木市',aka:'Fate',emoji:'🏆',color:'#c084fc',vec:[0.351,0.41,0.176,0.585,0.41,0.41],
+    q:'「圣杯选中了你——尽管你可能不太想要这个结果」',
+    desc:'你是天生的策略家。你看人很准，看局势更准。你知道什么时候该出手、什么时候该等，你对自己的"王牌"有绝对的信心。<br><br>你相信代价和回报是等价的——但你选择付出的时候从不犹豫。你的灵魂有一个从者，你们之间的羁绊比任何契约都牢固。',
+    tags:['圣杯战争','从者','令咒','策略','代价与回报']},
+  academy:{name:'学园都市',aka:'魔法禁书目录',emoji:'⚡',color:'#3b82f6',vec:[0.368,0.491,0.245,0.613,0.307,0.307],
+    q:'「你的灵魂在230万学生中排名第一——但你知道排名不代表一切」',
+    desc:'你不相信奇迹，因为你相信科学可以解释一切。你是超能力者中的超能力者，但你最强大的不是你的能力——是你这个人本身。<br><br>你用数据分析世界，用逻辑解决难题，但有时候一个笨蛋的直球比你的精密计算更有用。你心里承认这一点，只是嘴上不说。',
+    tags:['超能力','科学侧','LV5','电磁炮','一方通行']},
+  aincrad:{name:'艾恩葛朗特',aka:'刀剑神域',emoji:'🗡️',color:'#f97316',vec:[0.528,0.33,0.264,0.396,0.528,0.33],
+    q:'「你的血条上写着你的名字，但你从不看血条——因为你知道自己不会倒下」',
+    desc:'你是一个在生死之间找到了自己的人。你知道这个世界的规则是残酷的，但你没有选择逃避——你选择通关。<br><br>你习惯一个人扛，不是不信任别人，是害怕失去。但你在旅途中遇到了值得并肩的人，教会你一个人很强，两个人更强。',
+    tags:['二刀流','SOLO玩家','攻略组','血盟骑士团','通关']},
+  shingeki:{name:'墙内世界',aka:'进击的巨人',emoji:'🧣',color:'#a78bfa',vec:[0.519,0.288,0.058,0.403,0.519,0.461],
+    q:'「献出心脏——这不是口号，这是你的灵魂一直在做的事」',
+    desc:'你见过最深的绝望，但你选择在最黑暗的地方点燃火把。你不是不怕——你是怕到发抖但依然往前冲的那种人。<br><br>你对"自由"的执念深入骨髓。那些高墙没有困住你的身体，因为你的灵魂在墙建起来之前就已经飞出去了。',
+    tags:['献出心脏','调查兵团','立体机动','自由之翼','塔塔开']},
+  gensokyo:{name:'幻想乡',aka:'东方Project',emoji:'🏮',color:'#f472b6',vec:[0.261,0.457,0.652,0.326,0.196,0.391],
+    q:'「你的灵魂在博丽神社的樱花树下，喝着茶，弹幕在远处炸开——而这一切都是日常」',
+    desc:'你是所有世界里最安逸的那个灵魂。你有时间喝一辈子茶，有空间看一辈子樱花。你不追求强大——因为强大自己会来找你。<br><br>你对"异常"有一种天然的淡定：妖怪来了？喝茶；异变发生了？先喝完茶再说。你的灵魂需要的是一个永远不会结束的下午。',
+    tags:['弹幕游戏','博丽神社','符卡规则','喝茶','异变解决']},
+  sosdan:{name:'北高SOS团',aka:'凉宫春日的忧郁',emoji:'🎀',color:'#facc15',vec:[0.311,0.623,0.436,0.249,0.125,0.498],
+    q:'「让世界热闹起来——这就是你灵魂被创造出来的唯一原因」',
+    desc:'你对无聊的耐受度为零。你有一种让周围一切变得有趣的本能——不是故意搞事，是你本身就是事件的中心。<br><br>你可能以为自己只是普通人，但围绕着你的人都知道：你不是。你的灵魂被安排在这里，就是为了让这个宇宙不至于无聊到自我毁灭。',
+    tags:['团长','超能力者','外星人','未来人','让世界热闹']},
+  masara:{name:'真新镇',aka:'宝可梦',emoji:'⚡',color:'#fcd34d',vec:[0.379,0.063,0.632,0.19,0.126,0.632],
+    q:'「你的灵魂才刚出发——背包里还放着一个没打开的精灵球」',
+    desc:'你有一种永不褪色的纯真。不是幼稚，是相信世界上还有值得探索的美好。你对伙伴的信任是绝对的——不管是人还是宝可梦。<br><br>你的人生是一场旅程而不是竞赛。赢了开心，输了也没关系，反正还有下一场。你的灵魂需要一个初始精灵、一个劲敌、和一个永远在路上的早晨。',
+    tags:['宝可梦大师','初始之旅','劲敌','精灵球','相信伙伴']},
+  hunter:{name:'猎人工会',aka:'全职猎人',emoji:'🎴',color:'#84cc16',vec:[0.381,0.318,0.191,0.572,0.572,0.254],
+    q:'「念能力已经觉醒——你只是还没找到通往考试会场的入口」',
+    desc:'你有猎人的眼睛：看穿一切，但选择不点破。你享受复杂，对简单的东西反而感到不安。你不是不合群——你只是觉得"合群"这个词本身就是个伪命题。<br><br>你的战斗风格是不可预测的，因为你比对手更了解他们自己。你的灵魂需要一张猎人执照和一个让你感兴趣的目标。',
+    tags:['念能力','猎人考试','奇犽','小杰','没有正确答案']},
+  amestris:{name:'亚美斯特利斯',aka:'钢之炼金术师',emoji:'🦾',color:'#e2e8f0',vec:[0.442,0.252,0.316,0.568,0.252,0.505],
+    q:'「等价交换——这四个字是你灵魂最忠实的信条」',
+    desc:'你不是理想主义者，你是现实主义者——但你的现实主义里装着全世界的温柔。你不相信不劳而获，你相信付出才有回报，而你已经付出了足够多。<br><br>你的灵魂有一道恩维尔的裂痕，但你用那裂痕装下了更多的人。你不需要贤者之石——你本身就是等价交换的奇迹。',
+    tags:['等价交换','炼金术','兄弟','恩维尔','国家炼金术师']},
+  capsule:{name:'胶囊公司',aka:'龙珠',emoji:'🐉',color:'#f97316',vec:[0.707,0.212,0.354,0.071,0.283,0.495],
+    q:'「你的战斗力探测器在看到你之前就爆了」',
+    desc:'你是力量的化身。不是欺负弱小的那种——是保护弱小、挑战强者的那种。你觉得战斗是最好的交流方式，对手是最值得尊重的存在。<br><br>你练到秃了也练不秃，因为你的极限在地球之外。你的灵魂需要一个重力训练室、一桌满汉全席和一个永远比你强的对手。',
+    tags:['赛亚人','战斗力','龟派气功','修炼狂','超越极限']},
+  tokyoghoul:{name:'东京喰种区',aka:'东京喰种',emoji:'🎭',color:'#71717a',vec:[0.307,0.553,0.061,0.43,0.614,0.184],
+    q:'「在人性和喰种之间，你选择了一个最孤独的答案——你自己」',
+    desc:'你活在一个灰色地带。不全是人类，也不全是喰种，但正因为如此，你比谁都看得清楚。你对痛苦有一种超越常人的理解——因为你自己就站在痛苦中间。<br><br>你的世界里没有真正安全的角落，但你已经习惯了。你不是不渴望温暖，只是怕伸手的时候被烫伤。',
+    tags:['半喰种','独眼之王','赫子','安东区','悲惨世界']},
+  axel:{name:'异世界阿克塞尔',aka:'为美好世界献上祝福',emoji:'💥',color:'#38bdf8',vec:[0.268,0.603,0.536,0.134,0.201,0.469],
+    q:'「转生什么的不需要神装——下饭才是你灵魂最强的技能」',
+    desc:'你是全宇宙最快乐的废物——也是全宇宙最有用的废物。你可能会搞砸一切，但你搞砸的过程让所有人都笑出了声。<br><br>你的队友不是什么精英，你也不是什么英雄，但你们加在一起的化学反应比任何神装都强。你的灵魂需要一帮不靠谱的伙伴和一个永远扯淡的异世界日常。',
+    tags:['转生','女神','下饭','幸运值MAX','废柴小队']},
+  nerv:{name:'新东京市',aka:'EVA',emoji:'🤖',color:'#a3e635',vec:[0.344,0.573,0.057,0.458,0.573,0.115],
+    q:'「勇气不是不害怕——而是害怕了，依然坐上EVA」',
+    desc:'你活在一种存在主义式的孤独中。你想靠近别人，但又怕靠得太近。你觉得自己不够好，但需要你的时候你比谁都勇敢。<br><br>你不是天生的英雄——你是被命运推上驾驶舱的普通人。但正是这样的你，才是最真实的人类。你的灵魂需要的不是A.T.力场，是一个愿意打破它的人。',
+    tags:['EVA驾驶员','A.T.力场','人类补完计划','碇真嗣','拒绝补完']}
+};
+
+var REGION_KEYS = Object.keys(REGIONS);
+var DIMS = ['hot','chuuni','heal','smart','solo','bond'];
+var DIM_LABEL = {hot:'热血',chuuni:'中二',heal:'治愈',smart:'智谋',solo:'孤高',bond:'羁绊'};
+var DIM_COLORS = ['#ef4444','#c084fc','#22c55e','#3b82f6','#f97316','#fbbf24'];
+
+var QUIZ_TITLE = '测测你的灵魂故乡';
+var QUIZ_SUBTITLE = '16 道题 · 了解你的灵魂归属<br>你的故乡不一定在地图上……';
+var BADGE_TEXT = '霧雨魔法店 · 灵魂地理学';
+
+var QUESTIONS = [
+  {q:'周末下午，你最想干什么？',opts:[
+    {txt:'约上三五好友，出来聚聚聊聊',v:[1,-1,0,-1,-2,2]},
+    {txt:'一个人待着，做自己喜欢的事',v:[-2,0,0,0,2,-2]},
+    {txt:'随便走走，没有计划的那种',v:[0,0,1,0,0,0]},
+    {txt:'补觉，睡到自然醒再说',v:[-3,-1,2,-2,1,-1]},
+  ]},
+  {q:'聚会上，你更接近哪种角色？',opts:[
+    {txt:'主动张罗气氛的那个人',v:[2,0,0,-1,-2,2]},
+    {txt:'坐在角落观察大家的人',v:[-2,0,-1,1,2,-2]},
+    {txt:'跟着大家走，随大流',v:[0,-1,0,-1,0,0]},
+    {txt:'看心情，有时候很嗨有时候很安静',v:[0,1,0,0,0,0]},
+  ]},
+  {q:'有人说你活在自己的世界里，你怎么想？',opts:[
+    {txt:'你说得对，我的世界确实比外面有意思',v:[-1,2,0,0,1,0]},
+    {txt:'有吗？我觉得我挺接地气的',v:[0,-2,0,-1,-1,0]},
+    {txt:'每个人不都活在自己的世界里吗',v:[0,0,-1,1,0,0]},
+    {txt:'我只是不想被打扰而已',v:[-2,0,-1,0,2,-1]},
+  ]},
+  {q:'你心里真正的强大是什么样的？',opts:[
+    {txt:'能保护自己重要的人',v:[2,-1,0,0,-2,2]},
+    {txt:'无论发生什么都不崩溃',v:[-1,0,-1,0,2,0]},
+    {txt:'知道自己要什么且不犹豫',v:[0,0,0,1,0,0]},
+    {txt:'能让身边的人感到安心',v:[0,-1,2,-1,-1,1]},
+  ]},
+  {q:'面对一道几乎无解的问题，你？',opts:[
+    {txt:'分析所有可能性，找到最优解',v:[-1,0,-1,2,0,0]},
+    {txt:'直接动手试，边做边改',v:[1,0,0,-2,0,0]},
+    {txt:'请教身边值得信赖的人',v:[0,-1,0,0,-2,2]},
+    {txt:'放一放，也许灵感会自己来',v:[-2,0,1,0,0,-1]},
+  ]},
+  {q:'你对命运的看法？',opts:[
+    {txt:'命运是靠自己打出来的',v:[2,0,0,-2,0,0]},
+    {txt:'每个人都有自己的使命',v:[0,1,0,0,0,0]},
+    {txt:'命运是用来接受的东西',v:[-2,0,1,-1,0,-1]},
+    {txt:'命运像一盘棋——可以算但算不尽',v:[0,0,-1,2,0,0]},
+  ]},
+  {q:'深夜独自一人时，你最常在想？',opts:[
+    {txt:'复盘今天的事，想想有没有更好的做法',v:[-1,0,-1,2,0,0]},
+    {txt:'幻想平行世界的自己在干什么',v:[0,2,0,0,0,0]},
+    {txt:'想念一些人，但不太会主动联系',v:[-2,0,0,0,2,-2]},
+    {txt:'什么都不想，放空比较舒服',v:[-1,-1,1,-1,0,0]},
+  ]},
+  {q:'有人在你面前哭了，你会？',opts:[
+    {txt:'安静陪着，不说太多话',v:[0,-1,2,-1,0,1]},
+    {txt:'问清楚发生了什么，帮忙想办法',v:[0,0,0,1,0,1]},
+    {txt:'有点不知所措，但尽力安慰',v:[-1,0,1,0,0,1]},
+    {txt:'不太会处理这种情况，先保持距离',v:[-2,0,-1,0,2,-2]},
+  ]},
+  {q:'一扇通往神秘世界的门向你打开，你？',opts:[
+    {txt:'毫不犹豫走进去——这才叫活着',v:[2,1,0,-1,-1,0]},
+    {txt:'先观察一下，做足准备再进去',v:[0,0,0,2,0,0]},
+    {txt:'带上一两个信得过的人一起进',v:[0,0,0,0,-2,2]},
+    {txt:'有点犹豫但最终还是进去了',v:[0,0,-1,0,0,0]},
+  ]},
+  {q:'你理想中的生活更接近？',opts:[
+    {txt:'和一群志同道合的人一起闯荡',v:[2,0,1,-1,-2,2]},
+    {txt:'安静做自己想做的事没人打扰',v:[-2,0,0,0,2,-1]},
+    {txt:'每天都在发生新鲜有趣的事',v:[1,2,0,0,0,0]},
+    {txt:'稳定温暖，岁月静好就够了',v:[-1,-1,2,-1,0,0]},
+  ]},
+  {q:'正义到底是什么？',opts:[
+    {txt:'保护该保护的人，对抗该对抗的恶',v:[2,0,0,-1,-1,1]},
+    {txt:'没有绝对正义，只有不同立场',v:[-1,0,-1,1,0,0]},
+    {txt:'让所有人都能幸福',v:[0,0,2,-2,-2,1]},
+    {txt:'正义就是每个人做自己觉得对的事',v:[0,1,0,0,0,0]},
+  ]},
+  {q:'一觉醒来，窗外世界完全变了，你？',opts:[
+    {txt:'兴奋——终于不用过无聊的日常了',v:[1,2,0,0,0,0]},
+    {txt:'先冷静分析发生了什么',v:[-1,0,-1,2,1,0]},
+    {txt:'确认身边的人是否安全',v:[0,-1,0,-1,-2,2]},
+    {txt:'表面镇定，内心慌得一批但在想办法',v:[0,0,0,0,0,0]},
+  ]},
+  {q:'你心里住着一个…',opts:[
+    {txt:'充满干劲、想改变世界的人',v:[2,0,0,-1,0,0]},
+    {txt:'习惯一个人、但偶尔渴望陪伴的人',v:[-1,0,-1,0,2,-1]},
+    {txt:'温柔善良、相信好事会发生的人',v:[0,-1,2,-1,0,0]},
+    {txt:'总在思考、对一切充满好奇的人',v:[0,0,0,2,0,0]},
+  ]},
+  {q:'真正的伙伴是什么样的？',opts:[
+    {txt:'平时互相吐槽，关键时刻绝不掉链子',v:[2,0,0,0,0,2]},
+    {txt:'不在一起但心里有对方',v:[-1,0,1,-1,0,1]},
+    {txt:'不用说话就能互相理解',v:[0,0,0,0,0,1]},
+    {txt:'能让你变得更好的人',v:[0,0,0,0,0,1]},
+  ]},
+  {q:'最想拥有哪种不太实用的能力？',opts:[
+    {txt:'暂停时间，在暂停的世界里自由活动',v:[0,2,-1,0,1,0]},
+    {txt:'和动物/自然交流',v:[-1,0,2,-1,0,0]},
+    {txt:'瞬间学会任何技能',v:[0,0,0,2,0,0]},
+    {txt:'隐身，想消失的时候就能消失',v:[-2,0,-1,0,2,-2]},
+  ]},
+  {q:'如果灵魂可以选下一世的出生地，你希望那里',opts:[
+    {txt:'有一个需要全力以赴的目标',v:[2,0,0,0,0,0]},
+    {txt:'有值得一起走下去的伙伴',v:[0,0,1,-1,-2,2]},
+    {txt:'有趣且充满惊喜的日常',v:[0,1,1,0,0,0]},
+    {txt:'安静但不孤单，有懂你的人',v:[-1,0,2,0,0,0]},
+  ]}
+];
+var LOADING_STEPS = ['正在扫描灵魂波长…','检索二次元数据库…','分析人格坐标…','匹配世界线…','锁定灵魂归属…'];
+var QR_IMG = 'images/qr-code.png';
+var QQ_IMG = 'images/qq-group.png';
+var SITE_URL = 'www.azureflame.cloud';
+var QQ_GROUP = '702973928';
+
+// ==================== 渲染 ====================
+
+function render() {
+  var app = document.getElementById('app');
+  if (state === 'intro')  renderIntro(app);
+  else if (state === 'quiz') renderQuestion(app);
+  else if (state === 'loading') renderLoading(app);
+  else if (state === 'result') renderResult(app);
+  else if (state === 'poster') renderPoster(app);
+}
+
+function renderIntro(app) {
+  app.innerHTML =
+    '<div class="intro">' +
+      '<div class="intro-badge">' + BADGE_TEXT + '</div>' +
+      '<h1>' + QUIZ_TITLE + '</h1>' +
+      '<p class="sub">' + QUIZ_SUBTITLE + '</p>' +
+      '<div class="intro-deco" style="font-size:48px;margin-bottom:16px;">🗺️</div>' +
+      '<button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">🏠 开始寻找灵魂故乡</button>' +
+      '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+    '</div>';
+}
+
+function startQuiz() { state = 'quiz'; idx = 0; answers = []; render(); }
+
+function renderQuestion(app) {
+  if (idx >= QUESTIONS.length) { state = 'loading'; render(); return; }
+  var q = QUESTIONS[idx];
+  var pct = Math.round((idx / QUESTIONS.length) * 100);
+  var labels = 'ABCDEFGH';
+  var html =
+    '<div class="progress-wrap">' +
+      '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+      '<div class="progress-text">' + (idx + 1) + ' / ' + QUESTIONS.length + '</div>' +
+    '</div>' +
+    '<div class="q-num">第 ' + (idx + 1) + ' 问</div>' +
+    '<div class="q-text">' + q.q + '</div>' +
+    '<div class="options">';
+  for (var i = 0; i < q.opts.length; i++) {
+    html +=
+      '<button class="opt-btn" onclick="answer(' + i + ')">' +
+        '<span class="opt-letter">' + (labels[i] || '?') + '</span>' +
+        q.opts[i].txt +
+      '</button>';
+  }
+  html += '</div>';
+  if (idx > 0) html += '<div style="text-align:center;"><button class="btn-back" onclick="goBack()">← 上一题</button></div>';
+  app.innerHTML = html;
+}
+
+function answer(choice) { answers.push(QUESTIONS[idx].opts[choice]); idx++; render(); }
+function goBack() { if (idx <= 0) return; idx--; answers.pop(); render(); }
+
+function renderLoading(app) {
+  app.innerHTML =
+    '<div class="loading-wrap">' +
+      '<div class="loading-orb"></div>' +
+      '<p class="loading-text" id="ltxt">' + LOADING_STEPS[0] + '</p>' +
+    '</div>';
+  cycleLoading(1);
+}
+
+async function cycleLoading(i) {
+  if (i >= LOADING_STEPS.length) { state = 'result'; render(); return; }
+  await sleep(500 + Math.random() * 400);
+  var lt = document.getElementById('ltxt');
+  if (lt) lt.textContent = LOADING_STEPS[i];
+  cycleLoading(i + 1);
+}
+
+function calcResult() {
+  var uv = [0,0,0,0,0,0];
+  for (var i = 0; i < answers.length; i++) {
+    var v = answers[i].v;
+    for (var d = 0; d < 6; d++) uv[d] += v[d];
+  }
+  var scores = {};
+  for (var j = 0; j < REGION_KEYS.length; j++) {
+    var key = REGION_KEYS[j];
+    var rv = REGIONS[key].vec;
+    var dot = 0, na = 0, nb = 0;
+    for (var d = 0; d < 6; d++) { dot += uv[d] * rv[d]; na += uv[d] * uv[d]; nb += rv[d] * rv[d]; }
+    scores[key] = (na === 0 || nb === 0) ? 0 : dot / (Math.sqrt(na) * Math.sqrt(nb));
+  }
+  var ranked = REGION_KEYS.slice().sort(function(x,y){return scores[y]-scores[x];});
+  return { key:ranked[0], runners:ranked.slice(1,4), vec:uv, scores:scores };
+}
+
+function buildRadar(uv, color) {
+  var n = 6, cx = 140, cy = 124, R = 80, LB = 20;
+  var minv = Math.min.apply(null, uv);
+  var shifted = uv.slice();
+  if (minv <= 0) { var offset = Math.abs(minv) + 1; for (var i = 0; i < shifted.length; i++) shifted[i] += offset; }
+  var maxv = Math.max.apply(null, shifted.concat([1]));
+  function pt(i, r) { var ang = -Math.PI/2 + i*2*Math.PI/n; return [cx+r*Math.cos(ang), cy+r*Math.sin(ang)]; }
+  var svg = '<svg viewBox="0 0 280 252" xmlns="http://www.w3.org/2000/svg">';
+  var rings = [0.25,0.5,0.75,1];
+  for (var g = 0; g < rings.length; g++) {
+    var rp = [];
+    for (var i = 0; i < n; i++) { var p = pt(i, R*rings[g]); rp.push(p[0].toFixed(1)+','+p[1].toFixed(1)); }
+    svg += '<polygon points="'+rp.join(' ')+'" fill="none" stroke="var(--border)" stroke-width="1" opacity="'+(g===rings.length-1?0.9:0.45)+'"/>';
+  }
+  for (var i = 0; i < n; i++) {
+    var e = pt(i, R);
+    svg += '<line x1="'+cx+'" y1="'+cy+'" x2="'+e[0].toFixed(1)+'" y2="'+e[1].toFixed(1)+'" stroke="var(--border)" stroke-width="1" opacity="0.45"/>';
+    var lp = pt(i, R+LB), anc = Math.abs(lp[0]-cx)<8?'middle':(lp[0]>cx?'start':'end');
+    svg += '<text x="'+lp[0].toFixed(1)+'" y="'+(lp[1]-1).toFixed(1)+'" fill="var(--muted)" font-size="9" text-anchor="'+anc+'">'+DIM_LABEL[DIMS[i]]+'</text>';
+    svg += '<text x="'+lp[0].toFixed(1)+'" y="'+(lp[1]+10).toFixed(1)+'" fill="'+color+'" font-size="10" font-weight="700" text-anchor="'+anc+'">'+Math.round(uv[i])+'</text>';
+  }
+  var dp = [];
+  for (var i = 0; i < n; i++) { var p = pt(i, (shifted[i]/maxv)*R); dp.push(p[0].toFixed(1)+','+p[1].toFixed(1)); }
+  svg += '<polygon points="'+dp.join(' ')+'" fill="'+color+'" fill-opacity="0.2" stroke="'+color+'" stroke-width="2" stroke-linejoin="round"/>';
+  for (var i = 0; i < n; i++) { var p = pt(i, (shifted[i]/maxv)*R); svg += '<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3" fill="'+color+'"/>'; }
+  return svg + '</svg>';
+}
+
+function renderResult(app) {
+  var r = calcResult();
+  var reg = REGIONS[r.key];
+  var html =
+    '<div class="result">' +
+      '<div class="result-hero" style="background:linear-gradient(135deg,'+reg.color+'33,'+reg.color+'11);">'+reg.emoji+'</div>' +
+      '<div class="result-label">霧雨魔法店 · 灵魂故乡鉴定</div>' +
+      '<div class="result-name" style="color:'+reg.color+'">'+reg.name+'</div>' +
+      '<div class="result-tagline">'+reg.aka+'</div>' +
+      '<div class="result-quote">'+reg.q+'</div>' +
+      '<div class="dim-wrap">'+buildRadar(r.vec, reg.color)+'</div>' +
+      '<div class="result-desc">'+reg.desc+'</div>' +
+      '<div class="result-meta">';
+  for (var i = 0; i < reg.tags.length; i++) html += '<span class="meta-tag">'+reg.tags[i]+'</span>';
+  html += '</div>';
+  if (r.runners.length) {
+    html += '<div class="runner-up">你的灵魂还混有：';
+    for (var i = 0; i < r.runners.length; i++) {
+      html += '<span class="runner-item" style="border-color:'+REGIONS[r.runners[i]].color+'">'+REGIONS[r.runners[i]].emoji+' '+REGIONS[r.runners[i]].name+'</span>';
+    }
+    html += '</div>';
+  }
+  html +=
+      '<button class="btn btn-main" onclick="shareIt(\''+r.key+'\')">📋 复制结果发给朋友</button>' +
+      '<button class="btn btn-ghost" onclick="shareImage()">📸 生成分享海报</button>' +
+      '<button class="btn btn-ghost" onclick="restart()">🔄 再来一次</button>' +
+      '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+      '<p class="notice">霧雨魔法店 · 二次元灵魂研究所 · 结果仅供娱乐</p>' +
+      '<div class="qq-section">' +
+        '<img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'">' +
+        '<p><strong style="color:var(--gold);">加群一起玩</strong><br>群号 702973928 · 更多抽象好活</p>' +
+      '</div>' +
+      '<p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>' +
+    '</div>';
+  app.innerHTML = html;
+}
+
+function shareIt(key) {
+  var reg = REGIONS[key];
+  var text = '🏠 我测出来灵魂故乡是【'+reg.name+'】（'+reg.aka+'）——'+reg.q+' 你也来测测：'+window.location.href;
+  copyToClipboard(text, '已复制！发给朋友看看TA的灵魂故乡 😈');
+}
+
+function shareImage() { state = 'poster'; render(); }
+
+function renderPoster(app) {
+  app.innerHTML =
+    '<div class="poster-wrap">' +
+      '<div class="result-title" style="font-size:14px;color:var(--muted);margin-bottom:14px;">长按图片保存 / 分享</div>' +
+      '<img class="poster-img" id="posterImg" alt="分享海报" style="display:none;">' +
+      '<div class="loading-wrap" id="posterLoading"><div class="loading-orb"></div><p class="loading-text">正在生成海报…</p></div>' +
+      '<p class="poster-hint">手机长按上图即可保存到相册；电脑可点下方按钮下载。</p>' +
+      '<a class="btn btn-main" id="posterDl" download="灵魂故乡.png" style="display:none;">⬇️ 下载海报</a>' +
+      '<button class="btn btn-ghost" onclick="state=\'result\';render();">← 返回结果</button>' +
+    '</div>';
+  buildPoster();
+}
+
+async function buildPoster() {
+  var r = calcResult();
+  var reg = REGIONS[r.key];
+  var W = 640, H = 920, pad = 36;
+  var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  var ctx = cv.getContext('2d');
+  var FONT = "-apple-system,PingFang SC,Microsoft YaHei,sans-serif";
+
+  ctx.fillStyle = '#1a1520'; ctx.fillRect(0, 0, W, H);
+  var g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, 'rgba(176,159,255,.10)'); g.addColorStop(1, 'rgba(240,192,96,.06)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#241e2a'; roundRect(ctx, pad, pad, W - pad*2, H - pad*2, 28); ctx.fill();
+  var bar = ctx.createLinearGradient(pad, 0, W - pad, 0);
+  bar.addColorStop(0, '#f0c060'); bar.addColorStop(.5, '#b89fff'); bar.addColorStop(1, '#f0c060');
+  ctx.fillStyle = bar; roundRect(ctx, pad, pad, W - pad*2, 6, 3); ctx.fill();
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#b89fff'; ctx.font = '600 16px ' + FONT;
+  ctx.fillText('霧雨魔法店 · 灵魂故乡鉴定', W/2, 80);
+
+  var cx = W/2, cy = 170, R = 82;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.closePath(); ctx.clip();
+  ctx.fillStyle = '#1a1520'; ctx.fillRect(cx-R, cy-R, R*2, R*2);
+  ctx.fillStyle = '#fff'; ctx.font = '86px sans-serif'; ctx.textBaseline = 'middle';
+  ctx.fillText(reg.emoji, cx, cy + 6); ctx.textBaseline = 'alphabetic';
+  ctx.restore();
+  ctx.lineWidth = 5; ctx.strokeStyle = reg.color;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.stroke();
+
+  ctx.fillStyle = reg.color; ctx.font = '800 40px ' + FONT;
+  ctx.fillText(reg.name, W/2, 290);
+  ctx.fillStyle = '#8a7e9a'; ctx.font = '16px ' + FONT;
+  ctx.fillText(reg.aka, W/2, 320);
+  ctx.fillStyle = '#f0c060'; ctx.font = '14px ' + FONT;
+  var plain = reg.q.replace(/「/g,'').replace(/」/g,'');
+  wrapText(ctx, plain, W/2, 352, W - pad*2 - 50, 24);
+
+  var ty = 410;
+  ctx.fillStyle = '#e0d8ec'; ctx.font = '14px ' + FONT;
+  var dlines = wrapToLines(ctx, reg.desc.replace(/<br\s*\/?>/gi,'\n').split('\n')[0], W - pad*2 - 50);
+  for (var i = 0; i < Math.min(dlines.length, 2); i++) ctx.fillText(dlines[i], W/2, ty + i*22);
+
+  var tx = pad + 20, tty = ty + 60;
+  for (var i = 0; i < reg.tags.length; i++) {
+    var tw = ctx.measureText(reg.tags[i]).width + 28;
+    if (tx + tw > W - pad - 20) { tx = pad + 20; tty += 36; }
+    ctx.fillStyle = 'rgba(255,255,255,.04)'; ctx.strokeStyle = reg.color+'55';
+    roundRect(ctx, tx, tty-18, tw, 32, 16); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = reg.color; ctx.fillText(reg.tags[i], tx + tw/2, tty);
+    tx += tw + 10;
+  }
+
+  var siteImg = await loadImg(QR_IMG);
+  var qqImg = await loadImg(QQ_IMG);
+  var qs = 124, gap2 = 46, totalQW = qs*2 + gap2;
+  var leftX = (W - totalQW)/2, rightX = leftX + qs + gap2;
+  var qy = H - pad - 196;
+  drawQRBox(ctx, siteImg, leftX, qy, qs, '扫码开测', SITE_URL, '#f0c060');
+  drawQRBox(ctx, qqImg, rightX, qy, qs, '加 QQ 群', '群号 '+QQ_GROUP, '#b89fff');
+
+  ctx.fillStyle = '#8a7e9a'; ctx.font = '11px ' + FONT;
+  ctx.textAlign = 'center'; ctx.fillText('B站: bilibili.com/1029138222', W/2, qy+qs+62);
+
+  var pi = document.getElementById('posterImg');
+  var pl = document.getElementById('posterLoading');
+  var dl = document.getElementById('posterDl');
+  var dataUrl = null;
+  try { dataUrl = cv.toDataURL('image/png'); } catch(e){}
+  if (pl) pl.style.display = 'none';
+  if (dataUrl) {
+    if (pi) { pi.src = dataUrl; pi.style.display = 'block'; }
+    if (dl) { dl.href = dataUrl; dl.style.display = 'inline-flex'; }
+  } else {
+    if (pi && pi.parentNode) { cv.className = 'poster-img'; cv.style.display = 'block'; pi.parentNode.replaceChild(cv, pi); }
+    var hint = document.querySelector('.poster-hint');
+    if (hint) hint.textContent = '当前环境无法导出图片。部署到线上访问即可正常保存。';
+  }
+}
+
+function restart() { state = 'intro'; idx = 0; answers = []; render(); }
+
+render();
+</script>
+
+</body>
+</html>

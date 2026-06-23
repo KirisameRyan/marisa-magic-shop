@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高考出分模拟器 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<style>
+body { background-image: radial-gradient(ellipse at 30% 0%, rgba(239,68,68,.04) 0%, transparent 50%), radial-gradient(ellipse at 70% 100%, rgba(240,192,96,.03) 0%, transparent 50%); }
+.container { max-width: 540px; }
+.container::before { background: linear-gradient(90deg, #ef4444, var(--gold), #ef4444); }
+
+.intro-wrap { text-align: center; }
+.exam-badge { display: inline-block; font-size: 10px; letter-spacing: 2px; color: #ef4444; border: 1px solid rgba(239,68,68,.35); border-radius: 20px; padding: 4px 16px; margin-bottom: 14px; }
+.intro-wrap h1 { font-size: 24px; margin-bottom: 6px; }
+.intro-wrap .sub { font-size: 12px; color: var(--muted); margin-bottom: 24px; line-height: 1.7; }
+
+.form-row { display: flex; gap: 10px; margin-bottom: 14px; }
+.form-group { flex: 1; text-align: left; }
+.form-group label { display: block; font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-bottom: 6px; }
+.form-group input { width: 100%; background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px; font-size: 15px; color: var(--text); font-family: inherit; transition: all .2s; }
+.form-group input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(240,192,96,.08); }
+.form-group input::placeholder { color: var(--muted); opacity: .35; }
+.form-group input.error { border-color: #ef4444; }
+
+.subject-picker { margin-bottom: 18px; text-align: left; }
+.subject-picker .sp-label { display: block; font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-bottom: 8px; }
+.pill-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.pill { flex: 1; padding: 10px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,.02); font-size: 14px; color: var(--muted); cursor: pointer; text-align: center; font-family: inherit; transition: all .2s; }
+.pill:hover { border-color: var(--gold-dim); }
+.pill.on { border-color: var(--gold); color: var(--gold); background: rgba(240,192,96,.06); font-weight: 700; }
+.chip-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.chip { padding: 10px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,.02); font-size: 14px; color: var(--muted); cursor: pointer; text-align: center; font-family: inherit; transition: all .2s; }
+.chip:hover { border-color: var(--gold-dim); }
+.chip.on { border-color: var(--gold); color: var(--gold); background: rgba(240,192,96,.06); font-weight: 700; }
+
+.btn-query { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; margin-top: 4px; font-size: 17px; letter-spacing: 2px; }
+.btn-query:hover { background: linear-gradient(135deg, #f87171, #ef4444); transform: translateY(-1px); box-shadow: 0 4px 24px rgba(239,68,68,.3); }
+
+.load-wrap { text-align: center; padding: 16px 0; }
+.load-wrap .exam-tip { font-size: 12px; color: var(--gold); letter-spacing: 2px; margin-bottom: 20px; }
+.stage-list { text-align: left; max-width: 320px; margin: 0 auto 0; }
+.stage-item { font-size: 12px; padding: 5px 0; color: var(--muted); display: flex; align-items: center; gap: 8px; opacity: 0; transform: translateY(-4px); transition: opacity .25s, transform .25s, color .3s; }
+.stage-item.show { opacity: .5; transform: translateY(0); color: rgba(255,255,255,.3); }
+.stage-item.current { opacity: 1; color: var(--gold); }
+.stage-item.done { opacity: .7; color: var(--green); }
+.stage-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; background: var(--border); transition: background .3s; }
+.stage-item.done .stage-dot { background: var(--green); }
+.stage-item.current .stage-dot { background: var(--gold); animation: dotPulse .8s infinite; }
+@keyframes dotPulse { 0%,100%{opacity:.4;transform:scale(1)} 50%{opacity:1;transform:scale(1.8)} }
+
+.report-card { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; animation: fadeUp .45s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+
+.report-hd { padding: 20px; text-align: center; border-bottom: 1px solid var(--border); background: rgba(255,255,255,.012); }
+.report-hd .r-badge { font-size: 10px; letter-spacing: 3px; color: #ef4444; margin-bottom: 6px; }
+.report-hd .r-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+.report-hd .r-meta { font-size: 11px; color: var(--muted); line-height: 1.8; }
+.report-hd .r-meta b { color: var(--text); }
+
+.subs-block { padding: 6px 20px 14px; }
+.sub-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.025); }
+.sub-row:last-child { border-bottom: none; }
+.sub-name { width: 44px; font-size: 13px; color: var(--muted); flex-shrink: 0; }
+.sub-bar-wrap { flex: 1; height: 7px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.sub-bar { height: 100%; border-radius: 4px; transition: width 1s cubic-bezier(.4,0,.2,1); }
+.sub-score { width: 34px; text-align: right; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+.sub-max { font-size: 10px; color: var(--muted); }
+
+.total-area { padding: 16px 20px; text-align: center; border-top: 1px solid var(--border); background: rgba(240,192,96,.025); }
+.total-area .t-label { font-size: 11px; color: var(--muted); letter-spacing: 2px; margin-bottom: 2px; }
+.total-area .t-score { font-size: 54px; font-weight: 900; line-height: 1.05; background: linear-gradient(135deg, var(--gold), #ffe8b0, var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.total-area .t-detail { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+.admit-area { padding: 16px 20px; text-align: center; border-top: 1px solid var(--border); }
+.admit-area .a-label { font-size: 10px; letter-spacing: 2px; color: var(--muted); margin-bottom: 8px; }
+.admit-area .a-school { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+.admit-area .a-major { font-size: 14px; color: var(--muted); margin-bottom: 8px; }
+.admit-area .a-tag { display: inline-block; font-size: 10px; padding: 3px 14px; border-radius: 14px; background: rgba(240,192,96,.08); color: var(--gold); border: 1px solid rgba(240,192,96,.18); }
+
+.easter-area { text-align: center; padding: 14px 20px; border-top: 1px solid var(--border); background: rgba(240,192,96,.04); }
+.easter-area .e-msg { font-size: 13px; color: var(--gold); line-height: 1.8; }
+
+.comment-area { text-align: center; padding: 14px 20px; border-top: 1px solid var(--border); }
+.comment-area .c-icon { font-size: 28px; margin-bottom: 6px; }
+.comment-area .c-text { font-size: 13px; color: var(--muted); line-height: 1.8; }
+
+.act-row { display: flex; gap: 10px; margin-top: 16px; }
+.act-row .btn { flex: 1; }
+.btn-share { background: linear-gradient(135deg, var(--purple), #a78bfa); color: #fff; }
+.btn-share:hover { background: linear-gradient(135deg, #b89fff, #a78bfa); }
+.btn-again { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.btn-again:hover { border-color: var(--gold); }
+
+@media (max-width: 420px) {
+  .total-area .t-score { font-size: 40px; }
+  .admit-area .a-school { font-size: 18px; }
+  .form-row { flex-direction: column; gap: 12px; }
+  .act-row { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+<script src="js/utils.js"></script>
+
+<div class="container" id="app"></div>
+
+<script>
+var CURRENT_YEAR = '2026';
+
+var TIERS = [
+  { name:'学神附体',               emoji:'👑', w:10, s:[130,148, 135,150, 130,148, 90,100, 88,100, 88,100] },
+  { name:'学霸降世',               emoji:'🎓', w:30, s:[115,142, 120,148, 115,145, 80,98,  78,98,  78,98] },
+  { name:'中流砥柱',               emoji:'📚', w:35, s:[100,130, 95,132,  95,132,  65,90,  60,90,  60,90] },
+  { name:'普普通通',               emoji:'📖', w:20, s:[88,115,  72,105,  75,108,  48,75,  48,75,  48,75] },
+  { name:'✦ 魔法之森特招生 ✦',    emoji:'🧹', w:5,  s:[150,150, 150,150, 150,150, 100,100, 100,100, 100,100] },
+];
+
+var PRIME = ['物理','历史'];
+var ELECTIVE = ['化学','生物','地理','政治'];
+
+var ADMIT = {
+  '700':[
+    {s:'清华大学',m:'魔法理论研究',t:'清北直通车'},
+    {s:'北京大学',m:'跨次元文化交流',t:'TOP2'},
+    {s:'中国科学院大学',m:'抽象逻辑学',t:'科研圣地'},
+    {s:'复旦大学',m:'互联网考古学',t:'C9联盟'},
+    {s:'上海交通大学',m:'二次元工程学',t:'东方明珠'},
+    {s:'浙江大学',m:'全科满分迷惑学',t:'华五之光'},
+    {s:'中国科学技术大学',m:'量子运气学',t:'科研天花板'},
+    {s:'国防科技大学',m:'战略摸鱼指挥',t:'军中清华'}
+  ],
+  '650':[
+    {s:'浙江大学',m:'AI与摸鱼科学',t:'华五精英'},
+    {s:'南京大学',m:'赛博社会学',t:'华五精英'},
+    {s:'中国人民大学',m:'网络舆情管理学',t:'985之光'},
+    {s:'武汉大学',m:'樱花观赏与维护',t:'985之光'},
+    {s:'中山大学',m:'粤语方言保护',t:'华南一哥'},
+    {s:'华中科技大学',m:'光谷码农速成班',t:'华科爷'},
+    {s:'四川大学',m:'火锅底料配方工程',t:'西南一霸'},
+    {s:'北京师范大学',m:'优雅地当老师',t:'师范天花板'}
+  ],
+  '600':[
+    {s:'哈尔滨工业大学',m:'冬季生存技术',t:'C9守门员'},
+    {s:'西安交通大学',m:'肉夹馍标准化工程',t:'西部之光'},
+    {s:'同济大学',m:'土木圣经编纂学',t:'上海老三'},
+    {s:'北京航空航天大学',m:'纸飞机动力学',t:'国防七子'},
+    {s:'南开大学',m:'相声表演与鉴赏',t:'百年名校'},
+    {s:'东南大学',m:'福建人识别技术',t:'建筑老八校'},
+    {s:'天津大学',m:'煎饼果子标准化',t:'建筑老八校'},
+    {s:'厦门大学',m:'海景自习体验学',t:'最美大学'}
+  ],
+  '540':[
+    {s:'华中师范大学',m:'班主任速成班',t:'211'},
+    {s:'南京航空航天大学',m:'无人机送外卖',t:'国防七子'},
+    {s:'西南交通大学',m:'高铁麻辣烫配送',t:'211'},
+    {s:'华东理工大学',m:'实验室搬砖学',t:'211'},
+    {s:'暨南大学',m:'侨乡文化研究',t:'211'},
+    {s:'苏州大学',m:'园林设计与摸鱼',t:'211'},
+    {s:'上海大学',m:'魔都生存指南',t:'211'},
+    {s:'郑州大学',m:'人口大省守门员',t:'211'}
+  ],
+  '470':[
+    {s:'XX师范大学',m:'情绪管理（不被学生气哭）',t:'一本守门员'},
+    {s:'XX工业大学',m:'拧螺丝进阶教程',t:'一本'},
+    {s:'XX农业大学',m:'种地理论与实践',t:'一本'},
+    {s:'XX理工大学',m:'实验室安全逃生',t:'一本'},
+    {s:'XX医科大学',m:'秃头临床医学',t:'一本'},
+    {s:'XX财经大学',m:'炒股从入门到放弃',t:'一本'},
+    {s:'XX邮电大学',m:'网线接驳技术',t:'一本'},
+    {s:'XX外国语大学',m:'跟外国人比划学',t:'一本'}
+  ],
+  '400':[
+    {s:'XX学院',m:'大学生存指南',t:'二本'},
+    {s:'XX师范学院',m:'乡村教师速成',t:'二本'},
+    {s:'XX工程学院',m:'工地管理实务',t:'二本'},
+    {s:'XX文理学院',m:'万金油通识',t:'二本'},
+    {s:'XX商学院',m:'Excel速成班',t:'二本'},
+    {s:'XX旅游学院',m:'导游不迷路',t:'二本'},
+    {s:'XX体育学院',m:'躺平理论学',t:'二本'}
+  ],
+  '0':[
+    {s:'魔法之森自学大学',m:'扫帚飞行技术',t:'店主亲传'},
+    {s:'B站大学',m:'弹幕互动专业',t:'自学成才'}
+  ]
+};
+
+var QUIPS = {
+  '学神附体': [
+    '各科接近满分，{best}更是逆天——{bs}分一骑绝尘。省排{rank}名，清北随便挑。',
+    '这份成绩单配享太庙。{best}{bs}分碾压全场，清北招生办已经在查你电话了。省排{rank}名。',
+    '你不是来考试的，你是来给阅卷老师开眼界的。{best}独自美丽，{worst}也毫不逊色。',
+    '{best}直接拉满，{worst}稍逊但也足够封神。省排{rank}名，横着走。',
+    '全科爆表，{best}教全场什么叫"人和人的差距"。神仙下凡辛苦了。',
+  ],
+  '学霸降世': [
+    '{best}{bs}分撑起门面，{worst}{ws}分稍微拖了下后腿。省排{rank}名，稳稳的幸福。',
+    '妥妥的学霸配置。{best}是你的王牌，{worst}……可以解释为"战略性失误"，问题不大。',
+    '各科均衡发挥，稳中带秀。{best}告诉你什么叫差距，{worst}告诉你人无完人。省排{rank}名，不错了。',
+    '这分数985稳了，如果{worst}再高几分……算了，人不能太贪。{best}已经够猛了。',
+    '学霸气场拉满，{best}是你最硬的底牌。省排{rank}名，光宗耀祖的级别。',
+  ],
+  '中流砥柱': [
+    '{best}还不错，{worst}得加把劲。省排{rank}名，典型中游——稳得住。',
+    '不上不下的分数，比上不足比下有余。省排{rank}名，知足常乐。',
+    '中流砥柱代表：不卷也不摆，主打一个"来了就好"。{best}假装自己很努力。',
+    '{best}可以冲一冲，{worst}……建议以后跟人聊天时回避这个科目。省排{rank}名还行。',
+    '总分凑合，省排{rank}名。{best}还好，{worst}是那种"要是多蒙对几道"的遗憾。',
+  ],
+  '普普通通': [
+    '平平无奇的分数，{best}勉强能拿出手，{worst}就真的是"重在参与"了。省排{rank}名。',
+    '{best}是你唯一可以大声念出分的科目，{worst}念出来可能会引发沉默。',
+    '主打一个"到了考场就算赢"。省排{rank}名，高考嘛，重在参与顺便讨个彩头。',
+    '普普通通就是最大的不普通——至少每科都健康地写上了名字。{best}还行，{worst}就当没考。',
+    '二本稳了，一本看脸。省排{rank}名，比下有余，心态放平。',
+  ],
+  '✦ 魔法之森特招生 ✦': [
+    '全科满分！魔法之森特招生，店主说她混了这么多年都没见过这种场面。假的，但爽。',
+    '750 满分，随机数之神跟你开了个天大的玩笑。建议同时买张彩票，双重验证运气。',
+    '恭喜触发隐藏款！全科拉满，店主亲自发来贺电：假得很有创意，建议重测。',
+    '语数外理化生全满——传说中的"六边形战士"，只在传说中。建议截图裱起来挂墙上。',
+  ],
+};
+
+function pickQuip(tier, subs, rank) {
+  var pool = QUIPS[tier.name] || [tier.name];
+  if (!pool.length) return '';
+  var q = pool[Math.floor(Math.random() * pool.length)];
+  var best = subs[0], worst = subs[0];
+  for (var i = 1; i < subs.length; i++) {
+    if (subs[i].score / subs[i].max > best.score / best.max) best = subs[i];
+    if (subs[i].score / subs[i].max < worst.score / worst.max) worst = subs[i];
+  }
+  return q.replace(/\{best\}/g, best.name).replace(/\{worst\}/g, worst.name)
+          .replace(/\{bs\}/g, best.score).replace(/\{ws\}/g, worst.score)
+          .replace(/\{rank\}/g, rank.toLocaleString());
+}
+
+function getAdmit(total) {
+  var keys = Object.keys(ADMIT).map(Number).sort(function(a,b){return b-a;});
+  var key = 0;
+  for (var i = 0; i < keys.length; i++) { if (total >= keys[i]) { key = keys[i]; break; } }
+  var pool = ADMIT[String(key)];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+var state = 'intro';
+var result = null;
+var selectedPrime = '物理';
+var selectedElecs = ['化学','生物'];
+var lastName = '';
+var lastExamId = '';
+
+function r(min,max) { return Math.floor(Math.random()*(max-min+1))+min; }
+
+function pickTier() {
+  var tw = 0; for (var i=0;i<TIERS.length;i++) tw+=TIERS[i].w;
+  var roll = Math.random()*tw;
+  for (var i=0;i<TIERS.length;i++) { roll-=TIERS[i].w; if (roll<=0) return TIERS[i]; }
+  return TIERS[0];
+}
+
+function genResult(name,examId,prime,elecs) {
+  var tier = pickTier();
+  var R = tier.s;
+
+  var lang=r(R[0],R[1]), math=r(R[2],R[3]), eng=r(R[4],R[5]);
+  var primeScore=r(R[6],R[7]);
+  var e1=r(R[8],R[9]), e2=r(R[10],R[11]);
+
+  var subs = [
+    {name:'语文',score:lang,max:150},
+    {name:'数学',score:math,max:150},
+    {name:'外语',score:eng,max:150},
+    {name:prime,score:primeScore,max:100},
+    {name:elecs[0],score:e1,max:100},
+    {name:elecs[1],score:e2,max:100}
+  ];
+  var total = subs.reduce(function(s,x){return s+x.score;},0);
+
+  var pct = total/750;
+  var rank;
+  if      (pct>=0.95) rank=r(1,2000);
+  else if (pct>=0.90) rank=r(1000,15000);
+  else if (pct>=0.80) rank=r(10000,80000);
+  else if (pct>=0.70) rank=r(50000,200000);
+  else if (pct>=0.60) rank=r(150000,400000);
+  else if (pct>=0.50) rank=r(300000,650000);
+  else if (pct>=0.35) rank=r(550000,900000);
+  else rank=r(800000,1400000);
+
+  var admit = getAdmit(total);
+  var quip = pickQuip(tier, subs, rank);
+  var subsStr = prime+' + '+elecs[0]+' + '+elecs[1];
+
+  var easter = null;
+  var cn = name.toLowerCase();
+  if (cn.indexOf('魔理沙')>=0||cn.indexOf('まりさ')>=0)
+    easter = '🧹 店主说：魔理沙不用高考，魔法之森有保送名额。不过既然你来了……';
+  else if (cn.indexOf('灵梦')>=0||cn.indexOf('れいむ')>=0)
+    easter = '🪙 灵梦看了你的分数，默默把赛钱箱往前推了推……';
+  else if (cn.indexOf('高考')>=0)
+    easter = '📝 考神本人来了？但这分数……是随机生成的，别当真。';
+  else if (cn.indexOf('清华')>=0||cn.indexOf('北大')>=0)
+    easter = '🤯 清北学子也来测？你不是来查分的，你是来微服私访的。';
+  else if (cn.indexOf('锦鲤')>=0||cn.indexOf('保佑')>=0||cn.indexOf('好运')>=0)
+    easter = '🙏 锦鲤附体！魔法店给每个考生都施了祝福魔法，祝金榜题名！';
+  else if (cn.indexOf('原神')>=0||cn.indexOf('启动')>=0)
+    easter = '🎮 玩原神玩的？先别启动了，看看分再说。';
+  else if (cn.indexOf('店主')>=0||cn.indexOf('老板')>=0)
+    easter = '🧹 店主说：本店不给自己人查分，怕看了伤心。但……来都来了。';
+  else if (cn.indexOf('抽象')>=0)
+    easter = '💀 抽象人，抽象魂。你的分数……可能比这更抽象。';
+  else if (cn.indexOf('摆烂')>=0||cn.indexOf('躺平')>=0)
+    easter = '🛏️ 摆烂归摆烂，分数还是要查的。万一祖宗保佑了呢？';
+
+  return {name:name,examId:examId,tier:tier,subs:subs,total:total,rank:rank,admit:admit,quip:quip,subsStr:subsStr,easter:easter};
+}
+
+function esc(s) {
+  var d=document.createElement('div');
+  d.appendChild(document.createTextNode(s));
+  return d.innerHTML;
+}
+
+function barColor(score,max) {
+  var p=score/max;
+  if (p>=.9) return 'linear-gradient(90deg,#f0c060,#ffe8b0)';
+  if (p>=.7) return 'linear-gradient(90deg,#6fcf97,#4ade80)';
+  if (p>=.5) return 'linear-gradient(90deg,#22d3ee,#67e8f9)';
+  if (p>=.3) return 'linear-gradient(90deg,#fb923c,#fbbf24)';
+  return 'linear-gradient(90deg,#ef4444,#f87171)';
+}
+function scoreColor(score,max) {
+  var p=score/max;
+  if (p>=.9) return '#f0c060'; if (p>=.7) return '#6fcf97'; if (p>=.5) return '#22d3ee'; if (p>=.3) return '#fb923c'; return '#ef4444';
+}
+
+function render() {
+  var app = document.getElementById('app');
+  if (state==='intro') renderIntro(app);
+  else if (state==='result') renderResult(app);
+}
+
+function renderIntro(app) {
+  app.innerHTML =
+    '<div class="intro-wrap">'+
+      '<div class="exam-badge">🎓 '+CURRENT_YEAR+' 年普通高等学校招生全国统一考试</div>'+
+      '<h1>高考出分模拟器</h1>'+
+      '<p class="sub">就要出分了，讨个好彩头！<br>输入姓名考号（或直接点查询），看看老天爷给你多少分。</p>'+
+      '<div class="form-row">'+
+        '<div class="form-group"><label>考生姓名</label><input type="text" id="inpName" placeholder="你的名字（不填也行）" value="'+esc(lastName)+'" maxlength="20" autocomplete="off"></div>'+
+        '<div class="form-group"><label>准考证号</label><input type="text" id="inpExam" placeholder="随便填，不填也中" value="'+esc(lastExamId)+'" maxlength="30" autocomplete="off"></div>'+
+      '</div>'+
+      '<p style="font-size:10px;color:var(--muted);text-align:center;margin-bottom:12px;">💡 试试输入「魔理沙」「清华」「锦鲤」「原神」等名字，有彩蛋</p>'+
+      '<div class="subject-picker">'+
+        '<div class="sp-label">首选科目（选 1 门）</div>'+
+        '<div class="pill-row" id="primePills">'+
+          '<button class="pill'+(selectedPrime==='物理'?' on':'')+'" data-v="物理">物理</button>'+
+          '<button class="pill'+(selectedPrime==='历史'?' on':'')+'" data-v="历史">历史</button>'+
+        '</div>'+
+        '<div class="sp-label">次选科目（选 2 门）</div>'+
+        '<div class="chip-row" id="elecChips">'+
+          '<button class="chip'+(selectedElecs.indexOf('化学')>=0?' on':'')+'" data-v="化学">化学</button>'+
+          '<button class="chip'+(selectedElecs.indexOf('生物')>=0?' on':'')+'" data-v="生物">生物</button>'+
+          '<button class="chip'+(selectedElecs.indexOf('地理')>=0?' on':'')+'" data-v="地理">地理</button>'+
+          '<button class="chip'+(selectedElecs.indexOf('政治')>=0?' on':'')+'" data-v="政治">政治</button>'+
+        '</div>'+
+      '</div>'+
+      '<button class="btn btn-query" onclick="submit()">🔍 查询成绩</button>'+
+      '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+    '</div>';
+  var n = document.getElementById('inpName'); if (n) n.focus();
+  [document.getElementById('inpName'),document.getElementById('inpExam')].forEach(function(el){
+    if (el) el.addEventListener('keydown',function(e){ if (e.key==='Enter') submit(); });
+  });
+  // 首选科目切换
+  document.querySelectorAll('#primePills .pill').forEach(function(el){
+    el.addEventListener('click',function(){
+      selectedPrime = this.getAttribute('data-v');
+      document.querySelectorAll('#primePills .pill').forEach(function(p){p.classList.remove('on');});
+      this.classList.add('on');
+    });
+  });
+  // 次选科目切换（最多2门）
+  document.querySelectorAll('#elecChips .chip').forEach(function(el){
+    el.addEventListener('click',function(){
+      var v = this.getAttribute('data-v');
+      if (this.classList.contains('on')) {
+        this.classList.remove('on');
+        var idx = selectedElecs.indexOf(v);
+        if (idx>=0) selectedElecs.splice(idx,1);
+      } else {
+        if (selectedElecs.length>=2) return;
+        this.classList.add('on');
+        selectedElecs.push(v);
+      }
+    });
+  });
+}
+
+function submit() {
+  var nEl=document.getElementById('inpName'), eEl=document.getElementById('inpExam');
+  var name=(nEl&&nEl.value||'').trim()||'匿名考生';
+  var examId=(eEl&&eEl.value||'').trim()||(CURRENT_YEAR+'01'+String(Math.floor(Math.random()*900000+100000)));
+  lastName = name; lastExamId = examId;
+
+  result = genResult(name,examId,selectedPrime,selectedElecs.slice());
+  state = 'loading';
+  renderLoading();
+  doLoading();
+}
+
+    var STAGES = [
+      '正在连接考试院服务器...',
+      '核验考生身份...',
+      '查询各科成绩...',
+      '核算总分与排名...',
+      '生成成绩单...'
+    ];
+
+function renderLoading() {
+  var app=document.getElementById('app');
+  app.innerHTML =
+    '<div class="load-wrap">'+
+      '<div class="exam-tip">'+CURRENT_YEAR+' 年高考成绩查询</div>'+
+      '<div class="loading-orb"></div>'+
+      '<div class="stage-list" id="stageList"></div>'+
+      '<p style="font-size:10px;color:var(--muted);margin-top:20px;">查询人数较多，请耐心等待…</p>'+
+    '</div>';
+}
+
+async function doLoading() {
+  var list=document.getElementById('stageList'); if(!list) return;
+  for (var i=0;i<STAGES.length;i++) {
+    var item=document.createElement('div');
+    item.className='stage-item show current';
+    item.innerHTML='<span class="stage-dot"></span>'+STAGES[i];
+    list.appendChild(item);
+    if (i>0) { var prev=list.children[i-1]; prev.classList.remove('current'); prev.classList.add('done'); }
+        var delay=200+Math.random()*350;
+    await sleep(delay);
+    if (state!=='loading') return;
+  }
+  var last=list.children[list.children.length-1];
+  if (last) { last.classList.remove('current'); last.classList.add('done'); }
+  await sleep(300);
+  if (state!=='loading') return;
+  state='result';
+  render();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderResult(app) {
+  var d=result;
+  var subsHTML='';
+  for (var i=0;i<d.subs.length;i++) {
+    var s=d.subs[i], pct=Math.round(s.score/s.max*100);
+    subsHTML+=
+      '<div class="sub-row">'+
+        '<span class="sub-name">'+s.name+'</span>'+
+        '<div class="sub-bar-wrap"><div class="sub-bar" style="width:'+pct+'%;background:'+barColor(s.score,s.max)+'"></div></div>'+
+        '<span class="sub-score" style="color:'+scoreColor(s.score,s.max)+'">'+s.score+'</span>'+
+        '<span class="sub-max">/'+s.max+'</span>'+
+      '</div>';
+  }
+  var easterHTML='';
+  if (d.easter) easterHTML='<div class="easter-area"><div class="e-msg">'+d.easter+'</div></div>';
+
+  app.innerHTML =
+    '<div class="report-card">'+
+      '<div class="report-hd">'+
+        '<div class="r-badge">▶ 成绩通知单</div>'+
+        '<div class="r-title">'+CURRENT_YEAR+' 年高考成绩</div>'+
+        '<div class="r-meta">考生：<b>'+esc(d.name)+'</b> &nbsp;·&nbsp; 考号：<b>'+esc(d.examId)+'</b></div>'+
+        '<div class="r-meta" style="margin-top:3px;">选考：<b>'+esc(d.subsStr)+'</b></div>'+
+      '</div>'+
+      '<div class="subs-block">'+subsHTML+'</div>'+
+      '<div class="total-area">'+
+        '<div class="t-label">总 分</div>'+
+        '<div class="t-score">'+d.total+'</div>'+
+        '<div class="t-detail">省内排名：第 <b style="color:var(--text)">'+d.rank.toLocaleString()+'</b> 名 &nbsp;·&nbsp; '+d.tier.emoji+' '+d.tier.name+'</div>'+
+      '</div>'+
+      '<div class="admit-area">'+
+        '<div class="a-label">🎓 模拟录取结果</div>'+
+        '<div class="a-school">'+d.admit.s+'</div>'+
+        '<div class="a-major">'+d.admit.m+'</div>'+
+        '<span class="a-tag">'+d.admit.t+'</span>'+
+      '</div>'+
+      '<div class="comment-area">'+
+        '<div class="c-icon">💬</div>'+
+        '<div class="c-text">'+esc(d.quip)+'</div>'+
+      '</div>'+
+      easterHTML+
+    '</div>'+
+    '<div class="act-row">'+
+      '<button class="btn btn-share" onclick="doShare()">📋 分享成绩单</button>'+
+      '<button class="btn btn-again" onclick="doAgain()">🔄 重新查分</button>'+
+    '</div>'+
+    '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+    '<p class="notice">霧雨魔法店 · 纯属娱乐 · 分数已调高讨个彩头<br>祝各位考生金榜题名，得偿所愿 ✨</p>'+
+    '<div class="qq-section">'+
+      '<img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'">'+
+      '<p><strong style="color:var(--gold);">加群一起玩</strong><br>群号 702973928 · 更多抽象好活</p>'+
+    '</div>'+
+    '<p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>';
+}
+
+function doShare() {
+  var d=result;
+  copyToClipboard(
+    '【高考出分模拟器】我考了 '+d.total+' 分，被 '+d.admit.s+' 的「'+d.admit.m+'」录取了！你也来查查：'+window.location.href,
+    '已复制！发给朋友炫耀 😎'
+  );
+}
+function doAgain() { state='intro';result=null;render();window.scrollTo({top:0,behavior:'smooth'}); }
+
+render();
+</script>
+
+</body>
+</html>

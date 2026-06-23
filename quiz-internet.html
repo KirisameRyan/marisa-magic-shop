@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<script src="js/analytics.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>测一测你是哪位抽象圈大手子 · 2.0 · 霧雨魔法店</title>
+<style>
+:root {
+ --accent:#f0a060; --accent-soft:rgba(240,160,96,.06);
+}
+.container::before {
+ background:linear-gradient(90deg, var(--accent), var(--gold), var(--accent));
+}
+
+/* ── 开始页 ── */
+.start { text-align:center; }
+.badge-line {
+ display:inline-block; font-size:11px; letter-spacing:3px; color:var(--accent);
+ border:1px solid var(--accent); border-radius:20px; padding:4px 14px; margin-bottom:14px;
+}
+.start h1 { font-size:26px; margin-bottom:8px; line-height:1.35; }
+.start .sub { font-size:14px; color:var(--muted); margin-bottom:22px; }
+.avatar-strip { display:flex; justify-content:center; gap:4px; flex-wrap:wrap; margin-bottom:26px; }
+.mini {
+ width:40px; height:40px; border-radius:11px; overflow:hidden;
+ border:2px solid var(--border); background:rgba(255,255,255,.03);
+ transition:transform .2s;
+}
+.mini:hover { transform:translateY(-4px) rotate(-4deg); }
+.mini svg,.mini img { width:100%; height:100%; display:block; object-fit:cover; }
+.mystery {
+ display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800;
+ color:var(--muted);
+ background:repeating-linear-gradient(45deg,var(--border),var(--border) 4px,transparent 4px,transparent 8px);
+}
+
+/* ── 答题页 ── */
+.q-num { color:var(--accent); font-size:13px; font-weight:700; letter-spacing:1px; }
+.q-text { font-size:20px; font-weight:700; }
+.opt-btn:hover { border-color:var(--accent); background:var(--accent-soft); }
+.opt-btn:hover .opt-letter { background:var(--accent); color:#3d1e06; }
+.btn-back {
+ display:inline-flex; align-items:center; gap:4px; background:transparent;
+ border:1px solid var(--border); border-radius:10px; padding:10px 18px;
+ font-size:13px; color:var(--muted); cursor:pointer; font-family:inherit;
+ transition:all .15s; margin-top:14px;
+}
+.btn-back:hover { border-color:var(--gold); color:var(--gold); }
+
+/* ── 加载 ── */
+.loading-wrap { text-align:center; padding:44px 0; }
+.loading-avatar {
+ width:84px; height:84px; border-radius:22px; margin:0 auto 20px;
+ background:linear-gradient(135deg, var(--accent), var(--gold));
+ display:flex; align-items:center; justify-content:center; font-size:38px;
+ animation:pulse 1.1s infinite;
+}
+@keyframes pulse { 0%,100% { transform:scale(1) rotate(0); } 50% { transform:scale(1.1) rotate(3deg); } }
+.loading-text { font-size:14px; color:var(--muted); }
+
+/* ── 结果页 ── */
+.result { position:relative; }
+.result-hero {
+ width:130px; height:130px; border-radius:30px; margin:0 auto 14px; overflow:hidden;
+ animation:popInHero .55s cubic-bezier(.2,1.4,.4,1);
+ box-shadow:0 14px 36px rgba(0,0,0,.4); border:4px solid var(--border);
+}
+.result-hero svg,.result-hero img { width:100%; height:100%; display:block; object-fit:cover; }
+@keyframes popInHero {
+ 0% { transform:scale(0) rotate(-12deg); }
+ 60% { transform:scale(1.12); }
+ 100% { transform:scale(1); }
+}
+.result-label { font-size:12px; }
+.result-name { font-size:32px; font-weight:900; }
+.result-aka { font-size:13px; color:var(--muted); margin-bottom:16px; }
+.quote-bubble {
+ display:inline-block; background:rgba(255,255,255,.08); color:var(--text);
+ font-size:14px; padding:10px 18px; border-radius:18px 18px 18px 4px;
+ margin-bottom:22px; line-height:1.5; border:1px solid var(--border);
+}
+.dims { display:flex; flex-direction:column; gap:10px; text-align:left; margin-bottom:22px; }
+.dim-item { display:flex; align-items:center; gap:12px; }
+.dim-label { width:72px; font-size:13px; color:var(--muted); flex-shrink:0; text-align:right; }
+.dim-bar-wrap { flex:1; height:9px; background:var(--border); border-radius:5px; overflow:hidden; }
+.dim-bar { height:100%; border-radius:5px; width:0; transition:width .9s cubic-bezier(.3,1,.4,1); }
+.dim-val { font-size:12px; color:var(--muted); width:30px; text-align:right; }
+.result-desc {
+ text-align:left; padding:20px; font-size:14px; line-height:1.9; margin-bottom:18px;
+}
+.ru-face {
+ width:26px; height:26px; border-radius:8px; overflow:hidden;
+ display:inline-block; vertical-align:middle; border:1px solid var(--border);
+}
+.ru-face svg,.ru-face img { width:100%; height:100%; display:block; }
+.runner-up {
+ margin-top:14px; padding-top:12px; border-top:1px solid var(--border);
+ font-size:12px; color:var(--muted); display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+
+/* ── 隐藏特效 ── */
+.secret .result-hero { border-color:var(--gold); box-shadow:0 0 0 4px rgba(240,192,96,.3),0 14px 36px rgba(240,192,96,.2); }
+.secret-badge {
+ display:inline-block; background:linear-gradient(90deg, var(--gold), #ffe8b0); color:#5a430a;
+ font-size:12px; font-weight:800; letter-spacing:2px; padding:5px 16px; border-radius:20px;
+ margin-bottom:10px; animation:shine 1.6s ease infinite alternate;
+}
+@keyframes shine { from { filter:brightness(1); } to { filter:brightness(1.18); } }
+.confetti {
+ position:absolute; top:-10px; font-size:18px; animation:fall 2.6s linear infinite; pointer-events:none;
+}
+@keyframes fall {
+ 0% { transform:translateY(-20px) rotate(0); opacity:1; }
+ 100% { transform:translateY(440px) rotate(540deg); opacity:0; }
+}
+
+/* ── 按钮覆盖 ── */
+.btn-main { background:var(--accent); color:#3d1e06; }
+.btn-main:hover { background:#f0b878; }
+.btn-ghost:hover { border-color:var(--accent); }
+.notice { font-size:11px; line-height:1.8; }
+.result-meta { gap:8px; margin-bottom:20px; }
+.meta-tag { font-size:11px; padding:5px 12px; }
+
+@media (prefers-reduced-motion:reduce) { *,.result-hero,.confetti,.loading-avatar { animation:none!important; transition:none!important; } }
+@media (max-width:420px) { .container { padding:26px 18px; } .q-text { font-size:18px; } }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/canvas-utils.js"></script>
+
+<div class="container" id="app"></div>
+<canvas id="cardCanvas" width="600" height="880" style="display:none"></canvas>
+<script>
+/* ====== 图片: 把照片放到 images/ 目录, 填到对应 key, 留空则用内置 SVG 头像 ====== */
+const CUSTOM_IMAGES={
+ sun:'images/sxc.jpg',otto:'images/otto.jpg',xuan:'images/xuan.jpg',lu:'images/lbw.jpg',ding:'images/dingz.jpg',taffy:'images/taffy.jpg',xf:'images/zxf.jpg',kim:'images/kim.jpg',aion:'images/aion.jpg',mao:'images/mao.jpg',
+ dxl:'images/dxl.jpg',hu:'images/hu.jpg',zm:'images/zmjjkk.jpg',feng:'images/fengge.jpg',lhq:'images/lhq.jpg',tian:'images/tiansuohaoer.jpg',shunfei:'images/zsf.jpg',laoa:'images/laoa.jpg'
+};
+
+/* ====== 内置 Q 版头像(原创 SVG) ====== */
+const AVATARS={
+ sun:'<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#fde8c8"/><circle cx="50" cy="56" r="30" fill="#f2c79b"/><path d="M22 50 Q24 26 50 25 Q76 26 78 50 L74 48 Q72 32 50 31 Q28 32 26 48 Z" fill="#2b2b2b"/><rect x="28" y="48" width="18" height="13" rx="3" fill="none" stroke="#222" stroke-width="3"/><rect x="54" y="48" width="18" height="13" rx="3" fill="none" stroke="#222" stroke-width="3"/><line x1="46" y1="53" x2="54" y2="53" stroke="#222" stroke-width="3"/><circle cx="37" cy="55" r="2.6" fill="#222"/><circle cx="63" cy="55" r="2.6" fill="#222"/><path d="M42 74 Q50 77 58 74" stroke="#9c5b2e" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>',
+ otto:'<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#ffd6cc"/><g stroke="#ff5722" stroke-width="3" stroke-linecap="round"><line x1="10" y1="14" x2="20" y2="24"/><line x1="90" y1="14" x2="80" y2="24"/><line x1="8" y1="50" x2="18" y2="50"/><line x1="92" y1="50" x2="82" y2="50"/></g><circle cx="50" cy="56" r="30" fill="#f7a98c"/><path d="M24 48 Q26 28 50 27 Q74 28 76 48 L70 44 Q66 34 50 33 Q34 34 30 44 Z" fill="#3a2a20"/><path d="M32 50 L44 46" stroke="#222" stroke-width="3.5" stroke-linecap="round"/><path d="M68 50 L56 46" stroke="#222" stroke-width="3.5" stroke-linecap="round"/><ellipse cx="50" cy="72" rx="11" ry="13" fill="#5e1010"/><ellipse cx="50" cy="78" rx="6" ry="5" fill="#e2606b"/><circle cx="30" cy="66" r="4" fill="#ff8a73" opacity=".8"/><circle cx="70" cy="66" r="4" fill="#ff8a73" opacity=".8"/></svg>',
+ xuan:'<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#e6d6ff"/><circle cx="50" cy="56" r="30" fill="#f2c79b"/><path d="M22 52 Q22 24 50 24 Q78 24 78 52 L72 46 Q70 31 50 30 Q30 31 28 46 Z" fill="#4a2f7a"/><rect x="27" y="47" width="20" height="12" rx="4" fill="#111"/><rect x="53" y="47" width="20" height="12" rx="4" fill="#111"/><line x1="47" y1="52" x2="53" y2="52" stroke="#111" stroke-width="3"/><rect x="29" y="49" width="7" height="3" rx="1.5" fill="#666"/><rect x="55" y="49" width="7" height="3" rx="1.5" fill="#666"/><path d="M38 72 Q50 80 64 70" stroke="#9c5b2e" stroke-width="3" fill="none" stroke-linecap="round"/></svg>',
+ lu:'<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#cfe3ff"/><circle cx="50" cy="58" r="29" fill="#f6d4ae"/><path d="M22 50 Q24 27 50 26 Q76 27 78 50 L72 47 Q70 33 50 32 Q30 33 28 47 Z" fill="#2563eb"/><rect x="40" y="24" width="20" height="9" rx="4" fill="#fff" opacity=".9"/><path d="M33 54 Q37 50 41 54" stroke="#222" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M59 54 Q63 50 67 54" stroke="#222" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M36 68 Q50 82 64 68" stroke="#9c5b2e" stroke-width="3.5" fill="#fff" stroke-linecap="round"/><circle cx="29" cy="63" r="4" fill="#ff9d8a" opacity=".7"/><circle cx="71" cy="63" r="4" fill="#ff9d8a" opacity=".7"/></svg>',
+ ding:'<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#bfe3f5"/><path d="M0 100 L22 58 L38 84 L56 48 L78 88 L100 62 L100 100 Z" fill="#fff" opacity=".85"/><circle cx="50" cy="56" r="29" fill="#cf9468"/><path d="M21 60 Q18 26 50 24 Q82 26 79 60 L73 58 Q74 33 50 31 Q26 33 27 58 Z" fill="#1c1410"/><circle cx="38" cy="55" r="4.5" fill="#1c1410"/><circle cx="62" cy="55" r="4.5" fill="#1c1410"/><circle cx="39.5" cy="53.5" r="1.6" fill="#fff"/><circle cx="63.5" cy="53.5" r="1.6" fill="#fff"/><circle cx="31" cy="64" r="5" fill="#e06a5a" opacity=".75"/><circle cx="69" cy="64" r="5" fill="#e06a5a" opacity=".75"/><path d="M43 72 Q50 76 57 72" stroke="#7a4326" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>',
+ taffy:'<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#ffe3ef"/><path d="M26 34 L18 14 L38 26 Z" fill="#f9a8c9"/><path d="M74 34 L82 14 L62 26 Z" fill="#f9a8c9"/><circle cx="50" cy="58" r="29" fill="#fde9dc"/><path d="M21 58 Q19 28 50 26 Q81 28 79 58 L73 54 Q73 34 50 32 Q27 34 27 54 Z" fill="#fbb6d2"/><path d="M34 54 L42 50 L34 46" stroke="#d6336c" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M66 54 L58 50 L66 46" stroke="#d6336c" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M42 68 Q46 73 50 68 Q54 73 58 68" stroke="#d6336c" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="32" cy="62" r="4" fill="#ffb3c9" opacity=".8"/><circle cx="68" cy="62" r="4" fill="#ffb3c9" opacity=".8"/></svg>',
+ xf:'<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#d9f2e3"/><circle cx="50" cy="54" r="28" fill="#f2c79b"/><path d="M24 48 Q26 27 50 26 Q74 27 76 48 L70 45 Q68 33 50 32 Q32 33 30 45 Z" fill="#2b2b2b"/><rect x="29" y="46" width="17" height="12" rx="3" fill="none" stroke="#222" stroke-width="3"/><rect x="54" y="46" width="17" height="12" rx="3" fill="none" stroke="#222" stroke-width="3"/><line x1="46" y1="51" x2="54" y2="51" stroke="#222" stroke-width="3"/><circle cx="37.5" cy="52" r="2.6" fill="#222"/><circle cx="62.5" cy="52" r="2.6" fill="#222"/><path d="M40 67 Q50 74 62 65" stroke="#9c5b2e" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M30 86 Q50 76 70 86 L70 100 L30 100 Z" fill="#1f2937"/><path d="M46 84 L50 92 L54 84" fill="#fff"/></svg>',
+ kim:'<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#fbe2c0"/><g opacity=".5" stroke="#f0b04a" stroke-width="3" stroke-linecap="round"><line x1="50" y1="4" x2="50" y2="12"/><line x1="24" y1="10" x2="28" y2="18"/><line x1="76" y1="10" x2="72" y2="18"/></g><ellipse cx="50" cy="60" rx="31" ry="29" fill="#f7d3a8"/><path d="M28 46 Q30 28 50 27 Q70 28 72 46 L66 44 Q64 34 50 33 Q36 34 34 44 Z" fill="#151515"/><path d="M33 56 Q37 53 41 56" stroke="#222" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M59 56 Q63 53 67 56" stroke="#222" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M41 72 Q50 79 59 72" stroke="#9c5b2e" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="31" cy="65" r="4.5" fill="#f5a78f" opacity=".8"/><circle cx="69" cy="65" r="4.5" fill="#f5a78f" opacity=".8"/></svg>',
+ aion:'<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#fff0d9"/><circle cx="50" cy="58" r="28" fill="#fde9dc"/><path d="M22 60 Q18 26 50 24 Q82 26 78 60 L72 56 Q73 33 50 31 Q27 33 28 56 Z" fill="#f48fb1"/><path d="M64 30 L67 36 L73 37 L68.5 41 L70 47 L64 44 L58 47 L59.5 41 L55 37 L61 36 Z" fill="#fff" stroke="#e8a3bd" stroke-width="1.5"/><path d="M34 54 Q38 50 42 54" stroke="#5a3a46" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M58 54 Q62 50 66 54" stroke="#5a3a46" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M41 69 Q50 75 59 69" stroke="#c2566e" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M27 44 Q24 50 27 56 Q31 51 27 44" fill="#7dd3fc"/></svg>',
+ mao:'<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#e8e6e1"/><g fill="#9aa0a6" font-family="sans-serif" font-weight="900"><text x="8" y="26" font-size="13" opacity=".55">哈</text><text x="78" y="22" font-size="11" opacity=".45">哈</text></g><path d="M24 42 L12 20 L34 30 Z" fill="#2f2f2f"/><path d="M76 42 L88 20 L66 30 Z" fill="#2f2f2f"/><ellipse cx="50" cy="60" rx="32" ry="28" fill="#3a3a3a"/><path d="M50 38 Q70 38 78 54 Q80 70 70 78 L70 50 Q62 42 50 42 Z" fill="#fff"/><path d="M50 38 Q30 38 22 54 Q20 70 30 78 L30 50 Q38 42 50 42 Z" fill="#fff"/><ellipse cx="50" cy="68" rx="20" ry="16" fill="#fff"/><path d="M30 50 L42 56" stroke="#111" stroke-width="3.5" stroke-linecap="round"/><path d="M70 50 L58 56" stroke="#111" stroke-width="3.5" stroke-linecap="round"/><circle cx="37" cy="59" r="3.5" fill="#111"/><circle cx="63" cy="59" r="3.5" fill="#111"/><path d="M38 70 Q50 64 62 70 L58 78 Q50 82 42 78 Z" fill="#7a1f1f"/><path d="M42 70 L45 75 M50 68 L50 74 M58 70 L55 75" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>',
+ dxl:'<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#efe2ff"/><path d="M18 70 Q14 30 50 26 Q86 30 82 70 L82 92 L70 92 L70 50 Q68 36 50 35 Q32 36 30 50 L30 92 L18 92 Z" fill="#7c3aed"/><circle cx="50" cy="56" r="26" fill="#fde9dc"/><path d="M22 54 Q22 30 50 28 Q78 30 78 54 L72 50 Q70 36 50 35 Q30 36 28 50 Z" fill="#9d5fe6"/><path d="M34 50 L44 53" stroke="#3a2a46" stroke-width="3" stroke-linecap="round"/><path d="M66 50 L56 53" stroke="#3a2a46" stroke-width="3" stroke-linecap="round"/><circle cx="40" cy="57" r="3" fill="#3a2a46"/><circle cx="60" cy="57" r="3" fill="#3a2a46"/><path d="M42 70 Q50 66 58 70" stroke="#b03060" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="68" cy="34" r="5" fill="#ffd166"/></svg>',
+ hu:'<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#ffe0b3"/><circle cx="50" cy="56" r="30" fill="#e8b07a"/><path d="M22 46 Q24 30 50 29 Q76 30 78 46 Q70 38 50 38 Q30 38 22 46 Z" fill="#1a1a1a"/><rect x="30" y="40" width="40" height="6" fill="#1a1a1a"/><path d="M32 52 L42 50" stroke="#222" stroke-width="3.5" stroke-linecap="round"/><path d="M68 52 L58 50" stroke="#222" stroke-width="3.5" stroke-linecap="round"/><circle cx="38" cy="56" r="3" fill="#222"/><circle cx="62" cy="56" r="3" fill="#222"/><path d="M36 68 Q50 80 64 68 L60 74 Q50 80 40 74 Z" fill="#7a1f1f"/><rect x="44" y="70" width="3" height="6" fill="#fff"/><rect x="49" y="70" width="3" height="6" fill="#fff"/><rect x="54" y="70" width="3" height="6" fill="#fff"/><path d="M30 88 Q50 80 70 88 L70 100 L30 100 Z" fill="#b91c1c"/><circle cx="50" cy="90" r="5" fill="#ffd700"/></svg>',
+ zm:'<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#d6f0ff"/><circle cx="50" cy="56" r="29" fill="#f6d4ae"/><path d="M24 48 Q26 28 50 27 Q74 28 76 48 L70 44 Q66 34 50 33 Q34 34 30 44 Z" fill="#1f2937"/><path d="M18 46 Q18 30 50 30 Q82 30 82 46 L82 60 Q82 64 78 64 L78 48 Q78 40 50 40 Q22 40 22 48 L22 64 Q18 64 18 60 Z" fill="#0ea5e9"/><rect x="14" y="56" width="9" height="16" rx="4" fill="#0284c7"/><rect x="77" y="56" width="9" height="16" rx="4" fill="#0284c7"/><line x1="33" y1="52" x2="43" y2="50" stroke="#222" stroke-width="3" stroke-linecap="round"/><line x1="67" y1="52" x2="57" y2="50" stroke="#222" stroke-width="3" stroke-linecap="round"/><circle cx="38" cy="56" r="2.6" fill="#222"/><circle cx="62" cy="56" r="2.6" fill="#222"/><ellipse cx="50" cy="70" rx="8" ry="9" fill="#5e1010"/><path d="M28 64 L18 70" stroke="#0ea5e9" stroke-width="3" stroke-linecap="round"/></svg>',
+ feng:'<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#fff4cc"/><circle cx="50" cy="56" r="30" fill="#f2c79b"/><path d="M22 48 Q24 28 50 27 Q76 28 78 48 L72 44 Q68 34 50 33 Q32 34 28 44 Z" fill="#3a2a1a"/><rect x="26" y="48" width="20" height="11" rx="5" fill="#222"/><rect x="54" y="48" width="20" height="11" rx="5" fill="#222"/><line x1="46" y1="53" x2="54" y2="53" stroke="#222" stroke-width="3"/><path d="M40 70 Q50 80 62 69" stroke="#9c5b2e" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M70 78 L74 70 L80 74 L78 82 Z" fill="#22c55e"/><path d="M72 73 L72 67" stroke="#16a34a" stroke-width="3" stroke-linecap="round"/></svg>',
+ lhq:'<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#dfe7d8"/><circle cx="50" cy="52" r="28" fill="#e0a877"/><path d="M24 44 Q26 26 50 25 Q74 26 76 44 Q68 36 50 36 Q32 36 24 44 Z" fill="#1a1a1a"/><path d="M32 46 L44 49" stroke="#1a1a1a" stroke-width="4" stroke-linecap="round"/><path d="M68 46 L56 49" stroke="#1a1a1a" stroke-width="4" stroke-linecap="round"/><circle cx="38" cy="54" r="3" fill="#1a1a1a"/><circle cx="62" cy="54" r="3" fill="#1a1a1a"/><path d="M40 66 L60 66" stroke="#6b3a1f" stroke-width="3" stroke-linecap="round"/><ellipse cx="50" cy="90" rx="22" ry="14" fill="#3a7d2c"/><path d="M50 78 Q56 84 50 90 Q44 84 50 78" fill="#2d5e22"/><path d="M38 88 Q50 84 62 88" stroke="#9acb3a" stroke-width="2" fill="none" opacity=".6"/></svg>',
+ tian:'<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#e5e0d5"/><text x="6" y="94" font-family="sans-serif" font-size="20" font-weight="900" fill="#c0392b" opacity=".75">24</text><circle cx="50" cy="52" r="28" fill="#e8c9a0"/><path d="M24 44 Q26 26 50 25 Q74 26 76 44 L70 41 Q66 33 50 32 Q34 33 30 41 Z" fill="#2b2b2b"/><path d="M33 50 Q37 47 41 50" stroke="#222" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M59 50 Q63 47 67 50" stroke="#222" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="38" cy="55" r="2.6" fill="#222"/><circle cx="62" cy="55" r="2.6" fill="#222"/><path d="M40 64 Q50 62 60 64" stroke="#6b4226" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M42 71 Q50 76 58 71" stroke="#7a4326" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M30 82 Q50 74 70 82 L70 100 L30 100 Z" fill="#1f2937"/><path d="M46 80 L50 90 L54 80 L50 86 Z" fill="#b91c1c"/></svg>',
+ shunfei:'<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#ffe9a8"/><g stroke="#f0b429" stroke-width="3" stroke-linecap="round" opacity=".7"><line x1="50" y1="2" x2="50" y2="12"/><line x1="20" y1="8" x2="25" y2="17"/><line x1="80" y1="8" x2="75" y2="17"/><line x1="6" y1="34" x2="15" y2="38"/><line x1="94" y1="34" x2="85" y2="38"/></g><circle cx="50" cy="58" r="29" fill="#f2c79b"/><path d="M23 52 Q25 30 50 29 Q75 30 77 52 L71 49 Q69 36 50 35 Q31 36 29 49 Z" fill="#2b2b2b"/><path d="M32 52 Q37 47 42 52" stroke="#222" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M58 52 Q63 47 68 52" stroke="#222" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M36 66 Q50 82 64 66" stroke="#9c5b2e" stroke-width="3.5" fill="#fff" stroke-linecap="round"/><circle cx="29" cy="62" r="5" fill="#ffab91" opacity=".85"/><circle cx="71" cy="62" r="5" fill="#ffab91" opacity=".85"/></svg>',
+ laoa:'<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#1f1b2e"/><g opacity=".25" stroke="#8b5cf6" stroke-width="2"><line x1="0" y1="30" x2="100" y2="30"/><line x1="0" y1="50" x2="100" y2="50"/><line x1="0" y1="70" x2="100" y2="70"/></g><ellipse cx="50" cy="60" rx="26" ry="28" fill="#2d2640"/><path d="M26 50 Q28 32 50 31 Q72 32 74 50 L68 47 Q64 38 50 38 Q36 38 32 47 Z" fill="#0f0c1a"/><path d="M32 54 L44 51" stroke="#a78bfa" stroke-width="3" stroke-linecap="round"/><path d="M68 54 L56 51" stroke="#a78bfa" stroke-width="3" stroke-linecap="round"/><circle cx="39" cy="57" r="3.5" fill="#c4b5fd"/><circle cx="61" cy="57" r="3.5" fill="#c4b5fd"/><path d="M40 72 Q50 67 60 72" stroke="#a78bfa" stroke-width="2.5" fill="none" stroke-linecap="round"/><text x="50" y="22" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="900" fill="#8b5cf6">?</text></svg>'
+};
+function face(k){ const u=CUSTOM_IMAGES[k]; if(u&&u.trim()) return '<img src="'+u+'" alt="">'; return AVATARS[k]||''; }
+
+/* ====== 人物档案 + 五维坐标 [抽象a, 攻击g, 嘴硬m, 节目s, 钝感d] ====== */
+const REGULAR=['sun','otto','xuan','lu','ding','taffy','xf','kim','aion','mao','dxl','hu','zm','feng','lhq','tian'];
+const HIDDEN=['shunfei','laoa'];
+
+const CHARS={
+ sun:{name:'孙笑川',aka:'带带大师兄 · 万恶之源',color:'#f59e0b',quote:'兄弟们,我真的什么都没干。',
+ co:{a:85,g:50,m:55,s:75,d:100},
+ desc:'不管发生什么烂事,最后总能和你扯上关系。你早就不解释了——解释没用,沉默也没用,干脆躺平,任由世界把锅一口口叠在你头上,而你居然在锅底睡得很香。<br><br>朋友以损你的方式爱你,你以无所谓的方式爱他们。十年了你还是你,这本身就很伟大。',
+ tags:['经鉴定确实是我','背锅艺术家','十年如一日']},
+ otto:{name:'Otto 电棍',aka:'棍哥',color:'#ef4444',quote:'欧内的手,好汉!',
+ co:{a:88,g:95,m:90,s:95,d:10},
+ desc:'阿米诺斯创始人,动物园幻神。你越急眼，越气急败坏,大家笑得越大声。<br><br>嘴硬是护甲,鬼叫是武器。别人要努力搞笑,你只需要做自己。',
+ tags:['阿米诺斯','麦克风受难者','嘴硬冠军','破防即艺术']},
+ xuan:{name:'炫神',aka:'炫狗',color:'#8b5cf6',quote:'马头来了！',
+ co:{a:90,g:90,m:100,s:70,d:65},
+ desc:'全世界往东,你必须往西——不为别的,就因为全世界在往东。只有公式化唱反调。<br><br>众人皆醒你独醉,虽败犹荣,虽荣犹败。马头,启动!',
+ tags:['公式化唱反调','重新定义赢','被踩头但没输','无情']},
+ lu:{name:'卢本伟',aka:'五五开 · 全体起立',color:'#3b82f6',quote:'不要慌,问题不大。',
+ co:{a:80,g:60,m:80,s:100,d:70},
+ desc:'你走到哪哪就是舞台,不需要剧本,张嘴就是名场面。你大起大落,辉煌过翻车过,但越是过去人们越怀念你。<br><br>你已经从一个人变成一种图腾。伟大,无需多言。全体起立!',
+ tags:['全体起立','名场面制造机','节目效果天花板','活在传说里']},
+ ding:{name:'丁真',aka:'纯真代言人 · 天选之子',color:'#14b8a6',quote:'我测你们码。',
+ co:{a:65,g:15,m:20,s:60,d:92},
+ desc:'你没怎么努力,但好东西总自己找上门。别人卷生卷死,你站在原地微笑,机会排队来敲门。朋友嘴上喊"不公平",身体却很诚实地围着你转。<br><br>你的眼神是这个时代最干净的——虽然网友用它鉴定了世间万物。',
+ tags:['天选之子','躺赢体质','德不配位但配脸','纯']},
+ taffy:{name:'永雏塔菲',aka:'谢谢喵 · 唐之化身',color:'#ec4899',quote:'关注永雏塔菲谢谢喵。',
+ co:{a:95,g:30,m:35,s:70,d:82},
+ desc:'你的快乐很简单,简单到朋友偶尔有点担心。你说的话经常没逻辑,但传播力惊人——一句口癖能蔓延到所有不该出现的地方。<br><br>有人说你唐,你想了想,笑了,说了声谢谢喵。这一刻所有人都被治愈了。',
+ tags:['唐氏浓度超标','谢谢喵','病毒式口癖','快乐源泉']},
+ xf:{name:'张雪峰',aka:'人间清醒 · 雪人三项创始人',color:'#22c55e',quote:'跑步、雪碧、巧乐兹。',
+ co:{a:25,g:65,m:60,s:68,d:85},
+ desc:'你是朋友圈里最现实的人,现实到有时让人破防。选专业你要管,找工作你要劝,连人家恋爱你都要算投入产出比。被你劝退的人当时恨你,三年后回来磕头。<br><br>跑完步来瓶雪碧再吃根巧乐兹——自律与放纵的完美闭环。',
+ tags:['雪人三项','人间清醒','毒舌但为你好','理性到可怕']},
+ kim:{name:'金将军',aka:'你若三东来 · 自带BGM的男人',color:'#475569',quote:'人饿了,就要吃饭!',
+ co:{a:70,g:70,m:58,s:88,d:95},
+ desc:'骑白马的不一定是王子，但是一定时将军。你一出场,身后仿佛自动响起恢弘BGM,周围人含泪鼓掌挥手。<br><br>你是金将军！人生由专人激情播报,字字铿锵,句句有功。',
+ tags:['你若三冬来','人饿了就要吃饭','肥肥胖胖是太阳']},
+ aion:{name:'千早爱音',aka:'粉毛奶龙 · 乐队小丑',color:'#f472b6',quote:'要不要,组一辈子乐队?',
+ co:{a:82,g:45,m:70,s:80,d:32},
+ desc:'你最大的特点是:不会,但装得很会;慌得一批,但笑得很自信。爱面子的程度和唐氏浓度一样高,总在最关键时刻当众小丑——但神奇的是,大家因此更喜欢你。<br><br>没有你,朋友根本组不到一块去。小丑也是人气王。',
+ tags:['粉毛奶龙','乐队小丑但人气第一','爱面子晚期','装外向成功学']},
+ mao:{name:'耄耋',aka:'猫爹 · 哈基米',color:'#52525b',quote:'哈——!!',
+ co:{a:80,g:82,m:50,s:75,d:58},
+ desc:'哈——!!你的脾气写在脸上,谁惹到你当场弓背炸毛、呲牙哈气。但没人怕你,因为你越凶越好笑,气人又可爱,这是你毕生的困扰。<br><br>不爽就哈气,爽了就打呼噜,从不内耗从不演戏。',
+ tags:['哈气警告','气人又好笑','雷霆嘎巴','零内耗大师']},
+ dxl:{name:'东雪莲',aka:'V圈黑红顶流 · 对线狂魔',color:'#7c3aed',quote:'你骂谁罕见！',
+ co:{a:72,g:88,m:85,s:65,d:28},
+ desc:'你和你的支持者之间,是一种相爱相杀的关系——别人是和粉丝抱团取暖,你是和粉丝当面对线。被嘲笑、被挂、被玩黑历史,你不躲,直接开麦回击。<br><br>黑红也是红,嘴硬到底也是一种人格魅力。至少没人能让你低头。',
+ tags:['黑红体质','跟粉丝对线','嘴硬不低头','越骂越红']},
+ hu:{name:'虎哥',aka:'东百往事 · 整活狠人',color:'#b45309',quote:'我徒弟呢？',
+ co:{a:96,g:88,m:55,s:95,d:75},
+ desc:'为了节目效果,你这辈子就没有"不敢"两个字。鞭炮往身上招呼、半拉法拉利照开、徒手劈砖、套麻袋跳河……别人评估风险,你评估笑点。<br><br>癫得真诚,狠得离谱。你不是在整活,往那里一站，就是活本身。',
+ tags:['为效果不要命','鞭炮跳河劈砖','东北豪横','癫得真诚']},
+ zm:{name:'ZMJJKK',aka:'康神 · Let\'s 狗！',color:'#0ea5e9',quote:'都是同龄人,我本来没想降维打击!',
+ co:{a:75,g:70,m:88,s:82,d:55},
+ desc:'你赢的时候藏不住,"都是同龄人，我本来没想降维打击"。赛场怪叫、唱兰花草,你把电竞选手的反差萌玩明白了。<br><br>实力有,嘴也硬,但莫名让人觉得可爱。康神开播了,真的假的?',
+ tags:['降维打击','Let\'s go','凡尔赛文学','反差萌']},
+ feng:{name:'峰哥亡命天涯',aka:'性压抑理论 · 这是好事啊',color:'#16a34a',quote:'这是好事啊!',
+ co:{a:62,g:50,m:22,s:72,d:92},
+ desc:'你是行走的赛博嘴替。不管别人学业、事业、家庭遇到什么烂事,到你这里都能被一个清奇角度解读成"这是好事啊"。<br><br>你看似乐天,其实是把一切都想通了的通透。顺便,你对那些爱端着说教的人毫不留情。',
+ tags:['万物皆可好事','清奇视角','赛博嘴替','看透不说破']},
+ lhq:{name:'刘华强',aka:'砍价文学宗师 · 瓜保熟吗',color:'#15803d',quote:'你这瓜保熟吗?',
+ co:{a:45,g:92,m:78,s:82,d:72},
+ desc:'你狠,但你的狠有逻辑、有目的、有底线。你气场全开的样子能让对面腿软,可你从不无的放矢——你只是想要一个说法。<br><br>砍价是艺术,讲理是修养,而你两样都拉满。这瓜要是不保熟,你看办不办他。',
+ tags:['气场全开','狠得有逻辑','砍价宗师','要个说法']},
+ tian:{name:'田所浩二',aka:'野獗先辈 · 24 · 鬼畜图腾',color:'#9333ea',quote:'真是抱歉了。',
+ co:{a:96,g:35,m:42,s:90,d:62},
+ desc:'你本人可能什么都没做,但全网把你做成了素材。一句话、一个表情、一段空耳,被无数人剪辑、循环、二创,你莫名其妙成了一种文化图腾。<br><br>你的存在本身就是鬼畜的原材料。不愧是你。',
+ tags:['鬼畜图腾','空耳之神','被全网二创','存在即素材']},
+ shunfei:{name:'张顺飞',aka:'飞飞 · 抽象远古传说 · f8fq',color:'#d4a017',quote:'飞飞,我们回家吧。',
+ co:{a:100,g:12,m:15,s:55,d:100},
+ desc:'恭喜你,触发了普通人很难测出来的隐藏结局。<br><br>常规的智力测试在你面前失去了意义——但你活在自己的频道里,那个频道信号不太好,却永远在播放快乐。全世界都替你着急,只有你自己从不着急。<br><br>其实大家心里都明白:互联网上聪明人太多了,缺的就是你这样的。天黑了。飞飞,我们回家吧。',
+ tags:['隐藏人物','f8fq','快乐值溢出','回家吧']},
+ laoa:{name:'牢A',aka:'斯奎奇大王 · 迪斯科米',color:'#8b5cf6',quote:'(发表了一段没人敢苟同的高论)',
+ co:{a:100,g:95,m:100,s:92,d:38},
+ desc:'恭喜——你解锁了全场最四老冯的隐藏结局。<br><br>你最大的"天赋"是语不惊人死不休:别人讲常识,你专挑最阴间、最猎奇的角度发言,然后被全网当成反面教材鉴定、围观、玩梗。<br><br>流量得到了,老冯呢？',
+ tags:['隐藏人物','语不惊人死不休','阴间暴论','反面教材']}
+};
+
+/* ====== 26 题 ====== */
+const QUESTIONS=[
+ {q:'周末最理想的状态是?',o:[
+ {t:'在家躺着刷手机,一天就这么没了',v:{d:4,a:2,g:-1}},
+ {t:'出门搞点事情,最好身边能有人围观',v:{s:4,g:2,a:2}},
+ {t:'安排得满满当当,效率必须拉满',v:{a:-3,m:3,d:3}},
+ {t:'本来计划出门,结果躺床上想了一整天要干嘛', x:'shunfei',v:{a:3,d:3,s:1,m:-2,g:-2}} ]},
+ {q:'群里有人说了句明显站不住脚的话,你?',o:[
+ {t:'立刻指出来,顺便论证到他哑口无言',v:{m:4,g:3,a:2,d:2}},
+ {t:'假装没看见,多一事不如少一事',v:{d:3,a:1,g:-2}},
+ {t:'故意顺着他往更离谱的方向带,坐等看戏',v:{a:5,s:3,m:2,g:1}},
+ {t:'拿不准他到底错没错,默默自己去查了一下',v:{a:2,m:-2,g:-2,d:-1}} ]},
+ {q:'你觉得自己最可能因为什么被人记住?',o:[
+ {t:'一张特别有记忆点的脸或表情',v:{s:3,d:3,a:2,g:-2,m:-1}},
+ {t:'一句莫名其妙、但大家都开始跟着学的口头禅', x:'shunfei',v:{a:5,s:3,d:2}},
+ {t:'一次谁都没料到的、特别炸裂的发言',v:{a:4,g:3,m:4,s:3,d:-1}},
+ {t:'一件做得特别离谱、直接冲上热门的事',v:{a:4,s:4,g:2}} ]},
+ {q:'被人当面误会的时候,你的第一反应:',o:[
+ {t:'急着解释,越解释越乱,音量越来越高',v:{g:3,s:3,a:2,d:-3}},
+ {t:'懒得解释,信不信随你',v:{d:5,a:2,m:-1,g:-1}},
+ {t:'冷冷地把对方的逻辑一条条拆穿',v:{m:5,g:3,a:2,d:2}},
+ {t:'愣了三秒,然后自己先笑场了',v:{a:4,d:3,s:2,m:-2,g:-2}} ]},
+ {q:'朋友聚餐,你通常扮演的角色是?',o:[
+ {t:'气氛组,我一开口全场就活了',v:{s:5,g:2,a:2}},
+ {t:'专注干饭,这会儿别跟我说话',v:{d:4,a:2,g:1}},
+ {t:'安静坐着,谁来烦我我就摆脸色',v:{g:3,a:2,d:1,s:1,m:1}},
+ {t:'经常被大家拿来开玩笑,我也不恼',v:{d:3,s:2,a:2,m:-2,g:-2}} ]},
+ {q:'让你说出"我错了"这三个字,有多难?',o:[
+ {t:'不难,错了就认,改了就好',v:{m:-4,d:3,a:-1}},
+ {t:'比登天还难,我宁可把道理重新讲一遍', x:'laoa',v:{m:5,g:2,a:3}},
+ {t:'嘴上死活不认,心里其实门儿清',v:{m:3,a:2,d:2,g:1}},
+ {t:'会道歉,但会为这事纠结一整晚',v:{m:-2,d:-3,a:2,g:-2}} ]},
+ {q:'网上突然有人开始骂你,你会?',o:[
+ {t:'当场对线,绝不能让他赢',v:{g:5,m:3,s:3,a:2,d:-2}},
+ {t:'拉黑、删除、当没发生过',v:{d:4,g:-1,a:1}},
+ {t:'把他的话截图做成梗,顺便自嘲一番',v:{a:5,s:4,d:3,m:1}},
+ {t:'表面装没事,晚上失眠反复回想',v:{d:-4,a:2,g:-2,s:1}} ]},
+ {q:'你的"愤怒"通常长什么样?',o:[
+ {t:'一点就着,但来得快去得也快',v:{g:5,s:3,a:3,d:-3}},
+ {t:'几乎不生气,生气了也看不太出来',v:{d:5,g:-2,a:1}},
+ {t:'不算生气,只是嗓门天生比较大',v:{g:3,m:3,s:2,d:2}},
+ {t:'生起气来的样子,莫名其妙有点好笑',v:{g:4,a:4,s:2,m:-1}} ]},
+ {q:'一个你完全不懂的话题,大家聊得火热,你?',o:[
+ {t:'默默听着,听不懂但觉得好像很厉害',v:{a:3,d:2,m:-2,g:-2}},
+ {t:'不懂装懂,硬接几句把场面撑住',v:{m:4,a:2,s:2,d:-1}},
+ {t:'直接来一句"这玩意有什么好聊的"',v:{g:3,m:3,a:2,d:2}},
+ {t:'抛一个完全跑偏的角度,把话题带进沟里',v:{a:5,s:3,m:2,g:1}} ]},
+ {q:'别人夸你的时候,你心里在想?',o:[
+ {t:'那当然,本来就该夸我',v:{m:4,g:2,a:2}},
+ {t:'嘴上谦虚两句,其实心里美滋滋',v:{d:2,a:2,s:2,g:-1}},
+ {t:'有点不好意思,但会偷偷开心很久',v:{a:3,s:2,d:-2,g:-2,m:-2}},
+ {t:'先警惕一下:他是不是有什么目的',v:{g:2,m:2,a:2,d:1}} ]},
+ {q:'刷到一个完全无厘头、没什么意义的视频:',o:[
+ {t:'看了一遍没看懂,但已经笑出声了', x:'shunfei',v:{a:5,d:3,s:2,m:-2,g:-2}},
+ {t:'这什么玩意,纯纯浪费我时间',v:{a:-3,m:3,g:2,d:1}},
+ {t:'立刻转发给所有好友一起承受',v:{a:3,s:3,d:2}},
+ {t:'看完陷入沉思:这居然也能火?',v:{a:2,m:2,g:1,d:2}} ]},
+ {q:'做一件事之前,你更接近哪种人?',o:[
+ {t:'先列计划、查攻略,准备充分再动手',v:{a:-3,m:3,d:3}},
+ {t:'想都没想就冲了,边做边想',v:{g:3,s:3,a:3,d:-1}},
+ {t:'嘴上说马上就做,拖到最后一刻',v:{d:3,a:2,m:1,g:-1}},
+ {t:'准备到一半,忘了自己原本要干嘛',v:{a:4,d:3,m:-2,g:-2,s:1}, x:'shunfei'} ]},
+ {q:'你最受不了哪种人?',o:[
+ {t:'端着架子、到处对人说教的',v:{g:3,m:3,a:2,d:1}},
+ {t:'没什么受不了的,关我什么事',v:{d:5,a:2,g:-2,m:-2}},
+ {t:'比我还能整活、抢我风头的',v:{s:3,g:3,a:3,m:2}},
+ {t:'不懂装懂、声音还特别大的',v:{g:2,m:2,a:1,d:1}} ]},
+ {q:'朋友遇到糟心事来找你,你会?',o:[
+ {t:'先帮他冷静分析,顺便指出他哪做错了',v:{a:-2,m:3,d:3,g:1}},
+ {t:'陪他一起骂,他骂一句我骂三句',v:{g:4,s:3,a:2,d:-1}},
+ {t:'给他一个清奇角度,硬把坏事说成好事',v:{a:3,d:4,m:-2,g:-2,s:1}},
+ {t:'安静听完,然后说一句傻乎乎但很暖的话',v:{a:3,d:4,s:2,g:-3,m:-3}} ]},
+ {q:'镜头/直播突然对准你:',o:[
+ {t:'瞬间进入状态,这就是我的主场',v:{s:5,g:3,a:3}},
+ {t:'下意识调整角度,找一个最上镜的方向',v:{s:3,d:3,a:2,g:-2}},
+ {t:'表情管理彻底失败,但莫名有种喜感',v:{s:3,a:3,d:1,m:-1}},
+ {t:'当场僵住,脑子一片空白',v:{d:-3,a:2,g:-1,s:1}} ]},
+ {q:'你和"输赢"的关系是?',o:[
+ {t:'必须赢,输了也得想办法找补回来',v:{m:5,g:3,a:3,d:1}},
+ {t:'赢了开心,输了也就输了,无所谓',v:{d:4,a:2,g:-1,m:-2}},
+ {t:'过程比结果重要,我开心就行',v:{d:4,a:3,g:-2,m:-3,s:1}},
+ {t:'赢了也低调,实力不需要张扬',v:{m:3,d:3,s:2}} ]},
+ {q:'用一种天气形容你的脾气:',o:[
+ {t:'雷阵雨,说来就来,说走就走',v:{g:4,a:3,s:2,d:-2}},
+ {t:'大晴天,万里无云,晒得人发懒',v:{d:5,a:2,g:-3,m:-2}},
+ {t:'沙尘暴,所到之处一片鸡飞狗跳',v:{g:4,s:3,a:4,m:2}},
+ {t:'闷雷,看着随时要炸,其实一直憋着',v:{d:3,a:2,m:2,g:1}} ]},
+ {q:'你最可能在什么场合"社死"?',o:[
+ {t:'我不会社死,脸皮厚到能反向社死别人',v:{d:5,s:3,m:2,g:2,a:2}},
+ {t:'想活跃气氛,结果全场尴尬,只有我在笑',v:{a:4,s:3,d:1,m:-1,g:-1}},
+ {t:'我从不社死,因为我从不承认自己出错',v:{m:5,g:2,a:2}},
+ {t:'一想起三年前的糗事,当场脚趾抠地',v:{d:-4,a:2,g:-2,s:1}} ]},
+ {q:'别人模仿你的口头禅或动作,你?',o:[
+ {t:'荣幸,说明我有影响力',v:{s:4,d:3,a:3}},
+ {t:'模仿可以,但你学不到精髓',v:{m:4,g:2,a:2}},
+ {t:'无所谓,反正也学不走我的灵魂',v:{d:4,a:2,g:-1,m:1}},
+ {t:'啊?我有口头禅吗?(自己都没意识到)',v:{a:4,d:3,m:-2,g:-2,s:2}} ]},
+ {q:'面对一个明显的"坑",你?',o:[
+ {t:'明知是坑也往里跳,为了效果什么都豁得出去', x:'laoa',v:{a:5,g:3,s:5,d:3}},
+ {t:'绕道走,我又不傻',v:{a:-2,m:2,d:3,g:1}},
+ {t:'试探着踩一脚,结果还是掉进去了',v:{a:3,d:3,s:2,m:-2,g:-2}},
+ {t:'把别人推下去,自己站旁边看戏',v:{g:3,a:3,m:3,s:2,d:1}} ]},
+ {q:'你说话的风格更接近哪种?',o:[
+ {t:'有理有据,逻辑链条清晰,不容反驳',v:{m:4,a:2,g:2,d:1}},
+ {t:'阴阳怪气,专戳痛处,杀人还诛心', x:'laoa',v:{m:4,g:4,a:3,s:3,d:1}},
+ {t:'颠三倒四,但莫名很有感染力',v:{a:5,s:3,d:2,m:-1}},
+ {t:'慢吞吞的,经常说一半忘了下半句',v:{a:3,d:3,m:-2,g:-2,s:1}} ]},
+ {q:'你心情不好的时候会?',o:[
+ {t:'直接发出来,让全世界都知道我不爽',v:{g:4,s:3,a:2,d:-2}},
+ {t:'一个人默默消化,表面还装没事',v:{d:-2,a:2,g:-2,m:1}},
+ {t:'该吃吃该睡睡,睡一觉基本就好了',v:{d:5,a:2,g:-1}},
+ {t:'做点离谱的事来转移注意力',v:{a:4,s:3,g:1,d:2}} ]},
+ {q:'你怎么看"被全网讨论"这件事?',o:[
+ {t:'天大的好事,黑红那也是红',v:{s:4,m:3,a:3,g:2,d:2}},
+ {t:'得看情况,要是被骂我会很难受',v:{d:-3,a:2,g:-1,s:2}},
+ {t:'无所谓,讨论我的人多了去了',v:{d:4,a:2,m:2,g:1,s:2}},
+ {t:'啊?他们在讨论我?我怎么不知道',v:{a:4,d:4,m:-2,g:-3,s:2}} ]},
+ {q:'给你一个"语出惊人"的机会,你会?',o:[
+ {t:'说一句最离谱、最阴间、没人敢接的话', x:'laoa',v:{a:5,g:3,m:5,s:4,d:2}},
+ {t:'说一句温暖、有点傻、但很戳心的话',v:{a:4,d:5,s:3,g:-4,m:-4}},
+ {t:'说一句金句,争取日后被人反复引用',v:{s:5,m:3,a:2}},
+ {t:'算了,我还是不要乱说话比较安全',v:{a:-2,d:-2,g:-2,m:-2,s:-1}} ]},
+ {q:'你身上最"抽象"的一点是?',o:[
+ {t:'笑点和正常人不在同一个频道',v:{a:5,d:3,s:2,g:-1}},
+ {t:'该认真时很认真,我其实挺正常的(存疑)',v:{a:-3,m:3,d:2}},
+ {t:'整起活来,连我自己都有点怕', x:'laoa',v:{a:4,s:4,g:3,m:2}},
+ {t:'反应永远慢半拍,但活得很快乐',v:{a:4,d:4,m:-2,g:-3,s:1}, x:'shunfei'} ]},
+ {q:'最后一题:你最希望在别人眼里是?',o:[
+ {t:'一个嘴硬到底、从不认输的狠角色',v:{m:5,g:3,a:2,d:2}},
+ {t:'一个心态超稳、什么都打不倒的人',v:{d:5,a:2,m:2,s:1}},
+ {t:'一个自带节目效果、一出场就有梗的人',v:{s:5,a:3,m:2,g:1}},
+ {t:'一个傻乎乎的、但让人特别想保护的存在',v:{a:4,d:5,s:2,g:-4,m:-3}} ]}
+];
+
+const DIMS=['a','g','m','s','d'];
+
+/* ===== 校准 ===== */
+const BAND={};
+(function calibrate(){
+ function rawDims(ans){ var r={a:0,g:0,m:0,s:0,d:0}; for(var i=0;i<ans.length;i++){ var o=ans[i]; if(o&&o.v) for(var k in o.v) r[k]=(r[k]||0)+(o.v[k]||0); } return r; }
+ var N=4000,cols={a:[],g:[],m:[],s:[],d:[]};
+ for(var t=0;t<N;t++){
+ var ans=QUESTIONS.map(function(q){ return q.o[Math.floor(Math.random()*q.o.length)]; });
+ var r=rawDims(ans); DIMS.forEach(function(k){ cols[k].push(r[k]); });
+ }
+ DIMS.forEach(function(k){ var a=cols[k].sort(function(x,y){return x-y;}); BAND[k]={lo:a[Math.floor(N*0.03)],hi:a[Math.floor(N*0.97)]}; });
+})();
+function bandMap(k,raw){ var b=BAND[k]; if(b.hi===b.lo) return 50; return Math.max(0,Math.min(100,Math.round((raw-b.lo)/(b.hi-b.lo)*100))); }
+function charPoint(co){ var p={}; DIMS.forEach(function(k){ var span=BAND[k].hi-BAND[k].lo; var rawEq=BAND[k].lo+co[k]/100*span; p[k]=bandMap(k,rawEq); }); return p; }
+var CHAR_PTS={}; Object.keys(CHARS).forEach(function(k){ CHAR_PTS[k]=charPoint(CHARS[k].co); });
+
+const DIM_META=[
+ {k:'a',label:'抽象度',grad:'linear-gradient(90deg,#c084fc,#7c3aed)'},
+ {k:'g',label:'攻击性',grad:'linear-gradient(90deg,#fca5a5,#ef4444)'},
+ {k:'m',label:'嘴硬度',grad:'linear-gradient(90deg,#fdba74,#f97316)'},
+ {k:'s',label:'节目效果',grad:'linear-gradient(90deg,#93c5fd,#3b82f6)'},
+ {k:'d',label:'钝感力',grad:'linear-gradient(90deg,#86efac,#22c55e)'}
+];
+
+/* ====== 状态 ====== */
+var STORAGE_KEY='quiz_internet_v2';
+var qOrder=[],idx=-1,answers=[],started=false;
+
+function saveProgress(){
+ try{ localStorage.setItem(STORAGE_KEY,JSON.stringify({qOrder:qOrder,idx:idx,answers:answers})); }catch(e){}
+}
+function loadProgress(){
+ try{
+ var d=JSON.parse(localStorage.getItem(STORAGE_KEY));
+ if(d&&d.qOrder&&d.idx>0){ qOrder=d.qOrder;idx=d.idx;answers=d.answers;return true; }
+ }catch(e){}
+ return false;
+}
+
+function render(){
+ var a=document.getElementById('app');
+ if(!started){
+ var hasProgress=loadProgress();
+ var continueHTML='';
+ if(hasProgress&&qOrder&&qOrder.length>0&&idx>0){
+ continueHTML='<button class="btn btn-ghost" style="max-width:260px;margin:4px auto 0;display:block;" onclick="restoreQuiz()">📋 继续上次测试（第'+(idx+1)+'/'+qOrder.length+'题）</button>';
+ }
+ var strip=[];
+ for(var i=0;i<Math.min(16,REGULAR.length+HIDDEN.length);i++){
+ var all=[].concat(REGULAR).concat(HIDDEN);
+ strip.push('<div class="mini" title="?">'+face(all[i])+'</div>');
+ }
+ strip.push('<div class="mini mystery">?</div>','<div class="mini mystery">?</div>');
+ a.innerHTML='<div class="start">'+
+ '<div class="badge-line">赛博精神鉴定中心</div>'+
+ '<h1>测一测你是哪位<br>抽象圈大手子 2.0 升级版！</h1>'+
+ '<p class="sub">26 道灵魂问题,五维建模,精准鉴定你的精神归属</p>'+
+ '<div class="avatar-strip">'+strip.join('')+'</div>'+
+ '<button class="btn btn-main" onclick="begin()">⚡ 开始鉴定(26题)</button>'+continueHTML+
+ '<p class="notice">本测试共 16 位常规人物<br>另有 2 位隐藏人物潜伏其中,缘分到了才能遇见 🌚</p>'+
+ '</div>';
+ }else if(idx<qOrder.length){
+ var q=qOrder[idx];var pct=Math.round(idx/qOrder.length*100);
+ a.innerHTML='<div class="progress-wrap">'+
+ '<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div>'+
+ '<div class="progress-text">'+(idx+1)+' / '+qOrder.length+'</div></div>'+
+ '<div class="q-num">第 '+(idx+1)+' 题</div>'+
+ '<div class="q-text">'+q.q+'</div>'+
+ '<div class="options">'+q.o.map(function(o,i){ return '<button class="opt-btn" onclick="answer('+i+')"><span class="opt-letter">'+'ABCD'[i]+'</span><span>'+o.t+'</span></button>'; }).join('')+'</div>'+
+ (idx>0?'<div style="text-align:center;"><button class="btn-back" onclick="goBack()">← 返回上一题</button></div>':'')+
+ '<div style="text-align:center;margin-top:8px;"><button class="btn-back" onclick="restart()">🔄 重新开始</button></div>';
+ }else{ showLoading(); }
+}
+
+function begin(){ started=true; qOrder=shuffle(QUESTIONS).map(function(q){ return {q:q.q,o:shuffle(q.o)}; }); idx=0;answers=[]; try{ localStorage.removeItem(STORAGE_KEY); }catch(e){} saveProgress();render(); }
+function restoreQuiz(){ started=true; render(); }
+function answer(i){ answers[idx]=qOrder[idx].o[i];idx++;saveProgress();render(); }
+function goBack(){ if(idx>0){idx--;render();} }
+function restart(){ started=false;idx=-1;answers=[];qOrder=[]; try{ localStorage.removeItem(STORAGE_KEY); }catch(e){} render(); }
+
+async function showLoading(){
+ var a=document.getElementById('app');
+ var steps=['正在建立你的五维坐标…','正在比对 18 位人物档案…','正在校准唐氏指数…','正在测量嘴硬程度…','已通知李春姬同志准备播报…'];
+ a.innerHTML='<div class="loading-wrap"><div class="loading-avatar">🔍</div><p class="loading-text" id="ltxt">'+steps[0]+'</p></div>';
+ var lt=document.getElementById('ltxt');
+ for(var si=0;si<steps.length;si++){ await sleep(420+Math.random()*460); if(lt) lt.textContent=steps[si]; }
+ await sleep(350);showResult();
+}
+
+function rawDims(ans){ var r={a:0,g:0,m:0,s:0,d:0}; for(var i=0;i<ans.length;i++){ var o=ans[i]; if(o&&o.v) for(var k in o.v){ r[k]=(r[k]||0)+(o.v[k]||0); } } return r; }
+
+function computeUser(){
+ var raw=rawDims(answers);var norm={};
+ DIMS.forEach(function(k){ norm[k]=bandMap(k,raw[k]); });
+ return norm;
+}
+function dist(u,p){ return Math.sqrt(DIMS.reduce(function(s,k){ return s+Math.pow(u[k]-p[k],2); },0)); }
+
+function checkTriggers(){
+ var u=computeUser();
+ var hits={shunfei:0,laoa:0};
+ for(var i=0;i<answers.length;i++){
+ if(answers[i]&&answers[i].x) hits[answers[i].x]=(hits[answers[i].x]||0)+1;
+ }
+ // 向量距离托底：距离 ≤ 40 自动 +2 分
+ if(dist(u,CHAR_PTS.shunfei)<=40) hits.shunfei+=2;
+ if(dist(u,CHAR_PTS.laoa)<=40) hits.laoa+=2;
+ // 总分 ≥ 3 解锁
+ if(hits.shunfei>=3) return 'shunfei';
+ if(hits.laoa>=3) return 'laoa';
+ return null;
+}
+
+function match(){
+ var u=computeUser();
+ var trig=checkTriggers();
+
+ if(trig){
+ // 触发隐藏人物：命中 3+ 特定选项
+ var runners=[].concat(REGULAR).concat(HIDDEN).filter(function(k){ return k!==trig; }).map(function(k){ return {k:k,d:dist(u,CHAR_PTS[k])}; }).sort(function(x,y){ return x.d-y.d; }).filter(function(x){ return REGULAR.indexOf(x.k)>=0; }).slice(0,2).map(function(x){ return x.k; });
+ return {key:trig,secret:true,user:u,runners:runners};
+ }
+
+ // 常规匹配
+ var all=REGULAR.map(function(k){ return {k:k,d:dist(u,CHAR_PTS[k])}; }).sort(function(x,y){ return x.d-y.d; });
+ var key=all[0].k;
+ var runners=all.filter(function(x){ return x.k!==key; }).slice(0,2).map(function(x){ return x.k; });
+ return {key:key,secret:false,user:u,runners:runners};
+}
+
+var lastResult=null;
+function showResult(){
+ var a=document.getElementById('app');
+ var r=match();lastResult=r;
+ var c=CHARS[r.key];
+ var confetti='';
+ if(r.secret){
+ for(var i=0;i<14;i++){
+ confetti+='<span class="confetti" style="left:'+(5+i*7)+'%;animation-delay:'+(i%7)*0.35+'s">'+['✨','🎉','⭐'][i%3]+'</span>';
+ }
+ }
+ a.innerHTML='<div class="result '+(r.secret?'secret':'')+'">'+
+ confetti+
+ (r.secret?'<div class="secret-badge">★ 隐藏人物解锁 ★</div>':'')+
+ '<div class="result-hero">'+face(r.key)+'</div>'+
+ '<div class="result-label">'+(r.secret?'经特殊鉴定,你是——':'经赛博鉴定,你是——')+'</div>'+
+ '<div class="result-name" style="color:'+c.color+'">'+c.name+'</div>'+
+ '<div class="result-aka">'+c.aka+'</div>'+
+ '<div class="quote-bubble">"'+c.quote+'"</div>'+
+ '<div class="dims">'+DIM_META.map(function(d){
+ return '<div class="dim-item"><span class="dim-label">'+d.label+'</span><div class="dim-bar-wrap"><div class="dim-bar" data-w="'+r.user[d.k]+'" style="background:'+d.grad+'"></div></div><span class="dim-val">'+r.user[d.k]+'</span></div>';
+ }).join('')+'</div>'+
+ '<div class="match-pct" style="text-align:center;margin-bottom:20px;font-size:13px;color:var(--muted);">匹配度 <strong style="color:var(--gold);font-size:22px;">'+((function(){ var _d=dist(r.user,CHAR_PTS[r.key]); return isFinite(_d)?Math.round(Math.max(0,100-_d*100/224)):'--'; })())+'%</strong></div>'+
+ '<div class="result-desc">'+c.desc+
+ (r.runners.length?'<div class="runner-up"><span>你体内还潜伏着:</span>'+r.runners.map(function(k){ return '<span class="ru-face">'+face(k)+'</span><span>'+CHARS[k].name+'</span>'; }).join('')+'</div>':'')+
+ '</div>'+
+ '<div class="result-meta">'+c.tags.map(function(t){ return '<span class="meta-tag">'+t+'</span>'; }).join('')+'</div>'+
+ '<button class="btn btn-main" onclick="downloadCard()">🖼️ 生成并保存结果卡片</button>'+
+ '<button class="btn btn-ghost" onclick="copyText()">📋 复制文案发给好兄弟</button>'+
+ '<button class="btn btn-ghost" onclick="restart()">🔄 不服,再测一次</button>'+
+ '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+ '<p class="notice">本结果由五维匹配引擎出具 · 具有完全不可靠的权威性</p>'+
+ '<div class="qq-section">'+
+ '<img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'">'+
+ '<p><strong style="color:var(--gold);">加群一起玩</strong><br>扫码进群,更多抽象好活</p>'+
+  '</div>'+
+  '<p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>'+
+  '</div>';
+ requestAnimationFrame(function(){ setTimeout(function(){
+ var bars=document.querySelectorAll('.dim-bar');
+ for(var i=0;i<bars.length;i++){ bars[i].style.width=bars[i].dataset.w+'%'; }
+ },60); });
+}
+
+function copyText(){
+ var c=CHARS[lastResult.key];var u=lastResult.user;
+ // 根据最高维度生成不同口吻
+ var top='a';var topVal=0;
+ DIMS.forEach(function(k){ if(u[k]>topVal){ topVal=u[k];top=k; } });
+ var prefixes={
+ a:'我的抽象度高达'+u.a+',官方鉴定纯纯的带带大师兄接班人！',
+ g:'攻击性'+u.g+'%已拉满,测出来是【'+c.name+'】……',
+ m:'嘴硬度'+u.m+',打死不认输,系统说我最像【'+c.name+'】',
+ s:'节目效果'+u.s+'分,一出场就有梗,鉴定为【'+c.name+'】',
+ d:'钝感力'+u.d+',心态焊死,荣登【'+c.name+'】'
+ };
+ var prefix=prefixes[top]||('我在「抽象圈大手子鉴定2.0」里测出来是【'+c.name+'】');
+ var text=prefix+' —— "'+c.quote+'" 你也来测测你是谁:'+location.href;
+ copyToClipboard(text, '已复制!快去发给你的好兄弟 😈');
+}
+
+function svgToImage(svg){
+ return new Promise(function(res){
+ var blob=new Blob([svg],{type:'image/svg+xml;charset=utf-8'});
+ var url=URL.createObjectURL(blob);var img=new Image();
+ img.onload=function(){res(img);URL.revokeObjectURL(url);};
+ img.onerror=function(){res(null);};
+ img.src=url;
+ });
+}
+async function downloadCard(){
+ var c=CHARS[lastResult.key];var u=lastResult.user;
+ var cv=document.getElementById('cardCanvas');var x=cv.getContext('2d');
+ var W=600,H=880;
+ var bg=x.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#fffdf8');bg.addColorStop(1,'#f3ede2');
+ x.fillStyle=bg;x.fillRect(0,0,W,H);
+ x.fillStyle=lastResult.secret?'#d4a017':c.color;x.fillRect(0,0,W,10);
+ x.fillStyle='#948a7a';x.font='600 18px sans-serif';x.textAlign='center';
+ x.fillText(lastResult.secret?'★ 隐藏人物 · 赛博精神鉴定 ★':'赛博精神鉴定中心 · 2.0',W/2,60);
+ var av=CUSTOM_IMAGES[lastResult.key]?null:AVATARS[lastResult.key];
+ var img=null;
+ if(av) img=await svgToImage(av);
+ else if(CUSTOM_IMAGES[lastResult.key]){ img=new Image();img.crossOrigin='anonymous';
+ await new Promise(function(r2){ img.onload=r2;img.onerror=function(){img=null;r2();};img.src=CUSTOM_IMAGES[lastResult.key]; }); }
+ var AS=180,AX=(W-AS)/2,AY=90;
+ x.save();roundRect(x,AX,AY,AS,AS,36);x.clip();
+ if(img) x.drawImage(img,AX,AY,AS,AS);else{ x.fillStyle=c.color;x.fillRect(AX,AY,AS,AS); }
+ x.restore();
+ x.lineWidth=6;x.strokeStyle=lastResult.secret?'#d4a017':'#fff';
+ roundRect(x,AX,AY,AS,AS,36);x.stroke();
+ x.fillStyle=c.color;x.font='900 44px sans-serif';x.fillText(c.name,W/2,330);
+ x.fillStyle='#948a7a';x.font='400 16px sans-serif';x.fillText(c.aka,W/2,360);
+ x.fillStyle='#26211a';roundRect(x,W/2-200,385,400,46,16);x.fill();
+ x.fillStyle='#fff';x.font='500 18px sans-serif';
+ var qt='"'+c.quote+'"';if(qt.length>22)qt=qt.slice(0,21)+'…"';
+ x.fillText(qt,W/2,414);
+ var grads={a:'#7c3aed',g:'#ef4444',m:'#f97316',s:'#3b82f6',d:'#22c55e'};
+ var yy=480;x.textAlign='left';
+ DIM_META.forEach(function(d){
+ x.fillStyle='#948a7a';x.font='600 16px sans-serif';x.fillText(d.label,70,yy+14);
+ x.fillStyle='#e6ddcf';roundRect(x,180,yy+2,300,14,7);x.fill();
+ x.fillStyle=grads[d.k];roundRect(x,180,yy+2,300*u[d.k]/100,14,7);x.fill();
+ x.fillStyle='#948a7a';x.font='600 15px sans-serif';x.textAlign='left';x.fillText(u[d.k],490,yy+14);
+ yy+=52;
+ });
+ x.textAlign='center';x.font='500 15px sans-serif';
+ x.fillStyle='#948a7a';x.fillText('# '+c.tags.slice(0,3).join(' # '),W/2,yy+20);
+ x.fillStyle='#cabfae';x.font='400 14px sans-serif';
+ x.fillText('抽象圈大手子鉴定 2.0 · 测测你是谁',W/2,H-30);
+ var link=document.createElement('a');
+ link.download='我是'+c.name+'.png';link.href=cv.toDataURL('image/png');link.click();
+}
+
+render();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>读心术 · 你最爱什么水果 · 霧雨魔法店</title>
+    <script src="js/analytics.js"></script>
+    <link rel="stylesheet" href="css/common.css">
+<style>
+ .container::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg, var(--pink), var(--gold), var(--green));
+ }
+ .intro-badge { display:inline-block; font-size:10px; letter-spacing:3px; color:var(--pink); border:1px solid var(--pink); border-radius:20px; padding:4px 14px; margin-bottom:14px; }
+ .intro .mind-hint {
+  font-size:12px; color:var(--muted); margin-top:-10px; margin-bottom:20px;
+  font-style:italic; opacity:.7;
+ }
+ .progress-fill { height:100%; background:linear-gradient(90deg, var(--pink), var(--gold), var(--green)); border-radius:3px; transition:width .3s; }
+ .q-num { font-size:12px; color:var(--purple); font-weight:700; letter-spacing:1px; margin-bottom:6px; }
+ .loading-orb { width:64px; height:64px; border-radius:50%; margin:0 auto 22px; background:conic-gradient(var(--pink), var(--gold), var(--green), var(--purple)); animation:spin 1.2s linear infinite; }
+ .mind-reading { text-align:center; padding:20px 0; }
+ .mind-orb {
+  width:80px; height:80px; border-radius:50%; margin:0 auto 16px;
+  background:radial-gradient(circle, rgba(176,159,255,.3), rgba(240,192,96,.1), transparent 70%);
+  animation:pulse 1.5s ease-in-out infinite;
+  display:flex; align-items:center; justify-content:center; font-size:36px;
+ }
+ @keyframes pulse {
+  0%,100% { transform:scale(1); box-shadow:0 0 20px rgba(176,159,255,.2); }
+  50% { transform:scale(1.08); box-shadow:0 0 40px rgba(240,192,96,.3); }
+ }
+ .result-img {
+  width:200px; height:200px; border-radius:18px; margin:0 auto 12px;
+  object-fit:cover; border:3px solid var(--border);
+  box-shadow:0 8px 32px rgba(0,0,0,.4);
+  animation:popIn .5s cubic-bezier(.2,1.4,.4,1);
+  display:block;
+ }
+ @media (max-width:420px) {
+  .result-img { width:160px; height:160px; }
+ }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+<script src="js/utils.js"></script>
+
+<div class="container" id="app"></div>
+
+<script>
+var state = 'intro';
+var idx = 0;
+var answers = [];
+var seen = false;
+
+var QUIZ_TITLE = '六个问题，看穿你最爱什么水果';
+var QUIZ_SUBTITLE = '别想水果的事。回答下面六个无关的问题。<br>读心术会告诉你答案。';
+var BADGE_TEXT = '霧雨魔法店 · 读心术';
+
+var QUESTIONS = [
+ {
+ q: '在朋友聚会上，你通常是那个……',
+ opts: ['带节奏的人，话题由我发起','倾听者，让每个人都有话说','气氛组，负责让大家笑出声','安静观察，偶尔插一句金句']
+ },
+ {
+ q: '选一种你最想去的旅行目的地。',
+ opts: ['热带海岛，阳光沙滩','雪山木屋，围着火炉','古城小巷，慢慢逛吃','都市霓虹，不夜之城']
+ },
+ {
+ q: '最能代表你性格的一句歌词？',
+ opts: ['「我就是我，是颜色不一样的烟火」','「朋友一生一起走」','「甜甜的，你的笑」','「随风奔跑自由是方向」']
+ },
+ {
+ q: '周末早上醒来，你的第一个念头是？',
+ opts: ['再睡五分钟……zzz','今天要做什么？列个清单','阳光真好，出门浪！','先看看手机有没有消息']
+ },
+ {
+ q: '如果有人对你撒谎，你会？',
+ opts: ['当面戳穿，真相至上','不拆穿，但默默记一笔','给个台阶，看对方会不会自己说','无所谓，骗得了我是他的本事']
+ },
+ {
+ q: '最后一道：你现在心里在想什么？',
+ opts: ['「到底准不准啊？」','「不会是骗人的吧……」','「我好像知道是什么水果了」','「赶紧出结果别墨迹」']
+ }
+];
+
+// 🔧 图片路径：把照片放到 images/ 目录，改下面这行
+var RESULT_IMG = 'images/binlang.jpg';
+// 图片加载失败时显示的 emoji 兜底
+var RESULT_IMG_FALLBACK = '🪨';
+
+var RESULT = {
+ name: '槟榔', color: '#8b5e3c',
+ tagline: '硬核本核，拒绝被定义',
+ desc: '你以为是芒果？草莓？西瓜？<br><br>不。你爱吃槟榔。<br><br>你最爱嚼大果。果子大，汁水足，口味正。<br><br>别人第一次接触你觉得「这啥玩意儿」，但久了就莫名其妙离不开。你是那种<strong>一嚼就上头</strong>的人——不是人人都懂你，但懂你的人是真的戒不掉。<br><br>争议体质、后劲十足、存在感极强。<br><br><span style="color:var(--muted);font-size:11px;">（温馨提示：此读心术算法经过了 0 次迭代，结果绝对真实。不管你前面选了什么，最终都会到达这里。这就是命运。<br><br>……行，说句正经的：槟榔图一乐就好，真嚼上头请趁早收手，你的牙齿和口腔会谢谢你——本店只负责读心，不负责治病。）</span>',
+ tags: ['后劲大','争议体质','存在感爆炸','戒不掉','硬核本核','命运的安排']
+};
+
+var LOADING_STEPS = [
+ '正在读取你的脑电波……',
+ '分析潜意识信号……',
+ '排除干扰项……',
+ '匹配水果数据库……',
+ '计算风味人格……',
+ '锁定……'
+];
+
+function render() {
+ var app = document.getElementById('app');
+ if (state === 'intro') renderIntro(app);
+ else if (state === 'quiz') renderQuestion(app);
+ else if (state === 'loading') renderLoading(app);
+ else if (state === 'mind') renderMind(app);
+ else if (state === 'result') renderResult(app);
+}
+
+function renderIntro(app) {
+ app.innerHTML =
+ '<div class="intro">' +
+ '<div class="intro-badge">' + BADGE_TEXT + '</div>' +
+ '<h1>' + QUIZ_TITLE + '</h1>' +
+ '<p class="sub">' + QUIZ_SUBTITLE + '</p>' +
+ '<p class="mind-hint">🧠 别想水果。回答六个问题，我来读你的心。</p>' +
+ '<button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">开始读心 →</button>' +
+ '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+ '</div>';
+}
+
+function startQuiz() {
+ state = 'quiz'; idx = 0; answers = [];
+ var lastIdx = QUESTIONS.length - 1;
+ var rest = QUESTIONS.slice(0, lastIdx);
+ var last = QUESTIONS[lastIdx];
+ QUESTIONS = shuffle(rest);
+ QUESTIONS.push(last);
+ render();
+}
+
+function renderQuestion(app) {
+ if (idx >= QUESTIONS.length) { state = 'loading'; render(); return; }
+ var q = QUESTIONS[idx];
+ var denom = Math.max(1, QUESTIONS.length - 1);
+ var pct = Math.round((idx / denom) * 100);
+ var labels = 'ABCDEFGH';
+ var html =
+ '<div class="progress-wrap">' +
+ '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+ '<div class="progress-text">' + (idx + 1) + ' / ' + QUESTIONS.length + '</div>' +
+ '</div>' +
+ '<div class="q-num">第 ' + (idx + 1) + ' 问</div>' +
+ '<div class="q-text">' + q.q + '</div>' +
+ '<div class="options">';
+ for (var i = 0; i < q.opts.length; i++) {
+ html +=
+ '<button class="opt-btn" onclick="answer(' + i + ')">' +
+ '<span class="opt-letter">' + (labels[i] || '?') + '</span>' +
+ q.opts[i] +
+ '</button>';
+ }
+ html += '</div>';
+ app.innerHTML = html;
+}
+
+function answer(choice) {
+ var labels = 'ABCDEFGH';
+ var q = QUESTIONS[idx];
+ answers.push({ q: q.q, opt: q.opts[choice], letter: labels[choice] || '?' });
+ idx++;
+ render();
+}
+
+function renderLoading(app) {
+ app.innerHTML =
+ '<div class="loading-wrap">' +
+ '<div class="loading-orb"></div>' +
+ '<p class="loading-text" id="ltxt">' + LOADING_STEPS[0] + '</p>' +
+ '</div>';
+ cycleLoading(1);
+}
+
+async function cycleLoading(i) {
+ if (i >= LOADING_STEPS.length) { state = 'mind'; render(); return; }
+ await sleep(600 + Math.random() * 500);
+ var lt = document.getElementById('ltxt');
+ if (lt) lt.textContent = LOADING_STEPS[i];
+ cycleLoading(i + 1);
+}
+
+function renderMind(app) {
+ var pool = answers.slice(0, Math.max(1, answers.length - 1));
+ var pick = pool[Math.floor(Math.random() * pool.length)];
+ var personalized = pick
+ ? '你刚在「' + pick.q + '」里选了 <strong>' + pick.letter + '</strong>……<br>嗯。果然。<br><br>'
+ : '';
+
+ var head, body;
+ if (seen) {
+ head = '我又看到了……';
+ body = personalized +
+ '还是它。<br>还是<strong style="color:#8b5e3c;">那么硬</strong>的那一个。<br>逃不掉的，认命吧。<br><br>' +
+ '<span style="font-size:12px;opacity:.7;">点击揭晓（虽然你已经知道了）↓</span>';
+ } else {
+ head = '我看到了……';
+ body = personalized +
+ '你心里有一个水果。<br>它很硬。<br>非常硬。<br>你隐约感觉到了，但不敢相信。<br><br>' +
+ '<span style="font-size:12px;opacity:.7;">点击揭晓 ↓</span>';
+ }
+
+ app.innerHTML =
+ '<div class="mind-reading">' +
+ '<div class="mind-orb">🔮</div>' +
+ '<p style="font-size:18px;font-weight:600;margin-bottom:8px;">' + head + '</p>' +
+ '<p style="font-size:13px;color:var(--muted);line-height:1.8;">' + body + '</p>' +
+ '<button class="btn btn-main" style="max-width:200px;margin:16px auto 0;" onclick="reveal()">揭晓答案</button>' +
+ '</div>';
+}
+
+function reveal() {
+ seen = true; state = 'result'; render();
+}
+
+function renderResult(app) {
+ var r = RESULT;
+ var imgHTML =
+ '<img src="' + RESULT_IMG + '" alt="槟榔" class="result-img"' +
+ ' onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';" />' +
+ '<span class="result-emoji" style="display:none;font-size:88px;">' + RESULT_IMG_FALLBACK + '</span>';
+
+ var html =
+ '<div class="result">' +
+ imgHTML +
+ '<div class="result-label">霧雨魔法店 读心结果</div>' +
+ '<div class="result-name" style="color:' + r.color + '">' + r.name + '</div>' +
+ '<div class="result-tagline">' + r.tagline + '</div>' +
+ '<div class="result-desc">' + r.desc + '</div>' +
+ '<div class="result-meta">';
+ for (var i = 0; i < r.tags.length; i++) {
+ html += '<span class="meta-tag">' + r.tags[i] + '</span>';
+ }
+ html +=
+ '</div>' +
+ '<button class="btn btn-main" onclick="shareIt()">📋 复制结果发给朋友</button>' +
+ '<button class="btn btn-ghost" onclick="restart()">🔄 再来一次</button>' +
+ '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+ '<p class="notice">霧雨魔法店 · 读心术研究所 · 信则有不信则无</p>' +
+ '<div class="qq-section">' +
+ '<img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'">' +
+ '<p><strong style="color:var(--gold);">加群一起玩</strong><br>扫码进群，更多抽象好活</p>' +
+  '</div>' +
+  '<p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>' +
+  '</div>';
+ app.innerHTML = html;
+}
+
+function shareIt() {
+ var text = '🧠 六个问题，魔法店读出了我最爱的水果——槟榔！你也来测：' + window.location.href;
+ copyToClipboard(text, '已复制！发给朋友让他们也被读心 🧠');
+}
+
+function restart() { state = 'intro'; idx = 0; answers = []; render(); }
+
+render();
+</script>
+
+</body>
+</html>

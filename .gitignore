@@ -1,0 +1,9 @@
+# 服务器配置文件（不同环境不同）
+.user.ini
+bdunion.txt
+
+# SSL 证书验证（Let's Encrypt 临时文件）
+.well-known/
+
+# 百度站长验证
+39be8777283b6964b055eb7e87a6dadb.txt

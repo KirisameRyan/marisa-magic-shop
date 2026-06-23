@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<script src="js/analytics.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>测测你的二次元老婆 · 霧雨魔法店</title>
+
+<style>
+.container { transition: box-shadow .6s, border-color .6s; }
+.result { position: relative; }
+
+/* ⭐ 魔理沙 · 金色隐藏特效 ⭐ */
+.container.golden-aura {
+ border-color: rgba(240,192,96,.35);
+ box-shadow:
+ 0 0 40px rgba(240,192,96,.12),
+ 0 0 80px rgba(240,192,96,.06),
+ 0 4px 32px rgba(0,0,0,.3);
+}
+.container.golden-aura::before {
+ background: linear-gradient(90deg, var(--gold), #ffe8b0, #fff3cd, #ffe8b0, var(--gold));
+ animation: shimmer-bar 2s ease-in-out infinite;
+}
+
+.result-portrait.golden {
+ border-color: var(--gold);
+ box-shadow:
+ 0 0 24px rgba(240,192,96,.35),
+ 0 0 48px rgba(240,192,96,.15),
+ 0 0 80px rgba(240,192,96,.06),
+ 0 6px 28px rgba(0,0,0,.4);
+ animation: popIn .5s cubic-bezier(.2,1.4,.4,1), golden-pulse 2.5s ease-in-out infinite;
+}
+
+.result-name.golden-shimmer {
+ background: linear-gradient(135deg,
+ #f0c060 0%, #ffe8b0 25%, #fff3cd 40%, #ffe8b0 55%, #f0c060 70%, #ffd700 100%);
+ background-size: 200% auto;
+ -webkit-background-clip: text;
+ -webkit-text-fill-color: transparent;
+ background-clip: text;
+ animation: shimmer-text 3s linear infinite;
+}
+
+.result .meta-tag.golden-tag {
+ background: rgba(240,192,96,.08);
+ border-color: rgba(240,192,96,.3);
+ color: var(--gold);
+}
+
+.result-desc.golden-desc {
+ border-color: rgba(240,192,96,.2);
+ background: rgba(240,192,96,.03);
+}
+
+.egg-golden-bg {
+ position: absolute; inset: 0;
+ background:
+ radial-gradient(ellipse at 50% 30%, rgba(240,192,96,.06) 0%, transparent 60%),
+ radial-gradient(ellipse at 50% 70%, rgba(255,232,176,.04) 0%, transparent 60%);
+ pointer-events: none;
+ animation: egg-aura 3s ease-in-out infinite;
+}
+
+@keyframes golden-pulse {
+ 0%, 100% { box-shadow: 0 0 24px rgba(240,192,96,.35), 0 0 48px rgba(240,192,96,.15), 0 0 80px rgba(240,192,96,.06), 0 6px 28px rgba(0,0,0,.4); }
+ 50% { box-shadow: 0 0 36px rgba(240,192,96,.5), 0 0 64px rgba(240,192,96,.25), 0 0 100px rgba(240,192,96,.1), 0 6px 28px rgba(0,0,0,.4); }
+}
+@keyframes shimmer-text {
+ 0% { background-position: 0% center; }
+ 100% { background-position: 200% center; }
+}
+@keyframes shimmer-bar {
+ 0%, 100% { opacity: 1; }
+ 50% { opacity: .7; }
+}
+@keyframes egg-aura {
+ 0%, 100% { opacity: .6; }
+ 50% { opacity: 1; }
+}
+
+/* ⭐ 彩蛋页 · 光芒四射 */
+.egg-rays {
+ position: absolute; left: 50%; top: 96px; width: 520px; height: 520px;
+ transform: translate(-50%,-50%);
+ background: repeating-conic-gradient(from 0deg,
+   rgba(240,192,96,.12) 0deg 5deg, transparent 5deg 17deg);
+ border-radius: 50%;
+ -webkit-mask: radial-gradient(circle, #000 12%, transparent 58%);
+         mask: radial-gradient(circle, #000 12%, transparent 58%);
+ animation: rays-spin 22s linear infinite;
+ pointer-events: none; z-index: 0; opacity: .75;
+}
+@keyframes rays-spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+
+/* ⭐ 漂浮闪光层 */
+.sparkle-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; border-radius: 24px; }
+.sparkle {
+ position: absolute; color: #ffe8b0; line-height: 1;
+ text-shadow: 0 0 6px rgba(240,192,96,.85);
+ opacity: 0; will-change: transform, opacity;
+ animation: sparkle-twinkle var(--dur,3s) ease-in-out var(--delay,0s) infinite;
+}
+@keyframes sparkle-twinkle {
+ 0%, 100% { opacity: 0; transform: translateY(6px) scale(.4) rotate(0deg); }
+ 50%      { opacity: 1; transform: translateY(-7px) scale(1) rotate(25deg); }
+}
+
+/* ⭐ 中央星 */
+.egg-star {
+ font-size: 92px; position: relative; z-index: 1; display: inline-block;
+ filter: drop-shadow(0 0 18px rgba(240,192,96,.6));
+ animation: popIn .5s cubic-bezier(.2,1.4,.4,1), star-float 3.2s ease-in-out infinite;
+}
+@keyframes star-float {
+ 0%, 100% { transform: translateY(0) rotate(-5deg); filter: drop-shadow(0 0 16px rgba(240,192,96,.5)); }
+ 50%      { transform: translateY(-9px) rotate(5deg); filter: drop-shadow(0 0 32px rgba(240,192,96,.9)); }
+}
+
+/* ⭐ 「是」按钮金光脉动 + 流光 */
+.btn-yes {
+ background: linear-gradient(135deg, #f0c060, #ffe8b0, #fff3cd, #ffe8b0, #f0c060);
+ background-size: 200% auto; color: #2a2012; font-weight: 800;
+ animation: yes-glow 1.8s ease-in-out infinite, shimmer-text 3s linear infinite;
+}
+.btn-yes:hover { filter: brightness(1.06); }
+@keyframes yes-glow {
+ 0%, 100% { box-shadow: 0 0 12px rgba(240,192,96,.35); }
+ 50%      { box-shadow: 0 0 28px rgba(240,192,96,.7); }
+}
+
+/* ⭐ 「否」逃跑 */
+.btn-no { transition: transform .28s cubic-bezier(.2,1.6,.4,1), opacity .28s; }
+
+@media (prefers-reduced-motion: reduce) {
+ .egg-rays, .sparkle, .egg-star, .btn-yes, .container.golden-aura::before,
+ .result-portrait.golden, .result-name.golden-shimmer { animation: none !important; }
+ .egg-rays { opacity: .4; }
+}
+
+/* ── 页面组件 ── */
+.back-link {
+ display: inline-flex; align-items: center; gap: 4px;
+ background: none; border: none; cursor: pointer; font-family: inherit;
+ font-size: 12px; color: var(--muted); padding: 4px 0; margin-bottom: 12px;
+ transition: color .2s;
+}
+.back-link:hover { color: var(--gold); }
+.back-link:disabled { opacity: .3; cursor: default; }
+
+.result-portrait {
+ width: 132px; height: 132px; border-radius: 50%;
+ object-fit: cover; margin-bottom: 8px;
+ border: 3px solid var(--gold);
+ box-shadow: 0 6px 28px rgba(0,0,0,.4);
+ animation: popIn .5s cubic-bezier(.2,1.4,.4,1);
+}
+
+.poster-wrap { text-align: center; }
+.poster-img {
+ width: 100%; max-width: 320px; border-radius: 16px;
+ border: 1px solid var(--border); box-shadow: 0 8px 32px rgba(0,0,0,.4);
+ margin: 0 auto 14px;
+}
+.poster-hint { font-size: 11px; color: var(--muted); margin-bottom: 16px; line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/canvas-utils.js"></script>
+
+<div class="container" id="app"></div>
+
+<script>
+var state = 'intro';
+var idx = 0;
+var answers = [];
+var resultKey = null;
+
+var QUIZ_TITLE = '测测你的二次元老婆';
+var QUIZ_SUBTITLE = '20 道题，鉴定你命中注定的二次元老婆 —— 放心，抽到的都是「好女孩」。';
+var BADGE_TEXT = '霧雨魔法店 · 限定鉴定';
+
+var SITE_URL = 'www.azureflame.cloud';
+var QR_IMG = 'images/qr-code.png';
+var QQ_IMG = 'images/qq-group.png';
+var QQ_GROUP = '702973928';
+var POSTER_W = 640;
+var POSTER_H = 960;
+
+var EGG_THRESHOLD = 14;
+var SCORE_KEYS = ['sakura','chizuru','sayu','ai','lin'];
+
+var QUESTIONS = [
+ { q:'你最期待和二次元老婆一起做什么？', opts:[
+ { t:'一起吃饭看电影，平平淡淡就很好', pure:true, s:{} },
+ { t:'在家各玩各的，一起追番打游戏也舒服', s:{chizuru:1} },
+ { t:'陪她做她喜欢的事，哪怕是登台、抛头露面', s:{ai:1,lin:2} },
+ { t:'深夜长谈，听她讲心事', s:{sakura:2,sayu:1} } ] },
+ { q:'如果她偶尔有一些小秘密，你会？', opts:[
+ { t:'还是打探了解一下', pure:true, s:{} },
+ { t:'有点好奇，但她不说我就不问', s:{chizuru:2} },
+ { t:'觉得女人留点秘密很正常，甚至更迷人', s:{ai:1,lin:1} },
+ { t:'我更喜欢这种有秘密的没有秘密我不要', s:{sakura:2,sayu:1} } ] },
+ { q:'她打扮得很成熟性感，你的感觉是？', opts:[
+ { t:'有点不适应，更喜欢她平时的样子', pure:true, s:{} },
+ { t:'好看就行，怎么舒服怎么来', s:{chizuru:1} },
+ { t:'超喜欢，这种闪闪发光的感觉太迷人', s:{ai:2} },
+ { t:'直接夸爆，这种风情顶不住', s:{ai:1,lin:3} } ] },
+ { q:'她有时候情绪波动比较大，你会？', opts:[
+ { t:'耐心哄她，等她平静', pure:true, s:{sakura:1} },
+ { t:'给她一点空间，她需要时我再出现', s:{chizuru:2} },
+ { t:'觉得这种起伏和反差很可爱', s:{ai:2} },
+ { t:'更心疼她，想知道是什么让她这么难受', s:{sakura:2,sayu:1} } ] },
+ { q:'你理想中的老婆性格偏向？', opts:[
+ { t:'温柔体贴', pure:true, s:{sakura:1} },
+ { t:'活泼开朗、有自己的主见', s:{chizuru:2} },
+ { t:'有点神秘感，让人猜不透', s:{ai:1} },
+ { t:'黏人、需要你、离不开你', s:{sakura:1,sayu:2} } ] },
+ { q:'约会时她接到朋友电话，你？', opts:[
+ { t:'理解她有自己的社交，不介意', pure:true, s:{chizuru:1} },
+ { t:'给她空间慢慢聊', s:{chizuru:2} },
+ { t:'有点希望她早点挂，多陪陪我', s:{sakura:1,sayu:1} },
+ { t:'觉得她被很多人需要反而很有魅力', s:{sayu:1,ai:2,lin:1} } ] },
+ { q:'你更喜欢什么样的相处模式？', opts:[
+ { t:'平平淡淡的日常', pure:true, s:{} },
+ { t:'偶尔有点小惊喜', s:{chizuru:2} },
+ { t:'充满激情、故事和起伏', s:{ai:1,lin:3} },
+ { t:'她说什么我都听，围着她转', s:{sakura:1,sayu:2} } ] },
+ { q:'她对你说「其实我有很多缺点」，你会？', opts:[
+ { t:'安慰她，每个人都有缺点', pure:true, s:{sakura:1} },
+ { t:'说没关系，我接受真实的你', s:{chizuru:1,sayu:1} },
+ { t:'觉得有缺点才真实、才有味道', s:{ai:2} },
+ { t:'说在我眼里你的缺点也是优点', s:{sakura:2} } ] },
+ { q:'理想老婆的兴趣爱好是？', opts:[
+ { t:'看书、追剧，安静的爱好', pure:true, s:{} },
+ { t:'唱歌、跳舞、登台表演', s:{chizuru:1,ai:2} },
+ { t:'比较特别、外人不太懂的爱好', s:{ai:1,lin:2} },
+ { t:'没什么特别的，陪你一起玩就好', s:{sayu:2} } ] },
+ { q:'她半夜突然找你聊天，你？', opts:[
+ { t:'担心她是不是没睡好', pure:true, s:{sakura:1} },
+ { t:'很开心，陪她聊到她想睡', s:{sayu:2} },
+ { t:'觉得她这么依赖我，很受用', s:{sakura:1,sayu:1} },
+ { t:'直接陪到天亮，她需要我就够了', s:{sakura:1,sayu:2} } ] },
+ { q:'你发现她以前的生活经历挺丰富的，你？', opts:[
+ { t:'不行，坚守底线', pure:true, s:{} },
+ { t:'更欣赏她，经历多的人更有深度', s:{lin:3} },
+ { t:'觉得这样更有故事、更有魅力', s:{ai:1,lin:1} },
+ { t:'完全不在乎她经历过什么、和谁', s:{sayu:3} } ] },
+ { q:'她在你面前偶尔有点「演」的感觉，你？', opts:[
+ { t:'觉得有点可爱，她在努力', pure:true, s:{} },
+ { t:'不太在意，谁没点表演欲', s:{chizuru:1} },
+ { t:'更喜欢这样的她，会演才有意思', s:{ai:2} },
+ { t:'觉得能在我面前「演」也是一种真实', s:{ai:1,lin:1} } ] },
+ { q:'你最不能接受的是？', opts:[
+ { t:'太冷淡', pure:true, s:{sakura:1,sayu:1} },
+ { t:'太黏人', s:{chizuru:1} },
+ { t:'太无聊、没故事', s:{ai:1,lin:1} },
+ { t:'太普通、太平凡', s:{ai:1,lin:1} } ] },
+ { q:'如果她突然消失几天不联系，你会？', opts:[
+ { t:'非常担心她出事', pure:true, s:{sakura:1} },
+ { t:'等她主动，相信她有自己的事', s:{chizuru:2} },
+ { t:'相信她，给她时间', s:{chizuru:1,sayu:1} },
+ { t:'知道她最后一定会回到我身边', s:{sakura:1,sayu:2} } ] },
+ { q:'你希望老婆对你有多专一？', opts:[
+ { t:'完全只属于我一个人', pure:true, s:{} },
+ { t:'大部分时间陪我就好，她也有自己的生活', s:{chizuru:2} },
+ { t:'只要心里有我就行，形式不在意', s:{ai:2,lin:1} },
+ { t:'形式不重要，她开心最重要', s:{sayu:1,lin:1} } ] },
+ { q:'她哭着说自己不够好，你会？', opts:[
+ { t:'告诉她她很好', pure:true, s:{sakura:1} },
+ { t:'说她在我眼里已经很好了', s:{} },
+ { t:'说缺点我也一起爱', s:{sakura:2} },
+ { t:'觉得她脆弱的瞬间很真实、很动人', s:{sakura:1,ai:1} } ] },
+ { q:'你喜欢的二次元老婆类型？', opts:[
+ { t:'温柔学妹', pure:true, s:{sakura:2} },
+ { t:'魅力偶像', s:{ai:2} },
+ { t:'复杂、有故事的女人', s:{sayu:1,lin:3} },
+ { t:'反差萌女孩', s:{chizuru:1,ai:1} } ] },
+ { q:'相处久了，你最看重什么？', opts:[
+ { t:'性格合得来', pure:true, s:{} },
+ { t:'互相理解、各自独立又同行', s:{chizuru:2} },
+ { t:'一起经历过很多、有很多共同回忆', s:{sayu:1,lin:1} },
+ { t:'无论如何都支持她、站在她那边', s:{sakura:2,sayu:1} } ] },
+ { q:'最后一题：你觉得真正的赛博女友的标准是？', opts:[
+ { t:'不管怎么说要纯真善良', pure:true, s:{} },
+ { t:'对你好就行', s:{chizuru:1} },
+ { t:'经历再多，也依然值得被珍惜', s:{sayu:1,lin:3} },
+ { t:'只要可爱，就是好女孩', s:{sakura:1,ai:1} } ] }
+];
+
+var RESULTS = {
+ marisa: {
+ name:'魔理沙', emoji:'🌟', color:'var(--gold)', hex:'#f0c060',
+ img:'images/waifu/marisa.png',
+ tagline:'真·好女孩 · 隐藏结局',
+ desc:'恭喜你抽到了魔理沙！你从头到尾都在选最干净、最尊重、最纯爱的那个答案——所以雾雨魔法店决定把「真正的好女孩」颁给你。<br><br>元气满满、忠诚专一、毫无包袱，da~ze！你是真的好男人，配得上她。',
+ tags:['普通的魔法使','零包袱','纯爱战神']
+ },
+ sakura: {
+ name:'间桐樱', emoji:'🌸', color:'var(--pink)', hex:'#f472b6',
+ img:'images/waifu/sakura.png',
+ tagline:'温柔治愈型 · 好女孩',
+ desc:'你抽到了温柔体贴的好女孩——小樱！她内向、会做饭、把你放在心上，只是背着一些不太轻松的往事。<br><br>请一定好好珍惜她，别让她再受委屈了——也，尽量别去她家地下室。',
+ tags:['温柔学妹','为你下厨','值得被守护']
+ },
+ chizuru: {
+ name:'水原千鹤', emoji:'💴', color:'var(--purple)', hex:'#b89fff',
+ img:'images/waifu/chizuru.png',
+ tagline:'成熟可靠型 · 好女孩',
+ desc:'你抽到了成熟独立、魅力满分的好女孩——千鹤！和她在一起，认真得就像谈了一场正式的恋爱。<br><br>她得体、专业、进退有度。对她好一点——以及，记得按时续费哦。',
+ tags:['成熟独立','演技在线','按时续费']
+ },
+ sayu: {
+ name:'荻原沙优', emoji:'🌙', color:'var(--green)', hex:'#6fcf97',
+ img:'images/waifu/sayu.png',
+ tagline:'懂事体贴型 · 好女孩',
+ desc:'你抽到了懂事又阅历丰富的好女孩——沙优！她会在深夜找你聊心事，把你当成全部的依靠。<br><br>她的人生比你想象的更有故事。路上遇到隔壁的黄毛邻居，记得保持微笑。',
+ tags:['深夜来电','阅历丰富','别问过去']
+ },
+ ai: {
+ name:'星野爱', emoji:'✨', color:'var(--gold)', hex:'#f0c060',
+ img:'images/waifu/ai.png',
+ tagline:'人见人爱型 · 好女孩',
+ desc:'你抽到了闪闪发光、站在舞台中央的好女孩——小爱！她最擅长的，就是让你相信「撒谎也是一种温柔」。<br><br>爱她的人遍布全世界，而你是被选中的那个。偶尔她可能会带回家一两个「惊喜」，请张开双臂。',
+ tags:['万人迷偶像','演技封神','双份惊喜']
+ },
+ lin: {
+ name:'林翩翩', emoji:'🏮', color:'var(--pink)', hex:'#f472b6',
+ img:'images/waifu/lin.png',
+ tagline:'重情重义型 · 好女孩',
+ desc:'你抽到了有故事、有担当的好女孩——翩翩！二十四桥最有名的姑娘，懂的人自然懂。<br><br>她在乱世里依然干净又清醒，比谁都更值得被认真对待。她需要的，是一个真正肯为她赎身的人。',
+ tags:['风尘有骨','重情重义','意难平']
+ }
+};
+
+var LOADING_STEPS = ['正在连接二次元…','匹配灵魂频率…','鉴定她的「好女孩」成分…','马上揭晓…'];
+var SHARE_TEXT = '我在霧雨魔法店抽到的二次元老婆是【{name}】！你也来测测：';
+
+function render() {
+ var app = document.getElementById('app');
+ if (state === 'intro') renderIntro(app);
+ else if (state === 'quiz') renderQuestion(app);
+ else if (state === 'egg') renderEgg(app);
+ else if (state === 'loading') renderLoading(app);
+ else if (state === 'result') renderResult(app);
+ else if (state === 'poster') renderPoster(app);
+}
+
+function renderIntro(app) {
+ app.innerHTML =
+ '<div class="intro">' +
+ '<div class="intro-badge">' + BADGE_TEXT + '</div>' +
+ '<h1>' + QUIZ_TITLE + '</h1>' +
+ '<p class="sub">' + QUIZ_SUBTITLE + '</p>' +
+ '<button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">开始测试 →</button>' +
+ '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+ '</div>';
+}
+
+function startQuiz() {
+ if (!confirm('⚠️ 友情提示\n\n里面的女孩都是「好女孩」。\n确认开始测试吗？')) return;
+ state = 'quiz'; idx = 0; answers = []; resultKey = null;
+ render();
+}
+
+function renderQuestion(app) {
+ if (idx >= QUESTIONS.length) { advance(); return; }
+ var q = QUESTIONS[idx];
+ var pct = Math.round((idx / QUESTIONS.length) * 100);
+ var labels = 'ABCDEFGH';
+ var html =
+ (idx > 0 ? '<button class="back-link" onclick="goBack()">← 上一题</button>' : '') +
+ '<div class="progress-wrap">' +
+ '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+ '<div class="progress-text">' + (idx + 1) + ' / ' + QUESTIONS.length + '</div>' +
+ '</div>' +
+ '<div class="q-num">第 ' + (idx + 1) + ' 问</div>' +
+ '<div class="q-text">' + q.q + '</div>' +
+ '<div class="options">';
+ for (var i = 0; i < q.opts.length; i++) {
+ html +=
+ '<button class="opt-btn" onclick="answer(' + i + ')">' +
+ '<span class="opt-letter">' + (labels[i] || '?') + '</span>' +
+ q.opts[i].t +
+ '</button>';
+ }
+ html += '</div>';
+ app.innerHTML = html;
+}
+
+function answer(choice) {
+ answers.push(QUESTIONS[idx].opts[choice]);
+ idx++;
+ if (idx < QUESTIONS.length) { render(); return; }
+ advance();
+}
+
+function advance() {
+ if (countPure() >= EGG_THRESHOLD) { state = 'egg'; }
+ else { state = 'loading'; }
+ render();
+}
+
+function countPure() {
+ var n = 0;
+ for (var i = 0; i < answers.length; i++) { if (answers[i].pure) n++; }
+ return n;
+}
+
+function goBack() {
+ if (answers.length === 0) return;
+ if (state === 'egg') { answers.pop(); idx--; state = 'quiz'; render(); return; }
+ if (state === 'quiz') { if (idx === 0) return; idx--; answers.pop(); render(); }
+}
+
+// ⭐ 彩蛋问题（金色特效）──
+function renderEgg(app) {
+ var c = document.getElementById('app').parentElement;
+ if (c) { c.classList.add('golden-aura'); }
+ app.innerHTML =
+ '<div class="result" style="position:relative;">' +
+ '<div class="egg-golden-bg"></div>' +
+ '<div class="egg-rays"></div>' +
+ '<div class="sparkle-layer" id="eggSparkles"></div>' +
+ '<div class="egg-star">🌟</div>' +
+ '<div class="result-label" style="position:relative;z-index:1;">隐藏问题 · 仅限纯爱党</div>' +
+ '<div class="q-text" style="margin-top:10px;position:relative;z-index:1;">你……喜欢魔理沙吗？</div>' +
+ '<p class="result-tagline" style="position:relative;z-index:1;">你一路都在选最干净的答案。这道题，魔法店必须问你。</p>' +
+ '<button class="btn btn-yes" style="max-width:260px;margin:8px auto 0;position:relative;z-index:1;" onclick="chooseMarisa()">是 ☆</button>' +
+ '<button class="btn btn-ghost btn-no" style="max-width:260px;margin:10px auto 0;position:relative;z-index:1;" onmouseenter="dodgeNo(this)" onclick="dodgeNo(this)">否</button>' +
+ '<p class="notice" id="eggHint" style="visibility:hidden;position:relative;z-index:1;">这个选项坏掉了 ☆ —— 魔理沙不接受拒绝。</p>' +
+ '</div>';
+ spawnSparkles(document.getElementById('eggSparkles'), 16);
+}
+
+// 在指定容器内随机撒入闪光
+function spawnSparkles(layer, n) {
+ if (!layer) return;
+ var glyphs = ['✦','✧','⭐','★','✨','＊','·'];
+ for (var i = 0; i < n; i++) {
+ var s = document.createElement('span');
+ s.className = 'sparkle';
+ s.textContent = glyphs[Math.floor(Math.random() * glyphs.length)];
+ s.style.left = (Math.random() * 92 + 4) + '%';
+ s.style.top = (Math.random() * 88 + 4) + '%';
+ s.style.fontSize = (10 + Math.random() * 14).toFixed(0) + 'px';
+ s.style.setProperty('--dur', (2.2 + Math.random() * 2.6).toFixed(2) + 's');
+ s.style.setProperty('--delay', (Math.random() * 2.5).toFixed(2) + 's');
+ layer.appendChild(s);
+ }
+}
+
+// 「否」会逃跑，且提示只能选是
+function dodgeNo(btn) {
+ var dx = (Math.random() * 2 - 1) * 96;
+ var dy = (Math.random() * 2 - 1) * 34;
+ btn.style.transform = 'translate(' + dx.toFixed(0) + 'px,' + dy.toFixed(0) + 'px)';
+ var h = document.getElementById('eggHint');
+ if (h) h.style.visibility = 'visible';
+}
+function chooseMarisa() {
+ resultKey = 'marisa';
+ state = 'loading';
+ render();
+}
+
+function renderLoading(app) {
+ app.innerHTML =
+ '<div class="loading-wrap">' +
+ '<div class="loading-orb"></div>' +
+ '<p class="loading-text" id="ltxt">' + LOADING_STEPS[0] + '</p>' +
+ '</div>';
+ cycleLoading(1);
+}
+
+async function cycleLoading(i) {
+ if (i >= LOADING_STEPS.length) { finishToResult(); return; }
+ await sleep(500 + Math.random() * 400);
+ var lt = document.getElementById('ltxt');
+ if (lt) lt.textContent = LOADING_STEPS[i];
+ cycleLoading(i + 1);
+}
+
+function finishToResult() {
+ if (!resultKey) resultKey = calcResult();
+ state = 'result';
+ render();
+}
+
+function calcResult() {
+ var scores = {};
+ for (var i = 0; i < SCORE_KEYS.length; i++) scores[SCORE_KEYS[i]] = 0;
+ for (var i = 0; i < answers.length; i++) {
+ var s = answers[i].s || {};
+ for (var k in s) { if (scores[k] != null) scores[k] += s[k]; }
+ }
+ var best = -1;
+ for (var i = 0; i < SCORE_KEYS.length; i++) {
+ if (scores[SCORE_KEYS[i]] > best) best = scores[SCORE_KEYS[i]];
+ }
+ var top = [];
+ for (var i = 0; i < SCORE_KEYS.length; i++) {
+ if (scores[SCORE_KEYS[i]] === best) top.push(SCORE_KEYS[i]);
+ }
+ return top[Math.floor(Math.random() * top.length)];
+}
+
+// ⭐ 结果页（魔理沙金色特效）──
+function renderResult(app) {
+ var r = RESULTS[resultKey] || RESULTS[SCORE_KEYS[0]];
+ var isMarisa = (resultKey === 'marisa');
+ var nameColor = r.color || 'var(--gold)';
+
+ var c = document.getElementById('app').parentElement;
+ if (c) {
+ if (isMarisa) c.classList.add('golden-aura');
+ else c.classList.remove('golden-aura');
+ }
+
+ var pc = isMarisa ? ' golden' : '';
+ var nc = isMarisa ? ' golden-shimmer' : '';
+ var tc = isMarisa ? ' golden-tag' : '';
+ var dc = isMarisa ? ' golden-desc' : '';
+
+ var html =
+ '<div class="result">' +
+ '<img class="result-portrait' + pc + '" src="' + r.img + '" alt="' + r.name + '" ' +
+ 'onerror="this.style.display=\'none\'; var e=document.getElementById(\'remoji\'); if(e) e.style.display=\'inline-block\';">' +
+ '<div class="result-emoji' + (isMarisa ? ' egg-star' : '') + '" id="remoji" style="display:none;">' + r.emoji + '</div>' +
+ '<div class="result-label">霧雨魔法店 鉴定结果</div>' +
+ '<div class="result-name' + nc + '" style="color:' + (isMarisa ? '' : nameColor) + '">' + r.name + '</div>' +
+ '<div class="result-tagline">' + r.tagline + '</div>' +
+ '<div class="result-desc' + dc + '">' + r.desc + '</div>' +
+ '<div class="result-meta">';
+
+ for (var i = 0; i < r.tags.length; i++) {
+ html += '<span class="meta-tag' + tc + '">' + r.tags[i] + '</span>';
+ }
+
+ html +=
+ '</div>' +
+ '<button class="btn btn-main" onclick="shareImage()">📸 生成分享海报</button>' +
+ '<button class="btn btn-ghost" onclick="shareIt()">📋 复制结果文案</button>' +
+ '<button class="btn btn-ghost" onclick="restart()">🔄 再来一次</button>' +
+ '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+ '<p class="notice">霧雨魔法店 · 结果仅供参考 · 但魔法是真的</p>' +
+ '<div class="qq-section">' +
+ '<img src="' + QQ_IMG + '" alt="QQ群二维码" onerror="this.style.display=\'none\'">' +
+ '<p><strong style="color:var(--gold);">加群一起玩</strong><br>群号 ' + QQ_GROUP + ' · 更多抽象好活</p>' +
+  '</div>' +
+  '<p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>' +
+  '</div>';
+
+ app.innerHTML = html;
+
+ if (isMarisa) {
+ var rd = app.querySelector('.result');
+ if (rd) {
+ var sl = document.createElement('div');
+ sl.className = 'sparkle-layer';
+ rd.insertBefore(sl, rd.firstChild);
+ spawnSparkles(sl, 12);
+ }
+ }
+}
+
+function shareIt() {
+ var name = (resultKey && RESULTS[resultKey]) ? RESULTS[resultKey].name : '';
+ var text = SHARE_TEXT.replace('{name}', name) + ' ' + window.location.href;
+ copyToClipboard(text, '已复制！发给朋友试试 😈');
+}
+
+function restart() {
+ var c = document.getElementById('app').parentElement;
+ if (c) c.classList.remove('golden-aura');
+ state = 'intro'; idx = 0; answers = []; resultKey = null; render();
+}
+
+function shareImage() { state = 'poster'; render(); }
+
+function renderPoster(app) {
+ app.innerHTML =
+ '<div class="poster-wrap">' +
+ '<div class="result-label" style="margin-bottom:14px;">长按图片保存 / 分享</div>' +
+ '<img class="poster-img" id="posterImg" alt="分享海报" style="display:none;">' +
+ '<div class="loading-wrap" id="posterLoading" style="padding:24px 0;">' +
+ '<div class="loading-orb"></div>' +
+ '<p class="loading-text">正在生成海报…</p>' +
+ '</div>' +
+ '<p class="poster-hint">手机长按上图即可保存到相册；电脑可点下方按钮下载。</p>' +
+ '<a class="btn btn-main" id="posterDl" download="二次元老婆鉴定结果.png" style="display:none;">⬇️ 下载海报</a>' +
+ '<button class="btn btn-ghost" onclick="state=\'result\';render();">← 返回结果</button>' +
+ '</div>';
+ buildPoster();
+}
+
+
+
+
+async function buildPoster() {
+ var r = RESULTS[resultKey] || RESULTS[SCORE_KEYS[0]];
+ var W = POSTER_W, H = POSTER_H;
+ var cv = document.createElement('canvas');
+ cv.width = W; cv.height = H;
+ var ctx = cv.getContext('2d');
+
+ ctx.fillStyle = '#1a1520'; ctx.fillRect(0, 0, W, H);
+ var g = ctx.createLinearGradient(0, 0, W, H);
+ g.addColorStop(0, 'rgba(176,159,255,.10)');
+ g.addColorStop(1, 'rgba(240,192,96,.06)');
+ ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+ var pad = 40;
+ ctx.fillStyle = '#241e2a';
+ roundRect(ctx, pad, pad, W - pad * 2, H - pad * 2, 28); ctx.fill();
+ var bar = ctx.createLinearGradient(pad, 0, W - pad, 0);
+ bar.addColorStop(0, '#f0c060'); bar.addColorStop(.5, '#b89fff'); bar.addColorStop(1, '#f0c060');
+ ctx.fillStyle = bar;
+ roundRect(ctx, pad, pad, W - pad * 2, 6, 3); ctx.fill();
+
+ ctx.textAlign = 'center';
+ ctx.fillStyle = '#f0c060';
+ ctx.font = '600 20px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+ ctx.fillText('霧 雨 魔 法 店 · 二次元老婆鉴定', W / 2, 110);
+
+ var portrait = await loadImg(r.img);
+ var cx = W / 2, cy = 250, R = 92;
+
+ // ⭐ 魔理沙海报金光
+ if (resultKey === 'marisa') {
+ var glow = ctx.createRadialGradient(cx, cy, R * .6, cx, cy, R * 1.5);
+ glow.addColorStop(0, 'rgba(240,192,96,.25)');
+ glow.addColorStop(.5, 'rgba(240,192,96,.08)');
+ glow.addColorStop(1, 'rgba(240,192,96,0)');
+ ctx.fillStyle = glow; ctx.fillRect(cx - R * 1.5, cy - R * 1.5, R * 3, R * 3);
+ }
+
+ ctx.save();
+ ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+ if (portrait) {
+ var s = Math.max((R * 2) / portrait.width, (R * 2) / portrait.height);
+ var dw = portrait.width * s, dh = portrait.height * s;
+ ctx.drawImage(portrait, cx - dw / 2, cy - dh / 2, dw, dh);
+ } else {
+ ctx.fillStyle = '#1a1520'; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
+ ctx.fillStyle = '#fff'; ctx.font = '96px sans-serif'; ctx.textBaseline = 'middle';
+ ctx.fillText(r.emoji, cx, cy + 6); ctx.textBaseline = 'alphabetic';
+ }
+ ctx.restore();
+
+ // ⭐ 魔理沙双环金边
+ ctx.lineWidth = resultKey === 'marisa' ? 6 : 5;
+ ctx.strokeStyle = r.hex || '#f0c060';
+ ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+ if (resultKey === 'marisa') {
+ ctx.lineWidth = 2;
+ ctx.strokeStyle = 'rgba(255,232,176,.6)';
+ ctx.beginPath(); ctx.arc(cx, cy, R + 4, 0, Math.PI * 2); ctx.stroke();
+ }
+
+ ctx.fillStyle = '#8a7e9a';
+ ctx.font = '14px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+ ctx.fillText('我命中注定的二次元老婆是', W / 2, 405);
+ ctx.fillStyle = r.hex || '#f0c060';
+ ctx.font = '800 46px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+
+ // ⭐ 魔理沙名字金色阴影
+ if (resultKey === 'marisa') {
+ ctx.shadowColor = 'rgba(240,192,96,.4)'; ctx.shadowBlur = 12;
+ }
+ ctx.fillText(r.name, W / 2, 462);
+ ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+
+ ctx.fillStyle = '#8a7e9a';
+ ctx.font = '15px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+ ctx.fillText(r.tagline, W / 2, 492);
+
+ ctx.font = '13px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+ var tags = r.tags, gap = 12, ty = 540;
+ var widths = tags.map(function(t) { return ctx.measureText(t).width + 28; });
+ var totalW = widths.reduce(function(a, b) { return a + b; }, 0) + gap * (tags.length - 1);
+ var tx = (W - totalW) / 2;
+ for (var i = 0; i < tags.length; i++) {
+ ctx.fillStyle = 'rgba(255,255,255,.04)';
+ ctx.strokeStyle = resultKey === 'marisa' ? 'rgba(240,192,96,.3)' : '#3a3045';
+ ctx.lineWidth = 1;
+ roundRect(ctx, tx, ty - 19, widths[i], 30, 15); ctx.fill(); ctx.stroke();
+ ctx.fillStyle = resultKey === 'marisa' ? '#f0c060' : '#b89fff';
+ ctx.fillText(tags[i], tx + widths[i] / 2, ty);
+ tx += widths[i] + gap;
+ }
+
+ var plain = r.desc.replace(/<br\s*\/?>(\s*)/gi, '\n').split('\n')[0];
+ ctx.fillStyle = '#e0d8ec';
+ ctx.font = '15px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+ wrapText(ctx, plain, W / 2, 600, W - pad * 2 - 60, 26);
+
+ var siteImg = await loadImg(QR_IMG);
+ var qqImg = await loadImg(QQ_IMG);
+ var qs = 132, gap2 = 48;
+ var totalQW = qs * 2 + gap2;
+ var leftX = (W - totalQW) / 2;
+ var rightX = leftX + qs + gap2;
+ var qy = H - pad - 232;
+ drawQRBox(ctx, siteImg, leftX, qy, qs, '扫码开测', SITE_URL, '#f0c060');
+ drawQRBox(ctx, qqImg, rightX, qy, qs, '加 QQ 群', '群号 ' + QQ_GROUP, '#b89fff');
+
+ var pi = document.getElementById('posterImg');
+ var pl = document.getElementById('posterLoading');
+ var dl = document.getElementById('posterDl');
+ var dataUrl = null;
+ try { dataUrl = cv.toDataURL('image/png'); } catch (e) { dataUrl = null; }
+
+ if (pl) { pl.style.display = 'none'; }
+
+ if (dataUrl) {
+ if (pi) { pi.src = dataUrl; pi.style.display = 'block'; }
+ if (dl) { dl.href = dataUrl; dl.style.display = 'inline-flex'; }
+ } else {
+ if (pi && pi.parentNode) {
+ cv.className = 'poster-img';
+ cv.style.display = 'block';
+ pi.parentNode.replaceChild(cv, pi);
+ }
+ var hint = document.querySelector('.poster-hint');
+ if (hint) hint.textContent = '当前环境无法导出图片。部署到 ' + SITE_URL + ' 线上访问即可正常保存。';
+ }
+}
+
+
+render();
+</script>
+
+</body>
+</html>

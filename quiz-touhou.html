@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="js/analytics.js"></script>
+<title>测一测你最像哪个东方人物 · 霧雨魔法店</title>
+<link rel="stylesheet" href="css/common.css">
+<style>
+ .character-strip { display:flex; justify-content:center; gap:6px; flex-wrap:wrap; margin-bottom: 22px; }
+ .char-mini { width:42px; height:42px; border-radius:10px; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:20px; background: rgba(255,255,255,.03); transition: transform .2s; }
+ .char-mini:hover { transform: translateY(-3px); border-color: var(--gold); }
+ .result-hero { width:120px; height:120px; border-radius:28px; margin:0 auto 14px; display:flex; align-items:center; justify-content:center; font-size:56px; animation: popIn .5s ease; box-shadow: 0 12px 40px rgba(0,0,0,.35); border:3px solid var(--gold); }
+ .result-title { font-size:12px; color:var(--muted); margin-bottom: 8px; }
+ .result-quote { display:inline-block; background:rgba(255,255,255,.05); font-size:13px; padding:8px 16px; border-radius:14px; color:var(--gold); margin-bottom:18px; font-style:italic; }
+ .result-dimensions { display:flex; flex-direction:column; gap:8px; text-align:left; margin-bottom:20px; }
+ .dim-item { display:flex; align-items:center; gap:10px; }
+ .dim-label { width:68px; font-size:11px; color:var(--muted); text-align:right; flex-shrink:0; }
+ .dim-bar-wrap { flex:1; height:7px; background:var(--border); border-radius:4px; overflow:hidden; }
+ .dim-bar { height:100%; border-radius:4px; width:0; transition: width .9s ease; }
+ .dim-val { font-size:11px; color:var(--muted); width:28px; text-align:right; }
+ .runner-up { margin-top:12px; padding-top:10px; border-top:1px dashed var(--border); font-size:11px; color:var(--muted); display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+<script src="js/utils.js"></script>
+
+<div class="container" id="app"></div>
+<script>
+const CHARS = {
+ reimu:{name:'博丽灵梦',title:'乐园的悠闲巫女',emoji:'🏮',color:'#ef4444',dims:{lazy:95,power:88,social:55,brain:75,chaos:40},quote:'啊——好麻烦。但是既然妖怪出现了，那就顺手退治一下吧。',desc:'你骨子里是个怕麻烦的人。<br><br>但神奇的是——麻烦事总是自己找上门来。你嘴上抱怨，手上却没停过。别人觉得你很努力，只有你自己知道：只是懒得放着不管而已。<br><br>你有天赋，但更享受晒着太阳喝杯茶的日子。如果可以许一个愿望，你大概会说——「参拜客多一点，但妖怪少一点。」',tags:['懒但强','巫女','直觉派','贫穷但不在乎','守序善良']},
+ marisa:{name:'雾雨魔理沙',title:'普通的魔法使',emoji:'🧹',color:'#f0c060',dims:{lazy:20,power:85,social:75,brain:70,chaos:70},quote:'不华丽就算不上魔法！弹幕要的就是火力——da☆ze！',desc:'努力型天才。<br><br>你不是天生最强的那一个，但你是练得最狠的那一个。别人睡觉的时候你在研究魔法，别人偷懒的时候你在森林里搜集蘑菇。你不怕被说「普通」——因为你知道普通加上努力等于不普通。<br><br>另外，你确实会顺手借走一些不属于你的东西。不是偷，是「研究需要」。',tags:['火力全开','努力家','蘑菇','顺手牵羊','da☆ze']},
+ sakuya:{name:'十六夜咲夜',title:'完美潇洒的从者',emoji:'⏱️',color:'#93c5fd',dims:{lazy:10,power:80,social:60,brain:85,chaos:25},quote:'大小姐的下午茶，必须在四点整准备好。一秒不多，一秒不少。',desc:'你是那种让周围所有人都觉得「这人怎么什么都能搞定」的存在。<br><br>效率、品味、执行力——你把这些词变成了一种生活方式。你在混乱中保持优雅，仿佛时间站在你这边（确实也真的是）。<br><br>你服侍着某个人或某种信念，不是出于卑微，而是因为你选择成为那道光背后的影子。',tags:['完美主义','飞刀','时间管理大师','忠心','优雅']},
+ remilia:{name:'蕾米莉亚·斯卡雷特',title:'永远鲜红的幼月',emoji:'🦇',color:'#f472b6',dims:{lazy:60,power:90,social:85,brain:65,chaos:60},quote:'命运早就被写好了。不过嘛——偶尔我也会稍微改动一下。',desc:'你的气势和你的体型完全不成比例。<br><br>你喜欢掌控局面，喜欢被注视，喜欢所有人按你的剧本走。但你并不残暴——你是那种会为了一个完美的下午茶而把天气都操纵掉的浪漫主义者。<br><br>有人说你孩子气，你不否认。毕竟活了几百年，保持童心才是长生不老的秘诀。',tags:['幼月','命运操纵','红茶','威严（存疑）','浪漫']},
+ patchouli:{name:'帕秋莉·诺蕾姬',title:'不动的大图书馆',emoji:'📖',color:'#a78bfa',dims:{lazy:75,power:82,social:15,brain:100,chaos:20},quote:'外面的事……交给别人就好。我还有七十三本书没看完。',desc:'你知道得太多了。<br><br>你不是不爱和人说话，只是和人说话的时间够你看完两章了。你的脑子里存着一张极其精密的知识地图，但你只愿意在真正需要的时候打开它。<br><br>被误解是常有的事——有人觉得你冷漠，其实只是你的世界太丰富了，不需要太多外来输入。身体不太好是真的，但那是因为脑子耗电太大。',tags:['书虫','知识深渊','室内派','体力堪忧','沉默但致命']},
+ cirno:{name:'琪露诺',title:'冰之妖精',emoji:'❄️',color:'#67e8f9',dims:{lazy:30,power:60,social:80,brain:8,chaos:95},quote:'老娘最强！——咦，这道题等于几来着？',desc:'你的自信程度远高于你的实际水平——但这恰恰是你最可爱的地方。<br><br>你不是笨，你是天真到了一个常人无法企及的高度。在你的世界里，所有问题都可以用乐观和蛮力解决。虽然经常失败，但你从不记仇，因为你一般记不住。<br><br>⑨ 不是一个数字，是一种人生态度。',tags:['⑨','盲目自信','最強（自称）','冰','不记仇']},
+ yuyuko:{name:'西行寺幽幽子',title:'华胥的亡灵',emoji:'👻',color:'#fbbf24',dims:{lazy:88,power:95,social:80,brain:90,chaos:65},quote:'啊——好饿。那边的点心看起来很好吃，我可以吃掉你吗？开玩笑的~',desc:'你看起来什么都不在乎，但其实什么都知道。<br><br>你用一种慵懒的姿态掩盖了极其锐利的洞察力。别人以为你在发呆的时候，你已经把全局看穿了。但你不会说出来——因为说出来太累了，不如先吃点东西。<br><br>关于死亡和存在的命题，你可能有过几个世纪的思考。但下午茶时间到了，这些可以等等再说。',tags:['吃货','亡灵','大智若愚','笑里藏刀','优雅']},
+ aya:{name:'射命丸文',title:'传统的幻想记者',emoji:'📸',color:'#f97316',dims:{lazy:15,power:68,social:95,brain:60,chaos:80},quote:'独家新闻！——啊不用管是不是事实，有意思就行。',desc:'你是八卦的中心枢纽。<br><br>哪里有新闻（或可以制造新闻的地方），哪里就有你。你的情报网比任何人的朋友圈都密集，而且你的速度让所有竞争者望尘莫及。<br><br>真实性有时候可以稍微「调整」一下——毕竟一个好的故事比干巴巴的事实重要多了，对吧？',tags:['记者','八卦','速度','标题党','情报网']},
+ alice:{name:'爱丽丝·玛格特罗伊德',title:'七色的人偶使',emoji:'🎎',color:'#c084fc',dims:{lazy:35,power:78,social:25,brain:88,chaos:35},quote:'一个人也没什么不好。人偶们很安静，也很听话。',desc:'你习惯一个人。<br><br>不是因为讨厌别人，而是因为你一个人也完全可以过得很好。你有自己的世界——精致的、安静的、井然有序的。你创造你的作品，作品陪伴你。<br><br>偶尔会有个穿黑衣服骑扫帚的家伙闯进你家翻东西。你很烦她，但从没真正赶她走。这就是你的温柔。',tags:['人偶师','独处','手巧','傲娇','都市隐居者']},
+ yukari:{name:'八云紫',title:'境界的妖怪',emoji:'🌀',color:'#818cf8',dims:{lazy:90,power:100,social:70,brain:98,chaos:85},quote:'一切都在计算之中。包括你点开这个测试。包括你读到这句话。',desc:'你看穿一切。<br><br>大多数人活在三层，你住在顶层。你不常出手，但每一次出手都是一次优雅的降维打击。别人以为你在睡觉的时候，你已经在打一百年后的算盘。<br><br>你被叫做「隙间老太——」咳，还是不要说下去了。总之，你是一种跨越境界的存在，也是幻想乡真正的守护者。',tags:['幕后BOSS','千年智慧','隙间','算无遗策','不要说年龄']},
+ flandre:{name:'芙兰朵露·斯卡雷特',title:'恶魔之妹',emoji:'💎',color:'#fb7185',dims:{lazy:40,power:100,social:20,brain:50,chaos:100},quote:'要陪我玩吗？我会很小心、很小心的……大概。',desc:'你体内装着远超容器的能量。<br><br>情绪来的时候像潮水，挡不住也藏不住。大多数人只看到你安静的一面，少数靠近的人才知道你有多炽热——有时候连你自己都会被这种强度吓到。<br><br>你不是危险，你只是太久没人陪你好好玩了。找到能接住你全部能量的人之后，你会是世界上最纯粹、最忠诚的那一个。',tags:['495年','能量过剩','纯真','地下室','认定了就不放手']},
+ youmu:{name:'魂魄妖梦',title:'半分虚幻的庭师',emoji:'⚔️',color:'#86efac',dims:{lazy:5,power:75,social:40,brain:45,chaos:20},quote:'修行还差得远……今天也要继续努力才行！',desc:'你是认真本身。<br><br>交给你的事，你会做到底；定下的目标，你会一根筋地冲过去。别人觉得你太较真，但正是这种较真让你比所有「聪明人」走得更远。<br><br>缺点嘛——你容易被骗，容易被吓，容易被一句夸奖弄得不知所措。但没关系，你的剑（或者说你的执行力）替你说话。',tags:['剑士','一根筋','努力家','容易被吓','嘴笨手快']},
+ koishi:{name:'古明地恋',title:'紧闭的恋之瞳',emoji:'💭',color:'#34d399',dims:{lazy:50,power:70,social:30,brain:55,chaos:90},quote:'咦，我刚才在想什么来着？算啦，去那边看看吧～',desc:'你活在当下——字面意义上的。<br><br>计划？没有。烦恼？想不起来。你凭直觉行动，想去哪就去哪，路线连你自己都预测不了。别人羡慕你的自由，却学不来：因为他们放不下，而你是真的不拿起。<br><br>你的存在感时有时无，但奇妙的是——真正记住你的人，会一辈子记住你。',tags:['无意识','活在当下','自由','行踪成谜','直觉行动']},
+ mokou:{name:'藤原妹红',title:'蓬莱的人之形',emoji:'🔥',color:'#e2e8f0',dims:{lazy:55,power:92,social:30,brain:60,chaos:45},quote:'死过太多次了，反而不知道还有什么好怕的。',desc:'你是经历过事的人。<br><br>大风大浪见多了，你的反应从「慌」变成了「哦」。你独来独往，话不多，但谁要是真遇到麻烦，你会第一个站出来——然后嘴上说「只是顺路」。<br><br>你有一个相处了很久很久的「老对头」。你们互相看不顺眼，也互相离不开。这种关系外人不懂，你也懒得解释。',tags:['不死','嘴硬心软','独行','烤串','宿敌即挚友']},
+ suika:{name:'伊吹萃香',title:'小小的百鬼夜行',emoji:'🍶',color:'#fda4af',dims:{lazy:45,power:96,social:98,brain:55,chaos:88},quote:'宴会就是要大家一起才热闹嘛！来来来，再来一杯！',desc:'你是聚会的灵魂。<br><br>有你在的地方就有笑声，你能把八竿子打不着的人萃到一张桌子上。你看起来散漫随性，其实最重感情——朋友的事，你记得比谁都牢。<br><br>你讨厌虚伪，喜欢直来直去。撒谎的人在你面前撑不过三句话。人生苦短（虽然你的不短），不如痛快一点。',tags:['鬼','宴会狂','直率','怪力','把人聚在一起的人']},
+ sanae:{name:'东风谷早苗',title:'祀奉风的人间风祝',emoji:'🐸',color:'#4ade80',dims:{lazy:15,power:78,social:75,brain:70,chaos:55},quote:'常识什么的就先放一边——好！今天也来引发奇迹吧！',desc:'你的适应力是怪物级的。<br><br>把你扔到一个完全陌生的环境里，三个月后你会混得风生水起，仿佛土生土长。你干劲十足，对新鲜事物永远保持热情，偶尔热情过头会冒出一些让旁人愣住的发言。<br><br>你相信奇迹——更准确地说，你相信奇迹是干出来的。',tags:['现代人','适应力MAX','干劲','奇迹','偶尔暴走']}
+};
+
+const KEYS = ['reimu','marisa','sakuya','remilia','patchouli','cirno','yuyuko','aya','alice','yukari','flandre','youmu','koishi','mokou','suika','sanae'];
+const DIM_META = [{k:'lazy',label:'偷懒度',color:'#fbbf24'},{k:'power',label:'战斗力',color:'#ef4444'},{k:'social',label:'社交力',color:'#3b82f6'},{k:'brain',label:'智力值',color:'#a78bfa'},{k:'chaos',label:'混沌度',color:'#f97316'}];
+
+const QUESTIONS = [
+ {q:'周末早晨，你的理想状态是？',opts:[{txt:'睡到自然醒，然后喝茶发呆',scores:{reimu:3,yuyuko:2}},{txt:'早起练习或学习，今天要比昨天更强',scores:{youmu:3,marisa:2,sanae:1}},{txt:'躺在床上看书，外面的事与我无关',scores:{patchouli:3,alice:2}},{txt:'出门随便走走，看看有什么新鲜事',scores:{aya:2,koishi:2,suika:1}}]},
+ {q:'如果只能拥有一种能力，你选？',opts:[{txt:'让时间暂停，从容做完所有事',scores:{sakuya:3,alice:1}},{txt:'知道一切答案——但只在必要时使用',scores:{yukari:3,patchouli:2}},{txt:'力量大到没有任何东西能拦住我',scores:{flandre:2,suika:2,cirno:1}},{txt:'永远不会死，怎么折腾都行',scores:{mokou:3,yuyuko:1}}]},
+ {q:'朋友聚会时，你通常？',opts:[{txt:'全场中心，气氛担当',scores:{suika:3,remilia:1,aya:1}},{txt:'安静坐在角落，被点到名才说话',scores:{alice:2,patchouli:2,youmu:1}},{txt:'一会儿在这桌一会儿在那桌，转眼人就不见了',scores:{koishi:3,cirno:1}},{txt:'根本没去，在家躺着',scores:{reimu:2,mokou:2,yuyuko:1}}]},
+ {q:'你的自信程度如何？',opts:[{txt:'非常自信。根据？不需要那种东西',scores:{cirno:3,flandre:1,suika:1}},{txt:'挺强的，但没必要到处说',scores:{reimu:2,sakuya:2,mokou:1}},{txt:'总觉得自己还差得远，要继续努力',scores:{youmu:3,sanae:1}},{txt:'自信不自信不重要，事情能办成就行',scores:{yukari:2,patchouli:1,remilia:1}}]},
+ {q:'路边有一个看起来很值钱的东西，你会？',opts:[{txt:'捡起来研究一下，完事放回去',scores:{marisa:2,alice:1,sanae:1}},{txt:'顺手带走——这叫缘分',scores:{marisa:2,suika:1,remilia:1}},{txt:'不管它，关我什么事',scores:{reimu:2,mokou:2,patchouli:1}},{txt:'拍下来发给所有认识的人：「快看我发现了什么！」',scores:{aya:3,cirno:1}}]},
+ {q:'和人起了冲突，你的风格是？',opts:[{txt:'正面刚，当场解决，绝不拖泥带水',scores:{flandre:3,marisa:2,cirno:1}},{txt:'干净利落地处理掉，不留一点痕迹',scores:{sakuya:3,yukari:1}},{txt:'能不打就不打，打完转头就忘',scores:{reimu:2,koishi:2,yuyuko:1}},{txt:'不急着动手——时间站在我这边',scores:{yukari:2,mokou:2,remilia:1}}]},
+ {q:'你的房间一般是什么状态？',opts:[{txt:'一尘不染，每件东西都有固定位置',scores:{sakuya:2,alice:2,youmu:2}},{txt:'堆满东西，但我清楚每样在哪',scores:{patchouli:3,marisa:1}},{txt:'有点乱，但懒得收拾',scores:{reimu:2,yuyuko:1,suika:1}},{txt:'我几乎不待在房间里，乱不乱无所谓',scores:{aya:3,koishi:2,mokou:1}}]},
+ {q:'有人向你求助，你通常会？',opts:[{txt:'嘴上嫌麻烦，身体已经动起来了',scores:{reimu:3,mokou:2}},{txt:'先问清楚情况，再决定帮不帮',scores:{yukari:2,alice:1,patchouli:1}},{txt:'立刻冲过去帮忙，先帮了再说！',scores:{sanae:3,youmu:2,suika:1}},{txt:'可以帮，但你得拿点好处来换',scores:{remilia:3,marisa:1,yuyuko:1}}]},
+ {q:'你怎么看待「时间」？',opts:[{txt:'活得久不如活得自在',scores:{yuyuko:2,koishi:2,suika:1}},{txt:'不想那么远，把今天的事做好',scores:{youmu:2,sanae:2,marisa:1}},{txt:'时间多得是，没什么好急的',scores:{remilia:2,yukari:2,mokou:2}},{txt:'现在！此刻！开心最重要！',scores:{cirno:2,flandre:1,aya:1}}]},
+ {q:'如果你是一本书，你觉得自己是？',opts:[{txt:'一本随手翻开的漫画——轻松，偶尔也有深意',scores:{cirno:2,koishi:1,reimu:1}},{txt:'一本百科全书——干货满满，但翻的人不多',scores:{patchouli:3,alice:1}},{txt:'一本装帧精美的诗集——少数人才懂你的美',scores:{remilia:2,sakuya:1,yukari:1}},{txt:'一本被翻烂了的冒险小说——还缺了几页',scores:{mokou:2,marisa:1,flandre:1,suika:1}}]},
+ {q:'幻想乡举办大胃王比赛，你？',opts:[{txt:'参赛，并且赢了',scores:{yuyuko:3,suika:2}},{txt:'在场边起哄，比参赛的人还兴奋',scores:{aya:2,cirno:2,sanae:1}},{txt:'当裁判，维持秩序',scores:{sakuya:2,youmu:1,reimu:1}},{txt:'不知道有这回事，知道了也不去',scores:{patchouli:2,alice:2,koishi:1}}]},
+ {q:'你对"规则"的态度？',opts:[{txt:'该守就守，但执行的时候可以灵活通融',scores:{reimu:2,sakuya:1,sanae:1}},{txt:'规则就是用来打破的',scores:{marisa:2,suika:1,cirno:1}},{txt:'规则是我定的。你说呢？',scores:{remilia:3,yukari:2}},{txt:'规则？啊……有那种东西吗？',scores:{koishi:3,flandre:1}}]},
+ {q:'真的生气的时候，你会？',opts:[{txt:'当场爆发，火力全开，不留余地',scores:{flandre:3,mokou:1,cirno:1}},{txt:'笑着说「没事呀」，然后默默记在小本本上',scores:{yuyuko:2,remilia:1,sakuya:1}},{txt:'一个人待着，自己慢慢消化',scores:{alice:2,patchouli:1,youmu:1}},{txt:'气着气着……咦，我刚才为什么生气来着？',scores:{koishi:2,suika:1,cirno:1}}]},
+ {q:'被扔到一个完全陌生的环境，你会？',opts:[{txt:'很快混熟，三个月后跟土生土长的一样',scores:{sanae:3,suika:2,aya:1}},{txt:'先观察，摸清这里的规则再行动',scores:{yukari:2,sakuya:1,alice:1}},{txt:'哪里都一样，该干嘛干嘛',scores:{mokou:2,reimu:1,yuyuko:1}},{txt:'太好了！新地图！到处探索！',scores:{cirno:2,marisa:2,koishi:1,flandre:1}}]},
+ {q:'朋友会怎么评价你？',opts:[{txt:'「靠谱。什么事交给TA都放心」',scores:{sakuya:2,youmu:2,sanae:1}},{txt:'「有点神秘，永远猜不透在想什么」',scores:{yukari:2,yuyuko:1,koishi:1}},{txt:'「和TA在一起永远不会无聊」',scores:{suika:2,marisa:1,aya:1,cirno:1}},{txt:'「嘴硬，但心是软的」',scores:{mokou:2,alice:2,reimu:1}}]},
+ {q:'最后：你点开这个测试的时候，心里想的是？',opts:[{txt:'看看准不准——不准就再来一遍',scores:{marisa:1,cirno:2,sanae:1}},{txt:'反正闲着也是闲着',scores:{reimu:2,yuyuko:1,mokou:1}},{txt:'想分析一下这个测试的机制是怎么算分的',scores:{patchouli:2,yukari:1,alice:1}},{txt:'朋友发来的，顺手就点了，点完已经忘了为什么',scores:{suika:1,aya:1,koishi:2,flandre:1}}]}
+];
+
+let idx = -1, answers = [];
+
+function render() {
+ const a = document.getElementById('app');
+ if (idx === -1) {
+ const strip = KEYS.map(k=>`<div class="char-mini" title="${CHARS[k].name}">${CHARS[k].emoji}</div>`).join('');
+ a.innerHTML = `<div class="intro"><div class="intro-badge">霧雨魔法店 · 幻想入り診断</div><h1>测一测你最像<br>哪个东方人物</h1><p class="sub">${QUESTIONS.length} 道灵魂问题 · ${KEYS.length} 位幻想乡住人 · 找到另一个你</p><div class="character-strip">${strip}</div><button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="start()">开始测试 →</button><a href="index.html" class="home-link">← 返回魔法店</a></div>`;
+ } else if (idx < QUESTIONS.length) {
+ const q = QUESTIONS[idx]; const pct = Math.round((idx/QUESTIONS.length)*100);
+ a.innerHTML = `<div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><div class="progress-text">${idx+1} / ${QUESTIONS.length}</div></div><div class="q-num">第 ${idx+1} 问</div><div class="q-text">${q.q}</div><div class="options">${q.opts.map((o,i)=>`<button class="opt-btn" onclick="answer(${i})"><span class="opt-letter">${'ABCD'[i]}</span>${o.txt}</button>`).join('')}</div>${idx>0?`<div style="text-align:center;"><button class="btn-back" onclick="goBack()">← 上一题</button></div>`:''}`;
+ } else { showLoading(); }
+}
+
+function start() { idx = 0; answers = []; render(); }
+function answer(i) { answers.push(QUESTIONS[idx].opts[i]); idx++; render(); }
+function goBack() { if(idx<=0) return; idx--; answers.pop(); render(); }
+
+async function showLoading() {
+ const a = document.getElementById('app');
+ const steps = ['正在打开隙间…','检索幻想乡人物数据库…','分析灵力波动…','与博丽神社连线中…','生成结果…'];
+ a.innerHTML = '<div class="loading-wrap"><div class="loading-orb"></div><p class="loading-text" id="ltxt">正在打开隙间…</p></div>';
+ const lt = document.getElementById('ltxt');
+ for (const s of steps) { await sleep(450+Math.random()*500); lt.textContent = s; }
+ await sleep(300); showResult();
+}
+
+function calcResult() {
+ const scores = {}; for (const k of KEYS) scores[k] = 0;
+ for (const opt of answers) { for (const [k,v] of Object.entries(opt.scores||{})) scores[k]=(scores[k]||0)+v; }
+ let top = KEYS[0], topScore = -1;
+ for (const k of KEYS) { if (scores[k] > topScore) { topScore = scores[k]; top = k; } }
+ return { key: top, scores };
+}
+
+function showResult() {
+ const a = document.getElementById('app');
+ const { key, scores } = calcResult();
+ const c = CHARS[key];
+ const runners = Object.entries(scores).filter(([k])=>k!==key).sort((x,y)=>y[1]-x[1]).slice(0,2);
+ a.innerHTML = `<div class="result"><div class="result-hero" style="background:linear-gradient(135deg,${c.color}33,${c.color}11);">${c.emoji}</div><div class="result-label">幻想乡人物鉴定结果</div><div class="result-name" style="color:${c.color}">${c.name}</div><div class="result-title">${c.title}</div><div class="result-quote">「${c.quote}」</div><div class="result-dimensions">${DIM_META.map(d=>`<div class="dim-item"><span class="dim-label">${d.label}</span><div class="dim-bar-wrap"><div class="dim-bar" data-w="${c.dims[d.k]}" style="background:${d.color}"></div></div><span class="dim-val">${c.dims[d.k]}</span></div>`).join('')}</div><div class="result-desc">${c.desc}${runners.length?`<div class="runner-up">次匹配：${runners.map(([k])=>`<span>${CHARS[k].emoji} ${CHARS[k].name}</span>`).join(' · ')}</div>`:''}</div><div class="result-meta">${c.tags.map(t=>`<span class="meta-tag">${t}</span>`).join('')}</div><button class="btn btn-main" onclick="shareIt('${key}')">📋 复制结果发给朋友</button><button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button><a href="index.html" class="home-link">← 返回魔法店</a><div style="text-align:center;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);"><img src="images/qq-group.jpg" alt="QQ群二维码" style="width:130px;border-radius:12px;border:2px solid var(--border);margin-bottom:8px;"><p style="font-size:12px;color:var(--muted);"><strong style="color:var(--gold);">加群看更多乐子</strong><br>扫码进群，一起来玩</p></div><p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p><p class="notice">霧雨魔法店 · 幻想入り診断部 · 结果仅供参考</p></div>`;
+ requestAnimationFrame(()=>{setTimeout(()=>{document.querySelectorAll('.dim-bar').forEach(b=>b.style.width=b.dataset.w+'%')},60);});
+}
+function shareIt(key){const c=CHARS[key];const text='我在霧雨魔法店测出来最像的东方人物是【'+c.name+'】——「'+c.quote+'」你也来测测：'+window.location.href;copyToClipboard(text,'已复制！快去发给幻想乡的朋友 😈');}
+function restart(){idx=-1;answers=[];render();}
+render();
+</script>
+
+</body>
+</html>

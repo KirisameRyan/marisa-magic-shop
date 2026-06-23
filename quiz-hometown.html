@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="js/analytics.js"></script>
+<title>测测你的灵魂故乡 · 霧雨魔法店</title>
+<link rel="stylesheet" href="css/common.css">
+<style>
+.intro-deco { font-size:48px; margin-bottom:16px; letter-spacing:12px; }
+.poster-wrap { text-align:center; }
+.poster-img { max-width:100%; border-radius:16px; display:none; margin:0 auto 12px; }
+.poster-hint { font-size:11px; color:var(--muted); margin-bottom:12px; }
+.result-hero { width:120px; height:120px; border-radius:28px; margin:0 auto 14px; display:flex; align-items:center; justify-content:center; font-size:56px; animation:popIn .5s ease; box-shadow:0 12px 40px rgba(0,0,0,.35); border:3px solid var(--gold); }
+.result-quote { display:inline-block; background:rgba(255,255,255,.05); font-size:13px; padding:8px 18px; border-radius:14px; color:var(--gold); margin-bottom:18px; max-width:90%; }
+.dim-wrap { text-align:center; margin-bottom:18px; }
+.dim-wrap svg { max-width:300px; width:100%; }
+.runner-up { margin-top:12px; padding-top:10px; border-top:1px dashed var(--border); font-size:11px; color:var(--muted); display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:center; }
+.runner-item { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; background:rgba(255,255,255,.03); border-radius:10px; border:1px solid var(--border); }
+@media (max-width:420px) { .dim-wrap svg { max-width:260px; } .result-hero { width:100px; height:100px; font-size:48px; } }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container" id="app"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/canvas-utils.js"></script>
+<script>
+
+var state = 'intro';
+var idx = 0;
+var answers = [];
+
+// ==================== DATA ====================
+
+var REGIONS = {
+  beijing:{name:'北京',aka:'帝都',emoji:'🏯',color:'#ef4444',vec:[0.398,0.284,0.398,0.398,0.398,0.341,0.341,0.228],
+    q:'「您猜怎么着——您上辈子是胡同口晒太阳的爷，局气」',
+    desc:'你的灵魂住在二环内的胡同里。喜欢有里有面，讲究不将就。说话自带儿化音，骨子里是个大事不糊涂、小事不在乎的主。<br><br>表面上你在卷，实际上你在享受卷——因为北京的节奏就是你最舒服的节奏，不多不少，刚刚好。',
+    tags:['局气','皇城根','儿化音','关心大事','面儿上得过得去']},
+  tianjin:{name:'天津',aka:'哏都',emoji:'🎭',color:'#f97316',vec:[0.436,0.382,0.273,0.436,0.273,0.436,0.327,0.164],
+    q:'「结界，您这灵魂，天生就该在相声园子里支个摊儿」',
+    desc:'你的灵魂捧哏基因拉满。嘴皮子利索，心态豁达，天塌下来先贫两句。天津人的幽默不是技巧，是本能——这是一种把生活过成段子的能力。<br><br>别看你嘻嘻哈哈，做正事不含糊。煎饼果子必须绿豆面的，这是底线。',
+    tags:['相声','煎饼果子','豁达','嘴贫','乐天派']},
+  shanghai:{name:'上海',aka:'魔都',emoji:'🏙️',color:'#3b82f6',vec:[0.357,0.286,0.643,0.214,0.429,0.214,0.286,0.143],
+    q:'「侬好，你灵魂里住着一个拿咖啡杯的手势都很有讲究的人」',
+    desc:'你是精致的代名词。不是矫情——是对生活品质有要求且愿意为之努力。你有边界感，不轻易交心，但真正的朋友你会记一辈子。<br><br>你习惯把事情做到八十分以上，并且觉得这很正常。在很多人看来这是卷，对你来说这只是合格。',
+    tags:['精致','边界感','契约精神','咖啡配生煎','体面']},
+  dongbei:{name:'东北',aka:'白山黑水',emoji:'❄️',color:'#67e8f9',vec:[0.449,0.299,0.15,0.449,0.449,0.399,0.249,0.249],
+    q:'「老铁，你灵魂里自带BGM——就是澡堂子门口那种热闹」',
+    desc:'你骨子里是个社牛。走到哪儿暖到哪儿，天生自带热场技能。你讲义气，护犊子，谁欺负你朋友你就跟谁急。<br><br>你对冷没有恐惧，因为你有暖气。你对远没有概念，因为你走哪都像在家。你的灵魂需要一个大澡堂子和一箱老雪。',
+    tags:['社牛','讲义气','澡堂文化','抗冻','不磨叽']},
+  hebei:{name:'河北',aka:'燕赵大地',emoji:'⛰️',color:'#a78bfa',vec:[0.328,0.394,0.263,0.394,0.328,0.394,0.46,0.197],
+    q:'「朴实无华——这四个字就是你灵魂的老家」',
+    desc:'你是个实在人。话不多但做的事到位，不争不抢但心里有数。你在北京和天津之间选择了沉默，但沉默不代表没态度。<br><br>你的灵魂像河北平原：看着平坦，其实什么都能承载。别人说你没存在感，其实你是懒得刷存在感。',
+    tags:['实在','沉默是金','能扛事','平淡是真','靠谱']},
+  shanxi:{name:'山西',aka:'三晋大地',emoji:'🏮',color:'#e2e8f0',vec:[0.252,0.379,0.252,0.316,0.252,0.379,0.568,0.316],
+    q:'「你这灵魂啊，面里放醋、心里有数，外边那些花活儿你根本看不上」',
+    desc:'你的灵魂已经活了好几百年。你沉得住气，看得透事，外边怎么变都动摇不了你心里的节奏。你喜欢老东西——老房子、老味道、老交情。<br><br>别人觉得你保守，其实你是觉得没必要折腾。你吃面必须配醋，这是原则问题，不是口味问题。',
+    tags:['恋旧','沉得住气','醋','面食之魂','不折腾']},
+  neimenggu:{name:'内蒙古',aka:'草原',emoji:'🐎',color:'#84cc16',vec:[0.372,0.434,0.186,0.496,0.31,0.31,0.372,0.248],
+    q:'「你的灵魂需要一匹马、一片草原，和一只烤全羊」',
+    desc:'你天生辽阔。心胸开阔，不拘小节，朋友来了就是酒肉招待。你不喜欢拐弯抹角，说一是一，但也尊重各自的活法。<br><br>你可以忍受孤独，因为你内心有整片草原。你对自由的渴望比大多数人都强烈——不管是地理上的还是精神上的。',
+    tags:['豪爽','草原','自由','不拐弯','酒肉朋友']},
+  jiangzhe:{name:'江浙',aka:'江南水乡',emoji:'🛶',color:'#22d3ee',vec:[0.27,0.405,0.541,0.203,0.473,0.27,0.338,0.135],
+    q:'「你灵魂里有一条船，在小桥流水之间，不急不缓地划」',
+    desc:'你是把温柔刻进了骨头里的人。你做事情讲究分寸，说话留有余地，连卷都卷得很优雅。你不是没脾气，是觉得发出来不体面。<br><br>你的精致不是上海那种洋气，而是一种骨子里的文气——书卷、茶香、细雨，这些东西构成了你的灵魂底色。',
+    tags:['温润','分寸感','会卷','江南','鱼米']},
+  anhui:{name:'安徽',aka:'江淮',emoji:'⛩️',color:'#c084fc',vec:[0.264,0.396,0.33,0.264,0.396,0.396,0.462,0.264],
+    q:'「徽州的马头墙下，藏着你灵魂最安稳的那个角落」',
+    desc:'你是个会留后路的人。不是保守，是聪明——你知道什么该争、什么该放。你有一种天生的务实精神，不冒进但也不掉队。<br><br>你的灵魂像安徽的地理：不南不北，兼容并蓄。你既能欣赏江南的精致，也理解北方的直爽，但你不属于任何一边——你就是你。',
+    tags:['务实','兼容','不南不北','会算账','稳重']},
+  fujian:{name:'福建',aka:'八闽大地',emoji:'🍵',color:'#86efac',vec:[0.31,0.372,0.31,0.248,0.496,0.434,0.372,0.186],
+    q:'「你的灵魂已经出发了——这次是去东南亚做茶叶生意」',
+    desc:'你是个不安分的灵魂。全世界有华人的地方就有福建人，这不是巧合，是你们骨子里的闯劲。但是——别看你走多远，泡茶的时候你还是那个坐在闽南老厝里的人。<br><br>你有商业头脑，更有人情味。你做生意的原则是：先交朋友，再谈买卖。',
+    tags:['闯荡','爱拼','茶叶','全世界都是家','做生意']},
+  jiangxi:{name:'江西',aka:'赣鄱大地',emoji:'🌶️',color:'#f87171',vec:[0.255,0.318,0.255,0.255,0.318,0.382,0.445,0.509],
+    q:'「你的灵魂在景德镇的窑火和南昌的辣椒炒肉之间反复横跳」',
+    desc:'你看起来低调，其实内心有一团火。江西是被低估的省份，你也是被低估的人——但真正了解你的，都知道你有多能吃辣，有多能扛事。<br><br>你的灵魂有两种底色：一种是景德镇瓷器的温润，一种是炒米粉的热烈。这两面加在一起，才是完整的你。',
+    tags:['隐藏实力','能吃辣','低调','瓷器之魂','扛事']},
+  shandong:{name:'山东',aka:'齐鲁大地',emoji:'🌾',color:'#fbbf24',vec:[0.396,0.283,0.283,0.452,0.339,0.396,0.396,0.226],
+    q:'「老师儿，你灵魂里住着全中国最实在的那个人」',
+    desc:'你是个有里有面的人。对朋友讲义气，对家人有担当，对社会有责任感。你喜欢大碗喝酒大块吃肉，更喜欢把事情摆到台面上说清楚。<br><br>你重规矩但也重感情。你对身高有自信，对酒量更有自信。别人觉得你大男子主义，其实是你不习惯把关心说出口——但你做的事比说的多一百倍。',
+    tags:['实在','讲义气','酒量好','有担当','不耍心眼']},
+  henan:{name:'河南',aka:'中原大地',emoji:'🏛️',color:'#a16207',vec:[0.354,0.295,0.236,0.354,0.354,0.413,0.472,0.295],
+    q:'「中！你的灵魂扎根在全中国最厚的黄土层上」',
+    desc:'你是中华文明的底色。你身上有一种大地般的包容和厚重——你可以接受很多东西，不管是好的还是不好的，你都接着。不是因为软弱，是因为你见得太多了。<br><br>你勤劳到让人心疼，但你不觉得这有什么好说的。你对自己的要求是：把事干好就行，别的都无所谓。',
+    tags:['厚重','勤劳','包容','胡辣汤','实在']},
+  hubei:{name:'湖北',aka:'荆楚大地',emoji:'🏗️',color:'#facc15',vec:[0.358,0.298,0.298,0.418,0.358,0.418,0.298,0.358],
+    q:'「九省通衢，你的灵魂像个交通枢纽——去哪里都方便，但停在哪里都是家」',
+    desc:'你是中国的十字路口。你的灵魂里有一种天然的过渡感：不南不北、不东不西，但正因为这样，你什么都能接住。<br><br>你说话爽快，做事麻利，有一说一。早上热干面下肚，一整天都是你的。你对生活的要求不高，但对自己的要求不低。',
+    tags:['直爽','热干面','枢纽','麻利','刚刚好']},
+  hunan:{name:'湖南',aka:'潇湘',emoji:'🔥',color:'#ef4444',vec:[0.37,0.264,0.211,0.37,0.37,0.423,0.264,0.476],
+    q:'「怕不辣——这三个字就是你灵魂的出厂设置」',
+    desc:'你的灵魂自带火力。你性格鲜明，爱憎分明，不爽就干，干了再说。你不是冲动——你是把"做事就做到位"刻在了骨子里，不管是吃辣还是做人。<br><br>你的血是辣椒油做的，你的骨气比岳麓山还硬。你可以在任何地方生存，但你的灵魂永远属于湘江边那个热辣辣的傍晚。',
+    tags:['霸蛮','辣椒','血性','敢做敢当','不拖泥带水']},
+  guangdong:{name:'广东',aka:'岭南',emoji:'🦁',color:'#22c55e',vec:[0.383,0.328,0.328,0.274,0.492,0.492,0.274,0.055],
+    q:'「你灵魂里住着一个会飞的广东人——什么都吃，除了亏」',
+    desc:'你的灵魂有自己的一套法则。第一：吃好。第二：赚钱。第三：说粤语的时候自带霸气。你对食物的理解领先全中国，你对商业的嗅觉也一样。<br><br>你务实但不忘本，你讲究但不浪费。你对汤的执着和对抗通胀的重视程度一样高。你的灵魂需要一盅老火汤和一个好生意。',
+    tags:['会吃','务实','做生意','老火汤','适应力']},
+  guangxi:{name:'广西',aka:'八桂大地',emoji:'⛰️',color:'#84cc16',vec:[0.349,0.466,0.175,0.291,0.349,0.466,0.291,0.349],
+    q:'「老表，你灵魂里有一碗螺蛳粉，和一座永远不着急的山」',
+    desc:'你有山水做伴，天生比别人慢半拍——不是慢，是安逸。你身上有一种说不清的江湖气，又带点山野的随性，这两种东西混在一起，就成了独一无二的广西灵魂。<br><br>你不怕酸笋的味道，因为你从来不怕别人怎么说你。你活得自在，这是很多人学不来的本事。',
+    tags:['山水','螺蛳粉','随性','安逸','不着急']},
+  hainan:{name:'海南',aka:'琼州',emoji:'🌴',color:'#2dd4bf',vec:[0.281,0.632,0.281,0.281,0.351,0.421,0.211,0.14],
+    q:'「你的灵魂需要一双拖鞋、一棵椰子树，和无限量的海鲜」',
+    desc:'你把"慢"活成了一种哲学。不是效率低，是你觉得没什么事值得着急。热带气候把你的灵魂晒软了——软到可以包容一切，软到可以在海边发呆一整个下午。<br><br>你对季节变化没什么概念，因为你那儿只有夏天。你的灵魂故乡，候鸟也想去。',
+    tags:['安逸','椰子','拖鞋','海边','慢生活']},
+  sichuan:{name:'四川',aka:'天府之国',emoji:'🐼',color:'#f97316',vec:[0.394,0.394,0.246,0.296,0.296,0.443,0.246,0.443],
+    q:'「巴适得板——你灵魂的出厂地，大概率是成都某个茶馆」',
+    desc:'你灵魂里有三个东西：麻将、火锅、晒太阳。你看似慵懒，其实该卷的时候比谁都卷，只是卷完了一定要安逸回来，这是原则。<br><br>你自带幽默感，能把任何事聊成段子。你去任何一个城市都会嫌火锅不够味，因为你灵魂里那锅红汤从没凉过。',
+    tags:['巴适','麻将','火锅','幽默','熊猫']},
+  chongqing:{name:'重庆',aka:'山城',emoji:'🌉',color:'#ef4444',vec:[0.392,0.343,0.245,0.392,0.294,0.441,0.196,0.441],
+    q:'「兄弟，你灵魂的导航在重庆已经彻底失灵了——但你没在怕的」',
+    desc:'你是立体的。不光是城市立体的，你这个人也是立体的：一层是火锅的热烈，一层是江风的洒脱，还有一层是爬不完的台阶和说不完的故事。<br><br>你说一不二，敢爱敢恨。8D魔幻城市的灵魂，从来不按直线走——但最后都会到。你的灵魂需要的不是一个平坦的地方，而是一个有高度的家。',
+    tags:['山城','火锅','直爽','导航失灵','魔幻']},
+  guizhou:{name:'贵州',aka:'黔贵大地',emoji:'⛰️',color:'#a78bfa',vec:[0.298,0.417,0.179,0.298,0.298,0.417,0.357,0.476],
+    q:'「折耳根是灵魂的试金石——而你的灵魂轻松通过了」',
+    desc:'你是个复杂的人。外表低调，内心瑰丽。就像贵州的山水——外面看着山连着山，走进去才发现每一座山后面都有一个不一样的世界。<br><br>你对酸和辣的承受能力是人类学级别的。你不喜欢争，但你也从不让。你的灵魂像贵州的酸汤，层次丰富，回味悠长。',
+    tags:['折耳根','酸辣','低调','层次感','不争不让']},
+  yunnan:{name:'云南',aka:'彩云之南',emoji:'☁️',color:'#c084fc',vec:[0.314,0.566,0.251,0.251,0.251,0.44,0.314,0.314],
+    q:'「你的灵魂在一家丽江客栈的屋顶上晒太阳，已经晒了三年了」',
+    desc:'你是全中国最不着急的灵魂。你有自己的时钟，和北京时间大概是两小时的时差。你不需要什么宏大的目标——晒着太阳喝着茶，已经赢了。<br><br>你对自然有天然的亲近感。你相信万物有灵，也相信人应该活得像一朵云。别人觉得你不思进取，但你觉得——都想了还要进取干嘛？',
+    tags:['躺平宗师','四季如春','松弛','自然','晒太阳']},
+  xizang:{name:'西藏',aka:'世界屋脊',emoji:'🏔️',color:'#e2e8f0',vec:[0.197,0.524,0.197,0.393,0.197,0.262,0.59,0.197],
+    q:'「你的灵魂在海拔四千米的地方，和雪山面对面，谁也不说话」',
+    desc:'你有一种超越世俗的安静。不是冷漠，是你想的东西和别人不在一个层面。你可以一个人在屋里待很久，不是孤独，是自在。<br><br>你对仪式感和精神信仰有天然的敬畏。你的灵魂不需要太多解释——当你站在纳木错湖边，一切都不用再说了。',
+    tags:['宁静','精神高地','信仰','孤独不寂寞','高原']},
+  shanganning:{name:'陕甘宁',aka:'黄土高原',emoji:'🏜️',color:'#d4a017',vec:[0.331,0.331,0.221,0.387,0.276,0.387,0.497,0.331],
+    q:'「你灵魂里有一碗羊肉泡馍、一曲秦腔，和走不完的信天游」',
+    desc:'你的根扎得极深。黄土有多厚，你的恋旧情结就有多重。你不追求华丽的生活，但你追求有滋有味的生活——一碗面、一盅酒、一段戏，足矣。<br><br>你看起来大大喇喇，但你对传统的珍视比任何人都重。你的灵魂需要的是那种用时间发酵出来的味道，不是速成的东西。',
+    tags:['恋旧','羊肉泡馍','秦腔','厚道','面食宗师']},
+  qinghai:{name:'青海',aka:'三江之源',emoji:'💧',color:'#38bdf8',vec:[0.208,0.555,0.208,0.416,0.277,0.277,0.485,0.208],
+    q:'「你这个灵魂啊，安静得像青海湖的水面——但底下连着整个高原」',
+    desc:'你话不多，但内心极深。你有一种天生的孤独感，但这不是脆弱——这是广度。你需要的空间比别人大，不管是物理上的还是心理上的。<br><br>你对纯净的东西有执念，对复杂的关系没耐心。你的灵魂在三江源，那地方太干净了，你不想让任何东西污染它。',
+    tags:['安静','源远流长','纯净','不喜复杂','广阔']},
+  xinjiang:{name:'新疆',aka:'西域',emoji:'🍇',color:'#f472b6',vec:[0.404,0.346,0.231,0.462,0.289,0.404,0.346,0.289],
+    q:'「朋友，你的灵魂是切糕、大盘鸡和十二木卡姆的混合体」',
+    desc:'你有一种异域感，走到哪都带着不一样的味道。你热情似火，对谁都跟对亲戚似的——不是客套，是真的想让你尝尝他家自己种的葡萄。<br><br>你对美有一种天然的辨别力：美食、美景、美人——新疆的灵魂自带审美系统。你的故乡很大，你的心更大。',
+    tags:['热情','异域','大盘鸡','能歌善舞','豪爽']},
+  xianggang:{name:'香港',aka:'东方之珠',emoji:'🏙️',color:'#fbbf24',vec:[0.389,0.194,0.519,0.259,0.519,0.389,0.194,0.13],
+    q:'「你灵魂里有一杯冻柠茶和一份煲仔饭——快、准、香」',
+    desc:'效率是你的生命线。你对时间的尊重到了苛刻的地步，但你同时也懂得享受——一杯茶餐厅的奶茶，一份深夜的煲仔饭，就是你的仪式感。<br><br>你在全世界最拥挤的城市里活出了自己的节奏。你见得多、走得远、想得通。你的灵魂是中西合璧的，哪边都懂，哪边都不全属于。',
+    tags:['效率','中西','茶餐厅','见过世面','不浪费一分钟']},
+  taiwan:{name:'台湾',aka:'宝岛',emoji:'🏝️',color:'#34d399',vec:[0.386,0.451,0.386,0.322,0.322,0.386,0.322,0.193],
+    q:'「你灵魂的底色是人情味——夜市灯火里那一碗卤肉饭的温度」',
+    desc:'你有海岛的温柔，也有海岛的自由。你说话软软的，但主意硬硬的。你对小确幸有天然的追求——不是格局小，是你觉得幸福本来就该是可触摸的。<br><br>你的灵魂里有一条夜市，每个摊位都认识你。你对美食有执念，对生活有热情。你的故乡不需要很大，只要够暖。',
+    tags:['人情味','夜市','小确幸','温柔','自由']}
+};
+
+var REGION_KEYS = Object.keys(REGIONS);
+var DIMS = ['hot','easy','fine','plain','out','fire','old','spicy'];
+var DIM_LABEL = {hot:'热闹',easy:'安逸',fine:'精致',plain:'爽直',out:'闯荡',fire:'烟火',old:'恋旧',spicy:'辣度'};
+var DIM_COLORS = ['#fbbf24','#86efac','#3b82f6','#ef4444','#f97316','#22c55e','#a78bfa','#f87171'];
+
+var QUIZ_TITLE = '测测你的灵魂故乡';
+var QUIZ_SUBTITLE = '20 道题 · 28 个地域 · 8 维画像<br>找到你DNA里那个回不去的故乡';
+var BADGE_TEXT = '霧雨魔法店 · 灵魂地理学';
+
+var QUESTIONS = [
+  {q:'周末下午，你灵魂最想做的是？',opts:[
+    {txt:'约朋友出来聚，烧烤啤酒走起',v:[3,-1,-2,2,0,2,0,0]},
+    {txt:'在家躺着刷手机，谁也别找我',v:[-2,3,-1,-1,-1,-1,0,0]},
+    {txt:'去咖啡馆安静看本书',v:[-1,0,3,-1,0,-2,0,0]},
+    {txt:'一个人随便逛逛，走到哪算哪',v:[0,1,0,0,2,1,0,0]}
+  ]},
+  {q:'聚餐喝酒，你在席间更像？',opts:[
+    {txt:'主动提一杯，气氛组组长',v:[3,-1,0,2,0,1,0,0]},
+    {txt:'有人带就跟，不抢风头',v:[0,1,-1,0,0,0,0,0]},
+    {txt:'安静吃菜，偶尔接句话',v:[-1,1,1,-1,0,0,0,0]},
+    {txt:'能不去就不去，去了就想走',v:[-3,2,0,-1,-1,-1,0,0]}
+  ]},
+  {q:'有人当面夸你，你第一反应？',opts:[
+    {txt:'"那可不咋的，会说话你就多说点"',v:[1,0,-1,3,0,1,0,0]},
+    {txt:'客气说"哪里哪里"，心里暗爽',v:[-1,0,2,-2,0,0,1,0]},
+    {txt:'微笑，不说话，但记住了',v:[-2,1,1,-1,0,0,0,0]},
+    {txt:'有点尴尬，赶紧转移话题',v:[-1,1,0,0,0,-1,0,0]}
+  ]},
+  {q:'你对"精致生活"的看法？',opts:[
+    {txt:'粗犷自在最舒服，别整那些虚的',v:[0,0,-3,2,0,-1,0,0]},
+    {txt:'差不多就行，偶尔讲究一下',v:[0,0,0,0,0,0,0,0]},
+    {txt:'有些事必须讲究，别的不重要',v:[0,0,2,0,0,-1,0,0]},
+    {txt:'精致不是矫情，是生活方式',v:[0,-1,3,-1,0,-2,0,0]}
+  ]},
+  {q:'你灵魂里的生活半径是？',opts:[
+    {txt:'村口小卖部到家的距离就够了',v:[0,1,-1,0,-3,1,2,0]},
+    {txt:'省内不挪窝，安定最重要',v:[0,2,0,0,-2,0,2,0]},
+    {txt:'全国到处跑，世界那么大',v:[1,-1,0,0,3,0,-2,0]},
+    {txt:'国外也不错，灵魂很自由',v:[0,-2,1,0,3,-1,-3,0]}
+  ]},
+  {q:'春节回老家，你灵魂的感受是？',opts:[
+    {txt:'必须回，根在那里，不回不叫过年',v:[0,0,-1,0,-1,1,3,0]},
+    {txt:'想回，但一想到吃喝应酬有点累',v:[0,-1,1,0,0,0,0,0]},
+    {txt:'过年而已，在哪过不一样',v:[1,1,0,1,0,0,-2,0]},
+    {txt:'更想去别的地方旅行过年',v:[0,-1,1,0,2,-1,-3,0]}
+  ]},
+  {q:'以下哪种味型是你灵魂最认的调调？',opts:[
+    {txt:'麻辣、香辣——无辣不欢，越辣越爽',v:[0,0,-1,1,0,1,0,3]},
+    {txt:'咸香、酱浓——不花哨，但够味',v:[0,0,-1,0,-1,1,1,-1]},
+    {txt:'清淡、鲜甜——食材本味最重要',v:[0,1,2,-1,0,-2,0,-3]},
+    {txt:'酸香、发酵——酸得有层次，回味无穷',v:[0,1,0,0,0,1,1,-1]},
+    {txt:'酸甜——糖醋才是人间正道',v:[0,0,1,-1,0,0,0,-2]},
+    {txt:'酱香浓郁——酱油和豆瓣是灵魂伴侣',v:[0,0,0,0,0,2,0,1]}
+  ]},
+  {q:'以下哪种早餐让你灵魂一激灵？',opts:[
+    {txt:'煎饼果子 / 豆浆油条 / 豆腐脑',v:[1,0,-1,1,-1,1,0,0]},
+    {txt:'早茶点心：虾饺烧卖凤爪糯米鸡',v:[0,0,2,-1,0,1,0,-2]},
+    {txt:'米粉 / 米线 / 螺蛳粉',v:[0,1,-1,0,0,2,0,1]},
+    {txt:'小面 / 抄手 / 担担面',v:[1,0,-1,1,0,1,0,2]},
+    {txt:'羊肉泡馍 / 肉夹馍 / 牛肉面',v:[0,0,-2,1,-1,1,1,0]},
+    {txt:'生煎包 / 小笼包 / 粢饭糕',v:[-1,0,2,-1,0,0,0,-1]}
+  ]},
+  {q:'深夜饿了，你灵魂最想吃什么？',opts:[
+    {txt:'烧烤烤串撸起来',v:[2,0,-1,1,0,2,-1,0]},
+    {txt:'炒粉 / 炒牛河 / 干炒牛河',v:[0,0,0,0,0,2,0,-1]},
+    {txt:'串串香 / 火锅 / 麻辣烫',v:[1,0,-1,1,0,2,0,2]},
+    {txt:'羊肉汤 / 羊杂汤 / 手抓羊肉',v:[0,1,-2,1,-1,1,1,0]},
+    {txt:'小龙虾 / 花甲 / 炒田螺',v:[2,1,0,0,0,2,0,1]}
+  ]},
+  {q:'以下哪种食物，你的灵魂发自内心地拒绝？',opts:[
+    {txt:'折耳根（鱼腥草）——味道太野',v:[0,0,1,0,1,0,0,-1]},
+    {txt:'豆汁儿——这个我真来不了',v:[0,0,0,0,0,1,-1,0]},
+    {txt:'生腌海鲜——肠胃不接受',v:[0,0,-1,0,-1,-1,0,0]},
+    {txt:'蚕蛹/知了等虫类——心理障碍',v:[0,0,1,0,0,-2,0,0]},
+    {txt:'以上我全都能吃——灵魂没有禁区',v:[1,0,-1,2,1,3,-1,1]}
+  ]},
+  {q:'朋友让你推荐一家本地馆子，你带人去？',opts:[
+    {txt:'苍蝇馆子——环境随意，味道绝杀',v:[1,2,-2,1,0,3,0,1]},
+    {txt:'百年老店——吃的是传承和讲究',v:[-1,0,1,0,-1,0,3,0]},
+    {txt:'网红打卡店——好看好吃有面子',v:[0,-1,2,-1,0,-1,-1,0]},
+    {txt:'大排档路边摊——有烟火气才叫生活',v:[1,1,-2,1,0,3,0,0]},
+    {txt:'私房菜馆——安静讲究有格调',v:[-2,0,3,-1,0,-2,0,-1]}
+  ]},
+  {q:'什么天气让你的灵魂最舒展？',opts:[
+    {txt:'干冷但有暖气的冬天——外面零下屋里短袖',v:[2,1,0,1,0,1,0,0]},
+    {txt:'湿热但有空调的夏天——短裤拖鞋配冻柠茶',v:[0,1,0,0,1,1,-1,-2]},
+    {txt:'四季如春不冷不热——一件外套走天下',v:[-1,2,1,0,0,0,0,0]},
+    {txt:'高原干爽蓝天白云——阳光是最好的暖气',v:[-1,2,-1,0,-1,-1,1,0]}
+  ]},
+  {q:'哪种景色让你觉得"我的灵魂就属于这里"？',opts:[
+    {txt:'雪山草原戈壁——辽阔到让人想哭',v:[0,1,-2,1,1,-1,1,0]},
+    {txt:'江南水乡小桥流水——温柔到骨子里',v:[-1,1,3,-2,0,-2,0,-1]},
+    {txt:'热带阳光海滩椰林——永远的夏天',v:[0,2,0,0,0,0,-2,-2]},
+    {txt:'山城雾都江景——立体魔幻',v:[1,1,0,1,0,1,0,1]},
+    {txt:'戈壁大漠长河落日——孤勇者的浪漫',v:[0,0,-3,1,2,-2,1,0]},
+    {txt:'胡同里巷灰墙红门——人间烟火气',v:[1,0,0,0,-1,2,2,0]}
+  ]},
+  {q:'你灵魂里的"故乡声音"是？',opts:[
+    {txt:'京片子儿化音——"嘛呢您呐"',v:[1,0,0,1,0,1,1,0]},
+    {txt:'吴侬软语——轻轻柔柔像在唱歌',v:[-2,1,2,-2,0,-2,0,-1]},
+    {txt:'川音摆龙门阵——热闹有劲',v:[2,1,-1,2,0,2,0,2]},
+    {txt:'粤语铿锵有力——自带气场',v:[0,0,1,0,2,2,-1,-2]},
+    {txt:'关中话秦腔——厚得像黄土',v:[0,0,-2,2,-1,1,3,0]}
+  ]},
+  {q:'你介意一年有多少天见不到太阳？',opts:[
+    {txt:'无所谓，有暖气和雪就行',v:[2,1,-1,1,0,0,0,0]},
+    {txt:'偶尔阴天可以，别有梅雨季就好',v:[0,1,1,0,0,0,0,0]},
+    {txt:'最好天天有太阳，阴天心情差',v:[0,0,0,0,0,0,-1,0]},
+    {txt:'阳光必须灿烂，我就靠光合作用活着',v:[0,1,0,0,0,0,-2,0]}
+  ]},
+  {q:'你灵魂里"混得好"的标准是？',opts:[
+    {txt:'有里有面，朋友多、人情到位',v:[2,0,-1,2,0,1,1,0]},
+    {txt:'有钱但不显摆，自己过得好就行',v:[-1,1,1,-2,0,-1,0,0]},
+    {txt:'活得舒服自在，不用讨好任何人',v:[0,2,0,0,0,1,0,0]},
+    {txt:'有话语权有地位，说话有人听',v:[0,-1,1,0,1,-1,0,0]}
+  ]},
+  {q:'你骨子里的节奏更像？',opts:[
+    {txt:'急性子——说干就干，不等天亮',v:[1,-1,-1,2,1,0,0,0]},
+    {txt:'慢条斯理——急什么，天塌不下来',v:[-2,2,0,-1,-1,0,1,0]},
+    {txt:'看着慢其实快——别人反应过来我已经干完了',v:[0,1,1,0,0,0,0,0]},
+    {txt:'张弛有度——该快就快该慢就慢',v:[0,0,1,0,0,0,0,0]},
+    {txt:'随环境切换——和不同人不同节奏',v:[1,0,0,0,1,0,0,0]}
+  ]},
+  {q:'哪种关系让你最有归属感？',opts:[
+    {txt:'兄弟帮派式——一起扛过事的关系最铁',v:[2,0,-2,2,0,2,0,0]},
+    {txt:'大家族式——逢年过节一大家子才叫热闹',v:[0,0,-1,0,-1,1,3,0]},
+    {txt:'小圈子知己——三五好友足矣',v:[-1,1,1,-1,0,0,0,0]},
+    {txt:'独来独往——和自己相处最自在',v:[-2,2,0,-1,0,-1,-1,0]}
+  ]},
+  {q:'对未来，你更像？',opts:[
+    {txt:'走一步看一步，船到桥头自然直',v:[0,2,-1,0,0,1,-1,0]},
+    {txt:'有大致方向，但具体怎么走看情况',v:[0,1,1,0,0,0,0,0]},
+    {txt:'必须有清晰规划，不能瞎走',v:[0,-1,2,-1,0,-1,0,0]},
+    {txt:'不规划，命运自有安排',v:[-1,2,-1,0,0,0,0,0]}
+  ]},
+  {q:'如果灵魂能选出生地，你希望那里有？',opts:[
+    {txt:'有山有水——自然第一',v:[0,1,0,0,0,0,0,0]},
+    {txt:'有吃的有喝的——美食之都',v:[1,1,-1,1,0,2,0,1]},
+    {txt:'有人情有故事——活着有温度',v:[1,0,-1,0,0,1,1,0]},
+    {txt:'有自由有空间——谁也别管我',v:[-1,1,0,0,2,-1,-1,0]}
+  ]}
+];
+
+var LOADING_STEPS = ['正在打开灵魂地图…','读取地理DNA序列…','分析口味偏好…','匹配气候指纹…','锁定灵魂坐标…'];
+var QR_IMG = 'images/qr-code.png';
+var QQ_IMG = 'images/qq-group.png';
+var SITE_URL = 'www.azureflame.cloud';
+var QQ_GROUP = '702973928';
+
+// ==================== 渲染 ====================
+
+function render() {
+  var app = document.getElementById('app');
+  if (state === 'intro')  renderIntro(app);
+  else if (state === 'quiz') renderQuestion(app);
+  else if (state === 'loading') renderLoading(app);
+  else if (state === 'result') renderResult(app);
+  else if (state === 'poster') renderPoster(app);
+}
+
+function renderIntro(app) {
+  app.innerHTML =
+    '<div class="intro">' +
+      '<div class="intro-badge">' + BADGE_TEXT + '</div>' +
+      '<h1>' + QUIZ_TITLE + '</h1>' +
+      '<p class="sub">' + QUIZ_SUBTITLE + '</p>' +
+      '<div class="intro-deco">🗺️</div>' +
+      '<p style="font-size:12px;color:var(--muted);margin-bottom:18px;">28个地域·8维画像·找到你DNA里的故乡</p>' +
+      '<button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">🏠 开始寻找灵魂故乡</button>' +
+      '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+    '</div>';
+}
+
+function startQuiz() { state = 'quiz'; idx = 0; answers = []; render(); }
+
+function renderQuestion(app) {
+  if (idx >= QUESTIONS.length) { state = 'loading'; render(); return; }
+  var q = QUESTIONS[idx];
+  var pct = Math.round((idx / QUESTIONS.length) * 100);
+  var labels = 'ABCDEFGH';
+  var html =
+    '<div class="progress-wrap">' +
+      '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+      '<div class="progress-text">' + (idx + 1) + ' / ' + QUESTIONS.length + '</div>' +
+    '</div>' +
+    '<div class="q-num">第 ' + (idx + 1) + ' 问</div>' +
+    '<div class="q-text">' + q.q + '</div>' +
+    '<div class="options">';
+  for (var i = 0; i < q.opts.length; i++) {
+    html +=
+      '<button class="opt-btn" onclick="answer(' + i + ')">' +
+        '<span class="opt-letter">' + (labels[i] || '?') + '</span>' +
+        q.opts[i].txt +
+      '</button>';
+  }
+  html += '</div>';
+  if (idx > 0) html += '<div style="text-align:center;"><button class="btn-back" onclick="goBack()">← 上一题</button></div>';
+  app.innerHTML = html;
+}
+
+function answer(choice) {
+  answers.push(QUESTIONS[idx].opts[choice]);
+  idx++;
+  render();
+}
+
+function goBack() { if (idx <= 0) return; idx--; answers.pop(); render(); }
+
+function renderLoading(app) {
+  app.innerHTML =
+    '<div class="loading-wrap">' +
+      '<div class="loading-orb"></div>' +
+      '<p class="loading-text" id="ltxt">' + LOADING_STEPS[0] + '</p>' +
+    '</div>';
+  cycleLoading(1);
+}
+
+async function cycleLoading(i) {
+  if (i >= LOADING_STEPS.length) { state = 'result'; render(); return; }
+  await sleep(500 + Math.random() * 400);
+  var lt = document.getElementById('ltxt');
+  if (lt) lt.textContent = LOADING_STEPS[i];
+  cycleLoading(i + 1);
+}
+
+function calcResult() {
+  var uv = [0,0,0,0,0,0,0,0];
+  for (var i = 0; i < answers.length; i++) {
+    var v = answers[i].v;
+    for (var d = 0; d < 8; d++) uv[d] += v[d];
+  }
+  var scores = {};
+  for (var j = 0; j < REGION_KEYS.length; j++) {
+    var key = REGION_KEYS[j];
+    var rv = REGIONS[key].vec;
+    var dot = 0, na = 0, nb = 0;
+    for (var d = 0; d < 8; d++) { dot += uv[d] * rv[d]; na += uv[d] * uv[d]; nb += rv[d] * rv[d]; }
+    scores[key] = (na === 0 || nb === 0) ? 0 : dot / (Math.sqrt(na) * Math.sqrt(nb));
+  }
+  var ranked = REGION_KEYS.slice().sort(function(x,y){return scores[y]-scores[x];});
+  return { key:ranked[0], runners:ranked.slice(1,4), vec:uv, scores:scores };
+}
+
+function buildRadar(uv, color) {
+  var n = 8, cx = 140, cy = 124, R = 80, LB = 22;
+  var minv = Math.min.apply(null, uv);
+  var shifted = uv.slice();
+  if (minv <= 0) { var offset = Math.abs(minv) + 1; for (var i = 0; i < shifted.length; i++) shifted[i] += offset; }
+  var maxv = Math.max.apply(null, shifted.concat([1]));
+  function pt(i, r) { var ang = -Math.PI/2 + i*2*Math.PI/n; return [cx+r*Math.cos(ang), cy+r*Math.sin(ang)]; }
+  var svg = '<svg viewBox="0 0 280 252" xmlns="http://www.w3.org/2000/svg">';
+  var rings = [0.25,0.5,0.75,1];
+  for (var g = 0; g < rings.length; g++) {
+    var rp = [];
+    for (var i = 0; i < n; i++) { var p = pt(i, R*rings[g]); rp.push(p[0].toFixed(1)+','+p[1].toFixed(1)); }
+    svg += '<polygon points="'+rp.join(' ')+'" fill="none" stroke="var(--border)" stroke-width="1" opacity="'+(g===rings.length-1?0.9:0.45)+'"/>';
+  }
+  for (var i = 0; i < n; i++) {
+    var e = pt(i, R);
+    svg += '<line x1="'+cx+'" y1="'+cy+'" x2="'+e[0].toFixed(1)+'" y2="'+e[1].toFixed(1)+'" stroke="var(--border)" stroke-width="1" opacity="0.45"/>';
+    var lp = pt(i, R+LB), anc = Math.abs(lp[0]-cx)<8?'middle':(lp[0]>cx?'start':'end');
+    svg += '<text x="'+lp[0].toFixed(1)+'" y="'+(lp[1]-1).toFixed(1)+'" fill="var(--muted)" font-size="9" text-anchor="'+anc+'">'+DIM_LABEL[DIMS[i]]+'</text>';
+    svg += '<text x="'+lp[0].toFixed(1)+'" y="'+(lp[1]+10).toFixed(1)+'" fill="'+color+'" font-size="10" font-weight="700" text-anchor="'+anc+'">'+Math.round(uv[i])+'</text>';
+  }
+  var dp = [];
+  for (var i = 0; i < n; i++) { var p = pt(i, (shifted[i]/maxv)*R); dp.push(p[0].toFixed(1)+','+p[1].toFixed(1)); }
+  svg += '<polygon points="'+dp.join(' ')+'" fill="'+color+'" fill-opacity="0.2" stroke="'+color+'" stroke-width="2" stroke-linejoin="round"/>';
+  for (var i = 0; i < n; i++) { var p = pt(i, (shifted[i]/maxv)*R); svg += '<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3" fill="'+color+'"/>'; }
+  return svg + '</svg>';
+}
+
+function renderResult(app) {
+  var r = calcResult();
+  var reg = REGIONS[r.key];
+  var html =
+    '<div class="result">' +
+      '<div class="result-hero" style="background:linear-gradient(135deg,'+reg.color+'33,'+reg.color+'11);">'+reg.emoji+'</div>' +
+      '<div class="result-label">霧雨魔法店 · 灵魂故乡鉴定</div>' +
+      '<div class="result-name" style="color:'+reg.color+'">'+reg.name+'</div>' +
+      '<div class="result-tagline">'+reg.aka+'</div>' +
+      '<div class="result-quote">'+reg.q+'</div>' +
+      '<div class="dim-wrap">'+buildRadar(r.vec, reg.color)+'</div>' +
+      '<div class="result-desc">'+reg.desc+'</div>' +
+      '<div class="result-meta">';
+  for (var i = 0; i < reg.tags.length; i++) html += '<span class="meta-tag">'+reg.tags[i]+'</span>';
+  html += '</div>';
+  if (r.runners.length) {
+    html += '<div class="runner-up">你的灵魂还混有：';
+    for (var i = 0; i < r.runners.length; i++) {
+      html += '<span class="runner-item" style="border-color:'+REGIONS[r.runners[i]].color+'">'+REGIONS[r.runners[i]].emoji+' '+REGIONS[r.runners[i]].name+'</span>';
+    }
+    html += '</div>';
+  }
+  html +=
+      '<button class="btn btn-main" onclick="shareIt(\''+r.key+'\')">📋 复制结果发给朋友</button>' +
+      '<button class="btn btn-ghost" onclick="shareImage()">📸 生成分享海报</button>' +
+      '<button class="btn btn-ghost" onclick="restart()">🔄 再来一次</button>' +
+      '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+      '<p class="notice">霧雨魔法店 · 灵魂地理研究所 · 结果仅供娱乐 · 勿用于高考志愿填报</p>' +
+      '<div class="qq-section">' +
+        '<img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'">' +
+        '<p><strong style="color:var(--gold);">加群一起玩</strong><br>群号 702973928 · 更多抽象好活</p>' +
+      '</div>' +
+      '<p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>' +
+    '</div>';
+  app.innerHTML = html;
+}
+
+function shareIt(key) {
+  var reg = REGIONS[key];
+  var text = '🏠 我测出来灵魂故乡是【'+reg.name+'】——'+reg.q+' 你也来测测：'+window.location.href;
+  copyToClipboard(text, '已复制！发给朋友看看TA的灵魂故乡 😈');
+}
+
+function shareImage() { state = 'poster'; render(); }
+
+function renderPoster(app) {
+  app.innerHTML =
+    '<div class="poster-wrap">' +
+      '<div class="result-title" style="font-size:14px;color:var(--muted);margin-bottom:14px;">长按图片保存 / 分享</div>' +
+      '<img class="poster-img" id="posterImg" alt="分享海报" style="display:none;">' +
+      '<div class="loading-wrap" id="posterLoading"><div class="loading-orb"></div><p class="loading-text">正在生成海报…</p></div>' +
+      '<p class="poster-hint">手机长按上图即可保存到相册；电脑可点下方按钮下载。</p>' +
+      '<a class="btn btn-main" id="posterDl" download="灵魂故乡.png" style="display:none;">⬇️ 下载海报</a>' +
+      '<button class="btn btn-ghost" onclick="state=\'result\';render();">← 返回结果</button>' +
+    '</div>';
+  buildPoster();
+}
+
+async function buildPoster() {
+  var r = calcResult();
+  var reg = REGIONS[r.key];
+  var W = 640, H = 960, pad = 36;
+  var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  var ctx = cv.getContext('2d');
+  var FONT = '-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+
+  ctx.fillStyle = '#1a1520'; ctx.fillRect(0, 0, W, H);
+  var g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, 'rgba(176,159,255,.10)'); g.addColorStop(1, 'rgba(240,192,96,.06)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#241e2a'; roundRect(ctx, pad, pad, W - pad*2, H - pad*2, 28); ctx.fill();
+  var bar = ctx.createLinearGradient(pad, 0, W - pad, 0);
+  bar.addColorStop(0, '#f0c060'); bar.addColorStop(.5, '#b89fff'); bar.addColorStop(1, '#f0c060');
+  ctx.fillStyle = bar; roundRect(ctx, pad, pad, W - pad*2, 6, 3); ctx.fill();
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#b89fff'; ctx.font = '600 16px ' + FONT;
+  ctx.fillText('霧雨魔法店 · 灵魂故乡鉴定', W/2, 84);
+
+  var cx = W/2, cy = 180, R = 88;
+  var glow = ctx.createRadialGradient(cx, cy, R*.6, cx, cy, R*1.5);
+  glow.addColorStop(0, reg.color+'44'); glow.addColorStop(.5, reg.color+'11'); glow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow; ctx.fillRect(cx-R*1.5, cy-R*1.5, R*3, R*3);
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.closePath(); ctx.clip();
+  ctx.fillStyle = '#1a1520'; ctx.fillRect(cx-R, cy-R, R*2, R*2);
+  ctx.fillStyle = '#fff'; ctx.font = '96px sans-serif'; ctx.textBaseline = 'middle';
+  ctx.fillText(reg.emoji, cx, cy + 6); ctx.textBaseline = 'alphabetic';
+  ctx.lineWidth = 5; ctx.strokeStyle = reg.color;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.stroke();
+
+  ctx.fillStyle = reg.color; ctx.font = '800 42px ' + FONT;
+  ctx.fillText(reg.name, W/2, 310);
+  ctx.fillStyle = '#8a7e9a'; ctx.font = '16px ' + FONT;
+  ctx.fillText(reg.aka, W/2, 340);
+  ctx.fillStyle = '#f0c060'; ctx.font = '14px ' + FONT;
+  var plain = reg.q.replace(/「/g,'').replace(/」/g,'');
+  wrapText(ctx, plain, W/2, 375, W - pad*2 - 50, 24);
+
+  var ty = 440;
+  ctx.fillStyle = '#e0d8ec'; ctx.font = '14px ' + FONT;
+  var dlines = wrapToLines(ctx, reg.desc.replace(/<br\s*\/?>/gi,'\n').split('\n')[0], W - pad*2 - 60);
+  for (var i = 0; i < Math.min(dlines.length, 2); i++) ctx.fillText(dlines[i], W/2, ty + i*22);
+
+  var tx = pad + 20, tty = ty + 66;
+  for (var i = 0; i < reg.tags.length; i++) {
+    var tw = ctx.measureText(reg.tags[i]).width + 28;
+    if (tx + tw > W - pad - 20) { tx = pad + 20; tty += 36; }
+    ctx.fillStyle = 'rgba(255,255,255,.04)'; ctx.strokeStyle = reg.color+'55';
+    roundRect(ctx, tx, tty-18, tw, 32, 16); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = reg.color; ctx.fillText(reg.tags[i], tx + tw/2, tty);
+    tx += tw + 10;
+  }
+
+  var siteImg = await loadImg(QR_IMG);
+  var qqImg = await loadImg(QQ_IMG);
+  var qs = 124, gap2 = 46, totalQW = qs*2 + gap2;
+  var leftX = (W - totalQW)/2, rightX = leftX + qs + gap2;
+  var qy = H - pad - 196;
+  drawQRBox(ctx, siteImg, leftX, qy, qs, '扫码开测', SITE_URL, '#f0c060');
+  drawQRBox(ctx, qqImg, rightX, qy, qs, '加 QQ 群', '群号 '+QQ_GROUP, '#b89fff');
+
+  ctx.fillStyle = '#8a7e9a'; ctx.font = '11px ' + FONT;
+  ctx.textAlign = 'center'; ctx.fillText('B站: bilibili.com/1029138222', W/2, qy+qs+62);
+
+  var pi = document.getElementById('posterImg');
+  var pl = document.getElementById('posterLoading');
+  var dl = document.getElementById('posterDl');
+  var dataUrl = null;
+  try { dataUrl = cv.toDataURL('image/png'); } catch(e){}
+  if (pl) pl.style.display = 'none';
+  if (dataUrl) {
+    if (pi) { pi.src = dataUrl; pi.style.display = 'block'; }
+    if (dl) { dl.href = dataUrl; dl.style.display = 'inline-flex'; }
+  } else {
+    var hint = document.querySelector('.poster-hint');
+    if (hint) hint.textContent = '当前环境无法导出图片。部署到线上访问即可正常保存。';
+  }
+}
+
+function restart() { state = 'intro'; idx = 0; answers = []; render(); }
+
+render();
+</script>
+
+</body>
+</html>

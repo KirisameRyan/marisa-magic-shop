@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="js/analytics.js"></script>
+<title>你最像哪个动漫男主 · 霧雨魔法店</title>
+<link rel="stylesheet" href="css/common.css">
+<style>
+.intro { position: relative; }
+.intro-badge { position: relative; z-index: 3; }
+.intro h1 { position: relative; z-index: 3; }
+.intro .sub { position: relative; z-index: 3; }
+
+/* ── 3D 虚影旋转舞台 ── */
+.carousel-scene {
+ perspective: 900px;
+ perspective-origin: 50% 50%;
+ width: 100%; height: 320px;
+ margin: -10px auto 0;
+ position: relative;
+ cursor: grab;
+ touch-action: pan-y;
+}
+.carousel-scene.dragging { cursor: grabbing; }
+.carousel-stage {
+ position: absolute; top: 50%; left: 50%;
+ width: 0; height: 0;
+ transform-style: preserve-3d;
+ will-change: transform;
+}
+
+.hero-card {
+ position: absolute;
+ width: 100px; height: 120px;
+ margin: -60px 0 0 -50px;
+ border-radius: 16px;
+ display: flex; flex-direction: column;
+ align-items: center; justify-content: center;
+ will-change: opacity, filter, transform;
+}
+
+/* 卡片背景光晕 —— 放大成虚影辉光 */
+.hero-card .card-glow {
+ position: absolute; inset: -10px; border-radius: 22px; z-index: 0;
+ opacity: .45; filter: blur(14px);
+}
+.hero-card .card-face {
+ position: absolute; inset: 0; border-radius: 16px; z-index: 1;
+ background: linear-gradient(155deg, rgba(184,159,255,.16), rgba(26,21,32,.42));
+ border: 1px solid rgba(255,255,255,.16);
+ box-shadow: inset 0 0 20px rgba(184,159,255,.14), 0 0 24px rgba(0,0,0,.35);
+ -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+}
+.hero-card .card-emoji {
+ position: relative; z-index: 2;
+ font-size: 46px; line-height: 1;
+ filter: drop-shadow(0 0 12px currentColor) drop-shadow(0 0 26px currentColor);
+ animation: heroBob 3.2s ease-in-out infinite;
+}
+@keyframes heroBob {
+ 0%,100% { transform: translateY(0); }
+ 50%     { transform: translateY(-6px); }
+}
+.hero-card .card-name {
+ position: relative; z-index: 2;
+ font-size: 10px; color: var(--text);
+ margin-top: 6px; letter-spacing: 1px;
+ font-weight: 600; opacity: .85;
+ text-shadow: 0 0 8px rgba(0,0,0,.6);
+}
+
+/* 10 个角色沿 3D 环排列 (每 36°) 半径 170px */
+.hero-card:nth-child(1)  { transform: rotateY(0deg)   translateZ(170px); }
+.hero-card:nth-child(2)  { transform: rotateY(36deg)  translateZ(170px); }
+.hero-card:nth-child(3)  { transform: rotateY(72deg)  translateZ(170px); }
+.hero-card:nth-child(4)  { transform: rotateY(108deg) translateZ(170px); }
+.hero-card:nth-child(5)  { transform: rotateY(144deg) translateZ(170px); }
+.hero-card:nth-child(6)  { transform: rotateY(180deg) translateZ(170px); }
+.hero-card:nth-child(7)  { transform: rotateY(216deg) translateZ(170px); }
+.hero-card:nth-child(8)  { transform: rotateY(252deg) translateZ(170px); }
+.hero-card:nth-child(9)  { transform: rotateY(288deg) translateZ(170px); }
+.hero-card:nth-child(10) { transform: rotateY(324deg) translateZ(170px); }
+
+/* 不同角色的主题色光晕 */
+.card-naruto  .card-glow { background: #ff8c00; }
+.card-luffy   .card-glow { background: #ef4444; }
+.card-goku    .card-glow { background: #f97316; }
+.card-ichigo  .card-glow { background: #f0c060; }
+.card-eren    .card-glow { background: #6fcf97; }
+.card-tanjiro .card-glow { background: #3b82f6; }
+.card-edward  .card-glow { background: #a78bfa; }
+.card-saitama .card-glow { background: #fbbf24; }
+.card-light   .card-glow { background: #f472b6; }
+.card-gon     .card-glow { background: #4ade80; }
+
+/* 场景的径向光晕 */
+.carousel-scene::after {
+ content: ''; position: absolute; top: 50%; left: 50%;
+ width: 200px; height: 200px; margin: -100px 0 0 -100px;
+ border-radius: 50%; z-index: -1;
+ background: radial-gradient(circle, rgba(240,192,96,.06) 0%, transparent 70%);
+ pointer-events: none;
+}
+
+.result-img {
+ width: 220px; height: 220px; border-radius: 24px; margin: 0 auto 12px;
+ object-fit: cover; border: 3px solid var(--gold);
+ box-shadow: 0 12px 40px rgba(240,192,96,.25);
+ animation: popIn .5s cubic-bezier(.2,1.4,.4,1);
+}
+
+.btn-back { display:inline-flex; align-items:center; gap:4px; background:transparent; border:1px solid var(--border); border-radius:10px; padding:10px 18px; font-size:13px; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .15s; margin-top:14px; }
+.btn-back:hover { border-color:var(--purple); color:var(--purple); }
+
+@media (max-width: 420px) {
+ .result-img { width: 180px; height: 180px; }
+ .carousel-scene { height: 260px; }
+ .hero-card { width: 72px; height: 88px; margin: -44px 0 0 -36px; }
+ .hero-card .card-emoji { font-size: 34px; }
+ .hero-card:nth-child(1)  { transform: rotateY(0deg)   translateZ(130px); }
+ .hero-card:nth-child(2)  { transform: rotateY(36deg)  translateZ(130px); }
+ .hero-card:nth-child(3)  { transform: rotateY(72deg)  translateZ(130px); }
+ .hero-card:nth-child(4)  { transform: rotateY(108deg) translateZ(130px); }
+ .hero-card:nth-child(5)  { transform: rotateY(144deg) translateZ(130px); }
+ .hero-card:nth-child(6)  { transform: rotateY(180deg) translateZ(130px); }
+ .hero-card:nth-child(7)  { transform: rotateY(216deg) translateZ(130px); }
+ .hero-card:nth-child(8)  { transform: rotateY(252deg) translateZ(130px); }
+ .hero-card:nth-child(9)  { transform: rotateY(288deg) translateZ(130px); }
+ .hero-card:nth-child(10) { transform: rotateY(324deg) translateZ(130px); }
+}
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+<script src="js/utils.js"></script>
+
+<div class="container" id="app"></div>
+
+<script>
+var state = 'intro';
+var idx = 0;
+var answers = [];
+
+var QUIZ_TITLE = '你最像哪个动漫男主？';
+var QUIZ_SUBTITLE = '8 道题，深度剖析你的主角灵魂。热血？天才？还是隐藏的最终boss？';
+var BADGE_TEXT = '霧雨魔法店 · 番剧鉴定';
+
+var QUESTIONS = [
+ { q: '战斗开始前，你会做什么？', opts: ['大喊一声冲上去', '冷静分析对手弱点', '先保护好身边的同伴', '露出意味深长的微笑'] },
+ { q: '你的必杀技是哪种风格？', opts: ['一拳轰碎一切', '精密布局后一击制胜', '靠羁绊觉醒新形态', '低调到没人知道你有必杀技'] },
+ { q: '面对强大的敌人，你的台词是？', opts: ['「我绝对不会输！」', '「一切都在我的计算之中」', '「我不是一个人在战斗」', '「呵，有点意思」'] },
+ { q: '你的童年设定通常是？', opts: ['天真热血、从小立flag', '神童、被寄予厚望', '孤独但善良', '背负神秘的过去'] },
+ { q: '队友最常对你说的一句话？', opts: ['「你这家伙太乱来了！」', '「果然只能靠你了」', '「谢谢你一直在」', '「你到底在想什么……」'] },
+ { q: '如果番剧要出周边，你希望自己是？', opts: ['超帅的手办', '限量典藏卡', '治愈系挂件', '反派专属黑金版'] },
+ { q: '你的主角色彩主题色是？', opts: ['热血红', '高冷蓝', '温柔白', '神秘黑紫'] },
+ { q: '番剧最终话，你的结局是？', opts: ['守护了所有人，笑着谢幕', '站上世界之巅', '和重要的人平静生活', '留下伏笔，等待续作'] },
+];
+
+var RESULTS = {
+ nailong: {
+ name: '奶龙', img: 'images/nailong.png', tagline: '我才是奶龙！',
+ desc: '经过霧雨魔法店八道严谨题目的深度剖析，系统反复计算、交叉验证、推翻重来……<br><br>最终鉴定结果是——<b style="color:var(--gold)">奶龙</b>。<br><br>没错。无论你想当热血主角、冷酷天才、治愈担当还是隐藏boss，你的灵魂深处都住着一条圆滚滚、黄澄澄、人畜无害的奶龙。<br><br>唐唐的 很可爱<br><br>恭喜你，可以捧腹大笑了。',
+ tags: ['奶系天花板', '龙的传人', '可爱即正义', '主角？是奶龙']
+ }
+};
+
+var LOADING_STEPS = ['正在分析你的主角属性…', '匹配 1000+ 动漫男主数据库…', '交叉验证人格特质…', '咦…结果好像有点不对劲…', '正在确认…确实是这个…'];
+
+// 10 位知名动漫男主
+var HEROES = [
+ { emoji:'🦊', name:'鸣人', cls:'card-naruto', color:'#ff8c00' },
+ { emoji:'🏴‍☠️', name:'路飞', cls:'card-luffy', color:'#ef4444' },
+ { emoji:'🐉', name:'悟空', cls:'card-goku', color:'#f97316' },
+ { emoji:'⚔️', name:'一护', cls:'card-ichigo', color:'#f0c060' },
+ { emoji:'🕊️', name:'艾伦', cls:'card-eren', color:'#6fcf97' },
+ { emoji:'🔥', name:'炭治郎', cls:'card-tanjiro', color:'#3b82f6' },
+ { emoji:'⚡', name:'爱德华', cls:'card-edward', color:'#a78bfa' },
+ { emoji:'👊', name:'埼玉', cls:'card-saitama', color:'#fbbf24' },
+ { emoji:'📓', name:'夜神月', cls:'card-light', color:'#f472b6' },
+ { emoji:'🎣', name:'小杰', cls:'card-gon', color:'#4ade80' },
+];
+
+function render() {
+ stopCarousel();
+ var app = document.getElementById('app');
+ if (state === 'intro') renderIntro(app);
+ else if (state === 'quiz') renderQuestion(app);
+ else if (state === 'loading') renderLoading(app);
+ else if (state === 'result') renderResult(app);
+}
+
+function renderIntro(app) {
+ var html = '<div class="intro">' +
+ '<div class="intro-badge">' + BADGE_TEXT + '</div>';
+
+ // 3D 旋转舞台
+ html += '<div class="carousel-scene"><div class="carousel-stage">';
+ for (var i = 0; i < HEROES.length; i++) {
+ var h = HEROES[i];
+ html += '<div class="hero-card ' + h.cls + '">' +
+ '<div class="card-glow"></div>' +
+ '<div class="card-face"></div>' +
+ '<div class="card-emoji" style="color:' + h.color + '">' + h.emoji + '</div>' +
+ '<div class="card-name">' + h.name + '</div>' +
+ '</div>';
+ }
+ html += '</div></div>';
+
+ html += '<h1>' + QUIZ_TITLE + '</h1>' +
+ '<p class="sub">' + QUIZ_SUBTITLE + '</p>' +
+ '<button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">开始测试 →</button>' +
+ '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+ '</div>';
+
+ app.innerHTML = html;
+ startCarousel();
+}
+
+// ==================== 3D 虚影环绕舞台 ====================
+var carouselRAF = null;
+var CR = null;            // 当前舞台状态（单例，避免监听器泄漏）
+var crBound = false;      // 全局监听器是否已绑定
+
+function stopCarousel() {
+ if (carouselRAF) { cancelAnimationFrame(carouselRAF); carouselRAF = null; }
+ CR = null;
+}
+
+// 全局拖拽监听只绑一次，统一读写当前 CR
+function bindCarouselGlobals() {
+ if (crBound) return; crBound = true;
+ function move(x) {
+   if (!CR || !CR.dragging) return;
+   var dx = x - CR.lastX; CR.lastX = x;
+   CR.angle += dx * 0.4; CR.velocity = dx * 0.4;
+ }
+ function up() {
+   if (!CR) return;
+   CR.dragging = false;
+   if (CR.scene) CR.scene.classList.remove('dragging');
+ }
+ window.addEventListener('mousemove', function (e) { move(e.clientX); });
+ window.addEventListener('mouseup', up);
+ window.addEventListener('touchmove', function (e) { if (CR && CR.dragging) move(e.touches[0].clientX); }, { passive: true });
+ window.addEventListener('touchend', up);
+}
+
+function startCarousel() {
+ var scene = document.querySelector('.carousel-scene');
+ var stage = document.querySelector('.carousel-stage');
+ if (!scene || !stage) return;
+
+ var cards = Array.prototype.slice.call(stage.children);
+ var n = cards.length;
+ if (!n) return;
+
+ var radius = window.innerWidth <= 420 ? 130 : 170;
+ var step = 360 / n;
+ var reduce = window.matchMedia &&
+   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+ // 当前舞台状态写入单例
+ CR = {
+   scene: scene, stage: stage, cards: cards, n: n, radius: radius, step: step,
+   base: cards.map(function (_, i) { return step * i; }),
+   reduce: reduce,
+   angle: 0, velocity: 0, autoSpeed: reduce ? 0 : 12,
+   hovering: false, dragging: false, lastX: 0
+ };
+
+ bindCarouselGlobals();
+
+ // 悬停暂停 + 按下开始拖拽（绑在 scene 上，随 DOM 重建自动失效）
+ scene.addEventListener('mouseenter', function () { if (CR) CR.hovering = true; });
+ scene.addEventListener('mouseleave', function () { if (CR) CR.hovering = false; });
+ scene.addEventListener('mousedown', function (e) {
+   if (!CR) return; CR.dragging = true; CR.lastX = e.clientX; CR.velocity = 0; scene.classList.add('dragging');
+ });
+ scene.addEventListener('touchstart', function (e) {
+   if (!CR) return; CR.dragging = true; CR.lastX = e.touches[0].clientX; CR.velocity = 0;
+ }, { passive: true });
+
+ var last = performance.now();
+ function frame(now) {
+ if (!CR) return;
+ var dt = (now - last) / 1000; last = now;
+
+ if (CR.dragging) {
+   // 拖拽中：角度已更新
+ } else if (Math.abs(CR.velocity) > 0.05) {
+   CR.angle += CR.velocity; CR.velocity *= 0.92;   // 甩动惯性 + 摩擦
+ } else if (!CR.hovering && !CR.reduce) {
+   CR.angle += CR.autoSpeed * dt;                  // 自动旋转
+ }
+
+ CR.stage.style.transform = 'rotateY(' + CR.angle + 'deg)';
+
+ // 逐卡景深：越靠后越虚、越暗、越小
+ for (var i = 0; i < CR.n; i++) {
+   var world = (CR.base[i] + CR.angle) * Math.PI / 180;
+   var t = (Math.cos(world) + 1) / 2;             // 1=正前  0=正后
+   var c = CR.cards[i];
+   c.style.transform = 'rotateY(' + CR.base[i] + 'deg) translateZ(' + CR.radius + 'px) scale(' + (0.72 + t * 0.28).toFixed(3) + ')';
+   c.style.opacity = (0.18 + t * 0.82).toFixed(3);
+   c.style.filter = 'blur(' + ((1 - t) * 3.5).toFixed(2) + 'px)';
+ }
+
+ carouselRAF = requestAnimationFrame(frame);
+ }
+ carouselRAF = requestAnimationFrame(frame);
+}
+
+function startQuiz() { state = 'quiz'; idx = 0; answers = []; render(); }
+
+function renderQuestion(app) {
+ if (idx >= QUESTIONS.length) { state = 'loading'; render(); return; }
+ var q = QUESTIONS[idx];
+ var pct = Math.round((idx / QUESTIONS.length) * 100);
+ var labels = 'ABCDEFGH';
+ var html = '<div class="progress-wrap">' +
+ '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+ '<div class="progress-text">' + (idx + 1) + ' / ' + QUESTIONS.length + '</div>' +
+ '</div>' +
+ '<div class="q-num">第 ' + (idx + 1) + ' 问</div>' +
+ '<div class="q-text">' + q.q + '</div>' +
+ '<div class="options">';
+ for (var i = 0; i < q.opts.length; i++) {
+ html += '<button class="opt-btn" onclick="answer(' + i + ')"><span class="opt-letter">' + (labels[i] || '?') + '</span>' + q.opts[i] + '</button>';
+ }
+ html += '</div>';
+ if(idx>0) html += '<div style="text-align:center;"><button class="btn-back" onclick="goBack()">← 上一题</button></div>';
+ app.innerHTML = html;
+}
+
+function answer(choice) { answers.push(choice); idx++; render(); }
+function goBack() { if(idx<=0) return; idx--; answers.pop(); render(); }
+
+function renderLoading(app) {
+ app.innerHTML = '<div class="loading-wrap"><div class="loading-orb"></div><p class="loading-text" id="ltxt">' + LOADING_STEPS[0] + '</p></div>';
+ cycleLoading(1);
+}
+
+async function cycleLoading(i) {
+ if (i >= LOADING_STEPS.length) { state = 'result'; render(); return; }
+ await sleep(500 + Math.random() * 400);
+ var lt = document.getElementById('ltxt');
+ if (lt) lt.textContent = LOADING_STEPS[i];
+ cycleLoading(i + 1);
+}
+
+function renderResult(app) {
+ var r = RESULTS.nailong;
+ var html = '<div class="result">' +
+ '<img class="result-img" src="' + r.img + '" alt="' + r.name + '">' +
+ '<div class="result-label">霧雨魔法店 鉴定结果</div>' +
+ '<div class="result-name" style="color:var(--gold)">' + r.name + '</div>' +
+ '<div class="result-tagline">' + r.tagline + '</div>' +
+ '<div class="result-desc">' + r.desc + '</div>' +
+ '<div class="result-meta">';
+ for (var i = 0; i < r.tags.length; i++) {
+ html += '<span class="meta-tag">' + r.tags[i] + '</span>';
+ }
+ html += '</div>' +
+ '<button class="btn btn-main" onclick="shareIt()">📋 复制结果发给朋友</button>' +
+ '<button class="btn btn-ghost" onclick="restart()">🔄 再来一次</button>' +
+ '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+ '<p class="notice">霧雨魔法店 · 结果仅供参考 · 但魔法是真的</p>' +
+ '<div class="qq-section">' +
+ '<img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'">' +
+  '<p><strong style="color:var(--gold);">加群一起玩</strong><br>扫码进群，更多抽象好活</p>' +
+  '</div>' +
+  '<p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p></div>';
+ app.innerHTML = html;
+}
+
+function shareIt() {
+ var text = '我测了「你最像哪个动漫男主」，结果是奶龙……我不信，你来测测：' + window.location.href;
+ copyToClipboard(text,'已复制！发给朋友试试 😈');
+}
+
+function restart() { state = 'intro'; idx = 0; answers = []; render(); }
+
+render();
+</script>
+</body>
+</html>
