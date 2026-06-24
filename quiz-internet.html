@@ -6,6 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>测一测你是哪位抽象圈大手子 · 2.0 · 霧雨魔法店</title>
+<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
 <style>
 :root {
@@ -137,6 +138,9 @@
 <script src="js/canvas-utils.js"></script>
 
 <div class="container" id="app"></div>
+<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
 <canvas id="cardCanvas" width="600" height="880" style="display:none"></canvas>
 <script>
 /* ====== 图片: 把照片放到 images/ 目录, 填到对应 key, 留空则用内置 SVG 头像 ====== */
@@ -422,6 +426,10 @@ function loadProgress(){
 }
 
 function render(){
+  var d1=document.getElementById('ad1'),d2=document.getElementById('ad2'),d3=document.getElementById('ad3');
+  if(d1)d1.style.display=!started?'block':'none';
+  if(d2)d2.style.display=started&&idx<qOrder.length?'block':'none';
+  if(d3)d3.style.display=started&&idx>=qOrder.length?'block':'none';
  var a=document.getElementById('app');
  if(!started){
  var hasProgress=loadProgress();

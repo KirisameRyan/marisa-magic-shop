@@ -34,7 +34,7 @@ body {
     radial-gradient(ellipse at 70% 100%, rgba(240,192,96,.04) 0%, transparent 50%);
   color: var(--text);
   min-height: 100vh;
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: center; flex-direction: column;
   padding: 16px; padding-top: 64px;
   position: relative; overflow-x: hidden;
 }

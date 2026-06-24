@@ -6,6 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>测一测你的灵魂动物 · 霧雨魔法店</title>
+<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
 <style>
  :root {
@@ -94,6 +95,9 @@
 <script src="js/utils.js"></script>
 
 <div class="container" id="app"></div>
+<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
 <script>
 const quickQs = [
  { q:'周末下午你一般在干嘛？', opts:['出门浪', '家里瘫', '看心情', '不知道'] },
@@ -120,6 +124,10 @@ const proQs = [
 let mode = null, questions = [], idx = -1, answers = [];
 
 function render() {
+  var a1=document.getElementById('ad1'),a2=document.getElementById('ad2'),a3=document.getElementById('ad3');
+  if(a1)a1.style.display=mode===null?'block':'none';
+  if(a2)a2.style.display=mode!==null&&idx<questions.length?'block':'none';
+  if(a3)a3.style.display=mode!==null&&idx>=questions.length?'block':'none';
  const a = document.getElementById('app');
  if (mode === null) {
  a.innerHTML = `

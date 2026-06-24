@@ -26,3 +26,12 @@ function copyToClipboard(text, successMsg) {
     prompt('复制这段文字发给朋友：', text);
   }
 }
+
+function toggleAds(state) {
+  var ad1 = document.getElementById('ad1');
+  var ad2 = document.getElementById('ad2');
+  var ad3 = document.getElementById('ad3');
+  if (ad1) ad1.style.display = (state === 'intro') ? 'block' : 'none';
+  if (ad2) ad2.style.display = (state === 'quiz') ? 'block' : 'none';
+  if (ad3) ad3.style.display = (state === 'result') ? 'block' : 'none';
+}

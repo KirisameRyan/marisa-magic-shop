@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="js/analytics.js"></script>
 <title>测一测你最像哪个东方人物 · 霧雨魔法店</title>
+<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
 <link rel="stylesheet" href="css/common.css">
 <style>
@@ -30,6 +31,9 @@
 <script src="js/utils.js"></script>
 
 <div class="container" id="app"></div>
+<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
 <script>
 const CHARS = {
  reimu:{name:'博丽灵梦',title:'乐园的悠闲巫女',emoji:'🏮',color:'#ef4444',dims:{lazy:95,power:88,social:55,brain:75,chaos:40},quote:'啊——好麻烦。但是既然妖怪出现了，那就顺手退治一下吧。',desc:'你骨子里是个怕麻烦的人。<br><br>但神奇的是——麻烦事总是自己找上门来。你嘴上抱怨，手上却没停过。别人觉得你很努力，只有你自己知道：只是懒得放着不管而已。<br><br>你有天赋，但更享受晒着太阳喝杯茶的日子。如果可以许一个愿望，你大概会说——「参拜客多一点，但妖怪少一点。」',tags:['懒但强','巫女','直觉派','贫穷但不在乎','守序善良']},
@@ -75,6 +79,10 @@ const QUESTIONS = [
 let idx = -1, answers = [];
 
 function render() {
+  var d1=document.getElementById('ad1'),d2=document.getElementById('ad2'),d3=document.getElementById('ad3');
+  if(d1)d1.style.display=idx===-1?'block':'none';
+  if(d2)d2.style.display=idx>=0&&idx<QUESTIONS.length?'block':'none';
+  if(d3)d3.style.display=idx>=QUESTIONS.length?'block':'none';
  const a = document.getElementById('app');
  if (idx === -1) {
  const strip = KEYS.map(k=>`<div class="char-mini" title="${CHARS[k].name}">${CHARS[k].emoji}</div>`).join('');

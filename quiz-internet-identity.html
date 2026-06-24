@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>测测你的互联网身份 · 霧雨魔法店</title>
+<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
 <script src="js/analytics.js"></script>
 <link rel="stylesheet" href="css/common.css">
@@ -58,6 +59,9 @@
 <script src="js/utils.js"></script>
 
 <div class="container" id="app"></div>
+<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
 
 <script>
 var state='intro',idx=0,answers=[];
@@ -279,6 +283,7 @@ var ID_KEYS = ['leziren','lao','jianpan','wenyi','dilei','yabi','jianzheng','esu
 var LOADING_STEPS = ['正在扫描你的上网记录…','分析社交平台行为模式…','提取评论区和群聊数据…','排查点赞收藏和深夜动态…','计算 7 大行为维度…','比对 14 种互联网身份…','身份已锁定…'];
 
 function render() {
+  toggleAds(state);
  var a=document.getElementById('app');
  if(state==='intro') renderIntro(a);
  else if(state==='quiz') renderQuestion(a);

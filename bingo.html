@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>社会指数宾果 · 霧雨魔法店</title>
+<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
     <script src="js/analytics.js"></script>
     <link rel="stylesheet" href="css/common.css">
@@ -96,6 +97,8 @@
 <script src="js/canvas-utils.js"></script>
 
 <div class="container" id="app"></div>
+<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
 
 <script>
 var SITE_URL = 'www.azureflame.cloud';
@@ -121,6 +124,9 @@ var state = 'select';
 var on = new Array(25).fill(false);
 
 function render() {
+  var a1=document.getElementById('ad1'),a3=document.getElementById('ad3');
+  if(a1)a1.style.display=state==='select'?'block':'none';
+  if(a3)a3.style.display=state==='result'?'block':'none';
  var app = document.getElementById('app');
  if (state === 'select') renderSelect(app);
  else if (state === 'result') renderResult(app);
