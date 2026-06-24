@@ -1,1 +1,7 @@
- 
+# 阻止外部直接访问敏感词库和彩蛋数据
+<FilesMatch "^(sensitive-words|easter-eggs)\.js$">
+    RewriteEngine On
+    RewriteCond %{HTTP_REFERER} !^https?://(www\.)?azureflame\.cloud [NC]
+    RewriteCond %{HTTP_REFERER} !^https?://(www\.)?azureflame\.cloud/ [NC]
+    RewriteRule .* - [F,L]
+</FilesMatch>

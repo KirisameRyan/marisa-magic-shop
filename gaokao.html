@@ -113,7 +113,6 @@ body { background-image: radial-gradient(ellipse at 30% 0%, rgba(239,68,68,.04) 
 <script src="nav.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/canvas-utils.js"></script>
-<script src="js/sensitive-words.js"></script>
 <script src="js/easter-eggs.js"></script>
 
 <div class="container" id="app"></div>
@@ -445,27 +444,33 @@ function renderIntro(app) {
   }
 }
 
-function checkName(raw) {
-  if (!raw) return '匿名考生';
+function checkName(raw, callback) {
+  if (!raw) return callback('匿名考生');
   var s = raw.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '');
-  if (!s) return '匿名考生';
-  for (var i = 0; i < s.length; i++)
-    for (var j = i + 2; j <= s.length && j - i <= 10; j++)
-      if (SENSITIVE_SET.has(s.substring(i, j))) return '匿名考生';
-  return s;
+  if (!s || s.length < 2) return callback(s || '匿名考生');
+
+  fetch('api/checkname.php', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'name=' + encodeURIComponent(s)
+  }).then(function(r){return r.json()}).then(function(data){
+    callback(data.safe ? s : '匿名考生');
+  }).catch(function(){
+    callback(s); // 后端不可用时放行
+  });
 }
 
 function submit() {
   var nEl=document.getElementById('inpName'), eEl=document.getElementById('inpExam');
   var rawName=(nEl&&nEl.value||'').trim()||'匿名考生';
-  var name = checkName(rawName);
   var examId=(eEl&&eEl.value||'').trim()||(CURRENT_YEAR+'01'+String(Math.floor(Math.random()*900000+100000)));
-  lastName = name; lastExamId = examId;
-
-  result = genResult(name,examId,selectedPrime,selectedElecs.slice());
-  state = 'loading';
-  renderLoading();
-  doLoading();
+  checkName(rawName, function(name) {
+    lastName = name; lastExamId = examId;
+    result = genResult(name,examId,selectedPrime,selectedElecs.slice());
+    state = 'loading';
+    renderLoading();
+    doLoading();
+  });
 }
 
     var STAGES = [
