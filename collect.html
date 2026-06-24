@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>建议新彩蛋 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
+<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
+<link rel="stylesheet" href="css/common.css">
+<style>
+.container { max-width: 540px; }
+.container::before { background: linear-gradient(90deg, #ef4444, var(--gold), #ef4444); }
+.head-wrap { text-align: center; margin-bottom: 20px; }
+.head-wrap .badge { display: inline-block; font-size: 10px; letter-spacing: 2px; color: var(--gold); border: 1px solid var(--gold); border-radius: 20px; padding: 4px 16px; margin-bottom: 12px; }
+.head-wrap h1 { font-size: 22px; margin-bottom: 6px; }
+.head-wrap .sub { font-size: 12px; color: var(--muted); line-height: 1.7; }
+
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-bottom: 6px; }
+.form-group input, .form-group textarea { width: 100%; background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 12px; padding: 13px 16px; font-size: 15px; color: var(--text); font-family: inherit; transition: border-color .2s; resize: vertical; }
+.form-group textarea { min-height: 70px; }
+.form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--gold); }
+.form-group input::placeholder, .form-group textarea::placeholder { color: var(--muted); opacity: .35; }
+
+.btn-submit { background: linear-gradient(135deg, var(--gold), #e8a830); color: #1a1520; font-weight: 700; }
+.btn-submit:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(240,192,96,.25); }
+
+.thanks { display: none; text-align: center; padding: 30px 0; }
+.thanks .icon { font-size: 56px; margin-bottom: 12px; }
+.thanks h2 { font-size: 20px; margin-bottom: 8px; }
+.thanks p { font-size: 13px; color: var(--muted); }
+
+@media (max-width: 420px) { .container { padding: 24px 18px; } }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container" id="app">
+  <div class="head-wrap" id="formArea">
+    <div class="badge">霧雨魔法店 · 彩蛋征集令</div>
+    <h1>📝 建议新彩蛋人物</h1>
+    <p class="sub">高考出分模拟器需要更多隐藏彩蛋！<br>把你喜欢的角色或人物写下来，店主会挑合适的加进去。</p>
+
+    <div class="form-group"><label>角色名 / 人名（必填）</label><input type="text" id="inpName" placeholder="例如：琪露诺、芙莉莲" maxlength="50" autocomplete="off"></div>
+    <div class="form-group"><label>来自哪里</label><input type="text" id="inpSource" placeholder="例如：东方Project / 葬送的芙莉莲 / 互联网" maxlength="50" autocomplete="off"></div>
+    <div class="form-group"><label>想要的效果（可选）</label><textarea id="inpNotes" placeholder="希望多少分、什么专业、什么评语……随便写"></textarea></div>
+
+    <button class="btn btn-submit" onclick="doSubmit()">📨 提交建议</button>
+    <a href="index.html" class="home-link">← 返回魔法店</a>
+  </div>
+
+  <div class="thanks" id="thanksArea">
+    <div class="icon">✨</div>
+    <h2>收到你的建议！</h2>
+    <p id="thanksMsg"></p>
+    <button class="btn btn-ghost" onclick="resetForm()" style="max-width:200px;margin:16px auto 0;">📝 再提一个</button>
+    <a href="index.html" class="home-link">← 返回魔法店</a>
+  </div>
+</div>
+
+<script>
+function doSubmit() {
+  var name = (document.getElementById('inpName').value || '').trim();
+  var source = (document.getElementById('inpSource').value || '').trim();
+  var notes = (document.getElementById('inpNotes').value || '').trim();
+
+  if (!name) { document.getElementById('inpName').focus(); return; }
+
+  var body = 'name=' + encodeURIComponent(name) + '&source=' + encodeURIComponent(source) + '&notes=' + encodeURIComponent(notes);
+  fetch('api/submit.php', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: body
+  }).then(function(r){return r.json()}).then(function(data){
+    document.getElementById('formArea').style.display = 'none';
+    var ta = document.getElementById('thanksArea');
+    ta.style.display = 'block';
+    document.getElementById('thanksMsg').textContent = '「' + name + '」已被记录。如果被选中，你抽到的时候就知道啦！';
+  }).catch(function(){
+    alert('提交失败，请稍后再试。');
+  });
+}
+
+function resetForm() {
+  document.getElementById('formArea').style.display = 'block';
+  document.getElementById('thanksArea').style.display = 'none';
+  document.getElementById('inpName').value = '';
+  document.getElementById('inpSource').value = '';
+  document.getElementById('inpNotes').value = '';
+  document.getElementById('inpName').focus();
+}
+</script>
+
+</body>
+</html>

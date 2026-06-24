@@ -341,8 +341,10 @@ function genResult(name,examId,prime,elecs) {
     if (egg.quip) quip = egg.quip;
   }
   var easter = (egg && egg.easter) ? egg.easter : null;
+  var _eggName = egg ? (egg.ov ? egg.tier : egg.m[0]) : null;
+  var _eggCount = 0, _eggTotal = 0;
 
-  return {name:name,examId:examId,tier:tier,subs:subs,total:total,rank:rank,admit:admit,quip:quip,subsStr:subsStr,easter:easter};
+  return {name:name,examId:examId,tier:tier,subs:subs,total:total,rank:rank,admit:admit,quip:quip,subsStr:subsStr,easter:easter,_eggName:_eggName,_eggCount:_eggCount,_eggTotal:_eggTotal};
 }
 
 function esc(s) {
@@ -386,6 +388,8 @@ function renderIntro(app) {
         '<div class="form-group"><label>准考证号</label><input type="text" id="inpExam" placeholder="14位准考证号" inputmode="numeric" pattern="[0-9]*" value="'+esc(lastExamId)+'" maxlength="30" autocomplete="off" oninput="this.value=this.value.replace(/\\D/g,\x27\x27)"></div>'+
       '</div>'+
       '<p style="font-size:10px;color:var(--muted);text-align:center;margin-bottom:12px;">💡 试试输入「苏轼」「芙莉莲」「孙笑川」「张雪峰」等名字，80+ 隐藏彩蛋等你发现</p>'+
+      '<p style="font-size:10px;color:var(--muted);text-align:center;margin-bottom:14px;" id="eggStats">彩蛋统计加载中…</p>'+
+      '<p style="font-size:10px;text-align:center;margin-bottom:14px;"><a href="collect.html" style="color:var(--gold-dim);text-decoration:none;">📝 你也有想加入彩蛋的角色吗？点此建议 →</a></p>'+
       '<div class="subject-picker">'+
         '<div class="sp-label">首选科目（选 1 门）</div>'+
         '<div class="pill-row" id="primePills">'+
@@ -430,6 +434,15 @@ function renderIntro(app) {
       }
     });
   });
+
+  if (typeof EASTER_EGGS !== 'undefined') {
+    fetch('api/stats.php')
+      .then(function(r){return r.json()})
+      .then(function(data){
+        var el = document.getElementById('eggStats');
+        if (el) el.innerHTML = '彩蛋总数：<b>' + EASTER_EGGS.length + '</b> 个 · 已发现：<b>' + data.discovered + '</b> 个 · 今日触发：<b>' + data.todayTriggers + '</b> 次 · 累计：<b>' + data.totalTriggers + '</b> 次';
+      }).catch(function(){});
+  }
 }
 
 function checkName(raw) {
@@ -511,6 +524,10 @@ function renderResult(app) {
   var easterHTML='';
   if (d.easter) easterHTML='<div class="easter-area"><div class="e-msg">'+d.easter+'</div></div>';
 
+  var counterHTML = d._eggName
+    ? '<div class="easter-area" style="background:rgba(240,192,96,.02);text-align:center;" id="eggCounter"><div class="e-msg">🏆 正在查询你是第几个发现此彩蛋的人…</div></div>'
+    : '';
+
   app.innerHTML =
     '<div class="report-card">'+
       '<div class="report-hd">'+
@@ -536,6 +553,7 @@ function renderResult(app) {
         '<div class="c-text">'+esc(d.quip)+'</div>'+
       '</div>'+
       easterHTML+
+      counterHTML+
     '</div>'+
     '<div class="act-row">'+
       '<button class="btn btn-share" onclick="doShare()">📋 复制文案</button>'+
@@ -551,6 +569,22 @@ function renderResult(app) {
       '<p><strong style="color:var(--gold);">加群一起玩</strong><br>群号 702973928 · 更多抽象好活</p>'+
     '</div>'+
     '<p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>';
+
+  if (d._eggName) {
+    fetch('api/counter.php', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: 'egg=' + encodeURIComponent(d._eggName)
+    }).then(function(r){return r.json()}).then(function(data){
+      d._eggCount = data.count;
+      d._eggTotal = data.total;
+      var el = document.getElementById('eggCounter');
+      if (el) el.innerHTML = '<div class="e-msg">🏆 你是第 <b style="color:var(--gold)">' + data.count + '</b> 个触发「' + esc(d._eggName) + '」彩蛋的人！<br><span style="font-size:10px;color:var(--muted);">全站已触发 ' + data.total + ' 次彩蛋</span></div>';
+    }).catch(function(){
+      var el = document.getElementById('eggCounter');
+      if (el) el.innerHTML = '<div class="e-msg" style="color:var(--muted);font-size:11px;">🏆 彩蛋计数将在部署到服务器后生效</div>';
+    });
+  }
 }
 
 function doShare() {

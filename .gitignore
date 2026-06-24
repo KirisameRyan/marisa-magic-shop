@@ -7,3 +7,7 @@ bdunion.txt
 
 # 百度站长验证
 39be8777283b6964b055eb7e87a6dadb.txt
+
+# 彩蛋计数器数据（运行时生成）
+data/*
+!data/.gitkeep
