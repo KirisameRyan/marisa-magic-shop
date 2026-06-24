@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>高考出分模拟器 · 霧雨魔法店</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
 <script src="js/analytics.js"></script>
 <link rel="stylesheet" href="css/common.css">
 <style>
@@ -112,6 +113,7 @@ body { background-image: radial-gradient(ellipse at 30% 0%, rgba(239,68,68,.04) 
 <script src="js/utils.js"></script>
 <script src="js/canvas-utils.js"></script>
 <script src="js/sensitive-words.js"></script>
+<script src="js/easter-eggs.js"></script>
 
 <div class="container" id="app"></div>
 
@@ -311,35 +313,30 @@ function genResult(name,examId,prime,elecs) {
 
   var easter = null;
   var cn = name.toLowerCase();
-  if (cn.indexOf('魔理沙')>=0||cn.indexOf('まりさ')>=0)
-    easter = '🧹 店主说：魔理沙不用高考，魔法之森有保送名额。不过既然你来了……';
-  else if (cn.indexOf('灵梦')>=0||cn.indexOf('れいむ')>=0)
-    easter = '🪙 灵梦看了你的分数，默默把赛钱箱往前推了推……';
-  else if (cn.indexOf('高考')>=0)
-    easter = '📝 考神本人来了？但这分数……是随机生成的，别当真。';
-  else if (cn.indexOf('清华')>=0||cn.indexOf('北大')>=0)
-    easter = '🤯 清北学子也来测？你不是来查分的，你是来微服私访的。';
-  else if (cn.indexOf('锦鲤')>=0||cn.indexOf('保佑')>=0||cn.indexOf('好运')>=0)
-    easter = '🙏 锦鲤附体！魔法店给每个考生都施了祝福魔法，祝金榜题名！';
-  else if (cn.indexOf('原神')>=0||cn.indexOf('启动')>=0)
-    easter = '🎮 玩原神玩的？先别启动了，看看分再说。';
-  else if (cn.indexOf('店主')>=0||cn.indexOf('老板')>=0)
-    easter = '🧹 店主说：本店不给自己人查分，怕看了伤心。但……来都来了。';
-  else if (cn.indexOf('抽象')>=0)
-    easter = '💀 抽象人，抽象魂。你的分数……可能比这更抽象。';
-  else if (cn.indexOf('摆烂')>=0||cn.indexOf('躺平')>=0)
-    easter = '🛏️ 摆烂归摆烂，分数还是要查的。万一祖宗保佑了呢？';
-
-  var zxf = (cn.indexOf('张雪峰')>=0);
-  if (zxf) {
-    for (var k = 0; k < subs.length; k++) subs[k].score = r(subs[k].max * 0.3, subs[k].max * 0.5);
-    total = 250;
-    rank = r(500000, 800000);
-    tier = {name:'张雪峰の祝福',emoji:'🎤'};
-    admit = {s:'郑州大学',m:'给排水专业',t:'张雪峰の祝福'};
-    quip = '你考不过我你信吗？';
-    easter = '🎤 张雪峰老师看了一眼你的成绩单，微微一笑："你考不过我你信吗？"';
+  var egg = null;
+  for (var ei = 0; ei < EASTER_EGGS.length; ei++) {
+    var e = EASTER_EGGS[ei];
+    for (var mj = 0; mj < e.m.length; mj++) { if (cn.indexOf(e.m[mj].toLowerCase()) >= 0) { egg = e; break; } }
+    if (egg) break;
   }
+  if (egg && egg.ov) {
+    if (egg.total) {
+      total = egg.total[0] === egg.total[1] ? egg.total[0] : r(egg.total[0], egg.total[1]);
+      var ratio = total / 750;
+      for (var k2 = 0; k2 < subs.length; k2++) subs[k2].score = Math.max(1, Math.min(subs[k2].max, Math.round(subs[k2].max * ratio * (0.8 + Math.random() * 0.4))));
+      var diff = total - subs.reduce(function(s,x){return s+x.score;},0);
+      if (diff) subs[0].score = Math.max(1, Math.min(subs[0].max, subs[0].score + diff));
+    }
+    if (egg.rank) rank = r(egg.rank[0], egg.rank[1]);
+    tier = {name:egg.tier || tier.name, emoji:egg.emoji || tier.emoji};
+    if (egg.school) admit = {s:egg.school, m:egg.major, t:egg.tag || ''};
+    if (egg.quip) quip = egg.quip;
+  } else if (egg) {
+    if (egg.tier) { tier = {name:egg.tier, emoji:egg.emoji}; }
+    if (egg.school) admit = {s:egg.school, m:egg.major, t:egg.tag || ''};
+    if (egg.quip) quip = egg.quip;
+  }
+  var easter = (egg && egg.easter) ? egg.easter : null;
 
   return {name:name,examId:examId,tier:tier,subs:subs,total:total,rank:rank,admit:admit,quip:quip,subsStr:subsStr,easter:easter};
 }
@@ -378,9 +375,9 @@ function renderIntro(app) {
       '<p class="sub">就要出分了，讨个好彩头！<br>输入姓名考号（或直接点查询），看看老天爷给你多少分。</p>'+
       '<div class="form-row">'+
         '<div class="form-group"><label>考生姓名</label><input type="text" id="inpName" placeholder="你的名字（不填也行）" value="'+esc(lastName)+'" maxlength="20" autocomplete="off"></div>'+
-        '<div class="form-group"><label>准考证号</label><input type="text" id="inpExam" placeholder="随便填，不填也中" value="'+esc(lastExamId)+'" maxlength="30" autocomplete="off"></div>'+
+        '<div class="form-group"><label>准考证号</label><input type="text" id="inpExam" placeholder="14位准考证号" inputmode="numeric" pattern="[0-9]*" value="'+esc(lastExamId)+'" maxlength="30" autocomplete="off" oninput="this.value=this.value.replace(/\\D/g,\x27\x27)"></div>'+
       '</div>'+
-      '<p style="font-size:10px;color:var(--muted);text-align:center;margin-bottom:12px;">💡 试试输入「魔理沙」「清华」「锦鲤」「原神」等名字，有彩蛋</p>'+
+      '<p style="font-size:10px;color:var(--muted);text-align:center;margin-bottom:12px;">💡 试试输入「苏轼」「芙莉莲」「孙笑川」「张雪峰」等名字，80+ 隐藏彩蛋等你发现</p>'+
       '<div class="subject-picker">'+
         '<div class="sp-label">首选科目（选 1 门）</div>'+
         '<div class="pill-row" id="primePills">'+
