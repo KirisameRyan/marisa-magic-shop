@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>测测你的X压抑程度 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
+<link rel="stylesheet" href="css/common.css">
+<style>
+body { background-image: radial-gradient(ellipse at 30% 0%, rgba(239,68,68,.06) 0%, transparent 50%), radial-gradient(ellipse at 70% 100%, rgba(220,38,38,.03) 0%, transparent 50%); }
+.container { max-width: 560px; }
+.container::before { background: linear-gradient(90deg, #ef4444, #dc2626, #ef4444); }
+
+.intro-badge { color: #ef4444; border-color: rgba(239,68,68,.35); margin-bottom: 12px; }
+.intro h1 { font-size: 24px; }
+.intro .sub { margin-bottom: 16px; }
+
+.stat-line { font-size: 12px; color: var(--gold); text-align: center; margin-bottom: 18px; }
+
+.progress-fill { background: linear-gradient(90deg, #ef4444, #dc2626); }
+.q-num { color: #ef4444; }
+.opt-btn { border: 2px solid var(--border); }
+.opt-btn:hover { border-color: #ef4444; background: rgba(239,68,68,.06); }
+.opt-btn:hover .opt-letter { background: #ef4444; color: #fff; }
+
+.btn-start { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
+.btn-start:hover { background: linear-gradient(135deg, #f87171, #ef4444); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(239,68,68,.3); }
+
+.fake-score { text-align: center; }
+.fake-score .big-num { font-size: 120px; font-weight: 900; color: #ef4444; line-height: 1; animation: pulseRed 1.5s infinite; }
+@keyframes pulseRed { 0%,100%{opacity:.8} 50%{opacity:1} }
+.fake-score .alert-text { font-size: 16px; color: #ef4444; font-weight: 700; margin-bottom: 4px; }
+.fake-score .alert-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.7; }
+.fake-score .fool-count { font-size: 12px; color: var(--gold); margin-bottom: 18px; }
+
+.btn-reveal { background: linear-gradient(135deg, var(--gold), #e8a830); color: #1a1520; font-weight: 700; font-size: 18px; }
+.btn-reveal:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(240,192,96,.25); }
+
+.dim-row { margin-bottom: 14px; }
+.dim-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.dim-label b { color: var(--text); }
+.dim-bar { height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; }
+.dim-fill { height: 100%; border-radius: 5px; transition: width .6s ease; }
+
+.score-hero { text-align: center; margin-bottom: 16px; }
+.score-hero .hero-num { font-size: 64px; font-weight: 900; color: var(--gold); line-height: 1; }
+.score-hero .hero-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+@media (max-width: 420px) {
+  .fake-score .big-num { font-size: 80px; }
+  .score-hero .hero-num { font-size: 48px; }
+}
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container" id="app"></div>
+<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
+
+<script src="js/utils.js"></script>
+<script>
+var state = 'intro';
+var idx = 0;
+var answers = [];
+
+var QUIZ_TITLE = '测测你的X压抑程度';
+var QUIZ_SUBTITLE = '12 道灵魂拷问 · 3 大维度分析<br>精准测量你的好色总得分';
+var BADGE_TEXT = '⚠️ X压抑指数评估中心';
+
+var QUESTIONS = [
+  { q:'深夜刷手机，算法给你推了一个"深夜专属"封面。你？',
+    opts:[
+      {t:'赶紧划走，顺便清理推荐记录', s:{h:0,d:1,r:1}},
+      {t:'先点进去，看完再决定要不要举报', s:{h:3,d:2,r:1}},
+      {t:'关灯、戴耳机、进入沉浸模式', s:{h:4,d:3,r:2}},
+      {t:'截图发群："兄弟们速来品鉴"', s:{h:3,d:4,r:3}}
+    ]},
+  { q:'群聊里有人秒发了一张涩图又秒撤。你？',
+    opts:[
+      {t:'假装没看到，继续潜水', s:{h:1,d:1,r:2}},
+      {t:'已右键保存，等没人的时候慢慢看', s:{h:4,d:2,r:1}},
+      {t:'发一个"？"然后蹲下一张', s:{h:3,d:3,r:4}},
+      {t:'立刻私聊对方："兄弟，刚才那个再来一遍"', s:{h:4,d:4,r:3}}
+    ]},
+  { q:'你的手机/电脑收藏夹里，占比最大的内容类型？',
+    opts:[
+      {t:'正经的工作学习资料，很干净', s:{h:0,d:0,r:0}},
+      {t:'二次元/影视/游戏相关的普通收藏', s:{h:1,d:1,r:2}},
+      {t:'表面是学习资料，点进去是另一回事', s:{h:3,d:3,r:3}},
+      {t:'别问收藏夹，问就是加密云盘', s:{h:4,d:4,r:3}}
+    ]},
+  { q:'聊天中对方发了个表情包，你感觉有暧昧暗示在里头。你？',
+    opts:[
+      {t:'回一个纯良表情包，拒绝一切暧昧', s:{h:0,d:1,r:2}},
+      {t:'礼貌回复，不接茬也不拒绝', s:{h:2,d:2,r:3}},
+      {t:'回一个更有暗示性的，互相试探', s:{h:3,d:4,r:4}},
+      {t:'直接问："你这是在暗示什么？"', s:{h:2,d:4,r:3}}
+    ]},
+  { q:'你手机里有没有隐藏相册或加密文件夹？',
+    opts:[
+      {t:'没有，光明正大，没什么好藏的', s:{h:0,d:0,r:0}},
+      {t:'有是有，但里面是些无关紧要的东西', s:{h:2,d:1,r:2}},
+      {t:'有，而且指纹验证，扫脸验证', s:{h:4,d:3,r:3}},
+      {t:'不止手机，电脑网盘U盘移动硬盘全有备份', s:{h:4,d:4,r:2}}
+    ]},
+  { q:'聚会时有人开了个带"颜色"的玩笑，全场静默。你？',
+    opts:[
+      {t:'低头喝饮料，假装没听见', s:{h:0,d:0,r:2}},
+      {t:'跟着笑笑但不接话', s:{h:2,d:2,r:3}},
+      {t:'接一句更猛的，把气氛再推一步', s:{h:3,d:4,r:4}},
+      {t:'岔开话题聊别的，但心里默默记下这个梗', s:{h:2,d:1,r:3}}
+    ]},
+  { q:'对于"喜欢看帅哥美女"这种说法，你觉得？',
+    opts:[
+      {t:'欣赏美是人之常情，但要有分寸', s:{h:1,d:1,r:1}},
+      {t:'谁不喜欢看啊，就是不好意思说而已', s:{h:3,d:2,r:3}},
+      {t:'对，我就是喜欢，怎么了？看帅哥美女犯法吗', s:{h:4,d:4,r:2}},
+      {t:'美不美先放一边，主要是想看更多', s:{h:4,d:3,r:4}}
+    ]},
+  { q:'你的社交平台有没有专门关注"特殊"账号的小号？',
+    opts:[
+      {t:'没有小号，我只有一个号，表里如一', s:{h:0,d:0,r:0}},
+      {t:'有的，但纯粹是为了兴趣，没别的意思', s:{h:2,d:1,r:2}},
+      {t:'有专门的号关注那些"有深度"的博主', s:{h:4,d:2,r:3}},
+      {t:'关注列表达上限了，正在申第三个号', s:{h:4,d:4,r:3}}
+    ]},
+  { q:'如果手机坏了必须送去维修，你？',
+    opts:[
+      {t:'直接送修，没什么见不得人的', s:{h:0,d:1,r:0}},
+      {t:'先备份重要文件，顺便"清理"一下', s:{h:2,d:2,r:2}},
+      {t:'能自己修就绝不送修，省得社死', s:{h:3,d:3,r:3}},
+      {t:'已经在脑补维修小哥翻我相册的画面了', s:{h:4,d:4,r:4}}
+    ]},
+  { q:'"擦边"内容和"正常内容"之间，你的判断标准是？',
+    opts:[
+      {t:'尺度很明确，越界就划走', s:{h:0,d:1,r:1}},
+      {t:'分界线比较灵活——主要看有没有旁人', s:{h:2,d:2,r:2}},
+      {t:'没有分界线，只要是好看的我都看', s:{h:4,d:3,r:3}},
+      {t:'什么是擦边？我看着都挺正常的', s:{h:4,d:4,r:4}}
+    ]},
+  { q:'朋友评价你"看着就像那种人/典型的心里有鬼"。你？',
+    opts:[
+      {t:'极力否认："我真不是！你们别乱说！"', s:{h:1,d:2,r:2}},
+      {t:'一笑而过——沉默是今晚的康桥', s:{h:2,d:2,r:3}},
+      {t:'反问对方："那你怎么看出来的？展开说说"', s:{h:3,d:4,r:3}},
+      {t:'大方承认："对，你说的都对。但别到处说就行"', s:{h:4,d:4,r:2}}
+    ]},
+  { q:'夜深人静、WiFi满格、电量充沛、周围完全没人。你？',
+    opts:[
+      {t:'关机睡觉，养精蓄锐', s:{h:0,d:0,r:0}},
+      {t:'刷一会儿正经内容然后闭眼', s:{h:1,d:1,r:1}},
+      {t:'天时地利人和——追剧时间到', s:{h:3,d:2,r:2}},
+      {t:'终于可以尽情做那些白天不好意思做的事了', s:{h:4,d:4,r:4}}
+    ]}
+];
+
+var LOADING_STEPS = ['正在采集行为数据…','正在比对样本数据库…','正在计算X压抑曲线…'];
+
+var SHARE_TEXT = '我在霧雨魔法店测了X压抑程度，好色总得分是{score}分！你也来测测：';
+
+var lastScore = 0, lastH = 0, lastD = 0, lastR = 0, foolCount = 0;
+
+function render() {
+  toggleAds(state);
+  var app = document.getElementById('app');
+  if (state === 'intro') renderIntro(app);
+  else if (state === 'quiz') renderQuestion(app);
+  else if (state === 'loading') renderLoading(app);
+  else if (state === 'result') renderFake(app);
+  else if (state === 'revealed') renderReal(app);
+}
+
+function renderIntro(app) {
+  app.innerHTML =
+    '<div class="intro">'+
+      '<div class="intro-badge">'+BADGE_TEXT+'</div>'+
+      '<h1>'+QUIZ_TITLE+'</h1>'+
+      '<p class="sub">'+QUIZ_SUBTITLE+'</p>'+
+      '<div class="stat-line" id="takeCount">已有 … 人测过！测了都说准！</div>'+
+      '<button class="btn btn-main btn-start" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">⚠️ 开始测试 →</button>'+
+      '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+    '</div>';
+
+  fetch('api/readcount.php?egg=sexquiz_take')
+    .then(function(r){return r.json()})
+    .then(function(d){document.getElementById('takeCount').textContent='已有 '+d.count+' 人测过！测了都说准！';})
+    .catch(function(){});
+}
+
+function startQuiz() {
+  if (!confirm('⚠️ 免责声明\n\n本测试非科学意义上的X压抑概念，\n纯属娱乐，不构成任何医疗建议。\n\n确定继续吗？')) return;
+
+  fetch('api/counter.php',{
+    method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'egg=sexquiz_take'
+  }).catch(function(){});
+
+  state = 'quiz'; idx = 0; answers = [];
+  render();
+}
+
+function renderQuestion(app) {
+  if (idx >= QUESTIONS.length) { state = 'loading'; render(); return; }
+  var q = QUESTIONS[idx];
+  var pct = Math.round((idx / QUESTIONS.length) * 100);
+  var labels = 'ABCDEFGH';
+
+  var html =
+    '<div class="progress-wrap">'+
+      '<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div>'+
+      '<div class="progress-text">'+(idx+1)+' / '+QUESTIONS.length+'</div>'+
+    '</div>'+
+    '<div class="q-num">第 '+(idx+1)+' 问</div>'+
+    '<div class="q-text">'+q.q+'</div>'+
+    '<div class="options">';
+
+  for (var i = 0; i < q.opts.length; i++) {
+    html +=
+      '<button class="opt-btn" onclick="answer('+i+')">'+
+        '<span class="opt-letter">'+(labels[i]||'?')+'</span>'+
+        q.opts[i].t+
+      '</button>';
+  }
+  html += '</div>';
+  if (idx > 0) html += '<div style="text-align:center;"><button class="btn-back" onclick="goBack()">← 返回上一题</button></div>';
+  app.innerHTML = html;
+}
+
+function answer(choice) {
+  answers.push(QUESTIONS[idx].opts[choice]);
+  idx++;
+  render();
+}
+
+function goBack() { if (idx > 0) { idx--; answers.pop(); render(); } }
+
+function renderLoading(app) {
+  app.innerHTML =
+    '<div class="loading-wrap">'+
+      '<div class="loading-orb"></div>'+
+      '<p class="loading-text" id="ltxt">'+LOADING_STEPS[0]+'</p>'+
+    '</div>';
+  cycleLoading(1);
+}
+
+async function cycleLoading(i) {
+  if (i >= LOADING_STEPS.length) {
+    calcResult();
+    state = 'result';
+    render();
+    return;
+  }
+  await sleep(500 + Math.random() * 400);
+  var lt = document.getElementById('ltxt');
+  if (lt) lt.textContent = LOADING_STEPS[i];
+  cycleLoading(i+1);
+}
+
+function calcResult() {
+  var h = 0, d = 0, r = 0;
+  for (var i = 0; i < answers.length; i++) {
+    h += answers[i].s.h || 0;
+    d += answers[i].s.d || 0;
+    r += answers[i].s.r || 0;
+  }
+  // 归一化到 0-100
+  var maxH = 48, maxD = 48, maxR = 48;
+  lastH = Math.round(h / maxH * 100);
+  lastD = Math.round(d / maxD * 100);
+  lastR = Math.round(r / maxR * 100);
+  lastScore = lastH;
+}
+
+function renderFake(app) {
+  fetch('api/readcount.php?egg=sexquiz_fooled')
+    .then(function(res){return res.json()})
+    .then(function(d){
+      foolCount = d.count;
+      var el = document.getElementById('foolCountEl');
+      if (el) el.textContent = '已有 '+foolCount+' 人上当受骗';
+    }).catch(function(){});
+
+  app.innerHTML =
+    '<div class="result">'+
+      '<div class="fake-score">'+
+        '<div class="big-num">100</div>'+
+        '<p class="alert-text">⚠️ 经鉴定，您的X压抑指数已突破人类极限</p>'+
+        '<p class="alert-sub">红色警报！这份数据远超正常范围。<br>先别着急 下面有你的真实得分</p>'+
+        '<p class="fool-count" id="foolCountEl">已有 … 人上当受骗</p>'+
+        '<button class="btn btn-reveal" onclick="reveal()">🔍 别急 查看你的真实总得分</button>'+
+      '</div>'+
+      '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+      '<p class="notice">霧雨魔法店 · X压抑指数评估中心 · 数据仅供参考</p>'+
+    '</div>';
+}
+
+function reveal() {
+  fetch('api/counter.php',{
+    method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'egg=sexquiz_fooled'
+  }).then(function(r){return r.json()}).then(function(d){
+    foolCount = d.count;
+    state = 'revealed';
+    render();
+  }).catch(function(){
+    state = 'revealed';
+    render();
+  });
+}
+
+function getComment(score) {
+  if (score >= 85) return '⚠️ 终极压抑体——你体内的好色之力已突破天灵盖，但被你死死按住了。建议释放压力，合理疏导。';
+  if (score >= 70) return '🔥 驾龄丰富——万花丛中过，片叶不沾身。你深谙此道，但藏得很深。属于老司机里的扫地僧。';
+  if (score >= 55) return '🟡 正常人里的正常人——该看的看了，该藏的藏了，该装的时候也装了。主打一个"我就笑一下算了"。';
+  if (score >= 40) return '🟢 轻度压抑——你偶尔会多想，但大部分时候能管住自己。属于"有心无力"型选手。';
+  if (score >= 25) return '🟦 清流——你对这些不怎么上心。不是装了，是真的无所谓。稀有物种。';
+  return '⬜ 你是纯白的——要么真的不感兴趣，要么藏到了一个人类无法探测的维度。';
+}
+
+function renderReal(app) {
+  var fillH = lastH;
+  var fillD = lastD;
+  var fillR = lastR;
+
+  app.innerHTML =
+    '<div class="result">'+
+      '<div class="result-label">霧雨魔法店 · X压抑指数评估中心</div>'+
+      '<div class="score-hero">'+
+        '<div class="hero-num">'+lastScore+'</div>'+
+        '<div class="hero-label">好色总得分（满分 100）</div>'+
+      '</div>'+
+
+      '<div class="dim-row">'+
+        '<div class="dim-label"><span>👀 好色程度</span><b style="color:#ef4444;">'+lastH+'</b></div>'+
+        '<div class="dim-bar"><div class="dim-fill" style="width:'+fillH+'%;background:#ef4444;"></div></div>'+
+      '</div>'+
+      '<div class="dim-row">'+
+        '<div class="dim-label"><span>🗣️ 社交胆量</span><b style="color:#f97316;">'+lastD+'</b></div>'+
+        '<div class="dim-bar"><div class="dim-fill" style="width:'+fillD+'%;background:#f97316;"></div></div>'+
+      '</div>'+
+      '<div class="dim-row">'+
+        '<div class="dim-label"><span>📡 擦边雷达</span><b style="color:#eab308;">'+lastR+'</b></div>'+
+        '<div class="dim-bar"><div class="dim-fill" style="width:'+fillR+'%;background:#eab308;"></div></div>'+
+      '</div>'+
+
+      '<div class="result-desc">'+getComment(lastScore)+'</div>'+
+      '<p class="fool-count" style="text-align:center;margin-bottom:12px;">已有 '+foolCount+' 人上当受骗</p>'+
+
+      '<button class="btn btn-main" onclick="shareIt()">📋 分享结果</button>'+
+      '<button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button>'+
+      '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+      '<p class="notice">霧雨魔法店 · 这真的不是什么正经测试 · 数据仅供参考</p>'+
+      '<div class="qq-section">'+
+        '<img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'">'+
+        '<p><strong style="color:var(--gold);">加群一起玩</strong><br>群号 702973928 · 更多抽象好活</p>'+
+      '</div>'+
+    '</div>';
+}
+
+function shareIt() {
+  var text = '【测测你的X压抑程度】我的好色总得分是 '+lastScore+' 分！你也来测测：'+window.location.href;
+  copyToClipboard(text, '已复制！发给朋友试试 😈');
+}
+
+function restart() { state = 'intro'; idx = 0; answers = []; render(); }
+
+render();
+</script>
+
+</body>
+</html>
