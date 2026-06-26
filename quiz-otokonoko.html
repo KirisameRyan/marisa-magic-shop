@@ -178,14 +178,14 @@ var QUESTIONS = [
       {t:'两者都来，社交需要', s:{a:0,b:0,c:0,d:0}},
       {t:'偶尔喝酒，不抽烟', s:{a:1,b:0,c:0,d:1}},
       {t:'不抽烟不喝酒', s:{a:2,b:1,c:0,d:2}},
-      {t:'不烟不酒，且觉得抽烟喝酒"不够精致"', s:{a:3,b:1,c:2,d:3}}
+      {t:'不烟不酒，且觉得抽烟喝酒"不够精致"', s:{a:3,b:2,c:2,d:3}}
     ]},
   { q:'对自己整体性别的看法？',
     opts:[
       {t:'我是纯爷们，不接受反驳', s:{a:0,b:0,c:0,d:0}},
       {t:'偶尔会想"当女生好像也不错"', s:{a:1,b:0,c:1,d:0}},
       {t:'越来越不确定自己到底算哪边', s:{a:3,b:1,c:3,d:2}},
-      {t:'男的——但已经不重要了', s:{a:3,b:2,c:4,d:4}}
+      {t:'男的——但已经不重要了', s:{a:3,b:3,c:4,d:4}}
     ]}
 ];
 
@@ -248,12 +248,12 @@ function renderQuestion(app) {
     '<div class="q-num">第 '+(idx+1)+' 问</div>'+
     '<div class="q-text">'+q.q+'</div>'+
     '<div class="options">';
-
+  var order = [0,1,2,3]; for (var x = 3; x > 0; x--) { var y = Math.floor(Math.random()*(x+1)); var t = order[x]; order[x] = order[y]; order[y] = t; }
   for (var i = 0; i < q.opts.length; i++) {
     html +=
-      '<button class="opt-btn" onclick="answer('+i+')">'+
+      '<button class="opt-btn" onclick="answer('+order[i]+')">'+
         '<span class="opt-letter">'+(labels[i]||'?')+'</span>'+
-        q.opts[i].t+
+        q.opts[order[i]].t+
       '</button>';
   }
   html += '</div>';
@@ -299,11 +299,11 @@ function calcResult() {
     c += answers[i].s.c || 0;
     d += answers[i].s.d || 0;
   }
-  var maxEach = 16 * 4;
-  lastA = Math.round(a / maxEach * 100);
-  lastB = Math.round(b / maxEach * 100);
-  lastC = Math.round(c / maxEach * 100);
-  lastD = Math.round(d / maxEach * 100);
+  var maxA = 58, maxB = 50, maxC = 59, maxD = 55;
+  lastA = Math.round(a / maxA * 100);
+  lastB = Math.round(b / maxB * 100);
+  lastC = Math.round(c / maxC * 100);
+  lastD = Math.round(d / maxD * 100);
   lastScore = Math.round((lastA + lastB + lastC + lastD) / 4);
 }
 
