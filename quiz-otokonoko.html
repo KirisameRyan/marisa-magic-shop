@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>测测你的男娘指数 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
+<link rel="stylesheet" href="css/common.css">
+<style>
+body { background-image: radial-gradient(ellipse at 30% 0%, rgba(236,72,153,.06) 0%, transparent 50%), radial-gradient(ellipse at 70% 100%, rgba(219,39,119,.03) 0%, transparent 50%); }
+.container { max-width: 560px; }
+.container::before { background: linear-gradient(90deg, #ec4899, #db2777, #ec4899); }
+
+.intro-badge { color: #ec4899; border-color: rgba(236,72,153,.35); margin-bottom: 12px; }
+.intro h1 { font-size: 24px; }
+.intro .sub { margin-bottom: 16px; }
+
+.stat-line { font-size: 12px; color: var(--gold); text-align: center; margin-bottom: 18px; }
+
+.progress-fill { background: linear-gradient(90deg, #ec4899, #db2777); }
+.q-num { color: #ec4899; }
+.opt-btn { border: 2px solid var(--border); }
+.opt-btn:hover { border-color: #ec4899; background: rgba(236,72,153,.06); }
+.opt-btn:hover .opt-letter { background: #ec4899; color: #fff; }
+
+.btn-start { background: linear-gradient(135deg, #ec4899, #db2777); color: #fff; }
+.btn-start:hover { background: linear-gradient(135deg, #f472b6, #ec4899); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(236,72,153,.3); }
+
+.fake-score { text-align: center; }
+.fake-score .big-num { font-size: 120px; font-weight: 900; color: #ec4899; line-height: 1; animation: pulsePink 1.5s infinite; }
+@keyframes pulsePink { 0%,100%{opacity:.8} 50%{opacity:1} }
+.fake-score .alert-text { font-size: 16px; color: #ec4899; font-weight: 700; margin-bottom: 4px; }
+.fake-score .alert-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.7; }
+.fake-score .fool-count { font-size: 12px; color: var(--gold); margin-bottom: 18px; }
+
+.btn-reveal { background: linear-gradient(135deg, var(--gold), #e8a830); color: #1a1520; font-weight: 700; font-size: 18px; }
+.btn-reveal:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(240,192,96,.25); }
+
+.dim-row { margin-bottom: 14px; }
+.dim-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.dim-label b { color: var(--text); }
+.dim-bar { height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; }
+.dim-fill { height: 100%; border-radius: 5px; transition: width .6s ease; }
+
+.score-hero { text-align: center; margin-bottom: 16px; }
+.score-hero .hero-num { font-size: 64px; font-weight: 900; color: var(--gold); line-height: 1; }
+.score-hero .hero-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+@media (max-width: 420px) {
+  .fake-score .big-num { font-size: 80px; }
+  .score-hero .hero-num { font-size: 48px; }
+}
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container" id="app"></div>
+<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
+
+<script src="js/utils.js"></script>
+<script>
+var state = 'intro';
+var idx = 0;
+var answers = [];
+
+var QUIZ_TITLE = '测测你的男娘指数';
+var QUIZ_SUBTITLE = '16 道灵魂拷问 · 4 大维度分析<br>精准测量你的男娘仪容表';
+var BADGE_TEXT = '💅 男娘成分鉴定中心';
+
+var QUESTIONS = [
+  { q:'你的日常穿搭/外在打理习惯？',
+    opts:[
+      {t:'完全不讲究，抓到什么穿什么', s:{a:0,b:0,c:0,d:0}},
+      {t:'基本的干净整洁，但不会刻意打扮', s:{a:1,b:0,c:0,d:0}},
+      {t:'会注意搭配，偶尔研究穿搭', s:{a:3,b:1,c:1,d:0}},
+      {t:'对镜子的时间比大部分女生还长，衣柜里有"特殊"收藏', s:{a:4,b:2,c:3,d:2}}
+    ]},
+  { q:'从小到大，别人最常怎么夸你？',
+    opts:[
+      {t:'夸我靠谱/能干/壮实', s:{a:0,b:0,c:0,d:0}},
+      {t:'夸我帅/阳光/有男人味', s:{a:0,b:0,c:0,d:0}},
+      {t:'夸我可爱/清秀/皮肤好', s:{a:2,b:3,c:1,d:0}},
+      {t:'「兄弟你好香」——这句话我不想再听到了', s:{a:3,b:4,c:4,d:2}}
+    ]},
+  { q:'看动漫/影视/小说的口味？',
+    opts:[
+      {t:'热血战斗、机械科幻、体育竞技', s:{a:0,b:0,c:0,d:0}},
+      {t:'什么都看，不挑', s:{a:1,b:0,c:1,d:0}},
+      {t:'性转/伪娘/变身题材……收藏夹里有一批', s:{a:2,b:1,c:4,d:1}},
+      {t:'不是喜欢看，是羡慕——如果我也能就好了', s:{a:3,b:2,c:4,d:3}}
+    ]},
+  { q:'群聊里出现过以下情况吗？',
+    opts:[
+      {t:'都很正常，没什么特别的', s:{a:0,b:0,c:0,d:0}},
+      {t:'被群友开玩笑催过女装', s:{a:1,b:3,c:2,d:1}},
+      {t:'被催过女装，而且我真的穿过给他们看了', s:{a:3,b:4,c:3,d:4}},
+      {t:'不仅穿过，我其实还挺享受那种感觉的', s:{a:4,b:4,c:4,d:4}}
+    ]},
+  { q:'你的身体特征最接近？',
+    opts:[
+      {t:'高大威猛、体格健壮、很有力量感', s:{a:0,b:0,c:0,d:0}},
+      {t:'普通男性体型，不壮也不瘦', s:{a:1,b:0,c:0,d:1}},
+      {t:'偏瘦、皮肤好、不长胡子/胡子很少', s:{a:3,b:2,c:1,d:2}},
+      {t:'身轻柔弱易推倒，骨骼纤细，天生丽质（？）', s:{a:4,b:4,c:4,d:3}}
+    ]},
+  { q:'你笑的时候？',
+    opts:[
+      {t:'放声大笑，毫不克制', s:{a:0,b:0,c:0,d:0}},
+      {t:'正常笑，但不会太夸张', s:{a:1,b:0,c:0,d:1}},
+      {t:'经常会被说"笑得好可爱"', s:{a:2,b:3,c:1,d:2}},
+      {t:'会下意识捂嘴笑，或者掩面笑', s:{a:4,b:3,c:3,d:4}}
+    ]},
+  { q:'夜深人静、一个人躺在床上的时候，你有想过？',
+    opts:[
+      {t:'明天吃什么 / 游戏怎么上分 / 工作上的事', s:{a:0,b:0,c:0,d:0}},
+      {t:'偶尔会想：如果我是女生会是什么样的？', s:{a:1,b:0,c:2,d:1}},
+      {t:'经常幻想自己变成女孩子/穿女装的样子', s:{a:3,b:1,c:4,d:2}},
+      {t:'不止是幻想——已经在规划"那件事"了', s:{a:3,b:2,c:4,d:4}}
+    ]},
+  { q:'关于脱毛/光滑皮肤这件事？',
+    opts:[
+      {t:'纯天然毛茸茸，这是男人的象征', s:{a:0,b:0,c:0,d:0}},
+      {t:'正常修剪保持整洁，但不会刻意全剃光', s:{a:1,b:0,c:0,d:1}},
+      {t:'本来就没啥毛/特意做过脱毛护理', s:{a:4,b:2,c:2,d:3}},
+      {t:'不止脱毛——我还认真做过身体护理甚至美甲', s:{a:4,b:3,c:3,d:4}}
+    ]},
+  { q:'被陌生人/刚认识的人怎么评价？',
+    opts:[
+      {t:'"看着挺壮/挺帅/有安全感"', s:{a:0,b:0,c:0,d:0}},
+      {t:'"长得好清秀"或者"五官好看"', s:{a:2,b:2,c:1,d:0}},
+      {t:'不止一次被问："你是男的女的？"', s:{a:3,b:4,c:3,d:2}},
+      {t:'被说过像女孩子，而且……我心里还挺高兴的', s:{a:4,b:4,c:4,d:3}}
+    ]},
+  { q:'你学过以下哪些"不寻常"的技能？',
+    opts:[
+      {t:'游戏/运动/乐器之类的，挺正常的兴趣爱好', s:{a:0,b:0,c:0,d:0}},
+      {t:'学伪音——因为好玩，或者想逗朋友', s:{a:1,b:1,c:2,d:2}},
+      {t:'伪音已经有点心得了，甚至能骗过陌生人', s:{a:2,b:2,c:3,d:4}},
+      {t:'不止伪音——化妆、穿搭、仪态，都有认真研究过', s:{a:4,b:3,c:4,d:4}}
+    ]},
+  { q:'你对"穿女装/扮女相"这件事的态度？',
+    opts:[
+      {t:'不敢想像、无法接受、太奇怪了', s:{a:0,b:0,c:0,d:0}},
+      {t:'觉得有趣但仅停留在想象层面', s:{a:1,b:0,c:2,d:1}},
+      {t:'穿过一次——然后打开了新世界的大门', s:{a:2,b:2,c:4,d:3}},
+      {t:'衣柜里有不止一件，而且会主动想穿', s:{a:4,b:4,c:4,d:4}}
+    ]},
+  { q:'被男生告白过吗？与同性朋友有多亲密？',
+    opts:[
+      {t:'没有，朋友都是正常直男社交距离', s:{a:0,b:0,c:0,d:0}},
+      {t:'朋友间偶尔会有些擦边的玩笑，但只是玩笑', s:{a:1,b:1,c:1,d:1}},
+      {t:'被男生认真告白过——我当时挺震惊的', s:{a:2,b:4,c:3,d:2}},
+      {t:'不止被告白过，我其实挺享受被他人保护的安全感', s:{a:3,b:4,c:4,d:4}}
+    ]},
+  { q:'你的社交媒体头像/主页风格？',
+    opts:[
+      {t:'风景/游戏/默认图', s:{a:0,b:0,c:0,d:0}},
+      {t:'正常自拍或动漫男头', s:{a:1,b:1,c:1,d:0}},
+      {t:'用女角色头像/可爱风主页', s:{a:3,b:2,c:3,d:2}},
+      {t:'头像二次元女生，资料性别填了女', s:{a:4,b:3,c:4,d:4}}
+    ]},
+  { q:'逛街/网购时什么最吸引你？',
+    opts:[
+      {t:'电子产品/游戏装备', s:{a:0,b:0,c:0,d:0}},
+      {t:'随便逛逛没有特定目标', s:{a:1,b:0,c:0,d:1}},
+      {t:'会注意到女装/穿搭/美妆', s:{a:3,b:1,c:2,d:2}},
+      {t:'已经在看"女装推荐""伪音教程""脱毛攻略"', s:{a:4,b:3,c:4,d:3}}
+    ]},
+  { q:'抽烟喝酒吗？',
+    opts:[
+      {t:'两者都来，社交需要', s:{a:0,b:0,c:0,d:0}},
+      {t:'偶尔喝酒，不抽烟', s:{a:1,b:0,c:0,d:1}},
+      {t:'不抽烟不喝酒', s:{a:2,b:1,c:0,d:2}},
+      {t:'不烟不酒，且觉得抽烟喝酒"不够精致"', s:{a:3,b:1,c:2,d:3}}
+    ]},
+  { q:'对自己整体性别的看法？',
+    opts:[
+      {t:'我是纯爷们，不接受反驳', s:{a:0,b:0,c:0,d:0}},
+      {t:'偶尔会想"当女生好像也不错"', s:{a:1,b:0,c:1,d:0}},
+      {t:'越来越不确定自己到底算哪边', s:{a:3,b:1,c:3,d:2}},
+      {t:'男的——但已经不重要了', s:{a:3,b:2,c:4,d:4}}
+    ]}
+];
+
+var LOADING_STEPS = ['正在采集行为数据…','正在比对样本数据库…','正在计算男娘成分…'];
+
+var SHARE_TEXT = '我在霧雨魔法店测了男娘指数，得分{score}分！你也来测测：';
+
+var lastScore = 0, lastA = 0, lastB = 0, lastC = 0, lastD = 0, foolCount = 0;
+
+function render() {
+  toggleAds(state);
+  var app = document.getElementById('app');
+  if (state === 'intro') renderIntro(app);
+  else if (state === 'quiz') renderQuestion(app);
+  else if (state === 'loading') renderLoading(app);
+  else if (state === 'result') renderFake(app);
+  else if (state === 'revealed') renderReal(app);
+}
+
+function renderIntro(app) {
+  app.innerHTML =
+    '<div class="intro">'+
+      '<div class="intro-badge">'+BADGE_TEXT+'</div>'+
+      '<h1>'+QUIZ_TITLE+'</h1>'+
+      '<p class="sub">'+QUIZ_SUBTITLE+'</p>'+
+      '<div class="stat-line" id="takeCount">已有 … 人测过！测了都说准！</div>'+
+      '<button class="btn btn-main btn-start" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">💅 开始测试 →</button>'+
+      '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+    '</div>';
+
+  fetch('api/readcount.php?egg=otokonoko_take')
+    .then(function(r){return r.json()})
+    .then(function(d){document.getElementById('takeCount').textContent='已有 '+d.count+' 人测过！测了都说准！';})
+    .catch(function(){});
+}
+
+function startQuiz() {
+  if (!confirm('⚠️ 免责声明\n\n本测试纯属娱乐，不构成任何医疗建议，\n也不代表任何性别认同倾向。\n\n仅供娱乐 仅供娱乐 仅供娱乐\n\n确定继续吗？')) return;
+
+  fetch('api/counter.php',{
+    method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'egg=otokonoko_take'
+  }).catch(function(){});
+
+  state = 'quiz'; idx = 0; answers = [];
+  render();
+}
+
+function renderQuestion(app) {
+  if (idx >= QUESTIONS.length) { state = 'loading'; render(); return; }
+  var q = QUESTIONS[idx];
+  var pct = Math.round((idx / QUESTIONS.length) * 100);
+  var labels = 'ABCDEFGH';
+
+  var html =
+    '<div class="progress-wrap">'+
+      '<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div>'+
+      '<div class="progress-text">'+(idx+1)+' / '+QUESTIONS.length+'</div>'+
+    '</div>'+
+    '<div class="q-num">第 '+(idx+1)+' 问</div>'+
+    '<div class="q-text">'+q.q+'</div>'+
+    '<div class="options">';
+
+  for (var i = 0; i < q.opts.length; i++) {
+    html +=
+      '<button class="opt-btn" onclick="answer('+i+')">'+
+        '<span class="opt-letter">'+(labels[i]||'?')+'</span>'+
+        q.opts[i].t+
+      '</button>';
+  }
+  html += '</div>';
+  if (idx > 0) html += '<div style="text-align:center;"><button class="btn-back" onclick="goBack()">← 返回上一题</button></div>';
+  app.innerHTML = html;
+}
+
+function answer(choice) {
+  answers.push(QUESTIONS[idx].opts[choice]);
+  idx++;
+  render();
+}
+
+function goBack() { if (idx > 0) { idx--; answers.pop(); render(); } }
+
+function renderLoading(app) {
+  app.innerHTML =
+    '<div class="loading-wrap">'+
+      '<div class="loading-orb"></div>'+
+      '<p class="loading-text" id="ltxt">'+LOADING_STEPS[0]+'</p>'+
+    '</div>';
+  cycleLoading(1);
+}
+
+async function cycleLoading(i) {
+  if (i >= LOADING_STEPS.length) {
+    calcResult();
+    state = 'result';
+    render();
+    return;
+  }
+  await sleep(500 + Math.random() * 400);
+  var lt = document.getElementById('ltxt');
+  if (lt) lt.textContent = LOADING_STEPS[i];
+  cycleLoading(i+1);
+}
+
+function calcResult() {
+  var a = 0, b = 0, c = 0, d = 0;
+  for (var i = 0; i < answers.length; i++) {
+    a += answers[i].s.a || 0;
+    b += answers[i].s.b || 0;
+    c += answers[i].s.c || 0;
+    d += answers[i].s.d || 0;
+  }
+  var maxEach = 16 * 4;
+  lastA = Math.round(a / maxEach * 100);
+  lastB = Math.round(b / maxEach * 100);
+  lastC = Math.round(c / maxEach * 100);
+  lastD = Math.round(d / maxEach * 100);
+  lastScore = Math.round((lastA + lastB + lastC + lastD) / 4);
+}
+
+function renderFake(app) {
+  fetch('api/readcount.php?egg=otokonoko_fooled')
+    .then(function(res){return res.json()})
+    .then(function(d){
+      foolCount = d.count;
+      var el = document.getElementById('foolCountEl');
+      if (el) el.textContent = '已有 '+foolCount+' 人上当受骗';
+    }).catch(function(){});
+
+  app.innerHTML =
+    '<div class="result">'+
+      '<div class="fake-score">'+
+        '<div class="big-num">100</div>'+
+        '<p class="alert-text">💅 经鉴定，你是纯血男娘！</p>'+
+        '<p class="alert-sub">红色警报！您的男娘指数已突破人类上限。<br>检测到不可逆的精致化倾向——先别慌，下面有你的真实得分。</p>'+
+        '<p class="fool-count" id="foolCountEl">已有 … 人上当受骗</p>'+
+        '<button class="btn btn-reveal" onclick="reveal()">🔍 别急 查看你的真实男娘指数</button>'+
+      '</div>'+
+      '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+      '<p class="notice">霧雨魔法店 · 男娘成分鉴定中心 · 数据仅供参考</p>'+
+    '</div>';
+}
+
+function reveal() {
+  fetch('api/counter.php',{
+    method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'egg=otokonoko_fooled'
+  }).then(function(r){return r.json()}).then(function(d){
+    foolCount = d.count;
+    state = 'revealed';
+    render();
+  }).catch(function(){
+    state = 'revealed';
+    render();
+  });
+}
+
+function getComment(score) {
+  if (score >= 75) return '💅 纯血男娘——你是天选之人。从衣柜到气质，从审美到仪态，你已在next level。别掩饰了，坦荡接受自己的精致——兄弟你好香（确定的）。';
+  if (score >= 55) return '👀 懂的都懂——成分复杂但藏得很好。你知道自己不太一样，也偶尔试探性尝试。属于"一旦被狙必定中枪"型选手。';
+  if (score >= 35) return '🤔 说不清道不明——你有些倾向自己都没意识到。偶尔被夸可爱会暗爽，逛街会多看女装两眼。不算男娘，但也不是纯直男审美。';
+  if (score >= 15) return '🙂 有点精致无伤大雅——你比大部分直男爱干净爱打扮一点，仅此而已。有人夸你清秀也纯属基因好，和男娘不沾边。';
+  return '🔨 铁血真男人——纯度突破次元壁。你体内没有任何可疑成分，男娘指数低到检测仪报警。请继续保持。';
+}
+
+function renderReal(app) {
+  app.innerHTML =
+    '<div class="result">'+
+      '<div class="result-label">霧雨魔法店 · 男娘成分鉴定中心</div>'+
+      '<div class="score-hero">'+
+        '<div class="hero-num">'+lastScore+'</div>'+
+        '<div class="hero-label">男娘指数（满分 100）</div>'+
+      '</div>'+
+
+      '<div class="dim-row">'+
+        '<div class="dim-label"><span>💅 外观精致度</span><b style="color:#ec4899;">'+lastA+'</b></div>'+
+        '<div class="dim-bar"><div class="dim-fill" style="width:'+lastA+'%;background:#ec4899;"></div></div>'+
+      '</div>'+
+      '<div class="dim-row">'+
+        '<div class="dim-label"><span>👂 社会反馈</span><b style="color:#f472b6;">'+lastB+'</b></div>'+
+        '<div class="dim-bar"><div class="dim-fill" style="width:'+lastB+'%;background:#f472b6;"></div></div>'+
+      '</div>'+
+      '<div class="dim-row">'+
+        '<div class="dim-label"><span>💭 内心倾向</span><b style="color:#8b5cf6;">'+lastC+'</b></div>'+
+        '<div class="dim-bar"><div class="dim-fill" style="width:'+lastC+'%;background:#8b5cf6;"></div></div>'+
+      '</div>'+
+      '<div class="dim-row">'+
+        '<div class="dim-label"><span>🎭 行为习惯</span><b style="color:#06b6d4;">'+lastD+'</b></div>'+
+        '<div class="dim-bar"><div class="dim-fill" style="width:'+lastD+'%;background:#06b6d4;"></div></div>'+
+      '</div>'+
+
+      '<div class="result-desc">'+getComment(lastScore)+'</div>'+
+      '<p class="fool-count" style="text-align:center;margin-bottom:12px;">已有 '+foolCount+' 人上当受骗</p>'+
+
+      '<button class="btn btn-main" onclick="shareIt()">📋 分享结果</button>'+
+      '<button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button>'+
+      '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+      '<p class="notice">霧雨魔法店 · 纯属娱乐，不构成任何性别认同建议 · 仅供一乐</p>'+
+      '<div class="qq-section">'+
+        '<img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'">'+
+        '<p><strong style="color:var(--gold);">加群一起玩</strong><br>群号 702973928 · 更多抽象好活</p>'+
+      '</div>'+
+    '</div>';
+}
+
+function shareIt() {
+  var text = '【测测你的男娘指数】我的男娘指数是 '+lastScore+' 分！你也来测测：'+window.location.href;
+  copyToClipboard(text, '已复制！发给朋友试试 😈');
+}
+
+function restart() { state = 'intro'; idx = 0; answers = []; render(); }
+
+render();
+</script>
+
+</body>
+</html>

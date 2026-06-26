@@ -33,6 +33,7 @@
         label: '趣味鉴定',
         links: [
           { href: 'waifu-test.html',        emoji: '💕', text: '二次元老婆' },
+          { href: 'quiz-otokonoko.html',     emoji: '💅', text: '男娘指数' },
           { href: 'quiz-sexual.html',       emoji: '⚠️', text: 'X压抑程度' },
           { href: 'gaokao.html',            emoji: '🎓', text: '高考出分模拟器' },
           { href: 'collect.html',           emoji: '📝', text: '建议新彩蛋' },
