@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OTTI人格测试 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
+<link rel="stylesheet" href="css/common.css">
+<style>
+body { background-image: radial-gradient(ellipse at 30% 0%, rgba(14,165,233,.05) 0%, transparent 50%), radial-gradient(ellipse at 70% 100%, rgba(99,102,241,.03) 0%, transparent 50%); }
+.container { max-width: 580px; }
+.container::before { background: linear-gradient(90deg, #0ea5e9, #6366f1, #0ea5e9); }
+
+.intro-badge { color: #0ea5e9; border-color: rgba(14,165,233,.35); margin-bottom: 12px; }
+.intro h1 { font-size: 24px; }
+.intro .sub { margin-bottom: 14px; }
+.stat-line { font-size: 12px; color: var(--gold); text-align: center; margin-bottom: 14px; }
+
+.version-cards { display: flex; gap: 12px; margin-bottom: 18px; }
+.version-card { flex: 1; background: rgba(255,255,255,.02); border: 1px solid var(--border); border-radius: 14px; padding: 16px; cursor: pointer; text-align: center; transition: all .2s; }
+.version-card:hover { border-color: var(--gold-dim); }
+.version-card.sel { border-color: var(--gold); background: rgba(240,192,96,.06); }
+.version-card .v-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.version-card .v-sub { font-size: 11px; color: var(--muted); }
+
+.btn-start { background: linear-gradient(135deg, #0ea5e9, #6366f1); color: #fff; margin-top: 4px; }
+.btn-start:hover { background: linear-gradient(135deg, #38bdf8, #818cf8); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(14,165,233,.3); }
+
+.progress-fill { background: linear-gradient(90deg, #0ea5e9, #6366f1); }
+.q-num { color: #0ea5e9; }
+.q-statement { font-size: 17px; font-weight: 600; margin-bottom: 20px; line-height: 1.55; }
+
+.likert-row { display: flex; gap: 8px; margin-bottom: 20px; }
+.likert-btn { flex: 1; padding: 12px 6px; border: 1px solid var(--border); border-radius: 12px; background: rgba(255,255,255,.02); color: var(--muted); font-size: 11px; cursor: pointer; text-align: center; font-family: inherit; transition: all .15s; line-height: 1.35; }
+.likert-btn:hover { border-color: var(--gold-dim); }
+.likert-btn .val-tag { display: block; font-size: 9px; opacity: .5; margin-top: 2px; }
+
+.pg-label { font-size: 11px; color: var(--muted); text-align: center; margin-bottom: 8px; letter-spacing: 1px; }
+
+.result-dim { margin-bottom: 10px; }
+.result-dim .rd-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+.result-dim .rd-bar-wrap { display: flex; gap: 4px; align-items: center; }
+.result-dim .rd-bar { flex: 1; height: 8px; border-radius: 4px; background: var(--border); position: relative; overflow: hidden; }
+.result-dim .rd-bar-inner { position: absolute; height: 100%; background: #0ea5e9; border-radius: 4px; }
+.result-dim .rd-val { font-size: 10px; width: 28px; text-align: center; color: var(--muted); }
+.result-dim .rd-val.bold { color: var(--gold); font-weight: 700; }
+.result-dim .rd-tag { font-size: 9px; color: var(--muted); text-align: center; margin-top: 2px; }
+
+.detail-panel { display: none; margin-top: 16px; padding: 16px; border: 1px solid var(--border); border-radius: 14px; background: rgba(255,255,255,.015); }
+.detail-panel.show { display: block; animation: fadeUp .35s ease; }
+@keyframes fadeUp { from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)} }
+.detail-item { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,.04); }
+.detail-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.detail-item .d-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.detail-item .d-text { font-size: 12px; color: var(--muted); line-height: 1.8; }
+.btn-detail { background: transparent; border: 1px solid var(--border); color: var(--muted); text-align: center; width: 100%; margin-top: 10px; }
+.btn-detail:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+/* ═══ Reveal 屏 ═══ */
+.reveal-screen { position: relative; padding: 60px 20px; text-align: center; overflow: hidden; min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.reveal-screen .scanline { position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); animation: scanDown 1s infinite; }
+@keyframes scanDown { 0%{top:0} 100%{top:100%} }
+.reveal-screen .reveal-title { font-size: 13px; color: var(--gold); letter-spacing: 3px; margin-bottom: 20px; }
+.reveal-screen .reveal-code { font-size: 64px; font-weight: 900; color: var(--text); animation: glowPulse 1.2s infinite; letter-spacing: 8px; }
+@keyframes glowPulse { 0%,100%{text-shadow:0 0 20px rgba(240,192,96,.3)} 50%{text-shadow:0 0 40px rgba(240,192,96,.8),0 0 80px rgba(240,192,96,.3)} }
+.reveal-screen .reveal-hint { font-size: 11px; color: var(--muted); margin-top: 16px; animation: blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:.3} 50%{opacity:1} }
+.reveal-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.reveal-particle { position: absolute; color: var(--gold); font-size: 14px; animation: rise linear infinite; opacity: 0; }
+@keyframes rise { 0%{opacity:0;transform:translateY(0) rotate(0deg)} 10%{opacity:.6} 90%{opacity:.2} 100%{opacity:0;transform:translateY(-300px) rotate(180deg)} }
+
+/* ═══ 滑杆维度卡片 ═══ */
+.dim-card { padding: 16px; margin-bottom: 10px; background: rgba(255,255,255,.018); border: 1px solid rgba(255,255,255,.04); border-radius: 14px; opacity: 0; transform: translateY(14px); transition: opacity .4s, transform .4s; }
+.dim-card.show { opacity: 1; transform: translateY(0); }
+.dim-card .dc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 13px; font-weight: 700; }
+.dim-card .dc-letter { font-size: 18px; }
+.dim-card .dc-slider { position: relative; height: 24px; margin-bottom: 6px; }
+.dim-card .dc-track { position: absolute; top: 8px; left: 0; right: 0; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.dim-card .dc-fill { height: 100%; border-radius: 4px; transition: width 1.4s cubic-bezier(.34,1.56,.64,1); }
+.dim-card .dc-thumb { position: absolute; top: 0; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 0 18px rgba(255,255,255,.5); transform: translateX(-50%); transition: left 1.4s cubic-bezier(.34,1.56,.64,1); z-index: 2; }
+.dim-card .dc-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+.dim-card .dc-pct { text-align: center; font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* ═══ 人格卡光泽 ═══ */
+.persona-card { animation: resultPop .7s cubic-bezier(.2,1.3,.3,1); }
+@keyframes resultPop { 0%{opacity:0;transform:translateY(40px) scale(.85)} 60%{opacity:1;transform:translateY(-4px) scale(1.03)} 100%{opacity:1;transform:translateY(0) scale(1)} }
+.p-name-glow { background: linear-gradient(90deg, var(--text), #fff, var(--text)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 24px; font-weight: 900; margin-bottom: 2px; }
+.p-avatar.ring::before { content:''; position:absolute; left:-8px; top:-8px; right:-8px; bottom:-8px; border-radius:50%; background:radial-gradient(rgba(240,192,96,.35),transparent 70%); animation:halo 3s infinite; z-index:-1; }
+@keyframes halo { 0%{transform:scale(.9);opacity:.3} 50%{transform:scale(1.15);opacity:.7} 100%{transform:scale(.9);opacity:.3} }
+
+/* ═══ 总结区 ═══ */
+.ai-summary { margin-top: 14px; padding: 14px; border: 1px solid rgba(240,192,96,.12); border-radius: 12px; font-size: 12px; color: var(--muted); line-height: 1.8; text-align: center; background: rgba(240,192,96,.02); }
+.ai-summary::before { content:'✦ '; color: var(--gold); }
+
+@keyframes pulseGlow { 0%,100%{box-shadow:0 0 8px rgba(255,255,255,.1)} 50%{box-shadow:0 0 24px rgba(255,255,255,.25)} }
+
+.mini-tags { display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; margin-bottom: 18px; }
+.mini-tag { font-size: 9px; padding: 3px 8px; border-radius: 10px; border: 1px solid var(--border); background: rgba(255,255,255,.02); color: var(--muted); cursor: default; transition: transform .15s; white-space: nowrap; }
+.mini-tag:hover { transform: translateY(-2px); border-color: var(--gold); color: var(--gold); }
+
+.conf-bar-wrap { margin-bottom: 14px; text-align: center; }
+.conf-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+.conf-fill { height: 100%; border-radius: 3px; transition: width .5s; }
+.conf-label { font-size: 10px; color: var(--muted); }
+
+.persona-card { text-align: center; padding: 18px; border: 1px solid var(--border); border-radius: 16px; background: rgba(255,255,255,.015); margin-bottom: 14px; }
+.persona-card .p-avatar { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 10px; overflow: hidden; border: 2px solid var(--border); }
+.persona-card .p-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.persona-card .p-avatar .p-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 36px; }
+.persona-card .p-name { font-size: 22px; font-weight: 800; margin-bottom: 2px; }
+.persona-card .p-code { font-size: 16px; letter-spacing: 3px; margin-bottom: 8px; }
+.persona-card .p-tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
+.persona-card .p-tag { font-size: 10px; padding: 3px 10px; border-radius: 14px; background: rgba(255,255,255,.03); color: var(--muted); border: 1px solid var(--border); }
+.persona-card .p-desc { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+.sub-persona { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 14px; padding: 10px; border: 1px dashed var(--border); border-radius: 12px; }
+.sub-persona b { color: var(--gold); }
+
+.pct-line { font-size: 11px; color: var(--muted); text-align: center; margin-bottom: 12px; }
+
+.poster-wrap { text-align: center; }
+.poster-img { width: 100%; max-width: 300px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 8px 32px rgba(0,0,0,.4); margin: 0 auto 14px; display: none; }
+.poster-hint { font-size: 11px; color: var(--muted); margin-bottom: 16px; line-height: 1.7; }
+
+@media (max-width: 420px) {
+  .likert-row { flex-wrap: wrap; gap: 6px; }
+  .likert-btn { min-width: 55px; padding: 10px 4px; font-size: 10px; }
+  .version-cards { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container" id="app"></div>
+<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/canvas-utils.js"></script>
+<script>
+var state = 'intro';
+var idx = 0;
+var answers = [];
+var version = null;
+var QUESTIONS = [];
+
+var ALL_Q = [
+  // ══ R/W: 网上身份 = 10 ══
+  {t:'我在群里说话的方式和私下跟朋友面对面时很不一样', d:'R'},
+  {t:'我会选取和ID风格搭配的头像，让整个账号气质统一', d:'R'},
+  {t:'陌生人加我，我会先判断对方来自哪个圈子再决定用什么态度回应', d:'R'},
+  {t:'发朋友圈/动态前我会反复编辑措辞和配图', d:'R'},
+  {t:'打游戏/在线竞技时我的言行和私下看比赛的自己判若两人', d:'R'},
+  {t:'被问到身份时，我第一时间想到的是网上身份而非线下职业', d:'R'},
+  {t:'注销所有社交账号，我会觉得一部分自己消失了', d:'R'},
+  {t:'我在不同平台（QQ/B站/微博/贴吧）会调整说话风格，但底层人设是统一的', d:'R'},
+  {t:'现实中朋友发现了我的网上身份，我会感到不适', d:'R'},
+  {t:'我会为不同受众切换表达方式，工作群和兴趣群完全是两套语言体系', d:'R'},
+  // ══ H/G: 内容来源 = 10 ══
+  {t:'群聊冷场时，我是那个主动抛出话题或段子来激活气氛的人', d:'H'},
+  {t:'看到一个好玩的梗，我会想"如果换种画风/换群人，怎么玩会更有意思"', d:'H'},
+  {t:'我接近搞笑这件事是有意识的——我知道什么时候该收、什么时候该放', d:'H'},
+  {t:'别人问我"最近在搞什么"，我能说出一两个正在孵化或者想尝试的创意', d:'H'},
+  {t:'有人私聊我"这事你来看一眼""到你发挥了""救一下"——因为我确实能接住', d:'H'},
+  {t:'别人说过"你自己不觉得好笑的瞬间反而是最好笑的"——我无意的言行被朋友当成了梗', d:'G'},
+  {t:'我随口说的话或做的动作，被别人加上各种配字/解读，变成了我自己都没想到的意思', d:'G'},
+  {t:'我的聊天记录或者日常行为被截出来发到了别的群，我自己事后才知道', d:'G'},
+  {t:'关于我的梗或者段子，大多数是别人替我讲出去的，不是我主动发的', d:'G'},
+  {t:'我如果在某个小圈子里被记住，往往是因为某一个被反复提起的经典时刻，而不是我持续的输出', d:'G'},
+  // ══ T/B: 防御力 = 10 ══
+  {t:'有人在我评论区公开怼我，还涨了不少赞——我看了就划走了', d:'T'},
+  {t:'评论区有人阴阳怪气但不点名，我知道他在说我，但懒得理会', d:'T'},
+  {t:'我几年前发的帖子被人挖出来挂，我没什么感觉', d:'T'},
+  {t:'被一个群禁言或者踢出之后，我不会太当回事', d:'T'},
+  {t:'朋友说我"你急了"——我确实没急，也挺无所谓的', d:'T'},
+  {t:'有人把我某句话断章取义挂出去，我不解释也不去找原帖对线', d:'T'},
+  {t:'我的某句话被做成了表情包在好几个群里传', d:'T'},
+  {t:'我在网上说的某句话在别人那里造成了误会——但我不太想多打字去解释', d:'T'},
+  {t:'有人说我双标，翻我几年前的发言来打脸今天的我', d:'T'},
+  {t:'我发的内容没什么反响，但我也不会因此怀疑自己', d:'T'},
+  // ══ Q/P: 表达欲 = 10 ══
+  {t:'群里正在激烈争论，我更倾向于看完再决定要不要说话', d:'Q'},
+  {t:'看到自己曾经的观点被人截出去传播了，我不会上号认领', d:'Q'},
+  {t:'有人@我发表意见但我在忙——放着不管也不会难受', d:'Q'},
+  {t:'一个完全陌生的人突然发来消息，我大概率已读不回', d:'Q'},
+  {t:'我的朋友圈/动态可能一周都不发一条，甚至更久', d:'Q'},
+  {t:'有人说"你变了"，我不太会去解释或回应这种评价', d:'Q'},
+  {t:'一个话题我其实很有发言权，但看到一堆人已经聊起来了就懒得插嘴', d:'Q'},
+  {t:'语音群聊/视频里一堆人同时说话，我干脆不开口', d:'Q'},
+  {t:'别人问我一个问题我回答了，他追问更多细节时我不想再回了', d:'Q'},
+  {t:'我在白天的表达欲望比深夜低很多，晚上更容易想说话', d:'Q'}
+];
+
+var PERSONAS = {
+  'RHTQ': {n:'卢本伟',c:'SBYH',color:'#3b82f6',img:'images/lu.jpg',tags:['角色','有活','铁','潜水'],desc:'你在网上有清晰的角色感，自己能造梗，脸比城墙厚，话不多但每句都是暴击。就像被封之后依然活在鬼畜里的伞兵一号——沉默，但无处不在。'},
+  'RHBQ': {n:'山泥若',c:'TYTX',color:'#eab308',img:'images/snr.jpg',tags:['角色','有活','玻璃','潜水'],desc:'你有强烈的网上人格，内容原创力强，但内心其实很脆。被封之后就沉默了，有活，但是不想整活了。'},
+  'RHTP': {n:'永雏塔菲',c:'TANG',color:'#ec4899',img:'images/taffy.jpg',tags:['角色','有活','铁','开麦'],desc:'皮套就是你的第二人生，原创内容信手拈来，心态稳得住，还特别爱说话——关注塔菲谢谢喵。'},
+  'RHBP': {n:'炫神',c:'XDOG',color:'#8b5cf6',img:'images/xuan.jpg',tags:['角色','有活','玻璃','开麦'],desc:'你有明确的网上人设，自己就是节目本身，但一碰就炸，炸了还要继续输出。——炫，就是这个味儿。'},
+  'RGTQ': {n:'田所浩二',c:'1145',color:'#9333ea',img:'images/tiansuohaoer.jpg',tags:['角色','跟风','铁','潜水'],desc:'你是被动成为互联网符号的——自己不说话，但全网的二创都因你而起。铁打的身体，沉默的传奇。114514——只是存在于那里，就是一座雕像。'},
+  'RGTP': {n:'金将军',c:'🖐️😭🖐️',color:'#475569',img:'images/kim.jpg',tags:['角色','跟风','铁','开麦'],desc:'你在网上扮演着最极致的角色，内容被二创出无数版本，心态坚不可摧，每句话都自带BGM。🖐️😭🖐️——将军不需要解释。'},
+  'RGBQ': {n:'伏黑惠',c:'LBYT',color:'#06b6d4',img:'images/fhh.jpg',tags:['角色','跟风','玻璃','潜水'],desc:'你在圈内有独特的角色地位，但传播靠的是别人的二创。内心敏感，话不多，易碎。就像路边一条——存在感靠的是别人记得你。'},
+  'RGBP': {n:'Otto',c:'OTTO',color:'#ef4444',img:'images/otto.jpg',tags:['角色','跟风','玻璃','开麦'],desc:'你的网上人格已经和真实融为一体，梗靠二创发酵但根在你身上，一碰就碎但碎了继续喷。♿电棍——嘴没停过，心没强过。'},
+  'WHTQ': {n:'虎哥',c:'WTDN',color:'#b45309',img:'images/hu.jpg',tags:['本我','有活','铁','潜水'],desc:'网上网下你一个样，整活是本能不需要演，铁打的东北汉子，平时话少但一出手就是暴击。"我徒弟呢？"——东百往事的故事至今还在上演。'},
+  'WHBQ': {n:'抽象带蓝子',c:'CBHZ',color:'#84cc16',img:'images/chene.jpg',tags:['本我','有活','玻璃','潜水'],desc:'你不装了，活是自己的，但心脆了点。话不多，以前的锋芒都消失了，也就在现在偶尔发表一下暴论，说完就潜水。吃饱喝足——去RB!'},
+  'WHTP': {n:'峰哥',c:'ZSHSA',color:'#16a34a',img:'images/fengge.jpg',tags:['本我','有活','铁','开麦'],desc:'线上线下一个样，对一切能输出自己的独到见解，心态稳得像山。"这是好事啊！"——峰哥式豁达，你也有。'},
+  'WHBP': {n:'东雪莲',c:'MSHJ',color:'#dc2626',img:'images/dxl.jpg',tags:['本我','有活','玻璃','开麦'],desc:'虽说披皮套，但和没皮套是一样的，活是自己整的，一戳就炸，炸了还要继续开麦怼回去。"骂谁罕见！"——莲式应激反应，真性情到骨子里。'},
+  'WGTQ': {n:'丁真',c:'RK5D',color:'#14b8a6',img:'images/ding.jpg',tags:['本我','跟风','铁','潜水'],desc:'你纯真的本我吸引了一整个互联网的注意，内容全靠别人二创。也不见你出来争辩几句，话极少。RK5D——一支瑞克五代，就够了。'},
+  'WGTP': {n:'张雪峰',c:'XBQLZ',color:'#22c55e',img:'images/xf.jpg',tags:['本我','跟风','铁','开麦'],desc:'真实的你不需要角色，金句被全网传播你也不拦着，“你跑不过我你信不信！”，最近不见你出来说话，想必心态很稳健吧。XBQLZ——跑步、雪碧、巧乐兹，雪人三项，足矣。'},
+  'WGBQ': {n:'耄耋',c:'HA--',color:'#52525b',img:'images/mao.jpg',tags:['本我','跟风','玻璃','潜水'],desc:'你就是一只猫。依靠玩二创活出新生，几乎不主动表达，但耄耋也是有情绪的。"哈——！！"——够了，不需要再说别的。'},
+  'WGBP': {n:'孙笑川',c:'RBTH',color:'#f59e0b',img:'images/sun.jpg',tags:['本我','跟风','玻璃','开麦'],desc:'天皇早已不需要人设——他就是他。梗被二创到天边，他不拦着也不主动造。你骂他他会碎，碎了就回嘴——然后继续在双流区活下去。日本天皇，但也是普通男人。'}
+};
+
+var KEYS = Object.keys(PERSONAS);
+var lastType = null, lastScores = null, confPct = 0, totalQ = 0, lastPercent = 0, lastCount = 0;
+var SITE_URL = 'www.azureflame.cloud';
+var QR_IMG = 'images/qr-code.png';
+var QQ_IMG = 'images/qq-group.png';
+var QQ_GROUP = '702973928';
+var POSTER_W = 600, POSTER_H = 960;
+
+function render() {
+  toggleAds(state);
+  var app = document.getElementById('app');
+  if (state==='intro') renderIntro(app);
+  else if (state==='quiz') renderQuestion(app);
+  else if (state==='loading') renderLoading(app);
+  else if (state==='reveal') renderReveal(app);
+  else if (state==='result') renderResult(app);
+  else if (state==='troll') renderTroll(app);
+  else if (state==='lowconf') renderLowConf(app);
+  else if (state==='poster') renderPoster(app);
+}
+
+function renderIntro(app) {
+  app.innerHTML =
+    '<div class="intro">'+
+      '<div class="intro-badge">🎭 OTTI人格鉴定中心</div>'+
+      '<h1>测测你的互联网人格</h1>'+
+      '<p class="sub">4 大维度 · 16 种抽象人格<br>MBTI风格 · 互联网语境重新设计</p>'+
+      '<div class="stat-line" id="takeCount">已有 … 人测过！</div>'+
+      '<div class="mini-tags">'+KEYS.map(function(k){var p=PERSONAS[k];return '<span class="mini-tag" style="border-color:'+p.color+'33">'+p.c+'</span>';}).join('')+'</div>'+
+      '<p class="pg-label" style="margin-top:16px;">选择测试版本</p>'+
+      '<div class="version-cards">'+
+        '<div class="version-card" id="verLite" onclick="selVer(\'lite\')"><div class="v-title">⚡ 轻量版</div><div class="v-sub">24 题 · 约 2 分钟</div></div>'+
+        '<div class="version-card" id="verFull" onclick="selVer(\'full\')"><div class="v-title">🔬 完整版</div><div class="v-sub">40 题 · 约 5 分钟</div></div>'+
+      '</div>'+
+      '<button class="btn btn-main btn-start" id="btnStart" style="max-width:260px;margin:0 auto;opacity:.4;pointer-events:none;" onclick="startQuiz()">选择版本后开始测试 →</button>'+
+      '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+    '</div>';
+  fetch('api/readcount.php?egg=otti_take').then(function(r){return r.json()}).then(function(d){document.getElementById('takeCount').textContent='已有 '+d.count+' 人测过！';}).catch(function(){});
+}
+
+function selVer(v) {
+  version = v;
+  document.getElementById('verLite').classList.toggle('sel', v==='lite');
+  document.getElementById('verFull').classList.toggle('sel', v==='full');
+  var btn = document.getElementById('btnStart');
+  btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
+  btn.textContent = v==='lite' ? '⚡ 开始测试（24 题）→' : '🔬 开始测试（40 题）→';
+}
+
+function startQuiz() {
+  if (!version) return;
+  if (version === 'lite') {
+    QUESTIONS = [];
+    for (var di = 0; di < 4; di++) {
+      QUESTIONS = QUESTIONS.concat(ALL_Q.slice(di * 10, di * 10 + 6));
+    }
+  } else {
+    QUESTIONS = ALL_Q.slice(0);
+  }
+  totalQ = QUESTIONS.length;
+  state = 'quiz'; idx = 0; answers = [];
+  fetch('api/counter.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'egg=otti_take'}).catch(function(){});
+  render();
+}
+
+function renderQuestion(app) {
+  if (idx >= QUESTIONS.length) { state = 'loading'; render(); return; }
+  var q = QUESTIONS[idx];
+  var pct = Math.round((idx / QUESTIONS.length) * 100);
+  var dimMap = {R:'网上身份',H:'内容来源',T:'防御力',Q:'表达欲'};
+  var html =
+    '<div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div><div class="progress-text">'+(idx+1)+' / '+QUESTIONS.length+' · '+dimMap[q.d]+'</div></div>'+
+    '<div class="q-num">第 '+(idx+1)+' 问</div><div class="q-statement">'+q.t+'</div><div class="likert-row">';
+  var opts = [{v:2,label:'完全符合',tag:'+2'},{v:1,label:'有些符合',tag:'+1'},{v:0,label:'不确定',tag:'0'},{v:-1,label:'基本不符合',tag:'-1'},{v:-2,label:'完全不符合',tag:'-2'}];
+  for (var i = 0; i < opts.length; i++) html += '<button class="likert-btn" onclick="answer('+opts[i].v+')">'+opts[i].label+'<span class="val-tag">['+opts[i].tag+']</span></button>';
+  html += '</div>';
+  if (idx > 0) html += '<div style="text-align:center;"><button class="btn-back" onclick="goBack()">← 返回上一题</button></div>';
+  app.innerHTML = html;
+}
+
+function answer(val) { answers.push({d: QUESTIONS[idx].d, v: val}); idx++; render(); }
+function goBack() { if (idx > 0) { idx--; answers.pop(); render(); } }
+
+function renderLoading(app) {
+  app.innerHTML = '<div class="loading-wrap"><div class="loading-orb"></div><p class="loading-text" id="ltxt">正在分析行为模式…</p></div>';
+  cycleLoading(1);
+}
+
+async function cycleLoading(i) {
+  var steps = ['正在分析行为模式…','正在比对人格数据库…','正在匹配你的OTTI人格…'];
+  if (i >= steps.length) { calcResult(); if (state !== 'troll') state = (confPct < 20 ? 'lowconf' : 'reveal'); render(); return; }
+  await sleep(500 + Math.random() * 400);
+  var lt = document.getElementById('ltxt'); if (lt) lt.textContent = steps[i];
+  cycleLoading(i+1);
+}
+
+function calcResult() {
+  var scores = {R:0,W:0,H:0,G:0,T:0,B:0,Q:0,P:0};
+  for (var i = 0; i < answers.length; i++) {
+    var a = answers[i];
+    if (a.v > 0) scores[a.d] += Math.abs(a.v);
+    else if (a.v < 0) {       var opp = {R:'W',W:'R', H:'G',G:'H', T:'B',B:'T', Q:'P',P:'Q'}[a.d]; scores[opp] += Math.abs(a.v); }
+  }
+  lastScores = scores;
+  // 整活检测：全选同一个值
+  var allSame = true, firstV = answers[0].v;
+  for (var i = 1; i < answers.length; i++) if (answers[i].v !== firstV) { allSame = false; break; }
+  if (allSame) { state = 'troll'; firstV_var = firstV; return; }
+  // 置信度
+  var nonZero = 0; for (var i = 0; i < answers.length; i++) if (answers[i].v !== 0) nonZero++;
+  confPct = Math.round(nonZero / answers.length * 100);
+  // 每维决定（平局随机）
+  function pickDim(a,b) { var sa = scores[a]||0, sb = scores[b]||0; if (sa>sb) return a; if (sb>sa) return b; return Math.random()<0.5 ? a : b; }
+  var t1 = pickDim('R','W'), t2 = pickDim('H','G'), t3 = pickDim('T','B'), t4 = pickDim('Q','P');
+  lastType = t1+t2+t3+t4;
+  // 多平局 → 候选随机
+  var undecided = 0; if (scores.R===scores.W) undecided++; if (scores.H===scores.G) undecided++; if (scores.T===scores.B) undecided++; if (scores.Q===scores.P) undecided++;
+  if (undecided >= 2) {
+    var candidates = [];
+    for (var i = 0; i < KEYS.length; i++) {
+      var k = KEYS[i], match = true;
+      if (scores.R!==scores.W && k[0]!==t1) match = false;
+      if (scores.H!==scores.G && k[1]!==t2) match = false;
+      if (scores.T!==scores.B && k[2]!==t3) match = false;
+      if (scores.Q!==scores.P && k[3]!==t4) match = false;
+      if (match) candidates.push(k);
+    }
+    if (candidates.length > 0) lastType = candidates[Math.floor(Math.random() * candidates.length)];
+  }
+}
+
+var firstV_var = 0;
+function renderTroll(app) {
+  var msgs = [];
+  if (firstV_var === 2) msgs = ['经鉴定，你是互联网圣体——每道题都完全符合。你确定读了题吗？还是你的存在本身就是一切叙述的总和？'];
+  else if (firstV_var === 1) msgs = ['你在打太极——每一步都踩在"有些"上。不好说是谨慎，还是摸鱼。但无论如何，人格测试不需要这么折中。'];
+  else if (firstV_var === 0) msgs = ['全选"不确定"——你在刻意回避吗？连人格测试都不想做决定。数据不足，无法分类。要不重新来一次？'];
+  else if (firstV_var === -1) msgs = ['全选"基本不符合"——你是一个消极抵抗型存在。这本身已经是一个很强的人格特征了。'];
+  else msgs = ['反向拉满——你是一个极端反人格存在。这比任何类型都稀有。'];
+  app.innerHTML = '<div class="result"><div class="result-label">⚠️ OTTI人格鉴定中心</div><div class="persona-card"><div class="p-avatar"><div class="p-placeholder">🤨</div></div><div class="p-desc">'+msgs[0]+'</div></div><button class="btn btn-ghost" onclick="restart()">🔄 重新测试</button><a href="index.html" class="home-link">← 返回魔法店</a></div>';
+}
+
+function renderLowConf(app) {
+  app.innerHTML = '<div class="result"><div class="result-label">⚠️ 数据不足</div><div class="persona-card"><div class="p-avatar"><div class="p-placeholder">📊</div></div><div class="p-desc">你的有效答案太少（置信度 '+confPct+'%），无法得出有意义的结果。建议认真再测一次。</div></div><button class="btn btn-ghost" onclick="restart()">🔄 重新测试</button><a href="index.html" class="home-link">← 返回魔法店</a></div>';
+}
+
+function countUp(el, end, duration) {
+  var cur = 0, step = Math.max(1, Math.round(end / (duration/16)));
+  var timer = setInterval(function() {
+    cur = Math.min(cur + step, end);
+    if (el) el.textContent = cur + '%';
+    if (cur >= end) clearInterval(timer);
+  }, 16);
+}
+
+function renderReveal(app) {
+  var p = PERSONAS[lastType] || PERSONAS['WGBP'];
+  var particles = '';
+  for (var pi = 0; pi < 18; pi++) {
+    particles += '<span class="reveal-particle" style="left:'+(Math.random()*90+5)+'%;top:'+(Math.random()*80+10)+'%;animation-delay:'+Math.random()*3+'s;animation-duration:'+(2.5+Math.random()*3)+'s;font-size:'+(10+Math.random()*12)+'px;">✦</span>';
+  }
+  app.innerHTML =
+    '<div class="reveal-screen">'+
+      '<div class="scanline"></div>'+
+      '<div class="reveal-particles">'+particles+'</div>'+
+      '<div class="reveal-title">⏳ OTTI 人格鉴定完成</div>'+
+      '<div class="reveal-code" style="color:'+p.color+'">'+p.c+'</div>'+
+      '<div class="reveal-hint" style="color:'+p.color+'">人格数据解码中…</div>'+
+    '</div>';
+
+  setTimeout(function() {
+    state = 'result';
+    render();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }, 1400);
+}
+
+function renderResult(app) {
+  var p = PERSONAS[lastType] || PERSONAS['WGBP'];
+  var scores = lastScores;
+
+  // 置信度条
+  var confColor = confPct >= 60 ? '#6fcf97' : '#f0c060';
+  var confHTML = '<div class="conf-bar-wrap"><div class="conf-bar"><div class="conf-fill" style="width:'+confPct+'%;background:'+confColor+';"></div></div><div class="conf-label">置信度 '+confPct+'% '+(confPct>=60?'':'(仅供参考)')+'</div></div>';
+
+  // 维度滑杆卡片
+  var dimCards = '';
+  var dimCfg = [
+    {a:'R',b:'W',ic:'🎭',la:'角色',lb:'本我',title:'网上身份',ca:'#0ea5e9',cb:'#f59e0b'},
+    {a:'H',b:'G',ic:'🎪',la:'有活',lb:'跟风',title:'内容来源',ca:'#8b5cf6',cb:'#ec4899'},
+    {a:'T',b:'B',ic:'🗿',la:'铁',lb:'玻璃',title:'防御力',ca:'#10b981',cb:'#ef4444'},
+    {a:'Q',b:'P',ic:'👻',la:'潜水',lb:'开麦',title:'表达欲',ca:'#6366f1',cb:'#f97316'}
+  ];
+  var comments = {R:'你更习惯在网上经营人格',W:'你线上线下基本保持一致',H:'你倾向于主动创造内容',G:'你的传播力大于原创冲动',T:'你的心理防线相当稳固',B:'外界评价对你影响较大',Q:'你更享受安静的观察者角色',P:'你有话想说，而且要大声说'};
+  for (var di = 0; di < dimCfg.length; di++) {
+    var d = dimCfg[di], sa = scores[d.a]||0, sb = scores[d.b]||0, sum = sa+sb||1;
+    var pctA = Math.round(sa/sum*100);
+    var resultLetter = lastType[di];
+    var cmt = comments[resultLetter] || '';
+    dimCards +=
+      '<div class="dim-card" id="dim'+di+'" style="transition-delay:'+(di*0.15)+'s;">'+
+        '<div class="dc-header"><span>'+d.ic+' '+d.title+'</span><span class="dc-letter" style="color:'+d.ca+';">'+resultLetter+'</span></div>'+
+        '<div class="dc-slider">'+
+          '<div class="dc-track"><div class="dc-fill" id="fill'+di+'" style="width:0%;background:linear-gradient(90deg,'+d.ca+','+d.cb+');"></div></div>'+
+          '<div class="dc-thumb" id="thumb'+di+'" style="left:0%;background:'+d.ca+';"></div>'+
+        '</div>'+
+        '<div class="dc-labels"><span style="color:'+d.ca+';">← '+d.la+'</span><span style="color:'+d.cb+';">'+d.lb+' →</span></div>'+
+        '<div class="dc-pct"><span id="pct'+di+'">0%</span> <span style="font-size:10px;">'+cmt+'</span></div>'+
+      '</div>';
+  }
+
+  // 次人格
+  var subHTML = '';
+  var distances = [];
+  for (var i = 0; i < KEYS.length; i++) {
+    if (KEYS[i] === lastType) continue;
+    var k = KEYS[i], dist = 0;
+    for (var di2 = 0; di2 < 4; di2++) { dist += Math.abs((scores[k[di2]]||0) - (scores[lastType[di2]]||0)); }
+    distances.push({key:k, d:dist});
+  }
+  distances.sort(function(x,y){return x.d-y.d;});
+  if (distances.length > 0) {
+    var sub = PERSONAS[distances[0].key];
+    subHTML = '<div class="sub-persona">你的次人格：<b>'+sub.n+' / '+sub.c+'</b></div>';
+  }
+
+  // 大头像
+  var avatarHTML = '<div class="p-avatar ring" style="border-color:'+p.color+';animation:pulseGlow 3s infinite;position:relative;">';
+  if (p.img) avatarHTML += '<img src="'+p.img+'" alt="'+p.n+'" onerror="this.style.display=\'none\';this.parentElement.querySelector(\'.p-placeholder\').style.display=\'flex\'"><div class="p-placeholder" style="display:none;">'+((p.tags||['?'])[0])+'</div>';
+  else avatarHTML += '<div class="p-placeholder">'+(p.c ? p.c.charAt(0) : '?')+'</div>';
+  avatarHTML += '</div>';
+
+  // 人格总结：拼 4 段的关键词
+  var summaryParts = [];
+  var sumDimCfg = [{a:'R',b:'W',cats:['网上人格经营','线上线下一致']},{a:'H',b:'G',cats:['主动创造内容','靠二创传播']},{a:'T',b:'B',cats:['心理稳固不被影响','对外界评价敏感']},{a:'Q',b:'P',cats:['安静观察','热情表达']}];
+  for (var si = 0; si < 4; si++) { var sd = sumDimCfg[si]; var letter = lastType[si]; var idx = (letter===sd.a)?0:1; summaryParts.push(sd.cats[idx]); }
+  var summaryText = '你'+summaryParts.join('，')+'。';
+
+  app.innerHTML =
+    '<div class="result"><div class="result-label">霧雨魔法店 · OTTI人格鉴定中心</div>'+
+      confHTML+
+      '<div class="persona-card">'+avatarHTML+'<div class="p-name-glow" style="background:linear-gradient(90deg,var(--text),'+p.color+',var(--text));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">'+p.n+'</div><div class="p-code" style="color:'+p.color+'">'+p.c+'</div>'+
+        '<div class="p-tags">'+p.tags.map(function(t){return '<span class="p-tag">'+t+'</span>';}).join('')+'</div><div class="p-desc">'+p.desc+'</div></div>'+
+      subHTML+
+      '<p class="pct-line" id="pctLine">属于 '+(p.c||'?')+' 型人格</p>'+
+      dimCards+
+      '<div class="ai-summary">'+summaryText+'</div>'+
+      '<button class="btn btn-detail" onclick="toggleDetail()">📊 查看详细解析 ▾</button>'+
+      '<div class="detail-panel" id="detailPanel"></div>'+
+      '<div class="act-row" style="margin-top:16px;"><button class="btn btn-main" onclick="shareIt()">📋 复制文案</button><button class="btn btn-ghost" onclick="shareImage()" style="border-color:var(--gold-dim);color:var(--gold);">📸 生成分享图</button></div>'+
+      '<button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button>'+
+      '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+      '<p style="font-size:10px;text-align:center;margin-top:8px;">想精确匹配到具体人物？<a href="quiz-internet.html" style="color:var(--pink);text-decoration:none;">→ 测测你是哪位抽象圈大手子</a></p>'+
+      '<p class="notice">霧雨魔法店 · 数据仅供参考 · 不构成任何人格诊断</p>'+
+      '<div class="qq-section"><img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'"><p><strong style="color:var(--gold);">加群一起玩</strong><br>群号 702973928 · 更多抽象好活</p></div></div>';
+
+  // 滑杆依次展开 + 数字滚动
+  (function() {
+    var dA = ['R','H','T','Q']; var dB = ['W','G','B','P'];
+    for (var ai = 0; ai < 4; ai++) {
+      (function(i){
+        var pct = Math.round(((scores[dA[i]]||0) / ((scores[dA[i]]||0)+(scores[dB[i]]||0)||1)) * 100);
+        setTimeout(function() {
+          var card = document.getElementById('dim'+i);
+          if (card) card.classList.add('show');
+          var fill = document.getElementById('fill'+i);
+          if (fill) fill.style.width = pct + '%';
+          var thumb = document.getElementById('thumb'+i);
+          if (thumb) thumb.style.left = pct + '%';
+          var pctEl = document.getElementById('pct'+i);
+          if (pctEl) countUp(pctEl, pct, 600);
+        }, i * 200);
+      })(ai);
+    }
+  })();
+
+  // 百分比
+  fetch('api/counter.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'egg=otti_type_'+lastType}).catch(function(){});
+  fetch('api/readcount.php?prefix=otti_type_')
+    .then(function(r){return r.json()}).then(function(d){
+      var pct = 0; var cnt = 0;
+      if (d.items && d.total > 0) { cnt = d.items['otti_type_'+lastType] || 0; pct = Math.round(cnt / d.total * 100); }
+      lastPercent = pct; lastCount = cnt;
+      var el = document.getElementById('pctLine');
+      if (el) el.innerHTML = '你是第 <b style="color:var(--gold)">'+cnt+'</b> 个 '+(p.c||'?')+' 型人格 · 占比 <b style="color:var(--gold)">'+pct+'%</b>';
+    }).catch(function(){});
+}
+
+function shareIt() {
+  var p = PERSONAS[lastType] || PERSONAS['WGBP'];
+  copyToClipboard('【OTTI人格测试】我是 '+p.n+'（'+p.c+'）！你也来测测：'+window.location.href, '已复制！发给朋友试试 😈');
+}
+
+function restart() { state = 'intro'; version = null; idx = 0; answers = []; render(); }
+
+var DETAIL_TEXTS = {
+  'R':'你在网上有明显的"第二身份"，会根据不同场合调整表达方式。线上有自己的人设与标签，和线下的你存在差异。这并非伪装，而是一种在不同社会空间中自然切换的适应能力。你喜欢这种角色扮演的自由感——在不同的群、不同的平台，你可以展现不同的面向，这本身就是一种表达。',
+  'W':'你在网上基本保持与线下一致的表达方式，不刻意经营人设。互联网对你而言更像是日常生活的延伸，而非需要切换身份的"第二空间"。这种一致性让你显得自然可信，但有时可能也会让你在网上缺少一层"保护色"。你的真实就是你最大的力量。',
+  'RW':'你在网上偶尔会因场合不同调整说话风格，但不会感到强烈的身份切换。角色与本我之间你灵活游走，既能享受人设的乐趣，也不会有身份的割裂感。你属于"可咸可甜"的中间状态——不极端，但自在。',
+  'H':'你有原创的冲动和改编的能力。群聊冷场时你是那个救场的人，看到好梗会想着怎么变得更好笑。你享受制造内容的过程本身，被别人需要感对你而言是重要的反馈。你不一定是时刻整活的输出机器，但在关键时刻你接得住。',
+  'G':'你的影响力不来自主动的持续输出，而是因为你某些不经意的特质或言行被他人捕捉、放大、重新解读。你不是制造热点的人，但你是被热点选中的人——这种"被动走红"同样是一种独特的存在方式。别人替你讲出了你没想讲的段子，这是你的天赋。',
+  'HG':'你既不是完全的"H型"，也不完全属于"G型"。你既能偶尔贡献几句金句，也不是每件事都自己造。你处在内容创造与内容传播的中间地带——既能零帧起手整个好活，也能在别人整活的时候稳稳接住。这让你在不同的交流场合中游刃有余。',
+  'T':'你的心理防线很高，被人怼了不太当回事，黑历史被翻出来也不会让你难受。你清楚自己的价值，不需要从别人的评价中确认自我。这种"铁"不是冷漠，而是一种成熟的内在稳固。你是我行我素的类型——别人说什么影响不了你的节奏。',
+  'B':'你容易受到外界评价的影响，一句不点名的暗讽你也会反复思考。但这种敏感也意味着你在意——在意别人的感受，在意自己的表达能不能被理解。脆弱不代表软弱，它让你保持对环境和关系的敏锐感知。只是有时候需要提醒自己：不是每句话都值得接，也不是每个人都值得争辩。',
+  'TB':'你有时能忽略外界噪音，有时又会被戳中在意的事。你的防御力不是固定值，而是根据情境变化的。既不是铜墙铁壁也不是一碰就碎——你在意的才会在意，不在乎的真不在乎。这种"有选择的脆弱"其实是最健康的状态。',
+  'Q':'你对表达有保留，不会在每个群里当显眼包，也不会急着在争议里表态。你更享受观察和思考的安静，而非被推到话筒前的焦灼。你不吵，但你并不是没想法——只是在夜深人静或真正被需要时，你的声音才更有分量。',
+  'P':'你很难憋住不说，看到了就想说一句，有观点就想表达。这对你来说不是负担，是需要。你可能发完消息反复看有没有人回，也可能深夜突然想找人聊天——这都是你与世界连接的方式。你的热情和开放让你在人群里容易被注意到，只是有时也需要留意：一些场合适度收一收反而更有力。',
+  'QP':'你既不是话匣子也不是完美潜行者。该说的时候你也会说，但不会每一场讨论都参与。你是一条分得清"值得"与"不值"的河——有些场合你把自己关起来，有些场合你全情投入。总的来说，你懂得在说话与沉默之间找到属于你的平衡。'
+};
+
+var detailShown = false;
+function toggleDetail() {
+  var panel = document.getElementById('detailPanel');
+  var btn = document.querySelector('.btn-detail');
+  if (!panel) return;
+  if (!detailShown) {
+    panel.innerHTML = buildDetailHTML();
+    panel.classList.add('show');
+    btn.innerHTML = '📊 收起解析 ▴';
+  } else {
+    panel.classList.remove('show');
+    btn.innerHTML = '📊 查看详细解析 ▾';
+  }
+  detailShown = !detailShown;
+}
+
+function buildDetailHTML() {
+  var scores = lastScores;
+  var dims = [
+    {a:'R',b:'W',key:'RW',title:'🎭 网上身份',la:'角色',lb:'本我'},
+    {a:'H',b:'G',key:'HG',title:'🎪 内容来源',la:'有活',lb:'跟风'},
+    {a:'T',b:'B',key:'TB',title:'🗿 防御力',la:'铁',lb:'玻璃'},
+    {a:'Q',b:'P',key:'QP',title:'👻 表达欲',la:'潜水',lb:'开麦'}
+  ];
+  var html = '';
+  for (var i = 0; i < dims.length; i++) {
+    var d = dims[i], sa = scores[d.a]||0, sb = scores[d.b]||0;
+    var gap = sa - sb;
+    var cat = (Math.abs(gap) <= 2) ? d.key : (gap > 0 ? d.a : d.b);
+    var label = (Math.abs(gap) <= 2) ? '均衡' : (gap > 0 ? '偏'+d.la : '偏'+d.lb);
+    html += '<div class="detail-item"><div class="d-title">'+d.title+' · '+label+'<span style="font-size:10px;color:var(--muted);font-weight:400;">（'+d.a+' '+sa+' vs '+d.b+' '+sb+'）</span></div><div class="d-text">'+DETAIL_TEXTS[cat]+'</div></div>';
+  }
+  return html;
+}
+
+function shareImage() { state = 'poster'; render(); }
+
+function renderPoster(app) {
+  app.innerHTML = '<div class="poster-wrap"><div class="result-label" style="font-size:14px;color:var(--muted);margin-bottom:14px;">长按图片保存 / 分享</div><img class="poster-img" id="posterImg" alt="分享海报"><div class="loading-wrap" id="posterLoading"><div class="loading-orb"></div><p class="loading-text">正在生成海报…</p></div><p class="poster-hint">手机长按上图即可保存；电脑可点下方下载。</p><a class="btn btn-main" id="posterDl" download="OTTI人格测试.png" style="display:none;">⬇️ 下载海报</a><button class="btn btn-ghost" onclick="state=\'result\';render();">← 返回结果</button></div>';
+  buildPoster();
+}
+
+async function buildPoster() {
+  var p = PERSONAS[lastType] || PERSONAS['WGBP'];
+  var scores = lastScores;
+  var W = POSTER_W, H = POSTER_H, pad = 36;
+  var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  var ctx = cv.getContext('2d');
+  var FONT = '-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+
+  ctx.fillStyle = '#1a1520'; ctx.fillRect(0, 0, W, H);
+  var g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, 'rgba(14,165,233,.08)'); g.addColorStop(1, 'rgba(99,102,241,.05)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#241e2a'; roundRect(ctx, pad, pad, W - pad*2, H - pad*2, 24); ctx.fill();
+  var bar = ctx.createLinearGradient(pad, 0, W - pad, 0);
+  bar.addColorStop(0, p.color); bar.addColorStop(.5, '#f0c060'); bar.addColorStop(1, p.color);
+  ctx.fillStyle = bar; roundRect(ctx, pad, pad, W - pad*2, 5, 3); ctx.fill();
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#0ea5e9'; ctx.font = '600 15px ' + FONT;
+  ctx.fillText('🎭 OTTI16型人格测试', W/2, 76);
+
+  // ✦ 粒子
+  ctx.fillStyle = 'rgba(240,192,96,.12)'; ctx.font = '13px ' + FONT;
+  for (var si = 0; si < 5; si++) ctx.fillText('✦', 50+Math.random()*(W-100), 50+Math.random()*(H-100));
+
+  // 头像 + 光环
+  var avaImg = await loadImg(p.img);
+  var acy = 158, ar = 40;
+  ctx.beginPath(); ctx.arc(W/2, acy, ar+3, 0, Math.PI*2);
+  ctx.strokeStyle = p.color; ctx.lineWidth = 2; ctx.stroke();
+  ctx.save();
+  ctx.beginPath(); ctx.arc(W/2, acy, ar, 0, Math.PI*2); ctx.clip();
+  if (avaImg) ctx.drawImage(avaImg, W/2-ar, acy-ar, ar*2, ar*2);
+  else { ctx.fillStyle = p.color+'33'; ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = '40px sans-serif'; ctx.textAlign = 'center'; ctx.fillText((p.c||'?').charAt(0), W/2, 205); }
+  ctx.restore();
+
+  ctx.fillStyle = p.color; ctx.font = '700 22px ' + FONT;
+  ctx.fillText(p.n, W/2, 230);
+  var codeW = ctx.measureText(p.c).width + 24;
+  roundRect(ctx, W/2 - codeW/2, 238, codeW, 22, 11);
+  ctx.fillStyle = p.color+'22'; ctx.fill();
+  ctx.strokeStyle = p.color+'55'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = p.color; ctx.font = '600 13px ' + FONT;
+  ctx.fillText(p.c, W/2, 254);
+
+  var dimCfg = [
+    {a:'R',b:'W',t:'🎭 网上身份',ca:'#0ea5e9',cb:'#f59e0b'},
+    {a:'H',b:'G',t:'🎪 内容来源',ca:'#8b5cf6',cb:'#ec4899'},
+    {a:'T',b:'B',t:'🗿 防御力',ca:'#10b981',cb:'#ef4444'},
+    {a:'Q',b:'P',t:'👻 表达欲',ca:'#6366f1',cb:'#f97316'}
+  ];
+  var dy = 280, cardH = 36;
+  ctx.textAlign = 'left';
+  for (var di3 = 0; di3 < dimCfg.length; di3++) {
+    var d2 = dimCfg[di3], sa2 = scores[d2.a]||0, sb2 = scores[d2.b]||0, sum2 = sa2+sb2||1;
+    var pa2 = Math.round(sa2/sum2*100);
+    ctx.fillStyle = 'rgba(255,255,255,.025)'; roundRect(ctx, pad+10, dy, W-pad*2-20, cardH, 9); ctx.fill();
+    ctx.fillStyle = '#8a7e9a'; ctx.font = '11px ' + FONT;
+    ctx.fillText(d2.t, pad+20, dy+15);
+    var bx = pad + 155, bw = W-pad*2-215, bh = 9;
+    ctx.fillStyle = '#3a3045'; roundRect(ctx, bx, dy+13, bw, bh, 5); ctx.fill();
+    ctx.fillStyle = d2.cb; roundRect(ctx, bx, dy+13, bw, bh, 5); ctx.fill();
+    ctx.fillStyle = d2.ca; roundRect(ctx, bx, dy+13, bw*pa2/100, bh, 5); ctx.fill();
+    ctx.font = '9px ' + FONT; ctx.textAlign = 'right';
+    ctx.fillStyle = sa2>sb2?'#f0c060':d2.ca; ctx.fillText(d2.a+' '+sa2, bx-4, dy+10);
+    ctx.fillStyle = sb2>sa2?'#f0c060':d2.cb; ctx.fillText(sb2+' '+d2.b, bx+bw+4, dy+10);
+    ctx.textAlign = 'left';
+    dy += cardH + 7;
+  }
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(240,192,96,.6)'; ctx.font = 'bold 10px ' + FONT;
+  ctx.fillText('置信度 '+confPct+'%', W/2, dy+6);
+  dy += 16;
+  var descLines = wrapToLines(ctx, p.desc, W-pad*2-30);
+  ctx.fillStyle = '#8a7e9a'; ctx.font = '12px ' + FONT;
+  for (var j = 0; j < descLines.length && j < 2; j++) ctx.fillText(descLines[j], W/2, dy + 8 + j*20);
+  dy += Math.min(descLines.length,2)*20 + 12;
+
+  if (lastCount > 0) {
+    ctx.fillStyle = '#f0c060'; ctx.font = 'bold 11px ' + FONT;
+    ctx.fillText('第 '+lastCount+' 个 '+(p.c||'?')+' 型人格 · 占比 '+lastPercent+'%', W/2, dy);
+    dy += 20;
+  }
+
+  var siteImg = await loadImg(QR_IMG), qqImg = await loadImg(QQ_IMG);
+  var qs = 86, gap = 26, tqw = qs*2+gap;
+  var lx = (W-tqw)/2, qY = Math.max(dy+6, H-pad-136);
+  drawQRBox(ctx, siteImg, lx, qY, qs, '扫码开测', SITE_URL, '#f0c060');
+  drawQRBox(ctx, qqImg, lx+qs+gap, qY, qs, '加 QQ 群', '群号 '+QQ_GROUP, '#b89fff');
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#8a7e9a'; ctx.font = '11px ' + FONT;
+  ctx.fillText('霧雨魔法店 · OTTI人格测试 · 纯属娱乐 ✨', W/2, H-pad-12);
+
+  var pi = document.getElementById('posterImg'), pl = document.getElementById('posterLoading'), dl = document.getElementById('posterDl');
+  var dataUrl = null;
+  try { dataUrl = cv.toDataURL('image/png'); } catch(e) { dataUrl = null; }
+  if (pl) pl.style.display = 'none';
+  if (dataUrl) { if (pi) { pi.src = dataUrl; pi.style.display = 'block'; } if (dl) { dl.href = dataUrl; dl.style.display = 'inline-flex'; } }
+  else { if (pi && pi.parentNode) { cv.className = 'poster-img'; cv.style.display = 'block'; pi.parentNode.replaceChild(cv, pi); } var hint = document.querySelector('.poster-hint'); if (hint) hint.textContent = '当前环境无法导出图片，部署到线上即可正常保存。'; }
+}
+
+render();
+</script>
+
+</body>
+</html>
