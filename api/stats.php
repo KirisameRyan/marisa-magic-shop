@@ -11,8 +11,14 @@ if (!file_exists($file)) {
 $data = json_decode(file_get_contents($file), true);
 $today = date('Y-m-d');
 
+$eggs = $data['eggs'] ?? [];
+$discovered = 0;
+foreach ($eggs as $k => $v) {
+    if (strpos($k, '_') === false) $discovered++;
+}
+
 echo json_encode([
-    'discovered'    => count($data['eggs'] ?? []),
+    'discovered'    => $discovered,
     'totalTriggers' => $data['total'] ?? 0,
     'todayTriggers' => ($data['daily'] ?? [])[$today] ?? 0
 ]);

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>反馈建议 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
+<link rel="stylesheet" href="css/common.css">
+<style>
+.container { max-width: 540px; }
+.container::before { background: linear-gradient(90deg, var(--gold), #e8a830, var(--gold)); }
+.head-wrap { text-align: center; margin-bottom: 20px; }
+.head-wrap .badge { display: inline-block; font-size: 10px; letter-spacing: 2px; color: var(--gold); border: 1px solid var(--gold); border-radius: 20px; padding: 4px 16px; margin-bottom: 12px; }
+.head-wrap h1 { font-size: 22px; margin-bottom: 6px; }
+.head-wrap .sub { font-size: 12px; color: var(--muted); line-height: 1.7; }
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-bottom: 6px; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 12px; padding: 13px 16px; font-size: 15px; color: var(--text); font-family: inherit; transition: border-color .2s; }
+.form-group textarea { min-height: 120px; resize: vertical; }
+.form-group select { cursor: pointer; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--gold); }
+.btn-submit { background: linear-gradient(135deg, var(--gold), #e8a830); color: #1a1520; font-weight: 700; }
+.btn-submit:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(240,192,96,.25); }
+.thanks { display: none; text-align: center; padding: 30px 0; }
+.thanks .icon { font-size: 56px; margin-bottom: 12px; }
+.thanks h2 { font-size: 20px; margin-bottom: 8px; }
+.thanks p { font-size: 13px; color: var(--muted); }
+@media (max-width: 420px) { .container { padding: 24px 18px; } }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container" id="app">
+  <div class="head-wrap" id="formArea">
+    <div class="badge">霧雨魔法店 · 用户反馈</div>
+    <h1>💬 帮助我们改进网站</h1>
+    <p class="sub">有什么建议、bug反馈、新测试想法？<br>尽管写，每条都会看。</p>
+
+    <div class="form-group"><label>你的QQ号（选填，方便店主找到你）</label><input type="text" id="inpName" placeholder="QQ号，方便我们联系你" maxlength="20" autocomplete="off"></div>
+    <div class="form-group"><label>反馈类型</label>
+      <select id="inpType">
+        <option value="测试建议">测试建议（想要什么新测试）</option>
+        <option value="网站改进">网站改进（bug/体验/功能）</option>
+        <option value="MC服务器">MC 服务器相关</option>
+        <option value="其他">其他</option>
+      </select>
+    </div>
+    <div class="form-group"><label>详细内容（必填）</label><textarea id="inpNotes" placeholder="写点什么吧……"></textarea></div>
+
+    <button class="btn btn-submit" onclick="doSubmit()">📨 提交反馈</button>
+    <a href="index.html" class="home-link">← 返回魔法店</a>
+  </div>
+
+  <div class="thanks" id="thanksArea">
+    <div class="icon">✨</div>
+    <h2>收到你的反馈！</h2>
+    <p>店主会认真看的。感谢你让魔法店变得更好。</p>
+    <button class="btn btn-ghost" onclick="resetForm()" style="max-width:200px;margin:16px auto 0;">📝 再写一条</button>
+    <a href="index.html" class="home-link">← 返回魔法店</a>
+  </div>
+</div>
+
+<script>
+function doSubmit() {
+  var name = (document.getElementById('inpName').value || '').trim();
+  var type = document.getElementById('inpType').value;
+  var notes = (document.getElementById('inpNotes').value || '').trim();
+  if (!notes) { document.getElementById('inpNotes').focus(); return; }
+
+  var body = 'name=' + encodeURIComponent(name||'匿名用户') + '&source=' + encodeURIComponent('反馈类型：'+type) + '&notes=' + encodeURIComponent(notes);
+  fetch('api/submit.php', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: body
+  }).then(function(r){return r.json()}).then(function(data){
+    document.getElementById('formArea').style.display = 'none';
+    document.getElementById('thanksArea').style.display = 'block';
+  }).catch(function(){
+    alert('提交失败，请稍后再试。');
+  });
+}
+
+function resetForm() {
+  document.getElementById('formArea').style.display = 'block';
+  document.getElementById('thanksArea').style.display = 'none';
+  document.getElementById('inpName').value = '';
+  document.getElementById('inpNotes').value = '';
+  document.getElementById('inpNotes').focus();
+}
+</script>
+
+</body>
+</html>
