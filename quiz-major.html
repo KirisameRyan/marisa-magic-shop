@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>张雪峰八道题帮你选专业 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
+<link rel="stylesheet" href="css/common.css">
+<style>
+body { background-image: radial-gradient(ellipse at 30% 0%, rgba(240,192,96,.05) 0%, transparent 50%), radial-gradient(ellipse at 70% 100%, rgba(245,158,11,.03) 0%, transparent 50%); }
+.container { max-width: 560px; }
+.container::before { background: linear-gradient(90deg, #f59e0b, #d97706, #f59e0b); }
+
+.intro-badge { color: #f59e0b; border-color: rgba(245,158,11,.35); margin-bottom: 12px; }
+.intro h1 { font-size: 24px; }
+.intro .sub { margin-bottom: 16px; }
+.stat-line { font-size: 12px; color: var(--gold); text-align: center; margin-bottom: 18px; }
+
+.progress-fill { background: linear-gradient(90deg, #f59e0b, #d97706); }
+.q-num { color: #f59e0b; }
+.opt-btn { border: 2px solid var(--border); }
+.opt-btn:hover { border-color: #f59e0b; background: rgba(245,158,11,.06); }
+.opt-btn:hover .opt-letter { background: #f59e0b; color: #fff; }
+
+.btn-start { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; }
+.btn-start:hover { background: linear-gradient(135deg, #fbbf24, #f59e0b); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(245,158,11,.3); }
+
+/* ═══ Reveal 屏 ═══ */
+.reveal-screen { position: relative; padding: 60px 20px; text-align: center; overflow: hidden; min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.reveal-screen .scanline { position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); animation: scanDown 1s infinite; }
+@keyframes scanDown { 0%{top:0} 100%{top:100%} }
+.reveal-screen .reveal-title { font-size: 13px; color: var(--gold); letter-spacing: 3px; margin-bottom: 20px; }
+.reveal-screen .reveal-code { font-size: 44px; font-weight: 900; color: var(--text); animation: glowPulse 1.2s infinite; letter-spacing: 6px; }
+@keyframes glowPulse { 0%,100%{text-shadow:0 0 20px rgba(240,192,96,.3)} 50%{text-shadow:0 0 40px rgba(240,192,96,.8)} }
+.reveal-screen .reveal-hint { font-size: 11px; color: var(--muted); margin-top: 16px; animation: blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:.3} 50%{opacity:1} }
+.reveal-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.reveal-particle { position: absolute; color: var(--gold); font-size: 14px; animation: rise linear infinite; opacity: 0; }
+@keyframes rise { 0%{opacity:0;transform:translateY(0) rotate(0)} 10%{opacity:.6} 90%{opacity:.2} 100%{opacity:0;transform:translateY(-300px) rotate(180deg)} }
+
+.xf-avatar { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--gold); margin: 0 auto 14px; overflow: hidden; }
+.xf-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.result-hero { text-align: center; padding: 20px 0; }
+.result-hero .major-icon { font-size: 80px; margin-bottom: 8px; animation: bounceIn .6s cubic-bezier(.2,1.4,.4,1); }
+@keyframes bounceIn { 0%{opacity:0;transform:scale(0)} 60%{transform:scale(1.15)} 100%{opacity:1;transform:scale(1)} }
+.result-hero .major-name { font-size: 38px; font-weight: 900; color: var(--gold); margin-bottom: 6px; }
+.result-hero .major-sub { font-size: 15px; color: #f59e0b; font-weight: 700; margin-bottom: 16px; }
+.result-hero .major-quote { font-size: 13px; color: var(--muted); font-style: italic; margin-bottom: 20px; line-height: 1.7; }
+.fool-count { font-size: 12px; color: var(--gold); text-align: center; margin-bottom: 14px; }
+
+.bottom-wisdom { text-align: center; padding: 14px; margin-top: 8px; border: 1px dashed rgba(240,192,96,.2); border-radius: 12px; font-size: 13px; color: var(--gold); line-height: 1.7; }
+
+@media (max-width: 420px) { .result-hero .major-name { font-size: 28px; } }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container" id="app"></div>
+<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
+
+<script src="js/utils.js"></script>
+<script>
+var state = 'intro';
+var idx = 0;
+var answers = [];
+
+var QUIZ_TITLE = '张雪峰八道题帮你选专业';
+var QUIZ_SUBTITLE = '8 道生涯规划题 · AI 精准匹配<br>张雪峰老师看了都说好';
+var BADGE_TEXT = '🎓 张雪峰 · 生涯规划中心';
+
+var QUESTIONS = [
+  { q:'你更享受哪种工作环境？',
+    opts:[
+      {t:'安静独立的办公室，有自己的一方天地'},
+      {t:'户外风吹日晒但自由奔放'},
+      {t:'灵活不固定，看心情换地方'},
+      {t:'只要网速好，在哪都行'}
+    ]},
+  { q:'你对数字和图形的感觉？',
+    opts:[
+      {t:'数字让我兴奋，表格和公式是我的语言'},
+      {t:'图形比数字直观，我能一眼看出比例和结构'},
+      {t:'我更擅长文字和表达'},
+      {t:'我动手比动脑快，东西拿起来就会用'}
+    ]},
+  { q:'你解决问题的时候最依赖？',
+    opts:[
+      {t:'理论框架和数学模型'},
+      {t:'实践经验和试错'},
+      {t:'团队讨论和头脑风暴'},
+      {t:'先搜一下别人怎么解决的'}
+    ]},
+  { q:'你对自己未来薪资的期望？',
+    opts:[
+      {t:'稳定有保障，不求暴富但求不焦虑'},
+      {t:'上限越高越好，我不怕卷'},
+      {t:'够花就行，生活品质比数字重要'},
+      {t:'没仔细想过，先找到方向再说'}
+    ]},
+  { q:'你最看重一份工作的什么？',
+    opts:[
+      {t:'成就感——我做的东西能被看见、被使用'},
+      {t:'自由度——不想被死死管着'},
+      {t:'稳定性——不想35岁被优化'},
+      {t:'社会地位——说出去体面'}
+    ]},
+  { q:'你的动手能力如何？',
+    opts:[
+      {t:'超强——拆装家具、修电器不在话下'},
+      {t:'还行——跟着说明书能搞定大部分'},
+      {t:'一般——能动嘴绝不动手'},
+      {t:'有人带着就敢上'}
+    ]},
+  { q:'你对出差的看法？',
+    opts:[
+      {t:'喜欢到处跑，换个地方干活更有劲'},
+      {t:'偶尔可以，但不能常态化'},
+      {t:'跟项目走，项目在哪儿我在哪儿'},
+      {t:'最好不要，恋家'}
+    ]},
+  { q:'身边的人怎么形容你？',
+    opts:[
+      {t:'靠谱、稳重、让人放心'},
+      {t:'有想法、敢闯敢干'},
+      {t:'有创意、追求美感和品质'},
+      {t:'随和、好相处、不挑'}
+    ]}
+];
+
+var LOADING_STEPS = ['正在分析你的能力模型…','正在匹配全国高校专业数据库…','张雪峰老师正在签字…'];
+var foolCount = 0;
+
+function render() {
+  toggleAds(state);
+  var app = document.getElementById('app');
+  if (state === 'intro') renderIntro(app);
+  else if (state === 'quiz') renderQuestion(app);
+  else if (state === 'loading') renderLoading(app);
+  else if (state === 'reveal') renderReveal(app);
+  else if (state === 'result') renderResult(app);
+}
+
+function renderIntro(app) {
+  app.innerHTML =
+    '<div class="intro">'+
+      '<div class="intro-badge">'+BADGE_TEXT+'</div>'+
+      '<h1>'+QUIZ_TITLE+'</h1>'+
+      '<p class="sub">'+QUIZ_SUBTITLE+'</p>'+
+      '<div class="stat-line" id="takeCount">已有 … 人测过！</div>'+
+      '<div class="xf-avatar"><img src="images/xf.jpg" alt="张雪峰" onerror="this.style.display=\'none\'"></div>'+
+      '<button class="btn btn-main btn-start" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">🎓 开始测试 →</button>'+
+      '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+    '</div>';
+
+  fetch('api/readcount.php?egg=major_take')
+    .then(function(r){return r.json()})
+    .then(function(d){document.getElementById('takeCount').textContent = '已有 '+d.count+' 人测过！';})
+    .catch(function(){});
+}
+
+function startQuiz() {
+  fetch('api/counter.php',{
+    method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'egg=major_take'
+  }).catch(function(){});
+  state = 'quiz'; idx = 0; answers = [];
+  render();
+}
+
+function renderQuestion(app) {
+  if (idx >= QUESTIONS.length) { state = 'loading'; render(); return; }
+  var q = QUESTIONS[idx];
+  var pct = Math.round((idx / QUESTIONS.length) * 100);
+  var labels = 'ABCDEFGH';
+
+  var html =
+    '<div class="progress-wrap">'+
+      '<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div>'+
+      '<div class="progress-text">'+(idx+1)+' / '+QUESTIONS.length+'</div>'+
+    '</div>'+
+    '<div class="q-num">第 '+(idx+1)+' 问</div>'+
+    '<div class="q-text">'+q.q+'</div>'+
+    '<div class="options">';
+
+  for (var i = 0; i < q.opts.length; i++) {
+    html +=
+      '<button class="opt-btn" onclick="answer('+i+')">'+
+        '<span class="opt-letter">'+(labels[i]||'?')+'</span>'+
+        q.opts[i].t+
+      '</button>';
+  }
+  html += '</div>';
+  if (idx > 0) html += '<div style="text-align:center;"><button class="btn-back" onclick="goBack()">← 返回上一题</button></div>';
+  app.innerHTML = html;
+}
+
+function answer(choice) { answers.push(choice); idx++; render(); }
+function goBack() { if (idx > 0) { idx--; answers.pop(); render(); } }
+
+function renderLoading(app) {
+  app.innerHTML =
+    '<div class="loading-wrap">'+
+      '<div class="loading-orb"></div>'+
+      '<p class="loading-text" id="ltxt">'+LOADING_STEPS[0]+'</p>'+
+    '</div>';
+  cycleLoading(1);
+}
+
+async function cycleLoading(i) {
+  if (i >= LOADING_STEPS.length) { state = 'reveal'; render(); return; }
+  await sleep(600 + Math.random() * 500);
+  var lt = document.getElementById('ltxt');
+  if (lt) lt.textContent = LOADING_STEPS[i];
+  cycleLoading(i+1);
+}
+
+function renderReveal(app) {
+  var particles = '';
+  for (var pi = 0; pi < 16; pi++) {
+    particles += '<span class="reveal-particle" style="left:'+(Math.random()*90+5)+'%;top:'+(Math.random()*80+10)+'%;animation-delay:'+Math.random()*3+'s;animation-duration:'+(2.5+Math.random()*3)+'s;font-size:'+(10+Math.random()*12)+'px;">✦</span>';
+  }
+  app.innerHTML =
+    '<div class="reveal-screen">'+
+      '<div class="scanline"></div>'+
+      '<div class="reveal-particles">'+particles+'</div>'+
+      '<div class="reveal-title">⏳ 专业匹配完成</div>'+
+      '<div class="reveal-code" style="color:#f59e0b;">土木工程</div>'+
+      '<div class="reveal-hint">张雪峰老师正在生成推荐…</div>'+
+    '</div>';
+  setTimeout(function() {
+    state = 'result';
+    render();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }, 1400);
+}
+
+function renderResult(app) {
+  fetch('api/readcount.php?egg=major_fooled')
+    .then(function(res){return res.json()})
+    .then(function(d){
+      foolCount = d.count;
+      var el = document.getElementById('foolCountEl');
+      if (el) el.textContent = '已有 '+foolCount+' 人上当受骗';
+    }).catch(function(){});
+
+  fetch('api/counter.php',{
+    method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'egg=major_fooled'
+  }).catch(function(){});
+
+  app.innerHTML =
+    '<div class="result">'+
+      '<div class="result-label">霧雨魔法店 · 生涯规划测评中心</div>'+
+      '<div class="result-hero">'+
+        '<div class="major-icon">🏗️</div>'+
+        '<div class="major-name">土木工程</div>'+
+        '<div class="major-sub">张雪峰老师倾情推荐</div>'+
+        '<div class="major-quote">"工科只有三种——计算机、土木，和其他。<br>计算机你卷不过那群拿命换钱的，来土木吧，至少站得稳。"</div>'+
+      '</div>'+
+      '<p class="fool-count" id="foolCountEl">已有 … 人上当受骗</p>'+
+      '<div class="bottom-wisdom">选你喜欢的专业<br>别人说什么不重要</div>'+
+      '<button class="btn btn-ghost" onclick="restart()" style="margin-top:14px;">🔄 再测一次</button>'+
+      '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+      '<p class="notice">霧雨魔法店 · 纯属娱乐 · 张雪峰老师说得对但也不全对</p>'+
+      '<div class="qq-section">'+
+        '<img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'">'+
+        '<p><strong style="color:var(--gold);">加群一起玩</strong><br>群号 702973928 · 更多抽象好活</p>'+
+      '</div>'+
+    '</div>';
+}
+
+function shareIt() {
+  copyToClipboard('【测测你最适合什么专业】我被张雪峰老师推荐了土木工程！你也来测测：'+window.location.href, '已复制！发给朋友试试 😈');
+}
+
+function restart() { state = 'intro'; idx = 0; answers = []; render(); }
+
+render();
+</script>
+
+</body>
+</html>

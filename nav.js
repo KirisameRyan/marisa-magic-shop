@@ -18,6 +18,7 @@
       {
         label: '🆕 最新上线',
         links: [
+          { href: 'quiz-major.html',       emoji: '🏗️', text: '张雪峰选专业' },
           { href: 'quiz-otti.html',        emoji: '🎭', text: 'OTTI人格' },
           { href: 'quiz-otokonoko.html',   emoji: '💅', text: '男娘指数' },
           { href: 'quiz-sexual.html',      emoji: '⚠️', text: 'X压抑程度' }
