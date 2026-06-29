@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>测测你最像哪个原神角色 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
+<link rel="stylesheet" href="css/common.css">
+<style>
+body { background-image: radial-gradient(ellipse at 30% 0%, rgba(147,51,234,.05) 0%, transparent 50%), radial-gradient(ellipse at 70% 100%, rgba(59,130,246,.03) 0%, transparent 50%); }
+.container { max-width: 560px; }
+.container::before { background: linear-gradient(90deg, #7c3aed, #3b82f6, #7c3aed); }
+
+.intro-badge { color: #7c3aed; border-color: rgba(124,58,237,.35); margin-bottom: 12px; }
+.intro h1 { font-size: 24px; }
+.intro .sub { margin-bottom: 16px; }
+.stat-line { font-size: 12px; color: var(--gold); text-align: center; margin-bottom: 18px; }
+
+.progress-fill { background: linear-gradient(90deg, #7c3aed, #3b82f6); }
+.q-num { color: #7c3aed; }
+.opt-btn { border: 2px solid var(--border); border-left: 3px solid transparent; }
+.opt-btn:hover { border-color: #7c3aed; background: rgba(124,58,237,.06); border-left-color: #7c3aed; }
+.opt-btn:hover .opt-letter { background: #7c3aed; color: #fff; }
+
+.btn-start { background: linear-gradient(135deg, #7c3aed, #3b82f6); color: #fff; }
+.btn-start:hover { background: linear-gradient(135deg, #a78bfa, #60a5fa); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(124,58,237,.3); }
+
+/* Reveal 屏 */
+.reveal-screen { position: relative; padding: 60px 20px; text-align: center; overflow: hidden; min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.reveal-screen .scanline { position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); animation: scanDown 1s infinite; }
+@keyframes scanDown { 0%{top:0} 100%{top:100%} }
+.reveal-screen .reveal-title { font-size: 12px; color: var(--gold); letter-spacing: 2px; margin-bottom: 14px; }
+.reveal-screen .reveal-name { font-size: 32px; font-weight: 900; color: var(--text); animation: glowPulse 1.2s infinite; letter-spacing: 4px; margin-bottom: 8px; }
+@keyframes glowPulse { 0%,100%{text-shadow:0 0 20px rgba(240,192,96,.3)} 50%{text-shadow:0 0 40px rgba(240,192,96,.8)} }
+.reveal-screen .reveal-hint { font-size: 11px; color: var(--muted); margin-top: 12px; animation: blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:.3} 50%{opacity:1} }
+.load-cursor::after { content:' ▌'; animation: blink .7s infinite; }
+.reveal-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.reveal-particle { position: absolute; color: var(--gold); font-size: 14px; animation: rise linear infinite; opacity: 0; }
+@keyframes rise { 0%{opacity:0;transform:translateY(0) rotate(0)} 10%{opacity:.6} 90%{opacity:.2} 100%{opacity:0;transform:translateY(-300px) rotate(180deg)} }
+
+.result-hero { text-align: center; padding: 20px 0; }
+.result-hero .char-emoji { font-size: 72px; margin-bottom: 8px; animation: bounceIn .6s cubic-bezier(.2,1.4,.4,1); }
+.result-hero .char-avatar { width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 12px; overflow: hidden; border: 2px solid rgba(255,255,255,.1); animation: bounceIn .6s cubic-bezier(.2,1.4,.4,1); }
+.result-hero .char-avatar img { width: 100%; height: 100%; object-fit: cover; }
+@keyframes bounceIn { 0%{opacity:0;transform:scale(0)} 60%{transform:scale(1.15)} 100%{opacity:1;transform:scale(1)} }
+.result-hero .char-name { font-size: 32px; font-weight: 900; color: var(--gold); margin-bottom: 4px; }
+.result-hero .char-tag { display: inline-block; font-size: 12px; padding: 4px 14px; border-radius: 12px; font-weight: 700; margin-bottom: 12px; }
+.result-hero .char-desc { font-size: 13px; color: var(--muted); line-height: 1.9; max-width: 400px; margin: 0 auto 14px; }
+.fool-count { font-size: 12px; color: var(--gold); text-align: center; margin-bottom: 10px; }
+.gotcha-line { text-align: center; font-size: 11px; color: var(--muted); margin-bottom: 14px; padding: 8px; border: 1px dashed rgba(124,58,237,.2); border-radius: 10px; }
+
+@media (max-width: 420px) { .result-hero .char-name { font-size: 26px; } }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container" id="app"></div>
+<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
+
+<script src="js/utils.js"></script>
+<script>
+var state = 'intro';
+var idx = 0;
+var answers = [];
+
+var QUIZ_TITLE = '测测你最像哪个原神角色 ✦';
+var QUIZ_SUBTITLE = '16道情境 · 答完才知道出了什么';
+var BADGE_TEXT = '冒险家协会 · 非官方 · 不负责任';
+
+var QUESTIONS = [
+  // ══ 维1: 表面印象 ×4 ══
+  { q:'在蒙德的酒馆里，你更接近哪种状态？', opts:[
+    {t:'和所有人都能聊上两句，不自觉就成了气氛担当', s:{ames:2,katixiya:1}},
+    {t:'自己也很嗨，但不需要掌控全场', s:{katixiya:2,feibi:1}},
+    {t:'坐在角落，看着所有人，偶尔接一句话', s:{shouan:2,moning:1}},
+    {t:'不太主动开口——但一开口，那桌人都记住你了', s:{qianzhi:2,fuluoluo:1}} ]},
+  { q:'你刚到一个陌生的地方，有人走过来问路，你？', opts:[
+    {t:'直接带着他走过去，顺便聊了两句', s:{ames:2,katixiya:1}},
+    {t:'认真给他指路，还多说了两条备选路线', s:{katixiya:2,feibi:1}},
+    {t:'告诉他怎么走，然后继续看自己的东西', s:{shouan:2,moning:1}},
+    {t:'指了个方向，没多说话——但你确认他走对了才离开', s:{qianzhi:2,fuluoluo:1}} ]},
+  { q:'派蒙突然说：「旅行者，我饿了！」你？', opts:[
+    {t:'「走走走，猎鹿人餐馆我请！」', s:{ames:2,katixiya:1}},
+    {t:'「好好好，先做完这个委托就去」', s:{katixiya:2,feibi:1}},
+    {t:'「……嗯。」转身就往餐馆走', s:{shouan:2,moning:1}},
+    {t:'没说话，但她转头发现食材已经摆在面前了', s:{qianzhi:2,fuluoluo:1}} ]},
+  { q:'璃月的请仙典仪，仙人突然从云层里降下来，周围的人全都惊呼起来——你？', opts:[
+    {t:'第一个挤到最前面，踮脚往上看', s:{ames:2,katixiya:1}},
+    {t:'站着没动，但忍不住拉住旁边的人说「你看！你看！」', s:{katixiya:2,feibi:1}},
+    {t:'待在人群里，安静地把这一幕看完', s:{shouan:2,moning:1}},
+    {t:'靠在远处，远远地望着——你不需要离得很近', s:{qianzhi:2,fuluoluo:1}} ]},
+
+  // ══ 维2: 情感内核 ×4 ══
+  { q:'你喜欢的角色受伤了，你会？', opts:[
+    {t:'直接冲上去：「谁干的，我去找他」', s:{katixiya:2,feibi:1}},
+    {t:'表面笑嘻嘻安慰，转头自己把仇报了', s:{ames:2,kante:1}},
+    {t:'什么都没说，但那场战斗里你的输出翻了一倍', s:{shouan:2,moning:1}},
+    {t:'记住了，至于以后——他会知道的', s:{fuluoluo:2,qianzhi:1}} ]},
+  { q:'你帮助了别人之后，对方说要感谢你？', opts:[
+    {t:'「不用不用，小事一桩！」摆摆手，大方接受', s:{katixiya:2,feibi:1}},
+    {t:'「那下次请我吃饭呗！」顺势调侃过去', s:{ames:2,kante:1}},
+    {t:'「不用放在心上」——话是这么说的', s:{shouan:2,moning:1}},
+    {t:'「随你」，转身走了', s:{fuluoluo:2,qianzhi:1}} ]},
+  { q:'你做了很久的准备，最后却失败了？', opts:[
+    {t:'很沮丧，但立刻开始复盘，想好下次怎么做', s:{katixiya:2,feibi:1}},
+    {t:'笑着说「没事」，然后自己扛着', s:{ames:2,kante:1}},
+    {t:'没怎么说话，但接下来几天一直在默默重来', s:{shouan:2,moning:1}},
+    {t:'表面接受了，心里一直惦记着这件事', s:{fuluoluo:2,qianzhi:1}} ]},
+  { q:'有人突然对你说了很温暖的话？', opts:[
+    {t:'「啊别说了别说了——」眼眶有点红', s:{katixiya:2,feibi:1}},
+    {t:'用玩笑把那股感动挡回去，「你也会说这种话？」', s:{ames:2,kante:1}},
+    {t:'沉默了几秒，然后轻轻"嗯"了一声', s:{shouan:2,moning:1}},
+    {t:'表情没怎么变，那天晚上翻来覆去睡不着', s:{fuluoluo:2,qianzhi:1}} ]},
+
+  // ══ 维3: 处事底色 ×4 ══
+  { q:'你发现了一直信仰的东西其实是谎言？', opts:[
+    {t:'「那我不信了。走自己的路。」', s:{katixiya:2,qianzhi:1}},
+    {t:'不甘心，想把真相翻出来让所有人都看见', s:{fuluoluo:2,ames:1}},
+    {t:'默默接受，然后去保护那些还不知道的人', s:{shouan:2,feibi:1}},
+    {t:'把这个秘密压下去，不让身边的人受影响', s:{moning:2,kante:1}} ]},
+  { q:'为了保护一个无辜的人，你需要对抗整个系统？', opts:[
+    {t:'管你是天理还是七神，打就完了', s:{katixiya:2,qianzhi:1}},
+    {t:'先找系统的漏洞，用最小的代价撬开它', s:{fuluoluo:2,ames:1}},
+    {t:'先把那个人藏好，送出危险范围', s:{shouan:2,feibi:1}},
+    {t:'用自己的身份和关系去周旋，尽量保住他', s:{moning:2,kante:1}} ]},
+  { q:'一群人里有一个被孤立了？', opts:[
+    {t:'走过去坐到他旁边：「过来」', s:{katixiya:2,qianzhi:1}},
+    {t:'用玩笑的方式把他带回对话里，让人不尴尬', s:{fuluoluo:2,ames:1}},
+    {t:'没说什么，但每次分东西都多给他留一份', s:{shouan:2,feibi:1}},
+    {t:'没有直接动，但用自己的方式不动声色地罩着他', s:{moning:2,kante:1}} ]},
+  { q:'面前有两条路：一条安稳但平庸，一条危险但自由？', opts:[
+    {t:'选危险的。安稳太无聊了。', s:{katixiya:2,qianzhi:1}},
+    {t:'选危险的，但我会先把准备做足', s:{fuluoluo:2,ames:1}},
+    {t:'选安稳的，身后还有人要我守着', s:{shouan:2,feibi:1}},
+    {t:'两条都不选。我走第三条。', s:{moning:2,kante:1}} ]},
+
+  // ══ 维4: 内心本质 ×4 ══
+  { q:'如果你有一个愿望可以实现？', opts:[
+    {t:'「希望大家都平安快乐」', s:{ames:2,feibi:1}},
+    {t:'「希望那个人能获得幸福」', s:{shouan:2,moning:1}},
+    {t:'「希望我在乎的东西，永远都在」', s:{katixiya:2,fuluoluo:1}},
+    {t:'「希望有一个永远不会落空的约定」', s:{qianzhi:2,kante:1}} ]},
+  { q:'面对一个你很在乎但已经很久没见的人？', opts:[
+    {t:'跑过去，直接抱住他：「我好想你！」', s:{ames:2,feibi:1}},
+    {t:'站在原地等他过来，「……你来了。」', s:{shouan:2,moning:1}},
+    {t:'「你还记得我们的约定吗？」——其实已经等了很久了', s:{katixiya:2,fuluoluo:1}},
+    {t:'什么都没说，但那天晚上做了他最喜欢的菜', s:{qianzhi:2,kante:1}} ]},
+  { q:'有人对你说「你不用一个人扛着」？', opts:[
+    {t:'眼眶红了，然后笑了一下', s:{ames:2,feibi:1}},
+    {t:'没说话。但那之后，开始试着让别人靠近', s:{shouan:2,moning:1}},
+    {t:'「我知道。但这件事，必须我亲手做完。」', s:{katixiya:2,fuluoluo:1}},
+    {t:'「谢谢。但有些事，只能我来。」', s:{qianzhi:2,kante:1}} ]},
+  { q:'故事的结局，你更希望？', opts:[
+    {t:'所有人笑着说了再见，各自去了想去的地方', s:{ames:2,feibi:1}},
+    {t:'安静地，就这样陪在最重要的那个人身边', s:{shouan:2,moning:1}},
+    {t:'哪怕只剩我一个人，我也会把该做的事做完', s:{katixiya:2,fuluoluo:1}},
+    {t:'我的名字不重要——重要的是我守的东西还在', s:{qianzhi:2,kante:1}} ]}
+];
+
+var CHARS = {
+  ames:    { n:'爱弥斯', e:'✈️', c:'#f59e0b', tg:'折纸飞机·藏着重量', de:'折纸飞机折了一架又一架，笑的时候最像个孩子。但她扛着的东西，没人知道有多重。', img:'images/aimisi.png' },
+  shouan:  { n:'守岸人', e:'🪼', c:'#06b6d4', tg:'数据与执念·因你而生', de:'数据载体，没有预设情感。因为遇见你，开始生出执念。冷静的外表之下，是只属于你的偏心。', img:'images/shouanren.jpg' },
+  katixiya:{ n:'卡提希娅', e:'⚔️', c:'#ef4444', tg:'圣女冠冕·终于卸下', de:'扛了数百年的冠冕，分裂成无数个自己去承受。终于，有一天她把那顶冠摘掉了——她只想做个流浪骑士。', img:'images/katixiya.jpg' },
+  feibi:   { n:'菲比', e:'✨', c:'#facc15', tg:'违规收留·温柔传递', de:'父母的温柔交给了她，她又把它交出去。收留那些无处可去的孩子，违背了规矩，但她不后悔。', img:'images/feibi.jpg' },
+  fuluoluo:{ n:'弗洛洛', e:'🎻', c:'#8b5cf6', tg:'旋律囚笼·只等懂的人', de:'把整个故乡锁在末日循环里，只为不让任何人消失。一百年，旋律还在响——她在等一个听懂的人。', img:'images/fuluoluo.jpg' },
+  moning:  { n:'莫宁', e:'🔬', c:'#22d3ee', tg:'最年轻教授·一个例外', de:'天赋把他带进了学院，也让他习惯了独自把一切扛好。唯独面对那个人的时候，那层壳会慢慢松开。', img:'images/moning.jpg' },
+  qianzhi: { n:'千咲', e:'✂️', c:'#f472b6', tg:'看不清脸·认得出你', de:'少年时的恶意让她失去了辨认面孔的能力——世界从此只剩模糊的色块。但她认得出你。那就够了。', img:'images/qianxiao.jpg' },
+  kante:   { n:'坎特蕾拉', e:'🌂', c:'#a855f7', tg:'千年诅咒·自己来扛', de:'家族的诅咒压了一千年，她选择一个人接下来。外面看是美艳危险的家主，里面藏着没人见过的少女心。', img:'images/kanteleila.webp' }
+};
+
+var LOADING_STEPS = ['正在分析元素共鸣…','匹配中……好像哪里有点不对劲','算了，换个数据库试试'];
+var lastChar = null, foolCount = 0;
+
+function render() {
+  toggleAds(state);
+  var app = document.getElementById('app');
+  if (state==='intro') renderIntro(app);
+  else if (state==='quiz') renderQuestion(app);
+  else if (state==='loading') renderLoading(app);
+  else if (state==='reveal') renderReveal(app);
+  else if (state==='result') renderResult(app);
+}
+
+function renderIntro(app) {
+  app.innerHTML =
+    '<div class="intro">'+
+      '<div class="intro-badge">'+BADGE_TEXT+'</div>'+
+      '<h1>'+QUIZ_TITLE+'</h1>'+
+      '<p class="sub">'+QUIZ_SUBTITLE+'</p>'+
+      '<div class="stat-line" id="takeCount">已有 … 人测过！</div>'+
+      '<button class="btn btn-main btn-start" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">✨ 开始测试 →</button>'+
+      '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+    '</div>';
+
+  fetch('api/readcount.php?egg=genshin_take')
+    .then(function(r){return r.json()})
+    .then(function(d){document.getElementById('takeCount').textContent='已有 '+d.count+' 人测过！';})
+    .catch(function(){});
+}
+
+function startQuiz() {
+  fetch('api/counter.php',{
+    method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'egg=genshin_take'
+  }).catch(function(){});
+  state = 'quiz'; idx = 0; answers = [];
+  render();
+}
+
+function renderQuestion(app) {
+  if (idx >= QUESTIONS.length) { state = 'loading'; render(); return; }
+  var q = QUESTIONS[idx];
+  var pct = Math.round((idx / QUESTIONS.length) * 100);
+  var labels = 'ABCDEFGH';
+  var html =
+    '<div class="progress-wrap">'+
+      '<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div>'+
+      '<div class="progress-text">'+(idx+1)+' / '+QUESTIONS.length+'</div>'+
+    '</div>'+
+    '<div class="q-num">第 '+(idx+1)+' 问</div>'+
+    '<div class="q-text">'+q.q+'</div>'+
+    '<div class="options">';
+  for (var i = 0; i < q.opts.length; i++) {
+    html += '<button class="opt-btn" onclick="answer('+i+')"><span class="opt-letter">'+(labels[i]||'?')+'</span>'+q.opts[i].t+'</button>';
+  }
+  html += '</div>';
+  if (idx > 0) html += '<div style="text-align:center;"><button class="btn-back" onclick="goBack()">← 返回上一题</button></div>';
+  app.innerHTML = html;
+}
+
+function answer(choice) { answers.push(QUESTIONS[idx].opts[choice]); idx++; render(); }
+function goBack() { if (idx > 0) { idx--; answers.pop(); render(); } }
+
+function renderLoading(app) {
+  app.innerHTML = '<div class="loading-wrap"><div class="loading-orb"></div><p class="loading-text" id="ltxt">'+LOADING_STEPS[0]+'</p></div>';
+  cycleLoading(1);
+}
+
+async function cycleLoading(i) {
+  if (i >= LOADING_STEPS.length) {
+    calcResult();
+    state = 'reveal';
+    render();
+    return;
+  }
+  await sleep(600 + Math.random() * 500);
+  var lt = document.getElementById('ltxt');
+  if (lt) lt.textContent = LOADING_STEPS[i];
+  cycleLoading(i+1);
+}
+
+function calcResult() {
+  var scores = {};
+  var keys = Object.keys(CHARS);
+  for (var k = 0; k < keys.length; k++) scores[keys[k]] = 0;
+  for (var i = 0; i < answers.length; i++) {
+    var s = answers[i].s;
+    for (var k in s) { scores[k] = (scores[k]||0) + (s[k]||0); }
+  }
+  var best = keys[0];
+  for (var k = 0; k < keys.length; k++) { if (scores[keys[k]] > scores[best]) best = keys[k]; }
+  lastChar = best;
+}
+
+function renderReveal(app) {
+  var c = CHARS[lastChar] || CHARS['ames'];
+  var particles = '';
+  for (var pi = 0; pi < 16; pi++) {
+    particles += '<span class="reveal-particle" style="left:'+(Math.random()*90+5)+'%;top:'+(Math.random()*80+10)+'%;animation-delay:'+Math.random()*3+'s;animation-duration:'+(2.5+Math.random()*3)+'s;font-size:'+(10+Math.random()*12)+'px;">✦</span>';
+  }
+  app.innerHTML =
+    '<div class="reveal-screen">'+
+      '<div class="scanline"></div>'+
+      '<div class="reveal-particles">'+particles+'</div>'+
+      '<div class="reveal-title">⏳ 元素共鸣匹配完成</div>'+
+      '<div class="reveal-name" style="color:'+c.c+'">'+c.n+'</div>'+
+      '<div class="reveal-hint" id="revealExtra">异世界数据库同步中…</div>'+
+    '</div>';
+  setTimeout(function() {
+    var el = document.getElementById('revealExtra');
+    if (el) el.textContent = '……等等，这好像不是原神的角色';
+    setTimeout(function() {
+      state = 'result';
+      render();
+      window.scrollTo({top:0,behavior:'smooth'});
+    }, 800);
+  }, 1400);
+}
+
+function renderResult(app) {
+  var c = CHARS[lastChar] || CHARS['ames'];
+
+  fetch('api/readcount.php?egg=genshin_fooled')
+    .then(function(res){return res.json()})
+    .then(function(d){
+      foolCount = d.count;
+      var el = document.getElementById('foolCountEl');
+      if (el) el.textContent = '已有 '+foolCount+' 人跑来测原神，出了鸣潮';
+    }).catch(function(){});
+  fetch('api/counter.php',{
+    method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'egg=genshin_fooled'
+  }).catch(function(){});
+
+  app.innerHTML =
+    '<div class="result">'+
+      '<div class="result-label">霧雨魔法店 · 冒险家协会</div>'+
+      '<div class="result-hero">'+
+        '<div class="char-avatar"><img src="'+c.img+'" alt="'+c.n+'" onerror="this.style.display=\'none\';this.parentElement.nextElementSibling.style.display=\'block\'"></div>'+
+        '<div class="char-emoji" style="display:none;">'+c.e+'</div>'+
+        '<div class="char-name" style="color:'+c.c+'">'+c.n+'</div>'+
+        '<div class="char-tag" style="background:'+c.c+'22;color:'+c.c+';border:1px solid '+c.c+'44;">'+c.tg+'</div>'+
+        '<div class="char-desc">'+c.de+'</div>'+
+      '</div>'+
+      '<div class="gotcha-line">📡 提示：测的是原神，数据库连到了鸣潮，概不负责</div>'+
+      '<p class="fool-count" id="foolCountEl">已有 … 人跑来测原神，出了鸣潮</p>'+
+      '<button class="btn btn-ghost" onclick="shareIt()">📋 分享结果</button>'+
+      '<button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button>'+
+      '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+      '<p class="notice">本店不对跨游结果负责 · 如有雷同纯属元素共鸣</p>'+
+      '<div class="qq-section">'+
+        '<img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'">'+
+        '<p><strong style="color:var(--gold);">加群一起玩</strong><br>群号 702973928 · 更多抽象好活</p>'+
+      '</div>'+
+    '</div>';
+}
+
+function shareIt() {
+  var c = CHARS[lastChar] || CHARS['ames'];
+  copyToClipboard('【测测你最像哪个原神角色】结果我是「'+c.n+'」——等等，这好像是鸣潮的角色？你也来测测：'+window.location.href, '已复制！发给朋友试试 😈');
+}
+
+function restart() { state = 'intro'; idx = 0; answers = []; render(); }
+
+render();
+</script>
+
+</body>
+</html>
