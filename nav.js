@@ -18,7 +18,7 @@
       {
         label: '🎮 玩玩小游戏',
         links: [
-          { href: 'game-platform.html', emoji: '🧹', text: '魔理沙快跑' }
+          { href: 'marisa_dash.html', emoji: '🧹', text: '魔理沙快跑' }
         ]
       },
       {

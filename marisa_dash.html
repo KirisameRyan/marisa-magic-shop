@@ -55,6 +55,9 @@ canvas{display:block;width:auto;height:auto;max-width:100%;max-height:100%;aspec
 .lb-ok{color:#6fcf97;}
 .lb-err{color:#ef4444;}
 .lb-note{color:#8a7e9a;}
+.lb-toggle{text-align:center;font-size:12px;color:#8a7e9a;cursor:pointer;padding:6px 0;margin-top:4px;transition:color .2s;}
+.lb-toggle:hover{color:#f0c060;}
+.lb-table-wrap{overflow-x:auto;}
 </style>
 </head>
 <body>
@@ -84,13 +87,18 @@ canvas{display:block;width:auto;height:auto;max-width:100%;max-height:100%;aspec
 
   <div class="overlay hide" id="startOverlay">
     <h1>🧹 魔理沙快跑</h1>
-    <p>⬆ 切换到上方通道<br>⬇ 切换到下方通道<br>躲避琪露诺和毒蘑菇！</p>
+    <p>⬆ 切换到上方通道<br>⬇ 切换到下方通道<br>X / Shift 使用 DASH 冲刺</p>
     <button class="btn-start" id="btnStart">✦ 起飞</button>
     <div id="lbArea" class="hide"></div>
+    <div id="qqOverlay" class="hide" style="margin-top:16px;">
+      <img src="images/qq-group.png" alt="QQ群二维码" style="width:100px;border-radius:12px;border:2px solid #3a3045;" onerror="this.style.display='none'">
+      <p style="font-size:11px;color:#8a7e9a;margin-top:6px;">群号 702973928</p>
+    </div>
   </div>
 
   <div class="mobile-controls" id="mobileControls">
     <button class="ctrl-btn" id="btnUp">⬆ 切换</button>
+    <button class="ctrl-btn" id="btnDASH" style="font-size:14px;">⚡DASH</button>
     <button class="ctrl-btn" id="btnDown">⬇ 切换</button>
   </div>
 </div>

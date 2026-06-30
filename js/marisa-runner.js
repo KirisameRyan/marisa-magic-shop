@@ -74,12 +74,16 @@ function sfxStar()       { playTone(600,0.06,'sine',0.08); playTone(900,0.06,'si
 // ═══════════ 游戏状态 ═══════════
 var gameState = 'loading';
 var score = 0, bestScore = 0, bestGraze = 0;
-var speed = 2.5, frameCount = 0;
+var speed = 5, frameCount = 0;
+var preDashSpeed = 5;
+var lastTs = 0, dt = 1;
+var obstacleTimer = 0, powerUpTimer = 0, heartTimer = 0;
 var grazeStreak = 0, maxGrazeStreak = 0, totalGraze = 0;
 var lastObstacleTime = 0;
 var deathFlash = 0;
 var posHistory = [];
 var dashTimer = 0, dashMax = 210;
+var dashCharges = 0, maxDashCharges = 3;
 var lives = 3, maxLives = 5, invTimer = 0;
 var hearts = [];
 var player = {
@@ -116,19 +120,21 @@ function getPlayerHitbox() {
 
 document.addEventListener('keydown', function(e) {
   if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'w' || e.key === 's' || e.key === 'W' || e.key === 'S') e.preventDefault();
+  if (e.key === 'x' || e.key === 'X' || e.key === 'Shift') { e.preventDefault(); activateDASH(); }
   keys[e.key] = true;
   initAudio();
 });
 document.addEventListener('keyup', function(e) { keys[e.key] = false; });
 cv.addEventListener('touchstart', function(e) { e.preventDefault(); });
 
-var btnU = document.getElementById('btnUp'), btnD = document.getElementById('btnDown'), btnStart = document.getElementById('btnStart');
+var btnU = document.getElementById('btnUp'), btnD = document.getElementById('btnDown'), btnDash = document.getElementById('btnDASH'), btnStart = document.getElementById('btnStart');
 btnU.addEventListener('pointerdown', function(e) { upDown = true; initAudio(); e.preventDefault(); });
 btnU.addEventListener('pointerup', function() { upDown = false; });
 btnU.addEventListener('pointerleave', function() { upDown = false; });
 btnD.addEventListener('pointerdown', function(e) { downDown = true; initAudio(); e.preventDefault(); });
 btnD.addEventListener('pointerup', function() { downDown = false; });
 btnD.addEventListener('pointerleave', function() { downDown = false; });
+btnDash.addEventListener('pointerdown', function(e) { activateDASH(); initAudio(); e.preventDefault(); });
 btnStart.addEventListener('click', startGame);
 
 function wantsUp()   { return keys['ArrowUp'] || keys['w'] || keys['W'] || keys[' '] || upDown; }
@@ -143,28 +149,32 @@ function updateScoreDisplay() {
   var gs = grazeStreak;
   if (gs >= 3) {
     badge.classList.add('show');
-    badge.textContent = '擦弹 ×' + gs;
-    if (gs >= 20) badge.style.color = '#ff6b6b';
-    else if (gs >= 10) badge.style.color = '#b89fff';
+    badge.textContent = '擦弹 ×' + gs + ' (+' + (gs*5) + ')';
+    if (gs >= 30) badge.style.color = '#ff6b6b';
+    else if (gs >= 15) badge.style.color = '#b89fff';
     else badge.style.color = '#ffd700';
   } else badge.classList.remove('show');
   var dashInd = document.getElementById('dashInd');
-  if (dashTimer > 0) dashInd.classList.add('active');
-  else dashInd.classList.remove('active');
+  if (dashTimer > 0) { dashInd.textContent = '⚡ DASH'; dashInd.classList.add('active'); }
+  else if (dashCharges > 0) { dashInd.textContent = '⚡ ×' + dashCharges; dashInd.classList.add('active'); dashInd.style.color = '#ffd700'; }
+  else { dashInd.classList.remove('active'); }
 }
 
 // ═══════════ 游戏流程 ═══════════
 function startGame() {
-  score = 0; speed = 2.5; frameCount = 0;
+  score = 0; speed = 5; frameCount = 0;
+  preDashSpeed = 5;
+  obstacleTimer = 0; powerUpTimer = 0; heartTimer = 0;
   grazeStreak = 0; maxGrazeStreak = 0; totalGraze = 0;
   lastObstacleTime = 0; deathFlash = 0;
   player.lane = 1; player.targetY = LANE_Y[1]; player.switchCooldown = 0; player.animState = 'run';
-  dashTimer = 0; posHistory = []; lives = 3; invTimer = 0; hearts = [];
+  dashTimer = 0; posHistory = []; lives = 3; invTimer = 0; hearts = []; dashCharges = 0;
   laneObstacles = [[], [], []]; particles = []; floatingTexts = []; powerUps = [];
   gameState = 'playing';
   document.getElementById('startOverlay').classList.add('hide');
   document.getElementById('lbArea').innerHTML = '';
   document.getElementById('lbArea').classList.add('hide');
+  document.getElementById('qqOverlay').classList.add('hide');
   updateScoreDisplay();
 }
 
@@ -183,6 +193,7 @@ function endGame() {
     '历史最高 <b style="color:#f0c060">' + bestScore + '</b> 分';
   // 拉取排行榜
   loadLB(finalScore);
+  document.getElementById('qqOverlay').classList.remove('hide');
 }
 
 // ═══════════ 排行榜 ═══════════
@@ -223,6 +234,8 @@ function renderLB(area, data, rank, score) {
   } else if (data.length >= 20) {
     html += '<p class="lb-note">你的得分未进入前20</p>';
   }
+  html += '<div class="lb-toggle" id="lbToggle">📊 排行榜 ▸</div>';
+  html += '<div class="lb-table-wrap" id="lbTableWrap" style="display:none;">';
   html += '<table class="lb-table"><thead><tr><th>#</th><th>名字</th><th>得分</th><th>擦弹</th><th>日期</th></tr></thead><tbody>';
   for (var i = 0; i < data.length; i++) {
     var d = data[i];
@@ -230,8 +243,17 @@ function renderLB(area, data, rank, score) {
     var cls = (rank > 0 && rowRank === rank && d.score === score) ? ' class="lb-my"' : '';
     html += '<tr' + cls + '><td>' + rowRank + '</td><td>' + esc(d.name) + '</td><td>' + d.score + '</td><td>' + (d.graze||0) + '</td><td>' + (d.time||'') + '</td></tr>';
   }
-  html += '</tbody></table></div>';
+  html += '</tbody></table></div></div>';
   area.innerHTML = html;
+
+  // 折叠切换
+  var toggle = document.getElementById('lbToggle');
+  var wrap = document.getElementById('lbTableWrap');
+  toggle.addEventListener('click', function() {
+    var open = wrap.style.display !== 'none';
+    wrap.style.display = open ? 'none' : 'block';
+    toggle.textContent = open ? '📊 排行榜 ▸' : '📊 排行榜 ▾';
+  });
 
   if (rank > 0) {
     document.getElementById('lbSubmit').addEventListener('click', function() { submitLB(area); });
@@ -257,6 +279,12 @@ function submitLB(area) {
       if (res.ok) {
         area.innerHTML = '<p class="lb-ok">✅ 提交成功！排名第 <b>' + res.rank + '</b></p>';
         loadLB(lastFinalScore);
+        // 自动展开排行榜
+        setTimeout(function() {
+          var t = document.getElementById('lbToggle');
+          var w = document.getElementById('lbTableWrap');
+          if (t && w) { w.style.display = 'block'; t.textContent = '📊 排行榜 ▾'; }
+        }, 300);
       } else {
         area.innerHTML = '<p class="lb-err">提交失败: ' + (res.error||'未知错误') + '</p>';
       }
@@ -325,7 +353,7 @@ function drawBackground() {
   if (assets.bg && assets.bg.complete) {
     var bgH = H;
     var bgW = (bgH / assets.bg.naturalHeight) * assets.bg.naturalWidth;
-    bgScroll = (bgScroll + speed * 0.12) % bgW;
+    bgScroll = (bgScroll + speed * 0.12 * dt) % bgW;
     var copies = Math.ceil(W / bgW) + 1;
     for (var c = 0; c < copies; c++) {
       ctx.drawImage(assets.bg, -bgScroll + c * bgW, 0, bgW, bgH);
@@ -370,17 +398,24 @@ function spawnPowerUp() {
   if (powerUps.length >= 2) return;
   var r = Math.random();
   var lane = r < 0.4 ? 0 : (r < 0.75 ? 1 : 2);
-  powerUps.push({ x: W + 80, y: LANE_Y[lane], r: 12, lane: lane });
+  // 同通道有近距障碍物则跳过
+  var obs = laneObstacles[lane];
+  var conflict = false;
+  for (var oi = 0; oi < obs.length; oi++) {
+    if (obs[oi].x > W - 40) { conflict = true; break; }
+  }
+  if (conflict) return;
+  powerUps.push({ x: W + 80 + Math.random() * 40, y: LANE_Y[lane], r: 12, lane: lane });
 }
 function updatePowerUps() {
   for (var i = powerUps.length - 1; i >= 0; i--) {
-    var pu = powerUps[i]; pu.x -= speed;
+    var pu = powerUps[i]; pu.x -= speed * dt;
     if (pu.x < -40) { powerUps.splice(i, 1); continue; }
     var dx = getPlayerCenterX() - pu.x, dy = getPlayerCenterY() - pu.y;
     if (Math.sqrt(dx*dx + dy*dy) < pu.r + 30 && gameState === 'playing') {
-      dashTimer = dashMax; player.animState = 'dash';
+      if (dashCharges < maxDashCharges) dashCharges++;
       addScorePop(pu.x, pu.y - 5, '+50', '#ffd700');
-      addLabelPop(pu.x, pu.y - 25, '⚡ DASH!', '#ff6b6b');
+      addLabelPop(pu.x, pu.y - 25, '+1 ⚡', '#ff6b6b');
       spawnParticles(pu.x, pu.y, '#ffd700', 20, 1, 5);
       sfxStar(); powerUps.splice(i, 1);
     }
@@ -390,11 +425,18 @@ function updatePowerUps() {
 // ═══════════ 红心 ═══════════
 function spawnHeart() {
   var lane = Math.floor(Math.random() * 3);
-  hearts.push({ x: W + 60, y: LANE_Y[lane], r: 10 });
+  // 同通道有近距障碍物则跳过
+  var obs = laneObstacles[lane];
+  var conflict = false;
+  for (var oi = 0; oi < obs.length; oi++) {
+    if (obs[oi].x > W - 40) { conflict = true; break; }
+  }
+  if (conflict) return;
+  hearts.push({ x: W + 80 + Math.random() * 40, y: LANE_Y[lane], r: 10 });
 }
 function updateHearts() {
   for (var i = hearts.length - 1; i >= 0; i--) {
-    var h = hearts[i]; h.x -= speed;
+    var h = hearts[i]; h.x -= speed * dt;
     if (h.x < -40) { hearts.splice(i, 1); continue; }
     var dx = getPlayerCenterX() - h.x, dy = getPlayerCenterY() - h.y;
     if (Math.sqrt(dx*dx + dy*dy) < h.r + 24 && gameState === 'playing') {
@@ -436,7 +478,7 @@ function updateObstacles() {
     var obs = laneObstacles[lane];
     for (var i = obs.length - 1; i >= 0; i--) {
       var ob = obs[i];
-      ob.x -= speed;
+      ob.x -= speed * dt;
       ob.hitbox.x = ob.x + 15; ob.grazeBox.x = ob.x - GRAZE_MARGIN;
       if (ob.type === 'f') {
         var floatY = Math.sin(frameCount * 0.08 + ob.wingOffset) * 4;
@@ -461,24 +503,24 @@ function updateObstacles() {
         if (ob.grazed) {
           grazeStreak++; totalGraze++;
           if (grazeStreak > maxGrazeStreak) maxGrazeStreak = grazeStreak;
-          var bonus = grazeStreak>=20?80:(grazeStreak>=10?40:(grazeStreak>=5?20:10));
+          var bonus = grazeStreak * 5;
           score += bonus;
-          var label = grazeStreak>=20?'幻影擦弹!!!':(grazeStreak>=10?'擦弹高手!':(grazeStreak>=5?'连续擦弹!':'擦弹!'));
+          var label = '擦弹 ×' + grazeStreak;
+          if (grazeStreak >= 30) label = '擦弹神! ×' + grazeStreak;
+          else if (grazeStreak >= 15) label = '擦弹狂 ×' + grazeStreak;
           addScorePop(getPlayerCenterX(), player.targetY - 15, '+' + bonus, '#ffd700');
           addLabelPop(getPlayerCenterX(), player.targetY - 35, label, '#ffd700');
           spawnParticles(getPlayerCenterX(), player.targetY, '#ffd700', 16, 1, 4);
           sfxGraze();
-          if (grazeStreak === 15) {
-            dashTimer = Math.max(dashTimer, 240);
-            player.animState = 'dash';
-            addLabelPop(getPlayerCenterX(), player.targetY - 55, '🔥 擦弹爆发!!', '#ff6b6b');
+          if (grazeStreak % 20 === 0) {
+            if (dashCharges < maxDashCharges) dashCharges++;
+            addLabelPop(getPlayerCenterX(), player.targetY - 55, '+1 ⚡ 连击奖励!', '#ff6b6b');
             sfxCombo();
           }
         }
       }
     }
   }
-  if (grazeStreak > 0 && frameCount - lastObstacleTime > 180) grazeStreak = 0;
 }
 
 function checkCollisions() {
@@ -490,6 +532,7 @@ function checkCollisions() {
     if (hb.x < hh.x + hh.w && hb.x + hb.w > hh.x && hb.y < hh.y + hh.h && hb.y + hb.h > hh.y) {
       lives--;
       invTimer = 90;
+      grazeStreak = 0;
       spawnParticles(getPlayerCenterX(), getPlayerCenterY(), '#ef4444', 20, 2, 6);
       sfxHit();
       if (lives <= 0) { endGame(); return; }
@@ -509,6 +552,19 @@ function switchLane(dir) {
   player.switchCooldown = SWITCH_COOLDOWN;
   player.animState = 'dash';
   sfxSwitch();
+}
+
+function activateDASH() {
+  if (gameState !== 'playing' || dashTimer > 0 || dashCharges <= 0) return;
+  dashCharges--;
+  grazeStreak = 0;
+  preDashSpeed = speed;
+  speed *= 2;
+  dashTimer = dashMax;
+  player.animState = 'dash';
+  addLabelPop(getPlayerCenterX(), player.targetY - 30, '⚡ DASH!', '#ff6b6b');
+  spawnParticles(getPlayerCenterX(), player.targetY, '#ffd700', 20, 1, 5);
+  sfxDash();
 }
 
 function updatePlayer() {
@@ -580,21 +636,24 @@ function drawPlayer() {
 // ═══════════ 主循环 ═══════════
 function update() {
   if (gameState !== 'playing') return;
+  var now = performance.now();
+  dt = Math.min((now - lastTs) / 16.67, 3);
+  lastTs = now;
   frameCount++;
   var scoreMult = (dashTimer > 0) ? 2 : 1;
-  score += speed * 0.1 * scoreMult;
+  score += speed * 0.1 * scoreMult * dt;
   var phase = Math.max(1, Math.floor(score / 1000) + 1);
   var speedInterval = Math.max(120, 300 - phase * 35);
-  if (frameCount % speedInterval === 0) speed += 0.08;
-  if (speed < 2.5) speed = 2.5; if (speed > 10) speed = 10;
+  if (frameCount % speedInterval === 0) speed += 0.12;
+  if (speed < 5) speed = 5;
   updatePlayer();
   if (invTimer > 0) invTimer--;
-  if (dashTimer > 0) { dashTimer--; if (dashTimer === 0) { player.animState = 'run'; speed = Math.max(2.5, speed*0.75); } }
-  if (frameCount % Math.floor(Math.max(30, 70 - speed*3)) === 0) spawnObstacle();
+  if (dashTimer > 0) { dashTimer--; if (dashTimer === 0) { player.animState = 'run'; speed = preDashSpeed; } }
+  obstacleTimer += dt; if (obstacleTimer >= Math.max(22, 55 - speed * 2.5)) { spawnObstacle(); obstacleTimer = 0; }
   updateObstacles();
-  if (frameCount % 750 === 0) spawnPowerUp();
+  powerUpTimer += dt; if (powerUpTimer >= 450) { spawnPowerUp(); powerUpTimer = 0; }
   updatePowerUps();
-  if (frameCount % 1800 === 0 && hearts.length < 2) spawnHeart();
+  heartTimer += dt; if (heartTimer >= 1080 && hearts.length < 2) { spawnHeart(); heartTimer = 0; }
   updateHearts();
   checkCollisions();
   if (dashTimer > 0 && frameCount % 1 === 0) {
@@ -635,6 +694,14 @@ function draw() {
   for (var li = 0; li < maxLives; li++) {
     ctx.fillStyle = li < lives ? '#ff4466' : 'rgba(255,68,102,0.2)';
     drawHeartShape(ctx, 30 + li * 28, 24, 14);
+  }
+  // DASH充能
+  if (dashCharges > 0) {
+    ctx.fillStyle = dashCharges >= 3 ? '#ff6b6b' : '#ffd700';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('⚡ ×' + dashCharges, 30 + maxLives * 28 + 6, 28);
+    ctx.textAlign = 'start';
   }
 }
 
