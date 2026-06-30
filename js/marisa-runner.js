@@ -239,13 +239,23 @@ function renderLB(area, data, rank, score) {
   }
 }
 
-var SENSITIVE_ARRAY = typeof SENSITIVE_SET !== 'undefined' ? Array.from(SENSITIVE_SET) : [];
+var _sensitiveArr = null;
 
 function checkSensitive(name) {
-  if (!SENSITIVE_ARRAY.length) return false;
+  if (_sensitiveArr === null) {
+    _sensitiveArr = [];
+    try {
+      if (typeof SENSITIVE_SET !== 'undefined' && SENSITIVE_SET && SENSITIVE_SET.forEach) {
+        SENSITIVE_SET.forEach(function(w) {
+          _sensitiveArr.push(String(w).toLowerCase());
+        });
+      }
+    } catch(e) { console.warn('敏感词库加载失败:', e); }
+  }
+  if (!_sensitiveArr.length) return false;
   var lower = name.toLowerCase();
-  for (var i = 0; i < SENSITIVE_ARRAY.length; i++) {
-    if (lower.indexOf(SENSITIVE_ARRAY[i].toLowerCase()) !== -1) return true;
+  for (var i = 0; i < _sensitiveArr.length; i++) {
+    if (lower.indexOf(_sensitiveArr[i]) !== -1) return true;
   }
   return false;
 }
