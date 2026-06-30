@@ -53,6 +53,26 @@ foreach ($blockKeys as $w) {
     }
 }
 
+// 敏感词检测（与 checkname.php 相同逻辑）
+$clean = preg_replace('/[^\x{4e00}-\x{9fa5}a-zA-Z0-9]/u', '', $name);
+if ($clean && mb_strlen($clean) >= 2) {
+    $words = [];
+    $jsFile = __DIR__ . '/../js/sensitive-words.js';
+    if (file_exists($jsFile)) {
+        $content = file_get_contents($jsFile);
+        if (preg_match('/\[([\s\S]*)\]/', $content, $m)) {
+            $arr = @json_decode('[' . $m[1] . ']', true);
+            if (is_array($arr)) { $words = array_flip($arr); }
+        }
+    }
+    $len = mb_strlen($clean);
+    for ($i = 0; $i < $len; $i++) {
+        for ($j = $i + 2; $j <= $len && ($j - $i) <= 10; $j++) {
+            if (isset($words[mb_substr($clean, $i, $j - $i)])) { $name = '匿名玩家'; break 2; }
+        }
+    }
+}
+
 // 加载数据
 $entries = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
 if (!is_array($entries)) $entries = [];

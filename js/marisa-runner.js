@@ -244,25 +244,8 @@ function submitLB(area) {
   var name = (nameEl.value || '').trim();
   if (!name || name.length > 12) { name = '魔理沙'; }
   var btn = document.getElementById('lbSubmit');
-  btn.disabled = true; btn.textContent = '检测中...';
+  btn.disabled = true; btn.textContent = '提交中...';
 
-  fetch('api/checkname.php', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'name=' + encodeURIComponent(name)
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(res) {
-    if (!res.safe) { name = '匿名玩家'; }
-    doLBSubmit(name, area, btn);
-  })
-  .catch(function() {
-    doLBSubmit(name, area, btn); // 请求失败不拦
-  });
-}
-
-function doLBSubmit(name, area, btn) {
-  btn.textContent = '提交中...';
   var form = new FormData();
   form.append('name', name);
   form.append('score', String(lastFinalScore));
