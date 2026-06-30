@@ -239,10 +239,22 @@ function renderLB(area, data, rank, score) {
   }
 }
 
+function checkSensitive(name) {
+  if (typeof SENSITIVE_SET === 'undefined') return false;
+  var lower = name.toLowerCase();
+  var iter = SENSITIVE_SET.values();
+  var item;
+  while (!(item = iter.next()).done) {
+    if (lower.indexOf(item.value.toLowerCase()) !== -1) return true;
+  }
+  return false;
+}
+
 function submitLB(area) {
   var nameEl = document.getElementById('lbName');
   var name = (nameEl.value || '').trim();
   if (!name || name.length > 12) { name = '魔理沙'; }
+  if (checkSensitive(name)) { name = '匿名玩家'; }
   var btn = document.getElementById('lbSubmit');
   btn.disabled = true; btn.textContent = '提交中...';
 
