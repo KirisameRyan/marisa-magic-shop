@@ -239,13 +239,13 @@ function renderLB(area, data, rank, score) {
   }
 }
 
+var SENSITIVE_ARRAY = typeof SENSITIVE_SET !== 'undefined' ? Array.from(SENSITIVE_SET) : [];
+
 function checkSensitive(name) {
-  if (typeof SENSITIVE_SET === 'undefined') return false;
+  if (!SENSITIVE_ARRAY.length) return false;
   var lower = name.toLowerCase();
-  var iter = SENSITIVE_SET.values();
-  var item;
-  while (!(item = iter.next()).done) {
-    if (lower.indexOf(item.value.toLowerCase()) !== -1) return true;
+  for (var i = 0; i < SENSITIVE_ARRAY.length; i++) {
+    if (lower.indexOf(SENSITIVE_ARRAY[i].toLowerCase()) !== -1) return true;
   }
   return false;
 }
