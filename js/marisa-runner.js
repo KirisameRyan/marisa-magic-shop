@@ -10,6 +10,7 @@ var W = 960, H = 360;
 var GROUND_Y = 360;
 var LANE_Y = [60, 180, 300];
 var GRAZE_MARGIN = 30;
+var SWITCH_COOLDOWN = 20;
 
 // ═══════════ 素材 ═══════════
 var assets = {};
@@ -541,11 +542,14 @@ function checkCollisions() {
 
 // ═══════════ 玩家 ═══════════
 function switchLane(dir) {
-  if (gameState !== 'playing') return;
+  if (gameState !== 'playing' || player.switchCooldown > 0) return;
   var newLane = player.lane + dir;
   if (newLane < 0 || newLane > 2) return;
   player.lane = newLane;
   player.targetY = LANE_Y[player.lane];
+  player.switchCooldown = SWITCH_COOLDOWN;
+  player.animState = 'dash';
+  invTimer = Math.max(invTimer, SWITCH_COOLDOWN);
   sfxSwitch();
 }
 
@@ -563,8 +567,12 @@ function activateDASH() {
 }
 
 function updatePlayer() {
+  if (player.switchCooldown > 0) {
+    player.switchCooldown--;
+    if (player.switchCooldown === 0) player.animState = 'run';
+  }
   var diff = player.targetY - getPlayerCenterY();
-  if (Math.abs(diff) > 0.5) player.targetY -= diff * 0.25;
+  if (Math.abs(diff) > 0.5) player.targetY -= diff * 0.35;
   if (wantsUp()) switchLane(-1);
   if (wantsDown()) switchLane(1);
 
