@@ -16,13 +16,17 @@
         ]
       },
       {
+        label: '🎮 玩玩小游戏',
+        links: [
+          { href: 'game-platform.html', emoji: '🧹', text: '魔理沙快跑' }
+        ]
+      },
+      {
         label: '🆕 最新上线',
         links: [
           { href: 'quiz-genshin.html',      emoji: '✨', text: '原神人格' },
           { href: 'quiz-major.html',       emoji: '🏗️', text: '张雪峰选专业' },
-          { href: 'quiz-otti.html',        emoji: '🎭', text: 'OTTI人格' },
-          { href: 'quiz-otokonoko.html',   emoji: '💅', text: '男娘指数' },
-          { href: 'quiz-sexual.html',      emoji: '⚠️', text: 'X压抑程度' }
+          { href: 'quiz-otti.html',        emoji: '🎭', text: 'OTTI人格' }
         ]
       },
       {
@@ -40,6 +44,8 @@
           { href: 'quiz-food-care.html',          emoji: '🍲', text: '对症下菜' },
           { href: 'quiz-hometown.html',           emoji: '🏠', text: '灵魂故乡' },
           { href: 'quiz-animal.html',             emoji: '🐾', text: '灵魂动物·旧' },
+          { href: 'quiz-otokonoko.html',        emoji: '💅', text: '男娘指数' },
+          { href: 'quiz-sexual.html',           emoji: '⚠️', text: 'X压抑程度' },
           { href: 'collect.html',                 emoji: '📝', text: '建议新彩蛋' }
         ]
       },
