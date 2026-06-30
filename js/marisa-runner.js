@@ -239,35 +239,30 @@ function renderLB(area, data, rank, score) {
   }
 }
 
-var _sensitiveArr = null;
-
-function checkSensitive(name) {
-  if (_sensitiveArr === null) {
-    _sensitiveArr = [];
-    try {
-      if (typeof SENSITIVE_SET !== 'undefined' && SENSITIVE_SET && SENSITIVE_SET.forEach) {
-        SENSITIVE_SET.forEach(function(w) {
-          _sensitiveArr.push(String(w).toLowerCase());
-        });
-      }
-    } catch(e) { console.warn('敏感词库加载失败:', e); }
-  }
-  if (!_sensitiveArr.length) return false;
-  var lower = name.toLowerCase();
-  for (var i = 0; i < _sensitiveArr.length; i++) {
-    if (lower.indexOf(_sensitiveArr[i]) !== -1) return true;
-  }
-  return false;
-}
-
 function submitLB(area) {
   var nameEl = document.getElementById('lbName');
   var name = (nameEl.value || '').trim();
   if (!name || name.length > 12) { name = '魔理沙'; }
-  if (checkSensitive(name)) { name = '匿名玩家'; }
   var btn = document.getElementById('lbSubmit');
-  btn.disabled = true; btn.textContent = '提交中...';
+  btn.disabled = true; btn.textContent = '检测中...';
 
+  fetch('api/checkname.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'name=' + encodeURIComponent(name)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (!res.safe) { name = '匿名玩家'; }
+    doLBSubmit(name, area, btn);
+  })
+  .catch(function() {
+    doLBSubmit(name, area, btn); // 请求失败不拦
+  });
+}
+
+function doLBSubmit(name, area, btn) {
+  btn.textContent = '提交中...';
   var form = new FormData();
   form.append('name', name);
   form.append('score', String(lastFinalScore));
@@ -278,7 +273,7 @@ function submitLB(area) {
     .then(function(res) {
       if (res.ok) {
         area.innerHTML = '<p class="lb-ok">✅ 提交成功！排名第 <b>' + res.rank + '</b></p>';
-        loadLB(lastFinalScore); // 刷新
+        loadLB(lastFinalScore);
       } else {
         area.innerHTML = '<p class="lb-err">提交失败: ' + (res.error||'未知错误') + '</p>';
       }
