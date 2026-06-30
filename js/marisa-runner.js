@@ -10,8 +10,6 @@ var W = 960, H = 360;
 var GROUND_Y = 360;
 var LANE_Y = [60, 180, 300];
 var GRAZE_MARGIN = 30;
-var SWITCH_COOLDOWN = 42;
-var SWITCH_TRANSITION = 18;
 
 // ═══════════ 素材 ═══════════
 var assets = {};
@@ -543,14 +541,11 @@ function checkCollisions() {
 
 // ═══════════ 玩家 ═══════════
 function switchLane(dir) {
-  if (player.switchCooldown > 0) return;
   if (gameState !== 'playing') return;
   var newLane = player.lane + dir;
   if (newLane < 0 || newLane > 2) return;
   player.lane = newLane;
   player.targetY = LANE_Y[player.lane];
-  player.switchCooldown = SWITCH_COOLDOWN;
-  player.animState = 'dash';
   sfxSwitch();
 }
 
@@ -568,11 +563,6 @@ function activateDASH() {
 }
 
 function updatePlayer() {
-  if (player.switchCooldown > 0) {
-    player.switchCooldown--;
-    if (player.switchCooldown <= SWITCH_COOLDOWN - SWITCH_TRANSITION) player.animState = 'run';
-    if (player.switchCooldown === 0 && dashTimer <= 0) player.animState = 'run';
-  }
   var diff = player.targetY - getPlayerCenterY();
   if (Math.abs(diff) > 0.5) player.targetY -= diff * 0.25;
   if (wantsUp()) switchLane(-1);
@@ -624,12 +614,6 @@ function drawPlayer() {
     ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(cx + dw/2, cy + dh/2, dw/2 + 12, 0, Math.PI*2); ctx.stroke();
     ctx.globalAlpha = 1;
-  }
-  if (player.switchCooldown > 0) {
-    var progress = 1 - player.switchCooldown / SWITCH_COOLDOWN;
-    ctx.strokeStyle = 'rgba(255,255,255,' + (0.15 + progress*0.25) + ')';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(cx + dw/2, cy + dh/2, dw/2 + 8, -Math.PI/2, -Math.PI/2 + progress*Math.PI*2); ctx.stroke();
   }
 }
 
