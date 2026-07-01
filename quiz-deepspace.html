@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="js/analytics.js"></script>
+<title>测测你的恋与深空本命 · 霧雨魔法店</title>
+<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f472b6'>💘</text></svg>">
+<link rel="stylesheet" href="css/common.css">
+<style>
+.cover-hearts{text-align:center;margin-bottom:12px;font-size:36px;letter-spacing:8px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:.8;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+.result-dimensions{display:flex;flex-direction:column;gap:7px;text-align:left;margin-top:14px;}
+.dim-item{display:flex;align-items:center;gap:10px;}
+.dim-label{width:60px;font-size:10px;color:var(--muted);text-align:right;flex-shrink:0;}
+.dim-bar-wrap{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.dim-bar{height:100%;border-radius:3px;width:0;transition:width .9s ease;}
+.dim-val{font-size:10px;color:var(--muted);width:24px;text-align:right;}
+.reveal-screen{position:relative;padding:60px 20px;text-align:center;overflow:hidden;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.reveal-screen .scanline{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#ef4444,transparent);animation:scanDown 1s infinite;}
+@keyframes scanDown{0%{top:0}100%{top:100%}}
+.reveal-screen .reveal-title{font-size:13px;color:#ef4444;letter-spacing:3px;margin-bottom:16px;}
+.reveal-screen .reveal-emoji{font-size:60px;animation:glowPulse 1.2s infinite;}
+@keyframes glowPulse{0%,100%{text-shadow:0 0 20px rgba(239,68,68,.3)}50%{text-shadow:0 0 40px rgba(239,68,68,.8),0 0 80px rgba(239,68,68,.3)}}
+.reveal-screen .reveal-hint{font-size:11px;color:var(--muted);margin-top:12px;animation:blink 1s infinite;}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+.reveal-particles{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.reveal-particle{position:absolute;color:var(--gold);font-size:14px;animation:rise linear infinite;opacity:0;}
+@keyframes rise{0%{opacity:0;transform:translateY(0) rotate(0deg)}10%{opacity:.6}90%{opacity:.2}100%{opacity:0;transform:translateY(-300px) rotate(180deg)}
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+<script src="js/utils.js"></script>
+
+<div class="container" id="app"></div>
+<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
+<script>
+const CHARS = {
+deku:{name:'绿谷出久',hero:'デク',emoji:'🥦',color:'#4ade80',dims:{gentle:90,hot:70,cold:20,dark:35},
+ quote:'"作者堀越耕平亲手把他打成全网下架第一人——含金量比某些游戏制作组高多了。"',
+ desc:'· 一辈子无个性起步，跟你在恋与深空抽卡的概率一样低。<br>· 哭包本包，眼泪比One For All还猛，动不动就"为了成为英雄我可以哭死"。<br>· 作者堀越耕平亲手把他打成全网下架第一人，含金量薄纱某些游戏制作组。<br>· 恭喜你，抽到的是<strong>日本热血模板1.0</strong>，附赠鬼子最爱的中二病设定。',
+ tags:['全网下架第一人','日本热血模板1.0','中二病设定','泪腺核弹']},
+bakugo:{name:'爆豪胜己',hero:'大・爆・殺・神',emoji:'💥',color:'#f97316',dims:{gentle:5,hot:98,cold:15,dark:55},
+ quote:'"从幼儿园就开始霸凌主角——鬼子校园霸凌文化天花板。"',
+ desc:'· 从幼儿园就开始霸凌主角，鬼子校园霸凌文化天花板。<br>· 满口"去死"，对谁都这么温柔，包括你这个玩家。<br>· 脾气比核弹还爆，情商低到地心，典型鬼子"嘴臭当个性"的杰出代表。<br>· 你抽到的不是什么好东西，是一个需要送去<strong>劳改所改造的火药桶</strong>。',
+ tags:['霸凌天花板','嘴臭当个性','送去劳改所','EQ负数']},
+todoroki:{name:'轰焦冻',hero:'ショート',emoji:'❄️',color:'#93c5fd',dims:{gentle:30,hot:40,cold:95,dark:45},
+ quote:'"爹是全剧最大反派，但鬼子作者硬说这是家庭教育。"',
+ desc:'· 爹是全剧最大反派，但鬼子作者硬说这是"家庭教育"。<br>· 半边身子用自己力量，半边用"老爸的基因"，恶心程度直接拉满。<br>· 家族伦理烂剧男主，顺便客串英雄，鬼子最爱的"爹味"人设。<br>· 抽到他的你，等于同时抽到了<strong>他全家的精神污染套装</strong>。',
+ tags:['爹味人设','家族伦理烂剧','精神污染套装','洗白未遂']},
+shigaraki:{name:'死柄木弔',hero:'敵連合',emoji:'🖐️',color:'#a1a1aa',dims:{gentle:2,hot:55,cold:60,dark:99},
+ quote:'"被鬼子最大反派当儿子养，然后更疯了——经典传承。"',
+ desc:'· 一身脱皮干尸造型，皮肤管理直接摆烂到坟头。<br>· 被鬼子最大反派当儿子养，然后养得更疯，完美传承日本扭曲美学。<br>· 口头禅"我要毁灭一切"，包括你的好感度和游戏服务器。<br>· 你的本命：一位需要<strong>三吨保湿霜的恐怖分子</strong>。',
+ tags:['脱皮干尸','日本扭曲美学','三吨保湿霜','恐怖分子']},
+dabi:{name:'荼毗',hero:'青炎',emoji:'🔥',color:'#3b82f6',dims:{gentle:8,hot:85,cold:50,dark:95},
+ quote:'"烧成焦炭的培根长腿跑出来当反派——视觉效果赛博鬼子恐怖片。"',
+ desc:'· 烧成焦炭的培根长腿跑出来当反派，视觉效果赛博鬼子恐怖片。<br>· 当众直播自己是轰焦冻他哥，家庭关系比他皮肤还焦糊。<br>· 鬼子最爱的"复仇美学"巅峰，烧杀抢掠全家桶。<br>· 你抽到的是一份<strong>《鬼子家庭纠纷纵火案全记录》</strong>。',
+ tags:['培根成精','赛博恐怖片','纵火案全记录','复仇美学']},
+allmight:{name:'欧尔麦特',hero:'オールマイト',emoji:'🎈',color:'#fbbf24',dims:{gentle:70,hot:90,cold:20,dark:5},
+ quote:'"曾经的No.1英雄，现在是台会咳血的漏气机器——虚假坚强。"',
+ desc:'· 曾经的No.1英雄，现在是台会咳血的漏气机器。<br>· "已经没事了！"——下一秒自己快没了，鬼子式虚假坚强。<br>· 肌肉萎缩+肺部穿孔，卖惨卖到巅峰。<br>· 你抽到的最强角色——<strong>只是保质期早就过期了，还附赠日本职场过劳文化</strong>。',
+ tags:['漏气机器','虚假坚强','保质期过期','日本过劳文化']}
+};
+
+const KEYS = ['deku','bakugo','todoroki','shigaraki','dabi','allmight'];
+const DIM_META = [{k:'gentle',label:'温柔度',color:'#f472b6'},{k:'hot',label:'热血度',color:'#ef4444'},{k:'cold',label:'冷酷度',color:'#3b82f6'},{k:'dark',label:'病娇度',color:'#a1a1aa'}];
+
+const QUESTIONS = [
+{q:'你最喜欢游戏中男主的哪种外貌特征？',opts:[
+{txt:'温柔干净、笑容治愈的类型',scores:{deku:4,allmight:2}},
+{txt:'狂野帅气、身材爆炸的类型',scores:{bakugo:4,allmight:2}},
+{txt:'高冷禁欲、气质出众的类型',scores:{todoroki:4,dabi:1}},
+{txt:'神秘危险、眼神勾人的类型',scores:{shigaraki:4,dabi:2}}]},
+{q:'在游戏剧情里，你最期待哪种发展？',opts:[
+{txt:'甜蜜日常、互相治愈',scores:{deku:3,allmight:3}},
+{txt:'激烈战斗、并肩作战',scores:{bakugo:4,allmight:3}},
+{txt:'阴谋权谋、层层反转',scores:{todoroki:3,dabi:2}},
+{txt:'病娇追逐、占有与被占有',scores:{shigaraki:4,dabi:4}}]},
+{q:'如果你能给男主送礼物，你会选？',opts:[
+{txt:'温暖的围巾或手作点心',scores:{deku:4,allmight:3}},
+{txt:'最新款的战斗装备或武器',scores:{bakugo:4,allmight:3}},
+{txt:'高级定制西装或名表',scores:{todoroki:3,dabi:2}},
+{txt:'带有特殊含义的项链（带锁那种）',scores:{shigaraki:4,dabi:4}}]},
+{q:'游戏里男主吃醋时，你觉得最可爱的是？',opts:[
+{txt:'默默关心却假装不在意',scores:{deku:3,todoroki:3,allmight:2}},
+{txt:'直接炸毛、宣示主权',scores:{bakugo:5}},
+{txt:'表面平静但暗中较劲',scores:{todoroki:4,dabi:2}},
+{txt:'笑着说可怕的话',scores:{shigaraki:4,dabi:4}}]},
+{q:'面对突如其来的危险，你的第一反应是？',opts:[
+{txt:'先安抚身边的人',scores:{deku:3,allmight:4}},
+{txt:'立刻投入战斗',scores:{bakugo:5,allmight:2}},
+{txt:'分析局势找最优解',scores:{todoroki:4,deku:1}},
+{txt:'觉得有点刺激想看热闹',scores:{dabi:3,shigaraki:2}}]},
+{q:'你最欣赏男主的哪种性格？',opts:[
+{txt:'温柔可靠、有责任感',scores:{deku:4,allmight:4}},
+{txt:'热血冲动、永不放弃',scores:{bakugo:4,allmight:2}},
+{txt:'冷静理性、天才型',scores:{todoroki:4,dabi:2}},
+{txt:'极端偏执、敢爱敢恨',scores:{shigaraki:4,dabi:4}}]},
+{q:'约会时你最想去的地点是？',opts:[
+{txt:'安静的咖啡馆或公园',scores:{deku:3,allmight:3}},
+{txt:'刺激的游乐园或战场模拟区',scores:{bakugo:4,allmight:2}},
+{txt:'高档餐厅或艺术展览',scores:{todoroki:4,dabi:1}},
+{txt:'隐秘的、只有两个人的地方',scores:{shigaraki:4,dabi:4}}]},
+{q:'如果你和男主吵架，你会？',opts:[
+{txt:'主动道歉求和',scores:{deku:4,allmight:3}},
+{txt:'硬刚到底，谁怕谁',scores:{bakugo:5}},
+{txt:'冷战，然后用智商碾压',scores:{todoroki:5}},
+{txt:'用更极端的手段和好',scores:{shigaraki:4,dabi:4}}]},
+{q:'你最喜欢游戏的哪种玩法？',opts:[
+{txt:'剧情对话、收集回忆',scores:{deku:3,allmight:3}},
+{txt:'战斗系统、刷怪升级',scores:{bakugo:4,allmight:2}},
+{txt:'解谜、探索隐藏剧情',scores:{todoroki:3,dabi:2}},
+{txt:'卡池抽取、养成系统',scores:{shigaraki:3,dabi:3}}]},
+{q:'男主受伤时，你想怎么做？',opts:[
+{txt:'细心照顾他',scores:{deku:4,allmight:4}},
+{txt:'帮他报仇，打回去',scores:{bakugo:5}},
+{txt:'分析原因，防止再次发生',scores:{todoroki:4,deku:1}},
+{txt:'觉得他这个样子也挺有魅力',scores:{shigaraki:4,dabi:4}}]},
+{q:'你对HE（Happy Ending）的理解是？',opts:[
+{txt:'平淡幸福的日常',scores:{deku:4,allmight:4}},
+{txt:'战胜所有敌人后的胜利',scores:{bakugo:3,allmight:5}},
+{txt:'掌握一切真相和权力',scores:{todoroki:4,dabi:2}},
+{txt:'永远绑在一起，谁也离不开谁',scores:{shigaraki:4,dabi:4}}]},
+{q:'游戏里哪个元素最戳你？',opts:[
+{txt:'温暖治愈的感情线',scores:{deku:4,allmight:3}},
+{txt:'热血燃炸的战斗场面',scores:{bakugo:4,allmight:3}},
+{txt:'复杂烧脑的世界观',scores:{todoroki:4,dabi:2}},
+{txt:'黑暗病娇的感情张力',scores:{shigaraki:4,dabi:4}}]},
+{q:'如果你是女主，你最想对男主说？',opts:[
+{txt:'有你在真好',scores:{deku:4,allmight:3}},
+{txt:'我们一起变强吧',scores:{bakugo:4,allmight:3}},
+{txt:'把你的秘密都告诉我',scores:{todoroki:4,dabi:2}},
+{txt:'你只能是我的',scores:{shigaraki:4,dabi:4}}]},
+{q:'游戏更新新角色时，你最期待什么类型？',opts:[
+{txt:'新温柔系男主',scores:{deku:3,allmight:4}},
+{txt:'新战斗狂人',scores:{bakugo:5}},
+{txt:'新神秘大佬',scores:{todoroki:4,dabi:2}},
+{txt:'新危险反派',scores:{shigaraki:4,dabi:4}}]},
+{q:'玩完游戏后，你最想做的事是？',opts:[
+{txt:'反复重温甜蜜剧情',scores:{deku:4,allmight:2}},
+{txt:'去研究攻略打满成就',scores:{bakugo:3,allmight:3}},
+{txt:'分析整个世界设定',scores:{todoroki:4,dabi:2}},
+{txt:'脑补一些更刺激的剧情',scores:{shigaraki:4,dabi:4}}]}
+];
+
+var idx = -1, answers = [];
+
+function render() {
+  var d1=document.getElementById('ad1');
+  if(d1)d1.style.display=idx===-1?'block':'none';
+  var a = document.getElementById('app');
+  if (idx === -1) {
+    a.innerHTML = '<div class="intro"><div class="intro-badge">💘 霧雨魔法店 · 乙女鉴定</div><h1>测测你在《恋与深空》<br>的本命是谁</h1><p class="sub">' + QUESTIONS.length + ' 道深度问题 · 精准匹配你的深空恋人 · 抽到谁就是谁</p><div class="cover-hearts">💗💕💖💘💓</div><button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="start()">开始测试 →</button><a href="index.html" class="home-link">← 返回魔法店</a></div>';
+  } else if (idx < QUESTIONS.length) {
+    var q = QUESTIONS[idx];
+    var total = QUESTIONS.length;
+    var barW = Math.round((idx+1)/total*100);
+    var html = '<div class="progress-wrap"><div class="progress-text">问题 '+(idx+1)+' / '+total+'</div><div class="progress-bar"><div class="progress-fill" style="width:'+barW+'%"></div></div></div>';
+    html += '<div class="q-num">Q' + (idx+1) + '</div><div class="q-text">' + q.q + '</div><div class="options">';
+    for (var i = 0; i < q.opts.length; i++) {
+      html += '<button class="opt-btn" onclick="answer(' + i + ')"><span class="opt-letter">' + 'ABCD'[i] + '</span>' + q.opts[i].txt + '</button>';
+    }
+    html += '</div>';
+    a.innerHTML = html;
+  } else if (idx === QUESTIONS.length) {
+    state = 'reveal'; calcAndReveal();
+  } else if (state === 'reveal') {
+    renderReveal(a);
+  } else {
+    showResult();
+  }
+}
+
+var state = 'intro';
+
+function start() { state = 'quiz'; idx = 0; answers = []; render(); }
+
+function answer(optIdx) {
+  answers.push(optIdx);
+  idx++;
+  if (idx === QUESTIONS.length) { state = 'reveal'; calcAndReveal(); }
+  else render();
+}
+
+var revealedChar = null;
+
+function calcAndReveal() {
+  var scores = {}; KEYS.forEach(function(k){scores[k]=0;});
+  for (var i = 0; i < answers.length; i++) {
+    var sc = QUESTIONS[i].opts[answers[i]].scores;
+    for (var k in sc) { if (scores[k]!==undefined) scores[k] += sc[k]; }
+  }
+  var best = KEYS[0];
+  KEYS.forEach(function(k){ if (scores[k] > scores[best]) best = k; });
+  revealedChar = CHARS[best];
+  renderReveal(document.getElementById('app'));
+  setTimeout(function() { state = 'result'; showResult(); }, 2000);
+}
+
+function renderReveal(app) {
+  var c = revealedChar;
+  var particles = '';
+  for (var pi = 0; pi < 16; pi++) {
+    particles += '<span class="reveal-particle" style="left:'+(Math.random()*90+5)+'%;top:'+(Math.random()*80+10)+'%;animation-delay:'+Math.random()*3+'s;animation-duration:'+(2.5+Math.random()*3)+'s;font-size:'+(10+Math.random()*12)+'px;">✦</span>';
+  }
+  app.innerHTML =
+    '<div class="reveal-screen">'+
+      '<div class="scanline"></div>'+
+      '<div class="reveal-particles">'+particles+'</div>'+
+      '<div class="reveal-title">你以为你在测「恋与深空」？</div>'+
+      '<div class="reveal-emoji" style="color:'+c.color+'">'+c.emoji+'</div>'+
+      '<div class="reveal-code" style="color:'+c.color+';font-size:42px;font-weight:900;animation:glowPulse 1.2s infinite;">'+c.hero+'</div>'+
+      '<div class="reveal-hint">结果生成中…</div>'+
+    '</div>';
+}
+
+function showResult() {
+  var c = revealedChar;
+  var a = document.getElementById('app');
+  var html = '<div class="result" style="background:rgba(239,68,68,.05);border-radius:18px;padding:20px 16px;border:2px solid rgba(239,68,68,.2);margin-bottom:14px;">';
+  html += '<div class="result-emoji">' + c.emoji + '</div>';
+  html += '<div class="result-label" style="color:#ef4444;font-size:18px;font-weight:900;letter-spacing:3px;">这里只有鬼子学院！只有鬼子！</div>';
+  html += '<div class="result-name" style="color:' + c.color + ';">' + c.name + '</div>';
+  html += '<div class="result-tagline" style="color:var(--muted);">英雄名：' + c.hero + '</div>';
+  html += '<div class="result-desc" style="border-color:rgba(239,68,68,.2);">' + c.desc + '</div>';
+  html += '<div class="result-meta">';
+  c.tags.forEach(function(t){html += '<span class="meta-tag">' + t + '</span>';});
+  html += '</div>';
+  html += '<div class="result-dimensions">';
+  DIM_META.forEach(function(d){
+    var v = c.dims[d.k] || 0;
+    html += '<div class="dim-item"><span class="dim-label">' + d.label + '</span><div class="dim-bar-wrap"><div class="dim-bar" style="width:' + v + '%;background:' + d.color + ';"></div></div><span class="dim-val">' + v + '</span></div>';
+  });
+  html += '</div></div>';
+  html += '<button class="btn btn-main" onclick="shareIt()">📋 复制结果发给朋友</button>';
+  html += '<button class="btn btn-ghost" onclick="restart()">🔄 再来一次</button>';
+  html += '<a href="index.html" class="home-link">← 返回魔法店</a>';
+  html += '<div class="qq-section"><img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'"><p><strong style="color:var(--gold);">加群一起玩</strong><br>扫码进群，更多抽象好活</p></div>';
+  a.innerHTML = html;
+}
+
+function shareIt() {
+  var text = '😱我在《恋与深空》测出了蛆！你也来测测：' + window.location.href;
+  copyToClipboard(text, '已复制！发给朋友钓鱼 🎣');
+}
+
+function restart() { state = 'intro'; idx = -1; answers = []; render(); }
+
+render();
+</script>
+</body>
+</html>
