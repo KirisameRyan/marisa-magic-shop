@@ -11,7 +11,8 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:#1a1520;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;touch-action:manipulation;user-select:none;-webkit-user-select:none;overflow:hidden;height:100vh;}
-.game-container{display:flex;align-items:center;justify-content:center;width:100%;height:calc(100vh - 48px);background:#1a1520;position:relative;overflow:hidden;}
+.game-wrapper{display:flex;flex-direction:column;align-items:center;width:100%;height:calc(100vh - 48px);}
+.game-container{display:flex;align-items:center;justify-content:center;flex:1;width:100%;min-height:0;background:#1a1520;position:relative;overflow:hidden;}
 canvas{display:block;width:auto;height:auto;max-width:100%;max-height:100%;aspect-ratio:960/480;image-rendering:pixelated;image-rendering:crisp-edges;border:1px solid #3a3045;border-radius:12px;}
 .hud{position:absolute;top:16px;left:20px;right:20px;z-index:5;display:flex;justify-content:space-between;align-items:center;color:#8a7e9a;font-size:14px;flex-wrap:wrap;gap:4px;pointer-events:none;}
 .hud>*{pointer-events:auto;}
@@ -72,6 +73,8 @@ canvas{display:block;width:auto;height:auto;max-width:100%;max-height:100%;aspec
 <div id="shopNav"></div>
 <script src="nav.js"></script>
 
+<div class="game-wrapper">
+
 <div class="game-container" aria-label="魔理沙快跑">
   <div class="hud" id="hud">
     <div>
@@ -120,12 +123,13 @@ canvas{display:block;width:auto;height:auto;max-width:100%;max-height:100%;aspec
     <button class="btn-start" onclick="confirmSelect()">✦ 确认</button>
     <p class="sel-hint">← → 切换 · 滑动切换 · Enter 确认</p>
   </div>
-</div>
 
-<div class="mobile-controls" id="mobileControls">
-  <button class="ctrl-btn" id="btnUp">⬆ 切换</button>
-  <button class="ctrl-btn" id="btnDASH" style="font-size:14px;">⚡DASH</button>
-  <button class="ctrl-btn" id="btnDown">⬇ 切换</button>
+  <div class="mobile-controls" id="mobileControls">
+    <button class="ctrl-btn" id="btnUp">⬆ 切换</button>
+    <button class="ctrl-btn" id="btnDASH" style="font-size:14px;">⚡DASH</button>
+    <button class="ctrl-btn" id="btnDown">⬇ 切换</button>
+  </div>
+</div>
 </div>
 
 <script src="js/marisa-runner.js?v=2"></script>
