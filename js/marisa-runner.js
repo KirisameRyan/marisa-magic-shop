@@ -6,9 +6,9 @@
 
 var cv = document.getElementById('game');
 var ctx = cv.getContext('2d');
-var W = 960, H = 360;
+var W = 960, H = 480;
 var GROUND_Y = 360;
-var LANE_Y = [60, 180, 300];
+var LANE_Y = [80, 240, 400];
 var GRAZE_MARGIN = 30;
 var SWITCH_COOLDOWN = 20;
 
@@ -33,15 +33,25 @@ function preloadAll() {
     loadImage(base + 'marisa_dash2.png').then(function(i) { assets.dash2 = i; }),
     loadImage(base + 'marisa_dash3.png').then(function(i) { assets.dash3 = i; }),
     loadImage(base + 'marisa_dash4.png').then(function(i) { assets.dash4 = i; }),
+    loadImage(base + 'reimu_run0.png').then(function(i) { assets.re_run0 = i; }),
+    loadImage(base + 'reimu_run1.png').then(function(i) { assets.re_run1 = i; }),
+    loadImage(base + 'reimu_run2.png').then(function(i) { assets.re_run2 = i; }),
+    loadImage(base + 'reimu_run3.png').then(function(i) { assets.re_run3 = i; }),
+    loadImage(base + 'reimu_dash0.png').then(function(i) { assets.re_dash0 = i; }),
+    loadImage(base + 'reimu_dash1.png').then(function(i) { assets.re_dash1 = i; }),
+    loadImage(base + 'reimu_dash2.png').then(function(i) { assets.re_dash2 = i; }),
     loadImage(base + 'mogu.png').then(function(i) { assets.mogu = i; }),
     loadImage(base + 'yaojing.png').then(function(i) { assets.yaojing = i; }),
     loadImage(base + 'beijing.jpeg').then(function(i) { assets.bg = i; }),
   ]);
 }
 var runFrames = [], dashFrames = [];
+var reimuRunFrames = [], reimuDashFrames = [];
 function setupFrames() {
   runFrames  = [assets.run1, assets.run2, assets.run3, assets.run4];
   dashFrames = [assets.dash1, assets.dash2, assets.dash3, assets.dash4];
+  reimuRunFrames  = [assets.re_run0, assets.re_run1, assets.re_run2, assets.re_run3];
+  reimuDashFrames = [assets.re_dash0, assets.re_dash1, assets.re_dash2];
 }
 
 // ═══════════ 音效 ═══════════
@@ -72,6 +82,11 @@ function sfxStar()       { playTone(600,0.06,'sine',0.08); playTone(900,0.06,'si
 
 // ═══════════ 游戏状态 ═══════════
 var gameState = 'loading';
+var playerChar = 'marisa';
+var CHAR = {
+  marisa: { vW:110, vH:98, cW:44, cH:52, dashMax:210, maxCharges:3, switchCD:20, scoreRate:1.2, grazeM:36 },
+  reimu:  { vW:92, vH:86, cW:36, cH:40, dashMax:270, maxCharges:4, switchCD:16, scoreRate:1.0, grazeM:42 }
+};
 var score = 0, bestScore = 0, bestGraze = 0;
 var speed = 5, frameCount = 0;
 var preDashSpeed = 5;
@@ -86,7 +101,7 @@ var dashCharges = 0, maxDashCharges = 3;
 var lives = 3, maxLives = 5, invTimer = 0;
 var hearts = [];
 var player = {
-  x: 100, lane: 1, targetY: 180, visualW: 95, visualH: 85,
+  x: 100, lane: 1, targetY: 240, visualW: 110, visualH: 98,
   colW: 40, colH: 48, switchCooldown: 0, animState: 'run'
 };
 var laneObstacles = [[], [], []];
@@ -96,7 +111,6 @@ var floatingTexts = [];
 var bgScroll = 0;
 
 var keys = {};
-var upDown = false, downDown = false;
 
 // ═══════════ 存储 ═══════════
 function loadBest() {
@@ -119,6 +133,8 @@ function getPlayerHitbox() {
 
 document.addEventListener('keydown', function(e) {
   if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'w' || e.key === 's' || e.key === 'W' || e.key === 'S') e.preventDefault();
+  if (!e.repeat && (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ')) switchLane(-1);
+  if (!e.repeat && (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S')) switchLane(1);
   if (e.key === 'x' || e.key === 'X' || e.key === 'Shift') { e.preventDefault(); activateDASH(); }
   keys[e.key] = true;
   initAudio();
@@ -127,17 +143,9 @@ document.addEventListener('keyup', function(e) { keys[e.key] = false; });
 cv.addEventListener('touchstart', function(e) { e.preventDefault(); });
 
 var btnU = document.getElementById('btnUp'), btnD = document.getElementById('btnDown'), btnDash = document.getElementById('btnDASH'), btnStart = document.getElementById('btnStart');
-btnU.addEventListener('pointerdown', function(e) { upDown = true; initAudio(); e.preventDefault(); });
-btnU.addEventListener('pointerup', function() { upDown = false; });
-btnU.addEventListener('pointerleave', function() { upDown = false; });
-btnD.addEventListener('pointerdown', function(e) { downDown = true; initAudio(); e.preventDefault(); });
-btnD.addEventListener('pointerup', function() { downDown = false; });
-btnD.addEventListener('pointerleave', function() { downDown = false; });
+btnU.addEventListener('pointerdown', function(e) { switchLane(-1); initAudio(); e.preventDefault(); });
+btnD.addEventListener('pointerdown', function(e) { switchLane(1); initAudio(); e.preventDefault(); });
 btnDash.addEventListener('pointerdown', function(e) { activateDASH(); initAudio(); e.preventDefault(); });
-btnStart.addEventListener('click', startGame);
-
-function wantsUp()   { return keys['ArrowUp'] || keys['w'] || keys['W'] || keys[' '] || upDown; }
-function wantsDown() { return keys['ArrowDown'] || keys['s'] || keys['S'] || downDown; }
 
 // ═══════════ UI ═══════════
 function updateScoreDisplay() {
@@ -161,12 +169,17 @@ function updateScoreDisplay() {
 
 // ═══════════ 游戏流程 ═══════════
 function startGame() {
+  var c = CHAR[playerChar];
   score = 0; speed = 5; frameCount = 0;
   preDashSpeed = 5;
   obstacleTimer = 0; powerUpTimer = 0; heartTimer = 0;
   grazeStreak = 0; maxGrazeStreak = 0; totalGraze = 0;
   lastObstacleTime = 0; deathFlash = 0;
   player.lane = 1; player.targetY = LANE_Y[1]; player.switchCooldown = 0; player.animState = 'run';
+  player.visualW = c.vW; player.visualH = c.vH;
+  player.colW = c.cW; player.colH = c.cH;
+  dashMax = c.dashMax; maxDashCharges = c.maxCharges;
+  SWITCH_COOLDOWN = c.switchCD; GRAZE_MARGIN = c.grazeM;
   dashTimer = 0; posHistory = []; lives = 3; invTimer = 0; hearts = []; dashCharges = 0;
   laneObstacles = [[], [], []]; particles = []; floatingTexts = []; powerUps = [];
   gameState = 'playing';
@@ -365,8 +378,8 @@ function drawBackground() {
   ctx.fillStyle = 'rgba(10, 8, 18, 0.3)';
   ctx.fillRect(0, 0, W, H);
   ctx.strokeStyle = 'rgba(240,192,96,0.12)'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(0,120); ctx.lineTo(W,120); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(0,240); ctx.lineTo(W,240); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,160); ctx.lineTo(W,160); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,320); ctx.lineTo(W,320); ctx.stroke();
 }
 
 // ═══════════ 道具 ═══════════
@@ -463,9 +476,9 @@ function spawnObstacle() {
   if (laneObstacles[lane].length >= 2) return;
 
   var ob = { x: W + 60, grazed: false, passed: false, lane: lane };
-  ob.w = 80; ob.h = 80;
-  ob.y = lane * 120;
-  ob.hitbox = { x: ob.x + 15, y: ob.y + 15, w: 50, h: 50 };
+  ob.w = 96; ob.h = 96;
+  ob.y = lane * 160 + 32;
+  ob.hitbox = { x: ob.x + 20, y: ob.y + 20, w: 56, h: 56 };
   ob.grazeBox = { x: ob.x - GRAZE_MARGIN, y: ob.y - GRAZE_MARGIN, w: ob.w + GRAZE_MARGIN*2, h: ob.h + GRAZE_MARGIN*2 };
   if (lane === 2) { ob.type = 'm'; ob.image = assets.mogu; }
   else { ob.type = 'f'; ob.image = assets.yaojing; ob.wingOffset = Math.random()*Math.PI*2; }
@@ -478,10 +491,10 @@ function updateObstacles() {
     for (var i = obs.length - 1; i >= 0; i--) {
       var ob = obs[i];
       ob.x -= speed * dt;
-      ob.hitbox.x = ob.x + 15; ob.grazeBox.x = ob.x - GRAZE_MARGIN;
+      ob.hitbox.x = ob.x + 20; ob.grazeBox.x = ob.x - GRAZE_MARGIN;
       if (ob.type === 'f') {
         var floatY = Math.sin(frameCount * 0.08 + ob.wingOffset) * 4;
-        ob.hitbox.y = ob.y + floatY + 15;
+        ob.hitbox.y = ob.y + floatY + 20;
         ob.grazeBox.y = ob.y + floatY - GRAZE_MARGIN;
       }
       if (ob.x + ob.w < -80) { obs.splice(i, 1); continue; }
@@ -573,8 +586,6 @@ function updatePlayer() {
   }
   var diff = player.targetY - getPlayerCenterY();
   if (Math.abs(diff) > 0.5) player.targetY -= diff * 0.35;
-  if (wantsUp()) switchLane(-1);
-  if (wantsDown()) switchLane(1);
 
   if (dashTimer > 0) {
     player.animState = 'dash';
@@ -595,10 +606,12 @@ function updatePlayer() {
 
 function drawPlayer() {
   var animState = player.animState;
-  var frames = (animState === 'dash') ? dashFrames : runFrames;
+  var fr = (playerChar === 'reimu' && animState === 'dash') ? reimuDashFrames :
+           (playerChar === 'reimu') ? reimuRunFrames :
+           (animState === 'dash') ? dashFrames : runFrames;
   var frameSpeed = (animState === 'dash') ? 6 : 12;
-  var frameIdx = Math.floor(frameCount / frameSpeed) % frames.length;
-  var img = frames[frameIdx];
+  var frameIdx = Math.floor(frameCount / frameSpeed) % fr.length;
+  var img = fr[frameIdx];
   if (!img || !img.complete) return;
 
   var cx = player.x;
@@ -633,7 +646,7 @@ function update() {
   lastTs = now;
   frameCount++;
   var scoreMult = (dashTimer > 0) ? 2 : 1;
-  score += speed * 0.1 * scoreMult * dt;
+  score += speed * 0.1 * scoreMult * dt * CHAR[playerChar].scoreRate;
   var phase = Math.max(1, Math.floor(score / 1000) + 1);
   var speedInterval = Math.max(120, 300 - phase * 35);
   if (frameCount % speedInterval === 0) speed += 0.12;
@@ -665,8 +678,8 @@ function draw() {
       var ob = obs[i];
       var drawY = ob.y;
       if (ob.type === 'f') drawY += Math.sin(frameCount * 0.08 + ob.wingOffset) * 4;
-      if (ob.image && ob.image.complete) ctx.drawImage(ob.image, ob.x, drawY, 80, 80);
-      else { ctx.fillStyle = ob.type==='m'?'#8b3a3a':'#8b5cf6'; ctx.fillRect(ob.x, ob.y, 80, 80); }
+      if (ob.image && ob.image.complete) ctx.drawImage(ob.image, ob.x, drawY, 96, 96);
+      else { ctx.fillStyle = ob.type==='m'?'#8b3a3a':'#8b5cf6'; ctx.fillRect(ob.x, ob.y, 96, 96); }
       if (ob.grazed && !ob.passed) { ctx.globalAlpha = 0.3; ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(ob.x+ob.w/2, ob.y+ob.h/2, ob.w/2+10,0,Math.PI*2); ctx.fill(); ctx.globalAlpha = 1; }
     }
   }
@@ -721,5 +734,53 @@ preloadAll().then(function() {
 });
 
 gameLoop();
+
+// ═══════════ 选人界面（全局函数）═══════════
+var _selTouchX = 0;
+
+window._selChar = function(ch) {
+  playerChar = ch;
+  var sel = document.getElementById('selectOverlay');
+  document.getElementById('selMarisa').classList.toggle('selected', ch === 'marisa');
+  document.getElementById('selReimu').classList.toggle('selected', ch === 'reimu');
+  document.getElementById('imgMarisa').style.borderColor = ch === 'marisa' ? '#f0c060' : '#3a3045';
+  document.getElementById('imgReimu').style.borderColor = ch === 'reimu' ? '#f0c060' : '#3a3045';
+  sel.dataset.selected = ch;
+};
+
+window.showSelect = function() {
+  document.getElementById('startOverlay').classList.add('hide');
+  document.getElementById('selectOverlay').classList.remove('hide');
+  window._selChar('marisa');
+};
+
+window.confirmSelect = function() {
+  document.getElementById('selectOverlay').classList.add('hide');
+  startGame();
+};
+
+// 键盘选人
+document.addEventListener('keydown', function(e) {
+  var sel = document.getElementById('selectOverlay');
+  if (sel.classList.contains('hide')) return;
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    e.preventDefault();
+    var cur = sel.dataset.selected || 'marisa';
+    window._selChar(cur === 'marisa' ? 'reimu' : 'marisa');
+  }
+  if (e.key === 'Enter') { e.preventDefault(); window.confirmSelect(); }
+});
+
+// 触摸滑动选人
+document.getElementById('selectOverlay').addEventListener('touchstart', function(e) {
+  _selTouchX = e.touches[0].clientX;
+});
+document.getElementById('selectOverlay').addEventListener('touchend', function(e) {
+  var dx = (e.changedTouches[0].clientX - _selTouchX);
+  if (Math.abs(dx) > 40) {
+    var cur = this.dataset.selected || 'marisa';
+    window._selChar(dx > 0 ? 'marisa' : 'reimu'); // 右滑→魔理沙, 左滑→灵梦
+  }
+});
 
 })();
