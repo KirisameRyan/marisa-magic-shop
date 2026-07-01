@@ -11,8 +11,8 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:#1a1520;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;touch-action:manipulation;user-select:none;-webkit-user-select:none;overflow:hidden;height:100vh;}
-.game-wrapper{display:flex;flex-direction:column;align-items:center;width:100%;height:calc(100vh - 48px);}
-.game-container{display:flex;align-items:center;justify-content:center;flex:1;width:100%;min-height:0;background:#1a1520;position:relative;overflow:hidden;}
+.game-container{display:flex;flex-direction:column;align-items:center;width:100%;height:calc(100vh - 48px);background:#1a1520;overflow:hidden;}
+.canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;width:100%;position:relative;min-height:0;}
 canvas{display:block;width:auto;height:auto;max-width:100%;max-height:100%;aspect-ratio:960/480;image-rendering:pixelated;image-rendering:crisp-edges;border:1px solid #3a3045;border-radius:12px;}
 .hud{position:absolute;top:16px;left:20px;right:20px;z-index:5;display:flex;justify-content:space-between;align-items:center;color:#8a7e9a;font-size:14px;flex-wrap:wrap;gap:4px;pointer-events:none;}
 .hud>*{pointer-events:auto;}
@@ -34,7 +34,7 @@ canvas{display:block;width:auto;height:auto;max-width:100%;max-height:100%;aspec
 .overlay .btn-start:active{transform:scale(.95);}
 .overlay.hide{display:none;}
 .loading-text{color:#8a7e9a;font-size:14px;letter-spacing:1px;animation:pulse 1s infinite alternate;text-align:center;padding:40px 0;}
-.mobile-controls{display:flex;justify-content:center;gap:48px;padding:8px 0;z-index:5;}
+.mobile-controls{display:flex;justify-content:center;gap:48px;padding:8px 0;z-index:5;width:100%;flex-shrink:0;}
 .mobile-controls>*{pointer-events:auto;}
 .ctrl-btn{width:120px;height:72px;border-radius:16px;border:2px solid #3a3045;background:rgba(36,30,42,.9);color:#e0d8ec;font-size:18px;cursor:pointer;transition:background .1s;display:flex;align-items:center;justify-content:center;font-family:inherit;}
 .ctrl-btn:active,.ctrl-btn.press{background:rgba(240,192,96,.15);border-color:#f0c060;}
@@ -73,9 +73,8 @@ canvas{display:block;width:auto;height:auto;max-width:100%;max-height:100%;aspec
 <div id="shopNav"></div>
 <script src="nav.js"></script>
 
-<div class="game-wrapper">
-
 <div class="game-container" aria-label="魔理沙快跑">
+  <div class="canvas-wrap">
   <div class="hud" id="hud">
     <div>
       <strong>🧹 魔理沙快跑</strong>
@@ -124,12 +123,12 @@ canvas{display:block;width:auto;height:auto;max-width:100%;max-height:100%;aspec
     <p class="sel-hint">← → 切换 · 滑动切换 · Enter 确认</p>
   </div>
 
+  </div>
   <div class="mobile-controls" id="mobileControls">
     <button class="ctrl-btn" id="btnUp">⬆ 切换</button>
     <button class="ctrl-btn" id="btnDASH" style="font-size:14px;">⚡DASH</button>
     <button class="ctrl-btn" id="btnDown">⬇ 切换</button>
   </div>
-</div>
 </div>
 
 <script src="js/marisa-runner.js?v=2"></script>
