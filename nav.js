@@ -43,6 +43,7 @@
           { href: 'quiz-food.html',               emoji: '🍽️', text: '今天吃啥' },
           { href: 'quiz-food-care.html',          emoji: '🍲', text: '对症下菜' },
           { href: 'quiz-deepspace.html',         emoji: '💘', text: '恋与深空' },
+          { href: 'quiz-math2026.html',         emoji: '🧠', text: '智力测试' },
           { href: 'quiz-hometown.html',           emoji: '🏠', text: '灵魂故乡' },
           { href: 'quiz-animal.html',             emoji: '🐾', text: '灵魂动物·旧' },
           { href: 'quiz-otokonoko.html',        emoji: '💅', text: '男娘指数' },

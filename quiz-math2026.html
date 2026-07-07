@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="js/analytics.js"></script>
+<title>标准智力测试 · 霧雨魔法店</title>
+<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
+<link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<style>
+.q-statement{font-size:17px;font-weight:600;margin-bottom:20px;line-height:1.7;}
+.q-statement .katex{font-size:1.05em;}
+.opt-btn{text-align:left;line-height:1.6;}
+.opt-btn .katex{font-size:1em;}
+.multi-hint{font-size:10px;color:var(--muted);margin-top:4px;}
+.result-grade{font-size:13px;margin:4px 0 8px;}
+.result-detail{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:11px;}
+.result-detail td{padding:5px 8px;border-bottom:1px solid rgba(58,48,69,.3);}
+.result-detail .right{color:#6fcf97;}
+.result-detail .wrong{color:#ef4444;}
+.result-detail .partial{color:#f0c060;}
+.cheat-warn{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:10px 16px;margin-bottom:14px;text-align:center;color:#ef4444;font-size:13px;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+<script src="js/utils.js"></script>
+
+<div class="container" id="app"></div>
+<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
+<div class="adwork-net adwork-auto" data-id="1097" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
+<script>
+
+var QUESTIONS = [
+  {q:'样本数据 $6,8,4,5,12\$ 的中位数为',opts:['$5\$','$6\$','$8\$','$9\$'],ans:1,type:'s'},
+  {q:'已知平面向量 $\\vec{a},\\vec{b}\$ 不共线，且 $2\\vec{a}+y\\vec{b}=x\\vec{a}-3\\vec{b}\$，则',opts:['$x=2,y=-3\$','$x=-2,y=3\$','$x=2,y=3\$','$x=-2,y=-3\$'],ans:0,type:'s'},
+  {q:'已知集合 $A=\\{\\sin\\frac{7\\pi}{6},\\cos\\frac{5\\pi}{3},\\tan\\frac{5\\pi}{4}\\},B=\\{-\\frac{\\sqrt3}{2},-\\frac12,1\\}\$，则 $A\\cap B=\$',opts:['$\\{-\\frac{\\sqrt3}{2},-\\frac12\\}\$','$\\{-\\frac{\\sqrt3}{2},1\\}\$','$\\{-\\frac12,1\\}\$','$\\{-\\frac{\\sqrt3}{2},-\\frac12,1\\}\$'],ans:2,type:'s'},
+  {q:'曲线 $y=5x+8\\ln x\$ 在点 $(1,5)\$ 处的切线方程为',opts:['$y=3x+2\$','$y=5x\$','$y=8x-3\$','$y=13x-8\$'],ans:3,type:'s'},
+  {q:'已知抛物线 $C_1:y^2=2p_1x(p_1>0)\$ 和 $C_2:x^2=2p_2y(p_2>0)\$ 均经过点 $(4,8)\$，则 $C_1\$ 的焦点与 $C_2\$ 的焦点之间的距离为',opts:['$12\$','$4\\sqrt5\$','$6\$','$\\frac{\\sqrt{65}}{2}\$'],ans:3,type:'s'},
+  {q:'已知函数 $f(x)=\\frac{x+2}{e^x+a}\$ 最大值为 $1\$，则 $a=\$',opts:['$\\frac12\$','$1\$','$\\frac32\$','$2\$'],ans:1,type:'s'},
+  {q:'一百零八塔位于宁夏青铜峡市，以其独特的建筑格局和深远的历史文化闻名遐迩。该塔群共有108座塔，依山势自上而下排成12行，将第$i\$行中塔的座数记为$a_i\$，其中$a_1=1,a_2=a_3=3,a_4=a_5=5\$，且$a_6,a_7,\\cdots,a_{12}\$是首项为7、公差为2的等差数列。将$a_1,a_2,\\cdots,a_{12}\$分为6组每组2个数，使每组的2个数之和构成项数为6、公差为$d(d>0)\$的等差数列，则$d=\$',opts:['$2\$','$4\$','$6\$','$8\$'],ans:1,type:'s'},
+  {q:'设$U=\\{(x_1,x_2,x_3)|x_i\\in\\{-2,-1,1,2\\},i=1,2,3\\}\$为空间中64个点构成的集合，点$P(1,1,1)\$，记样本空间$\\Omega=\\complement_UP\$，从$\\Omega\$中随机取一个点$A(x_1,x_2,x_3)\$，定义$X(A)=x_1+x_2+x_3\$，则$X\$的数学期望值为',opts:['$-\\frac{1}{21}\$','$-\\frac{1}{63}\$','$0\$','$\\frac{1}{7}\$'],ans:0,type:'s'},
+  {q:'设$z=3+2\\mathrm{i}\$，则',opts:['$\\bar{z}=3-2\\mathrm{i}\$','$|z|=5\$','$z^2=5+12\\mathrm{i}\$','$\\frac{z+3}{z-\\mathrm{i}}\\in\\mathbb{R}\$'],ans:[0,2,3],type:'m'},
+  {q:'在空间中，$A,B\$为两个定点，动点$C\$到直线$AB\$的距离为$2\$，动点$D\$到直线$AB\$的距离为$1\$。若二面角$C-AB-D\$为$60°\$，则',opts:['$\\angle CAD\\ge60°\$','$CD\\ge\\sqrt3\$','当$AB\\perp CD\$时，$CD\\perp\$平面$ABD\$','当$AB\\perp\$平面$ACD\$时，$AC\\perp AD\$'],ans:[1,2],type:'m'},
+  {q:'已知圆$C_1:(x+1)^2+y^2=1,C_2:(x-1)^2+y^2=1,C_3:x^2+(y-\\sqrt3)^2=1\$，直线$l:y=kx+b\$与$C_1,C_2,C_3\$均有两个交点。记$l\$被$C_1,C_2,C_3\$截得的弦长分别为$s_1,s_2,s_3\$，则',opts:['$k\$可以取任意实数','满足$s_1=s_2=s_3\$的直线$l\$共有$3\$条','满足$s_1+s_2+s_3=3\$的直线$l\$多于$3\$条','当$b=0\$时，$s_1+s_2+s_3\$的最大值为$\\frac{2\\sqrt{21}}{3}\$'],ans:[1,2,3],type:'m'}
+];
+
+var state = 'intro', idx = 0, selected = [], startTime = 0;
+
+function render() {
+  var app = document.getElementById('app');
+  if (state === 'intro') {
+    app.innerHTML =
+      '<div class="intro"><div class="intro-badge">霧雨魔法店 · 认知评估</div><h1>标准智力测试</h1><p class="sub">包含数学逻辑、空间推理、数理思维等综合维度<br>共 ' + QUESTIONS.length + ' 道题 · 单选+多选 · 满分 58 分</p><button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">开始测试 →</button><a href="index.html" class="home-link">← 返回魔法店</a></div>';
+  } else if (state === 'quiz') {
+    renderQuestion(app);
+  } else if (state === 'result') {
+    renderResult(app);
+  }
+}
+
+function startQuiz() {
+  state = 'quiz'; idx = 0; selected = []; startTime = Date.now();
+  render();
+}
+
+function renderQuestion(app) {
+  if (idx >= QUESTIONS.length) { state = 'result'; render(); return; }
+  var q = QUESTIONS[idx];
+  var isMulti = q.type === 'm';
+  var pct = Math.round((idx / QUESTIONS.length) * 100);
+  var sel = selected[idx] || (isMulti ? [] : -1);
+  var html = '<div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div><div class="progress-text">' + (idx+1) + ' / ' + QUESTIONS.length + '</div></div>';
+  html += '<div class="q-num">第 ' + (idx+1) + ' 题' + (isMulti ? '（多选）' : '（单选）') + '</div>';
+  html += '<div class="q-statement">' + q.q + '</div>';
+  html += '<div class="options">';
+  var labels = 'ABCD';
+  for (var i = 0; i < q.opts.length; i++) {
+    var active = isMulti ? (sel.indexOf(i) !== -1) : (sel === i);
+    html += '<button class="opt-btn' + (active ? '" style="border-color:var(--gold);background:rgba(240,192,96,.08)"' : '"') + ' onclick="pick(' + i + ')"><span class="opt-letter">' + labels[i] + '</span>' + q.opts[i] + '</button>';
+  }
+  html += '</div>';
+  html += '<div style="text-align:center;margin-top:12px;">';
+  html += '<button class="btn btn-main" onclick="nextQ()" style="max-width:200px;">' + (idx === QUESTIONS.length-1 ? '提交' : '下一题') + '</button>';
+  html += '</div>';
+  if (isMulti) html += '<p class="multi-hint">点击选项切换选中状态（多选）</p>';
+  app.innerHTML = html;
+  renderMathInElement(app, { delimiters: [{left:'$', right:'$', display:false}] });
+}
+
+function pick(optIdx) {
+  var q = QUESTIONS[idx];
+  if (q.type === 'm') {
+    if (!selected[idx]) selected[idx] = [];
+    var pos = selected[idx].indexOf(optIdx);
+    if (pos === -1) selected[idx].push(optIdx);
+    else selected[idx].splice(pos, 1);
+  } else {
+    selected[idx] = optIdx;
+  }
+  renderQuestion(document.getElementById('app'));
+}
+
+function nextQ() {
+  if (selected[idx] === undefined || (Array.isArray(selected[idx]) && selected[idx].length === 0)) return;
+  idx++;
+  if (idx >= QUESTIONS.length) { state = 'result'; render(); }
+  else render();
+}
+
+function renderResult(app) {
+  var elapsed = Math.round((Date.now() - startTime) / 1000);
+  var mins = Math.floor(elapsed / 60), secs = elapsed % 60;
+  var timeStr = (mins > 0 ? mins + '分' : '') + secs + '秒';
+  var total = 0, maxScore = 0;
+  var details = '';
+
+  for (var i = 0; i < QUESTIONS.length; i++) {
+    var q = QUESTIONS[i];
+    var user = selected[i] || (q.type === 'm' ? [] : -1);
+    var max = q.type === 's' ? 5 : 6;
+    maxScore += max;
+    var pts = 0, cls = '';
+
+    if (q.type === 's') {
+      if (user === q.ans) { pts = 5; cls = 'right'; }
+      else { pts = 0; cls = 'wrong'; }
+    } else {
+      var correct = q.ans;
+      var hasWrong = false;
+      for (var j = 0; j < user.length; j++) { if (correct.indexOf(user[j]) === -1) hasWrong = true; }
+      if (hasWrong) { pts = 0; cls = 'wrong'; }
+      else if (user.length === correct.length) { pts = 6; cls = 'right'; }
+      else if (user.length > 0 && user.length < correct.length) { pts = 3; cls = 'partial'; }
+      else { pts = 0; cls = 'wrong'; }
+    }
+    total += pts;
+
+    var labels = 'ABCD';
+    var userStr = q.type === 's' ? labels[user] : user.map(function(x){return labels[x];}).join('');
+    var ansStr = q.type === 's' ? labels[q.ans] : q.ans.map(function(x){return labels[x];}).join('');
+    details += '<tr><td>' + (i+1) + '</td><td>' + userStr + '</td><td>' + ansStr + '</td><td class="' + cls + '">' + pts + '分</td></tr>';
+  }
+
+  var grade, gradeEmoji;
+  if (total >= 55) { grade = '认知卓越'; gradeEmoji = '🎓'; }
+  else if (total >= 45) { grade = '认知优秀'; gradeEmoji = '📚'; }
+  else if (total >= 35) { grade = '认知良好'; gradeEmoji = '📖'; }
+  else if (total >= 20) { grade = '认知欠佳'; gradeEmoji = '💀'; }
+  else { grade = '需要帮助'; gradeEmoji = '🤡'; }
+
+  var cheatHTML = '';
+  if (total === maxScore && elapsed < 90) {
+    cheatHTML = '<div class="cheat-warn">⚠️ 作答时间过短（' + timeStr + '），仅 ' + elapsed + ' 秒完成满分测试——该结果不具参考价值。检测到异常行为。</div>';
+  } else if (total === maxScore && elapsed < 180) {
+    cheatHTML = '<div class="cheat-warn">⚡ 满分但用时仅 ' + timeStr + '——你的智力水平属于极端异常值。建议重新自测。</div>';
+  }
+
+  var html = cheatHTML;
+  html += '<div class="result"><div class="result-emoji">' + gradeEmoji + '</div>';
+  html += '<div class="result-label">認知評估報告</div>';
+  html += '<div class="result-name">' + total + ' / ' + maxScore + ' 分</div>';
+  html += '<div class="result-tagline" style="color:var(--gold);">段位：' + grade + '</div>';
+  html += '<div class="result-grade" style="color:var(--muted);">用时：' + timeStr + '</div>';
+  html += '<table class="result-detail"><thead><tr><th>题号</th><th>你的答案</th><th>正确</th><th>得分</th></tr></thead><tbody>' + details + '</tbody></table>';
+  html += '<button class="btn btn-main" onclick="shareIt()">📋 复制结果发给朋友</button>';
+  html += '<button class="btn btn-ghost" onclick="restart()">🔄 再来一次</button>';
+  html += '<a href="index.html" class="home-link">← 返回魔法店</a>';
+  html += '<p class="notice">霧雨魔法店 · 结果仅供参考 · 但智力是真的（大概）</p>';
+  html += '<div class="qq-section"><img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'"><p><strong style="color:var(--gold);">加群一起玩</strong><br>扫码进群，更多抽象好活</p></div>';
+  html += '</div>';
+  app.innerHTML = html;
+}
+
+function shareIt() {
+  copyToClipboard('我完成了一项标准智力测试，得分 ' + total + '/' + maxScore + ' 分！你也来测测：' + window.location.href, '已复制！发给朋友挑战 🧠');
+}
+
+function restart() { state = 'intro'; idx = 0; selected = []; render(); }
+
+render();
+</script>
+</body>
+</html>
