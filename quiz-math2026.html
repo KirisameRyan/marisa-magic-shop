@@ -10,7 +10,6 @@
 <link rel="stylesheet" href="css/common.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 <style>
 .q-statement{font-size:17px;font-weight:600;margin-bottom:20px;line-height:1.7;}
 .q-statement .katex{font-size:1.05em;}
@@ -50,8 +49,33 @@ var QUESTIONS = [
   {q:'在空间中，$A,B\$为两个定点，动点$C\$到直线$AB\$的距离为$2\$，动点$D\$到直线$AB\$的距离为$1\$。若二面角$C-AB-D\$为$60°\$，则',opts:['$\\angle CAD\\ge60°\$','$CD\\ge\\sqrt3\$','当$AB\\perp CD\$时，$CD\\perp\$平面$ABD\$','当$AB\\perp\$平面$ACD\$时，$AC\\perp AD\$'],ans:[1,2],type:'m'},
   {q:'已知圆$C_1:(x+1)^2+y^2=1,C_2:(x-1)^2+y^2=1,C_3:x^2+(y-\\sqrt3)^2=1\$，直线$l:y=kx+b\$与$C_1,C_2,C_3\$均有两个交点。记$l\$被$C_1,C_2,C_3\$截得的弦长分别为$s_1,s_2,s_3\$，则',opts:['$k\$可以取任意实数','满足$s_1=s_2=s_3\$的直线$l\$共有$3\$条','满足$s_1+s_2+s_3=3\$的直线$l\$多于$3\$条','当$b=0\$时，$s_1+s_2+s_3\$的最大值为$\\frac{2\\sqrt{21}}{3}\$'],ans:[1,2,3],type:'m'}
 ];
+// 保存原始副本用于打乱
+QUESTIONS.forEach(function(q){
+  q._opts = q.opts.slice();
+  q._ans = q.type === 's' ? q.ans : q.ans.slice();
+});
 
 var state = 'intro', idx = 0, selected = [], startTime = 0;
+
+function renderMath(html) {
+  return html.replace(/\$([^$]+)\$/g, function(_, f) {
+    try { return katex.renderToString(f, { throwOnError: false }); }
+    catch(e) { return f; }
+  });
+}
+
+function shuffleQuestion(q) {
+  q.opts = q._opts.slice();
+  q.ans = q.type === 's' ? q._ans : q._ans.slice();
+  var indices = [0,1,2,3];
+  for (var i = 3; i > 0; i--) {
+    var j = Math.floor(Math.random()*(i+1));
+    var t = indices[i]; indices[i] = indices[j]; indices[j] = t;
+  }
+  q.opts = indices.map(function(i){ return q._opts[i]; });
+  if (q.type === 's') q.ans = indices.indexOf(q._ans);
+  else q.ans = q._ans.map(function(a){ return indices.indexOf(a); }).sort(function(a,b){return a-b;});
+}
 
 function render() {
   var app = document.getElementById('app');
@@ -67,6 +91,7 @@ function render() {
 
 function startQuiz() {
   state = 'quiz'; idx = 0; selected = []; startTime = Date.now();
+  for (var i = 0; i < QUESTIONS.length; i++) shuffleQuestion(QUESTIONS[i]);
   render();
 }
 
@@ -75,7 +100,7 @@ function renderQuestion(app) {
   var q = QUESTIONS[idx];
   var isMulti = q.type === 'm';
   var pct = Math.round((idx / QUESTIONS.length) * 100);
-  var sel = selected[idx] || (isMulti ? [] : -1);
+  var sel = selected.hasOwnProperty(idx) ? selected[idx] : (isMulti ? [] : -1);
   var html = '<div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div><div class="progress-text">' + (idx+1) + ' / ' + QUESTIONS.length + '</div></div>';
   html += '<div class="q-num">第 ' + (idx+1) + ' 题' + (isMulti ? '（多选）' : '（单选）') + '</div>';
   html += '<div class="q-statement">' + q.q + '</div>';
@@ -90,8 +115,7 @@ function renderQuestion(app) {
   html += '<button class="btn btn-main" onclick="nextQ()" style="max-width:200px;">' + (idx === QUESTIONS.length-1 ? '提交' : '下一题') + '</button>';
   html += '</div>';
   if (isMulti) html += '<p class="multi-hint">点击选项切换选中状态（多选）</p>';
-  app.innerHTML = html;
-  renderMathInElement(app, { delimiters: [{left:'$', right:'$', display:false}] });
+  app.innerHTML = renderMath(html);
 }
 
 function pick(optIdx) {
@@ -123,7 +147,7 @@ function renderResult(app) {
 
   for (var i = 0; i < QUESTIONS.length; i++) {
     var q = QUESTIONS[i];
-    var user = selected[i] || (q.type === 'm' ? [] : -1);
+    var user = selected.hasOwnProperty(i) ? selected[i] : (q.type === 'm' ? [] : -1);
     var max = q.type === 's' ? 5 : 6;
     maxScore += max;
     var pts = 0, cls = '';
