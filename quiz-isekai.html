@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="js/analytics.js"></script>
+<title>转生异世界职业诊断 · 霧雨魔法店</title>
+<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
+<link rel="stylesheet" href="css/common.css">
+<style>
+.intro-badge{color:#a78bfa;border-color:rgba(167,139,250,.35);}
+.opt-letter{background:rgba(167,139,250,.08);}
+.btn-main{background:linear-gradient(135deg,#a78bfa,#6366f1);color:#fff;}
+.btn-main:hover{background:linear-gradient(135deg,#c4b5fd,#818cf8);}
+.progress-fill{background:linear-gradient(90deg,#a78bfa,#6366f1);}
+.result-dim{display:flex;flex-direction:column;gap:8px;margin:12px 0;}
+.rd-item{display:flex;align-items:center;gap:8px;}
+.rd-label{width:80px;font-size:11px;color:var(--muted);text-align:right;flex-shrink:0;}
+.rd-bar{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden;}
+.rd-fill{height:100%;border-radius:4px;transition:width .8s ease;}
+.rd-val{width:28px;font-size:10px;color:var(--muted);text-align:left;}
+.sub-match{margin-top:8px;padding:8px;border-radius:10px;background:rgba(255,255,255,.02);border:1px solid var(--border);font-size:12px;color:var(--muted);}
+.sub-match b{color:var(--text);}
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+<script src="js/utils.js"></script>
+
+<div class="container" id="app"></div>
+<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
+
+<script>
+// ═══════════ 数据 ═══════════
+var TITLE = '转生异世界·职业诊断';
+var SUBTITLE = '恭喜！你被卡车君亲切问候，成功转生到异世界！\n神明（疑似阿库娅）给了你一次选择职业的机会——但她好像又喝醉了。\n快来测测你到底会成为怎样的异世界主角吧！';
+var BADGE = '霧雨魔法店 · 異世界転生';
+
+var DIMS = ['战斗激进度','智慧规划度','领导召唤度','黑暗倾向度','生活悠闲度','社交后宫欲'];
+var DIM_COLORS = ['#ef4444','#3b82f6','#f0c060','#a1a1aa','#6fcf97','#f472b6'];
+
+var QUESTIONS = [
+{q:'转生前最后一刻你在做什么？',opts:[
+{txt:'看热血番，大喊"我也要当勇者！"',w:[9,2,4,1,1,5]},
+{txt:'狂刷异世界轻小说，研究怎么开挂',w:[3,10,3,3,2,3]},
+{txt:'肝游戏肝到死，还在骂队友坑',w:[5,5,9,4,3,6]},
+{txt:'做饭吃播，梦想成为异世界料理之神',w:[3,7,2,2,10,5]}]},
+{q:'喝醉的神明问你要什么金手指？',opts:[
+{txt:'能重来的能力——反正死不了',w:[7,5,4,3,4,6]},
+{txt:'全知大贤者——几秒学会任何技能',w:[2,10,4,4,5,4]},
+{txt:'无限召唤权限——不用亲自动手',w:[4,6,10,5,3,7]},
+{txt:'隐身+最强暗杀——谁都看不见我',w:[8,7,1,9,2,3]}]},
+{q:'刚到异世界第一个遇到的是？',opts:[
+{txt:'蓝发女神哭着说"对不起我又搞砸了"',w:[5,3,4,2,6,9]},
+{txt:'会说话的史莱姆，想跟你签订契约',w:[3,6,9,3,5,6]},
+{txt:'可爱又可靠的女仆姐妹',w:[6,4,5,1,4,10]},
+{txt:'一群冒险者指着你说"他好像是魔王"',w:[7,5,3,9,2,3]}]},
+{q:'你的第一场战斗风格是？',opts:[
+{txt:'正面硬刚，喊着"为了世界和平！"',w:[10,2,5,1,2,6]},
+{txt:'分析弱点，一波操作秀死对面',w:[3,10,3,3,4,4]},
+{txt:'召唤小弟上去送，自己在后面摸鱼',w:[5,6,10,4,6,5]},
+{txt:'猥琐发育，偷袭+跑路保命优先',w:[6,9,1,7,7,3]}]},
+{q:'异世界最想做的事？',opts:[
+{txt:'打倒魔王迎娶公主',w:[8,3,6,1,2,9]},
+{txt:'建立国家当幕后BOSS',w:[6,8,9,10,3,5]},
+{txt:'开冒险者公会每天喝酒吹牛',w:[4,5,6,3,8,9]},
+{txt:'研究魔法/炼金把科技树点满',w:[3,10,4,5,9,5]}]},
+{q:'最想要的队友是谁？',opts:[
+{txt:'超级可靠的蓝发女仆',w:[6,4,5,2,4,10]},
+{txt:'虽然废柴但CV很萌的爆裂魔女',w:[5,3,4,4,5,8]},
+{txt:'能变形各种形态的史莱姆伙伴',w:[4,7,9,3,6,7]},
+{txt:'忠心耿耿的不死军团',w:[8,6,8,10,2,2]}]},
+{q:'坑爹队友像某水之女神，你会？',opts:[
+{txt:'忍着，继续当好人',w:[6,3,5,1,3,8]},
+{txt:'直接把她卖了换钱',w:[4,9,2,7,4,5]},
+{txt:'一起摸鱼，反正世界毁灭了再重来',w:[2,4,3,5,10,7]},
+{txt:'吐槽她一整天然后继续组队',w:[5,6,4,3,5,9]}]},
+{q:'神明又让你选一个作弊技能？',opts:[
+{txt:'无限复活——反正死不了',w:[9,4,4,3,3,6]},
+{txt:'全知术——看一眼就学会',w:[2,10,4,4,5,4]},
+{txt:'魅惑术——见过的人=队友',w:[3,5,7,5,4,10]},
+{txt:'诅咒术——让仇人统统倒霉',w:[6,8,3,10,2,3]}]},
+{q:'打着打着发现魔王好像不是坏人？',opts:[
+{txt:'不管照样打！正义必胜！',w:[10,2,4,1,2,5]},
+{txt:'谈判合作，建立新世界',w:[5,8,9,4,6,7]},
+{txt:'溜了溜了不关我事',w:[2,5,2,3,10,5]},
+{txt:'你才是真正的魔王',w:[8,6,5,10,3,4]}]},
+{q:'异世界冒险结束，你的结局是？',opts:[
+{txt:'和心爱的人回王都，过幸福生活',w:[5,4,5,1,6,10]},
+{txt:'当新魔王，统治世界',w:[8,7,9,10,3,4]},
+{txt:'回到原来世界继续当社畜',w:[3,6,2,4,8,5]},
+{txt:'写了本书《我在异世界的那几年》',w:[3,9,4,5,9,6]}]},
+{q:'如果重来一次还会选一样的职业吗？',opts:[
+{txt:'会！这是命运的安排',w:[8,4,6,2,4,8]},
+{txt:'不会！换个隐藏职业试试',w:[4,9,5,7,5,6]},
+{txt:'无所谓，反正活着就好',w:[3,5,3,4,9,5]},
+{txt:'不重来，这个异世界挺好的',w:[5,6,5,3,7,9]}]},
+{q:'最遗憾没做成什么？',opts:[
+{txt:'没去更远的地方冒险',w:[9,3,4,2,3,6]},
+{txt:'没建立自己的组织/国家',w:[6,8,10,7,4,5]},
+{txt:'没开后宫',w:[4,4,5,3,6,10]},
+{txt:'没继续研究更深的知识',w:[3,10,4,6,8,5]}]}
+];
+
+var RESULTS = {
+hero:{name:'勇者',emoji:'⚔️',rep:'岩谷尚文',anime:'《盾之勇者成名录》',color:'#fbbf24',v:[9,4,7,1,3,8],tagline:'你就是被卡车撞了还能拿到最强技能的幸运儿',desc:'经典王道路线。你相信正义，热爱伙伴，不惧强敌。<br><br>唯一的弱点是——太好骗。请务必不要相信任何蓝头发的女神。她们大概率搞错了你的召唤编号。<br><br><strong>温馨提示：</strong>小心你的队友里藏着真正的反派。以及，公主大概率不是你的。',tags:['盾勇','经典王道','正义感爆棚','容易被骗']},
+sage:{name:'大贤者',emoji:'📚',rep:'利姆露（萌王）',anime:'《关于我转生变成史莱姆这档事》',color:'#60a5fa',v:[3,10,5,4,6,5],tagline:'社恐的终极形态——住图书馆里，别人打魔王你在翻书',desc:'你的大脑就是最强的武器。你不需要肌肉——你需要的是大贤者技能自动帮你分析一切。<br><br>朋友们都觉得你什么都知道。其实你只是比别人多看了两页书。<br><br><strong>温馨提示：</strong>记得偶尔离开图书馆。外面的世界也有信息——而且有免费午餐。',tags:['史莱姆','大贤者','全知全能','书虫']},
+summoner:{name:'召唤师',emoji:'🐙',rep:'利姆露（召唤流）',anime:'《关于我转生变成史莱姆这档事》',color:'#34d399',v:[5,7,10,5,6,7],tagline:'你不需要自己强——你的史莱姆现在是魔王了',desc:'你有一项别人学不来的天赋：让别人替你干活。<br><br>召唤术的本质不是召唤怪物——而是召唤朋友。你的军团来自五湖四海，每一个都是你亲自"说服"（或者吃掉）的。<br><br><strong>温馨提示：</strong>不要吃了所有遇到的东西。有些物种不可消化。',tags:['召唤术','史莱姆军团','朋友多','好吃']},
+swordsaint:{name:'剑圣',emoji:'🗡️',rep:'黑铁一辉',anime:'《落第骑士英雄谭》',color:'#f97316',v:[10,5,3,3,2,6],tagline:'一刀999，智商8.8——但帅就完事了',desc:'你的字典里只有两个字：变强。<br><br>你不在乎什么阴谋诡计，也不在乎魔王到底在想什么。你只在乎下一刀能不能更快、更狠。别人花时间开策略会议的时候，你已经把问题解决了。<br><br><strong>温馨提示：</strong>偶尔也读读书。不是所有问题都能用砍的。……大概？',tags:['一剑斩','变强','帅是正事','智商感人']},
+shadow:{name:'暗影刺客',emoji:'🌑',rep:'希德（暗影大人）',anime:'《想要成为影之实力者》',color:'#a1a1aa',v:[8,8,2,8,3,4],tagline:'从出生就在装弱——装到作者都忘了你其实是主角',desc:'你享受被人低估的感觉。一切都在你的计划之中——包括让别人以为这一切都不是你计划的。<br><br>真实实力大概是表面实力的 50 倍。但你永远不会告诉任何人。<br><br><strong>温馨提示：</strong>装弱太久了真的会变弱。以及你的中二台词其实都被人听见了。',tags:['影之实力者','装弱','中二病','扮猪吃虎']},
+chef:{name:'炼金厨师',emoji:'🍳',rep:'穆寇达',anime:'《网购技能开启异世界美食之旅》',color:'#f472b6',v:[4,9,5,5,10,7],tagline:'别人在打魔王，你在研究第108种异世界调味料',desc:'你的战斗力？大概能打一只哥布林。但你的料理能让魔王亲自来敲门求蹭饭。<br><br>异世界的美食文化从你开始改写。你不是战士——你是文明的火种。而且你做的菜真的好吃。<br><br><strong>温馨提示：</strong>不要把所有材料都扔进锅里。上次炸掉半座城的那次……算了吧不提了。',tags:['料理','异世界美食','炸厨房','吃货']},
+overlord:{name:'骨傲天',emoji:'💀',rep:'安兹·乌尔·恭',anime:'《Overlord》',color:'#818cf8',v:[7,9,8,10,4,3],tagline:'氪金玩家转生——全是满级装备，唯一的烦恼是部下太能脑补',desc:'你拥有压倒性的力量，但你最大的敌人不是勇者——而是你的部下。<br><br>他们总是把你随口说的一句话过度解读成千年战略。你只好顺着演下去。现在你已经是世界之王了。行吧。<br><br><strong>温馨提示：</strong>下次不要随口说"世界征服"这种词——他们会当真。',tags:['骨王','满级号','部下脑补','误解系']},
+neet:{name:'无职后宫王',emoji:'🛋️',rep:'鲁迪乌斯',anime:'《无职转生～到了异世界就拿出真本事》',color:'#e2e8f0',v:[5,6,4,6,9,10],tagline:'纯运气选手——不对，你确实什么也没干',desc:'你的转生之路平淡如水。没有惊天动地的金手指，没有毁灭世界的阴谋。<br><br>你只是……过着自己的小日子，顺便吸引了一群不得了的人。他们说这叫"后宫光环"。你说这叫"对人好"。<br><br><strong>温馨提示：</strong>珍惜眼前人。不是每个异世界都有第二次机会。',tags:['无职','后宫','日常','运气好']},
+appraiser:{name:'鉴定师',emoji:'🔍',rep:'佐藤和真',anime:'《为美好的世界献上祝福！》',color:'#a78bfa',v:[4,10,4,6,8,6],tagline:'你的技能是看别人属性——然后默默感叹自己真的好弱',desc:'你不是最强者。但你是最聪明的旁观者。<br><br>鉴定师的精髓不在于"自己强"，而在于"知道谁真的强"。你有最敏锐的眼睛和最毒舌的判断力。冒险者们花钱求你看装备——不是为了鉴定，是为了听你吐槽。<br><br><strong>温馨提示：</strong>偶尔也上场打一架。否则你的肌肉会退化成史莱姆级别的。',tags:['鉴定','和真','吐槽','毒舌']},
+necromancer:{name:'死灵法师',emoji:'☠️',rep:'安兹（不死军团流）',anime:'《Overlord》',color:'#64748b',v:[6,7,9,10,3,4],tagline:'不死军团比人类靠谱多了。而且不会抱怨加班。',desc:'你选择了最省心的部下——死人。<br><br>他们忠诚、从不顶嘴、不需要发工资、24小时待命。唯一的缺点是社交场合有点尴尬——"这位是我的副官，他已经死了三百年了。"<br><br><strong>温馨提示：</strong>偶尔也交几个活着的朋友。死人虽然不抱怨，但也不会陪你喝酒。',tags:['不死军团','亡灵之主','省心','社交困难']},
+villager:{name:'村民A',emoji:'👨‍🌾',rep:'田中（所有路人）',anime:'每部异世界番里的背景板',color:'#84cc16',v:[2,3,1,2,10,3],tagline:'你根本就没被选中——但村民A在所有番里都活到了最后一集',desc:'实话说，你的战斗属性约等于零。<br><br>但你知道所有异世界番剧里活到最后的是谁吗？不是勇者、不是魔王——是村民A。他们种田、开店、给冒险者提供情报，从不参与主线剧情，却活到了结局。<br><br><strong>温馨提示：</strong>你才是真正的赢家。不用打魔王也能安稳过日子。这是一种智慧。',tags:['路人','生存率100%','种田','真·主角']},
+smith:{name:'锻造大师',emoji:'🔨',rep:'利兹贝特 / 卫宫士郎',anime:'《刀剑神域》《Fate》',color:'#facc15',v:[7,8,5,2,7,6],tagline:'别人靠技能，你靠装备——而你做的装备比别人的技能还强',desc:'你不需要最强的技能——你做的武器就是别人的最强技能。<br><br>锻造台是你的城堡，材料是你的士兵。冒险者们排队求你打一把剑——不是因为你的战斗力，而是因为他们的命系在你的手艺上。<br><br><strong>温馨提示：</strong>记得收钱。免费打铁换来的只有好人卡，不是金币。',tags:['锻造','兵器大师','手艺活','收钱']}
+};
+
+var KEYS = ['hero','sage','summoner','swordsaint','shadow','chef','overlord','neet','appraiser','necromancer','villager','smith'];
+
+// ═══════════ 状态机 ═══════════
+var state = 'intro', idx = 0, answers = [], lastResultKey = null;
+
+function render() {
+  var app = document.getElementById('app');
+  if (state === 'intro') renderIntro(app);
+  else if (state === 'quiz') renderQuestion(app);
+  else if (state === 'loading') renderLoading(app);
+  else if (state === 'result') renderResult(app);
+}
+
+function renderIntro(app) {
+  app.innerHTML =
+    '<div class="intro">'+
+      '<div class="intro-badge">'+BADGE+'</div>'+
+      '<h1>'+TITLE+'</h1>'+
+      '<p class="sub">'+SUBTITLE.replace(/\n/g,'<br>')+'</p>'+
+      '<button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">开始测试 →</button>'+
+      '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+    '</div>';
+}
+
+function startQuiz() { state = 'quiz'; idx = 0; answers = []; render(); }
+
+function renderQuestion(app) {
+  if (idx >= QUESTIONS.length) { state = 'loading'; renderLoading(app); return; }
+  var q = QUESTIONS[idx], total = QUESTIONS.length;
+  var pct = Math.round((idx/total)*100);
+  var html = '<div class="progress-wrap"><div class="progress-text">问题 '+(idx+1)+' / '+total+'</div><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div></div>';
+  html += '<div class="q-num">Q'+(idx+1)+'</div>';
+  html += '<div class="q-text">'+q.q+'</div><div class="options">';
+  for (var i=0;i<q.opts.length;i++) {
+    html += '<button class="opt-btn" onclick="answer('+i+')"><span class="opt-letter">'+'ABCD'[i]+'</span>'+q.opts[i].txt+'</button>';
+  }
+  html += '</div>';
+  app.innerHTML = html;
+}
+
+function answer(choice) { answers.push(choice); idx++; render(); }
+
+async function renderLoading(app) {
+  app.innerHTML = '<div class="loading-wrap"><div class="loading-orb"></div><p class="loading-text" id="ltxt">正在与异世界连接…</p></div>';
+  await sleep(600);
+  var lt = document.getElementById('ltxt'); if(lt) lt.textContent = '神明正在审核你的简历…';
+  await sleep(600);
+  lt = document.getElementById('ltxt'); if(lt) lt.textContent = '卡车君：这次选的人还不错…';
+  await sleep(500);
+  state = 'result';
+  render();
+}
+
+function renderResult(app) {
+  // 累加用户向量
+  var uvec = [0,0,0,0,0,0];
+  for (var i=0;i<answers.length;i++) {
+    var w = QUESTIONS[i].opts[answers[i]].w;
+    for (var d=0;d<6;d++) uvec[d] += w[d];
+  }
+  // 欧氏距离匹配
+  var bestKey = KEYS[0], bestDist = Infinity;
+  for (var k=0;k<KEYS.length;k++) {
+    var v = RESULTS[KEYS[k]].v, dist = 0;
+    for (var d=0;d<6;d++) dist += Math.pow(uvec[d]-v[d], 2);
+    if (dist < bestDist) { bestDist = dist; bestKey = KEYS[k]; }
+  }
+  // 次匹配
+  var runnerKey = null, runnerDist = Infinity;
+  for (var k=0;k<KEYS.length;k++) {
+    if (KEYS[k]===bestKey) continue;
+    var v = RESULTS[KEYS[k]].v, dist = 0;
+    for (var d=0;d<6;d++) dist += Math.pow(uvec[d]-v[d], 2);
+    if (dist < runnerDist) { runnerDist = dist; runnerKey = KEYS[k]; }
+  }
+  var c = RESULTS[bestKey];
+  lastResultKey = bestKey;
+  var r = runnerKey ? RESULTS[runnerKey] : null;
+
+  var html = '<div class="result">';
+  html += '<div class="result-emoji">'+c.emoji+'</div>';
+  html += '<div class="result-label">異世界職業診斷</div>';
+  html += '<div class="result-name" style="color:'+c.color+';">'+c.name+'</div>';
+  html += '<div class="result-tagline">'+c.tagline+'</div>';
+
+  // 代表人物
+  html += '<div style="font-size:12px;color:var(--muted);margin:4px 0;">代表：<b style="color:var(--text);">'+c.rep+'</b> &nbsp;'+c.anime+'</div>';
+
+  // 维度条
+  html += '<div class="result-dim">';
+  for (var d=0;d<6;d++) {
+    var pct = Math.min(100, Math.round(uvec[d]/1.2));
+    html += '<div class="rd-item"><span class="rd-label">'+DIMS[d]+'</span><div class="rd-bar"><div class="rd-fill" style="width:'+pct+'%;background:'+DIM_COLORS[d]+';"></div></div><span class="rd-val">'+uvec[d]+'</span></div>';
+  }
+  html += '</div>';
+
+  html += '<div class="result-desc">'+c.desc+'</div>';
+  html += '<div class="result-meta">';
+  c.tags.forEach(function(t){html += '<span class="meta-tag">'+t+'</span>';});
+  html += '</div>';
+
+  // 次匹配
+  if (r) {
+    html += '<div class="sub-match">⚡ 次匹配职业：<b>'+r.name+'</b>（代表：'+r.rep+'·'+r.anime+'）</div>';
+  }
+
+  html += '<button class="btn btn-main" onclick="shareIt()">📋 复制结果发给朋友</button>';
+  html += '<button class="btn btn-ghost" onclick="restart()">🔄 再来一次</button>';
+  html += '<a href="index.html" class="home-link">← 返回魔法店</a>';
+  html += '<p class="notice">霧雨魔法店 · 转生有风险 · 选职业需谨慎</p>';
+  html += '<div class="qq-section"><img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'"><p><strong style="color:var(--gold);">加群一起玩</strong><br>扫码进群，更多抽象好活</p></div></div>';
+  app.innerHTML = html;
+}
+
+function shareIt() { copyToClipboard('🚛 我被卡车撞到异世界了！转生职业是【'+RESULTS[lastResultKey].name+'】！你也来测测：'+window.location.href, '已复制！发给朋友一起转生 🚛'); }
+function restart() { state = 'intro'; idx = 0; answers = []; render(); }
+
+render();
+</script>
+</body>
+</html>
