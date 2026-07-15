@@ -4,9 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
 <title>测一测你最像哪个东方人物 · 霧雨魔法店</title>
-<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
 <link rel="stylesheet" href="css/common.css">
 <style>
  .character-strip { display:flex; justify-content:center; gap:6px; flex-wrap:wrap; margin-bottom: 22px; }
@@ -29,11 +28,12 @@
 <div id="shopNav"></div>
 <script src="nav.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/reveal-screen.js"></script>
+<script src="js/quiz-storage.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/result-footer.js"></script>
 
 <div class="container" id="app"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
 <script>
 const CHARS = {
  reimu:{name:'博丽灵梦',title:'乐园的悠闲巫女',emoji:'🏮',color:'#ef4444',dims:{lazy:95,power:88,social:55,brain:75,chaos:40},quote:'啊——好麻烦。但是既然妖怪出现了，那就顺手退治一下吧。',desc:'你骨子里是个怕麻烦的人。<br><br>但神奇的是——麻烦事总是自己找上门来。你嘴上抱怨，手上却没停过。别人觉得你很努力，只有你自己知道：只是懒得放着不管而已。<br><br>你有天赋，但更享受晒着太阳喝杯茶的日子。如果可以许一个愿望，你大概会说——「参拜客多一点，但妖怪少一点。」',tags:['懒但强','巫女','直觉派','贫穷但不在乎','守序善良']},
@@ -77,6 +77,8 @@ const QUESTIONS = [
 ];
 
 let idx = -1, answers = [];
+const STORAGE_KEY = 'quiz_touhou_v1';
+const TRACK_KEY = 'touhou_take';
 
 function render() {
   var d1=document.getElementById('ad1'),d2=document.getElementById('ad2'),d3=document.getElementById('ad3');
@@ -86,16 +88,17 @@ function render() {
  const a = document.getElementById('app');
  if (idx === -1) {
  const strip = KEYS.map(k=>`<div class="char-mini" title="${CHARS[k].name}">${CHARS[k].emoji}</div>`).join('');
- a.innerHTML = `<div class="intro"><div class="intro-badge">霧雨魔法店 · 幻想入り診断</div><h1>测一测你最像<br>哪个东方人物</h1><p class="sub">${QUESTIONS.length} 道灵魂问题 · ${KEYS.length} 位幻想乡住人 · 找到另一个你</p><div class="character-strip">${strip}</div><button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="start()">开始测试 →</button><a href="index.html" class="home-link">← 返回魔法店</a></div>`;
+  a.innerHTML = `<div class="intro"><div class="intro-badge">霧雨魔法店 · 幻想入り診断</div><h1>测一测你最像<br>哪个东方人物</h1><p class="sub">${QUESTIONS.length} 道灵魂问题 · ${KEYS.length} 位幻想乡住人 · 找到另一个你</p><div class="character-strip">${strip}</div><button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="start()">开始测试 →</button>${resumeButton(STORAGE_KEY)}<a href="index.html" class="home-link">← 返回魔法店</a><p style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;" id="takeCount"></p></div>`;
+ getCount(TRACK_KEY,function(n){var el=document.getElementById('takeCount');if(el&&n>0)el.textContent='已有 '+n+' 人完成测试';});
  } else if (idx < QUESTIONS.length) {
  const q = QUESTIONS[idx]; const pct = Math.round((idx/QUESTIONS.length)*100);
  a.innerHTML = `<div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><div class="progress-text">${idx+1} / ${QUESTIONS.length}</div></div><div class="q-num">第 ${idx+1} 问</div><div class="q-text">${q.q}</div><div class="options">${q.opts.map((o,i)=>`<button class="opt-btn" onclick="answer(${i})"><span class="opt-letter">${'ABCD'[i]}</span>${o.txt}</button>`).join('')}</div>${idx>0?`<div style="text-align:center;"><button class="btn-back" onclick="goBack()">← 上一题</button></div>`:''}`;
  } else { showLoading(); }
 }
 
-function start() { idx = 0; answers = []; render(); }
-function answer(i) { answers.push(QUESTIONS[idx].opts[i]); idx++; render(); }
-function goBack() { if(idx<=0) return; idx--; answers.pop(); render(); }
+function start() { idx = 0; answers = []; trackStart(TRACK_KEY); quizClear(STORAGE_KEY); render(); }
+function answer(i) { answers.push(QUESTIONS[idx].opts[i]); idx++; quizSave(STORAGE_KEY,{idx:idx,answers:answers}); render(); }
+function goBack() { if(idx<=0) return; idx--; answers.pop(); quizSave(STORAGE_KEY,{idx:idx,answers:answers}); render(); }
 
 async function showLoading() {
  const a = document.getElementById('app');
@@ -103,7 +106,7 @@ async function showLoading() {
  a.innerHTML = '<div class="loading-wrap"><div class="loading-orb"></div><p class="loading-text" id="ltxt">正在打开隙间…</p></div>';
  const lt = document.getElementById('ltxt');
  for (const s of steps) { await sleep(450+Math.random()*500); lt.textContent = s; }
- await sleep(300); showResult();
+  await sleep(300); var r=calcResult();showReveal('🏮 幻想乡鉴定完成',CHARS[r.key].name,'#ef4444','博丽神社存档中…',function(){showResult();});
 }
 
 function calcResult() {
@@ -119,11 +122,13 @@ function showResult() {
  const { key, scores } = calcResult();
  const c = CHARS[key];
  const runners = Object.entries(scores).filter(([k])=>k!==key).sort((x,y)=>y[1]-x[1]).slice(0,2);
- a.innerHTML = `<div class="result"><div class="result-hero" style="background:linear-gradient(135deg,${c.color}33,${c.color}11);">${c.emoji}</div><div class="result-label">幻想乡人物鉴定结果</div><div class="result-name" style="color:${c.color}">${c.name}</div><div class="result-title">${c.title}</div><div class="result-quote">「${c.quote}」</div><div class="result-dimensions">${DIM_META.map(d=>`<div class="dim-item"><span class="dim-label">${d.label}</span><div class="dim-bar-wrap"><div class="dim-bar" data-w="${c.dims[d.k]}" style="background:${d.color}"></div></div><span class="dim-val">${c.dims[d.k]}</span></div>`).join('')}</div><div class="result-desc">${c.desc}${runners.length?`<div class="runner-up">次匹配：${runners.map(([k])=>`<span>${CHARS[k].emoji} ${CHARS[k].name}</span>`).join(' · ')}</div>`:''}</div><div class="result-meta">${c.tags.map(t=>`<span class="meta-tag">${t}</span>`).join('')}</div><button class="btn btn-main" onclick="shareIt('${key}')">📋 复制结果发给朋友</button><button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button><a href="index.html" class="home-link">← 返回魔法店</a><div style="text-align:center;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);"><img src="images/qq-group.jpg" alt="QQ群二维码" style="width:130px;border-radius:12px;border:2px solid var(--border);margin-bottom:8px;"><p style="font-size:12px;color:var(--muted);"><strong style="color:var(--gold);">加群看更多乐子</strong><br>扫码进群，一起来玩</p></div><p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p><p class="notice">霧雨魔法店 · 幻想入り診断部 · 结果仅供参考</p></div>`;
+  a.innerHTML = `<div class="result"><div class="result-hero" style="background:linear-gradient(135deg,${c.color}33,${c.color}11);">${c.emoji}</div><div class="result-label">幻想乡人物鉴定结果</div><div class="result-name" style="color:${c.color}">${c.name}</div><div class="result-title">${c.title}</div><div class="result-quote">「${c.quote}」</div><div class="result-dimensions">${DIM_META.map(d=>`<div class="dim-item"><span class="dim-label">${d.label}</span><div class="dim-bar-wrap"><div class="dim-bar" data-w="${c.dims[d.k]}" style="background:${d.color}"></div></div><span class="dim-val">${c.dims[d.k]}</span></div>`).join('')}</div><div class="result-desc">${c.desc}${runners.length?`<div class="runner-up">次匹配：${runners.map(([k])=>`<span>${CHARS[k].emoji} ${CHARS[k].name}</span>`).join(' · ')}</div>`:''}</div><div class="result-meta">${c.tags.map(t=>`<span class="meta-tag">${t}</span>`).join('')}</div><button class="btn btn-main" onclick="shareIt('${key}')">📋 复制结果发给朋友</button><button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button><a href="index.html" class="home-link">← 返回魔法店</a>${resultFooterHTML({notice:'霧雨魔法店 · 幻想入り診断部 · 结果仅供参考'})}</div>`;
  requestAnimationFrame(()=>{setTimeout(()=>{document.querySelectorAll('.dim-bar').forEach(b=>b.style.width=b.dataset.w+'%')},60);});
 }
 function shareIt(key){const c=CHARS[key];const text='我在霧雨魔法店测出来最像的东方人物是【'+c.name+'】——「'+c.quote+'」你也来测测：'+window.location.href;copyToClipboard(text,'已复制！快去发给幻想乡的朋友 😈');}
 function restart(){idx=-1;answers=[];render();}
+function resumeQuiz(){var d=quizLoad(STORAGE_KEY);if(!d||d.idx<=0)return;idx=d.idx;answers=d.answers;render();}
+
 render();
 </script>
 

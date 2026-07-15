@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>测测你最像哪个原神角色 · 霧雨魔法店</title>
 <script src="js/analytics.js"></script>
-<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
 <link rel="stylesheet" href="css/common.css">
+<script src="js/reveal-screen.js"></script>
+<script src="js/page-base.js"></script>
 <style>
 body { background-image: radial-gradient(ellipse at 30% 0%, rgba(147,51,234,.05) 0%, transparent 50%), radial-gradient(ellipse at 70% 100%, rgba(59,130,246,.03) 0%, transparent 50%); }
 .container { max-width: 560px; }
@@ -26,20 +26,6 @@ body { background-image: radial-gradient(ellipse at 30% 0%, rgba(147,51,234,.05)
 
 .btn-start { background: linear-gradient(135deg, #7c3aed, #3b82f6); color: #fff; }
 .btn-start:hover { background: linear-gradient(135deg, #a78bfa, #60a5fa); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(124,58,237,.3); }
-
-/* Reveal 屏 */
-.reveal-screen { position: relative; padding: 60px 20px; text-align: center; overflow: hidden; min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.reveal-screen .scanline { position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); animation: scanDown 1s infinite; }
-@keyframes scanDown { 0%{top:0} 100%{top:100%} }
-.reveal-screen .reveal-title { font-size: 12px; color: var(--gold); letter-spacing: 2px; margin-bottom: 14px; }
-.reveal-screen .reveal-name { font-size: 32px; font-weight: 900; color: var(--text); animation: glowPulse 1.2s infinite; letter-spacing: 4px; margin-bottom: 8px; }
-@keyframes glowPulse { 0%,100%{text-shadow:0 0 20px rgba(240,192,96,.3)} 50%{text-shadow:0 0 40px rgba(240,192,96,.8)} }
-.reveal-screen .reveal-hint { font-size: 11px; color: var(--muted); margin-top: 12px; animation: blink 1s infinite; }
-@keyframes blink { 0%,100%{opacity:.3} 50%{opacity:1} }
-.load-cursor::after { content:' ▌'; animation: blink .7s infinite; }
-.reveal-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.reveal-particle { position: absolute; color: var(--gold); font-size: 14px; animation: rise linear infinite; opacity: 0; }
-@keyframes rise { 0%{opacity:0;transform:translateY(0) rotate(0)} 10%{opacity:.6} 90%{opacity:.2} 100%{opacity:0;transform:translateY(-300px) rotate(180deg)} }
 
 .result-hero { text-align: center; padding: 20px 0; }
 .result-hero .char-emoji { font-size: 72px; margin-bottom: 8px; animation: bounceIn .6s cubic-bezier(.2,1.4,.4,1); }
@@ -61,10 +47,6 @@ body { background-image: radial-gradient(ellipse at 30% 0%, rgba(147,51,234,.05)
 <script src="nav.js"></script>
 
 <div class="container" id="app"></div>
-<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
-
 <script src="js/utils.js"></script>
 <script>
 var state = 'intro';
@@ -272,27 +254,10 @@ function calcResult() {
 
 function renderReveal(app) {
   var c = CHARS[lastChar] || CHARS['ames'];
-  var particles = '';
-  for (var pi = 0; pi < 16; pi++) {
-    particles += '<span class="reveal-particle" style="left:'+(Math.random()*90+5)+'%;top:'+(Math.random()*80+10)+'%;animation-delay:'+Math.random()*3+'s;animation-duration:'+(2.5+Math.random()*3)+'s;font-size:'+(10+Math.random()*12)+'px;">✦</span>';
-  }
-  app.innerHTML =
-    '<div class="reveal-screen">'+
-      '<div class="scanline"></div>'+
-      '<div class="reveal-particles">'+particles+'</div>'+
-      '<div class="reveal-title">⏳ 元素共鸣匹配完成</div>'+
-      '<div class="reveal-name" style="color:'+c.c+'">'+c.n+'</div>'+
-      '<div class="reveal-hint" id="revealExtra">异世界数据库同步中…</div>'+
-    '</div>';
-  setTimeout(function() {
-    var el = document.getElementById('revealExtra');
-    if (el) el.textContent = '……等等，这好像不是原神的角色';
-    setTimeout(function() {
-      state = 'result';
-      render();
-      window.scrollTo({top:0,behavior:'smooth'});
-    }, 800);
-  }, 1400);
+  showReveal('⏳ 元素共鸣匹配完成', c.n, c.c, '异世界数据库同步中…', function() {
+    state = 'result';
+    render();
+  });
 }
 
 function renderResult(app) {

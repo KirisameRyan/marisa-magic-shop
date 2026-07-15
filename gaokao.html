@@ -4,9 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>高考出分模拟器 · 霧雨魔法店</title>
-<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
 <script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
 <link rel="stylesheet" href="css/common.css">
 <style>
 body { background-image: radial-gradient(ellipse at 30% 0%, rgba(239,68,68,.04) 0%, transparent 50%), radial-gradient(ellipse at 70% 100%, rgba(240,192,96,.03) 0%, transparent 50%); }
@@ -114,11 +113,12 @@ body { background-image: radial-gradient(ellipse at 30% 0%, rgba(239,68,68,.04) 
 <script src="js/utils.js"></script>
 <script src="js/canvas-utils.js"></script>
 <script src="js/easter-eggs.js"></script>
+<script src="js/reveal-screen.js"></script>
+<script src="js/quiz-storage.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/result-footer.js"></script>
 
 <div class="container" id="app"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
 
 <script>
 var CURRENT_YEAR = '2026';
@@ -127,6 +127,9 @@ var QR_IMG = 'images/qr-code.png';
 var QQ_IMG = 'images/qq-group.png';
 var QQ_GROUP = '702973928';
 var POSTER_W = 600, POSTER_H = 960;
+
+var STORAGE_KEY = 'quiz_gaokao_v1';
+var TRACK_KEY = 'gaokao_take';
 
 var TIERS = [
   { name:'学神附体',               emoji:'👑', w:10, s:[130,148, 135,150, 130,148, 90,100, 88,100, 88,100] },
@@ -377,6 +380,15 @@ function render() {
 }
 
 function renderIntro(app) {
+  // Load saved form state
+  var saved = quizLoad(STORAGE_KEY);
+  if (saved) {
+    if (saved.lastName) lastName = saved.lastName;
+    if (saved.lastExamId) lastExamId = saved.lastExamId;
+    if (saved.selectedPrime) selectedPrime = saved.selectedPrime;
+    if (saved.selectedElecs) selectedElecs = saved.selectedElecs.slice();
+  }
+  var count = getCount(TRACK_KEY);
   app.innerHTML =
     '<div class="intro-wrap">'+
       '<div class="exam-badge">🎓 '+CURRENT_YEAR+' 年普通高等学校招生全国统一考试</div>'+
@@ -466,7 +478,9 @@ function submit() {
   var examId=(eEl&&eEl.value||'').trim()||(CURRENT_YEAR+'01'+String(Math.floor(Math.random()*900000+100000)));
   checkName(rawName, function(name) {
     lastName = name; lastExamId = examId;
+    quizSave(STORAGE_KEY, {lastName: name, lastExamId: examId, selectedPrime: selectedPrime, selectedElecs: selectedElecs.slice()});
     result = genResult(name,examId,selectedPrime,selectedElecs.slice());
+    trackStart(TRACK_KEY);
     state = 'loading';
     renderLoading();
     doLoading();
@@ -508,9 +522,11 @@ async function doLoading() {
   if (last) { last.classList.remove('current'); last.classList.add('done'); }
   await sleep(300);
   if (state!=='loading') return;
-  state='result';
-  render();
-  window.scrollTo({top:0,behavior:'smooth'});
+  showReveal('🎓 成绩查询完成', result.total, '#ef4444', '录取结果生成中…', function() {
+    state='result';
+    render();
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
 }
 
 function renderResult(app) {
@@ -568,12 +584,7 @@ function renderResult(app) {
       '<button class="btn btn-again" onclick="doAgain()">🔄 重新查分</button>'+
     '</div>'+
     '<a href="index.html" class="home-link">← 返回魔法店</a>'+
-    '<p class="notice">霧雨魔法店 · 纯属娱乐 · 分数已调高讨个彩头<br>祝各位考生金榜题名，得偿所愿 ✨</p>'+
-    '<div class="qq-section">'+
-      '<img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'">'+
-      '<p><strong style="color:var(--gold);">加群一起玩</strong><br>群号 702973928 · 更多抽象好活</p>'+
-    '</div>'+
-    '<p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>';
+    resultFooterHTML({notice:'霧雨魔法店 · 纯属娱乐 · 分数已调高讨个彩头<br>祝各位考生金榜题名，得偿所愿 ✨'}) +
 
   if (d._eggName) {
     fetch('api/counter.php', {

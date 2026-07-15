@@ -4,9 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
 <title>转生异世界职业诊断 · 霧雨魔法店</title>
-<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
 <link rel="stylesheet" href="css/common.css">
 <style>
 .intro-badge{color:#a78bfa;border-color:rgba(167,139,250,.35);}
@@ -35,6 +34,10 @@
 <div id="shopNav"></div>
 <script src="nav.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/reveal-screen.js"></script>
+<script src="js/quiz-storage.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/result-footer.js"></script>
 <div class="container" id="app"></div>
 <script>
 var DIMS=['战斗力','智慧','魅力','秩序感','混沌度','探索欲','生活感','幸运值'];
@@ -158,10 +161,12 @@ var HID=['holy','shadow','bone','joker','bar'];
 var TK=['天生幸运：暴击率+50%','社恐：NPC好感+30%，但组队率-80%','幸运E：永远不会被Boss优先攻击','慢性子：所有技能冷却翻倍，但伤害+200%','路痴：走进任何迷宫自动找到隐藏房间','睡眠体质：无时不在犯困，但休息效率×3','中二之魂：你相信你的右手封印了古老的黑暗力量（其实没有）'];
 
 var state='intro',idx=0,answers=[],step='story',lastKey=null,lastTal=null;
+var STORAGE_KEY='quiz_isekai_v1';
+var TRACK_KEY='isekai_take';
 
-function render(){var a=document.getElementById('app');if(state==='intro'){a.innerHTML='<div class="intro"><div class="intro-badge">霧雨魔法店 · 異世界転生</div><h1>转生异世界·职业诊断</h1><p class="sub">恭喜！你被卡车君亲切问候，成功转生到异世界！<br>神明（疑似阿库娅）给了你一次选择职业的机会，但她好像又喝醉了。<br>12 章剧情，测测你的异世界真正归属</p><button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">开始冒险 →</button><a href="index.html" class="home-link">← 返回魔法店</a></div>';}else if(state==='quiz')renderQ(a);else if(state==='loading')renderLoad(a);else if(state==='result')renderR(a);}
+function render(){var a=document.getElementById('app');if(state==='intro'){a.innerHTML='<div class="intro"><div class="intro-badge">霧雨魔法店 · 異世界転生</div><h1>转生异世界·职业诊断</h1><p class="sub">恭喜！你被卡车君亲切问候，成功转生到异世界！<br>神明（疑似阿库娅）给了你一次选择职业的机会，但她好像又喝醉了。<br>12 章剧情，测测你的异世界真正归属</p><button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">开始冒险 →</button>'+resumeButton(STORAGE_KEY)+'<a href="index.html" class="home-link">← 返回魔法店</a><p style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;" id="takeCount"></p></div>';getCount(TRACK_KEY,function(n){var el=document.getElementById('takeCount');if(el&&n>0)el.textContent='已有 '+n+' 人完成测试';});}else if(state==='quiz')renderQ(a);else if(state==='loading')renderLoad(a);else if(state==='result')renderR(a);}
 
-function startQuiz(){state='quiz';idx=0;answers=[];step='story';render();}
+function startQuiz(){state='quiz';idx=0;answers=[];step='story';trackStart(TRACK_KEY);quizClear(STORAGE_KEY);render();}
 function renderQ(a){
   var q=Q[idx],tot=Q.length,pct=Math.round((idx/tot)*100);
   var h='<div class="progress-wrap"><div class="progress-text">冒险进度 '+(idx+1)+' / '+tot+'</div><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div></div>';
@@ -178,8 +183,9 @@ function renderQ(a){
   }
   a.innerHTML=h;
 }
-function pick(c){answers.push(c);idx++;step='story';if(idx>=Q.length){state='loading';renderLoad(document.getElementById('app'));}else render();}
-async function renderLoad(a){a.innerHTML='<div class="loading-wrap"><div class="loading-orb"></div><p class="loading-text" id="ltxt">正在与异世界连接…</p></div>';await sleep(600);var l=document.getElementById('ltxt');if(l)l.textContent='卡车君：这次选的人还不错…';await sleep(600);if(l)l.textContent='神明：让我查查，你这辈子到底干了些啥…';await sleep(500);state='result';render();}
+function pick(c){answers.push(c);idx++;step='story';quizSave(STORAGE_KEY,{idx:idx,answers:answers});if(idx>=Q.length){state='loading';renderLoad(document.getElementById('app'));}else render();}
+async function renderLoad(a){a.innerHTML='<div class="loading-wrap"><div class="loading-orb"></div><p class="loading-text" id="ltxt">正在与异世界连接…</p></div>';await sleep(600);var l=document.getElementById('ltxt');if(l)l.textContent='卡车君：这次选的人还不错…';await sleep(600);if(l)l.textContent='神明：让我查查，你这辈子到底干了些啥…';await sleep(500);var jn=jobName();showReveal('🚛 转生诊断完成',jn,'#8b5cf6','异世界连接建立中…',function(){state='result';render();});}
+function jobName(){var uv=[0,0,0,0,0,0,0,0],hv=[0,0,0,0];for(var i=0;i<answers.length;i++){var o=Q[i].o[answers[i]];for(var d=0;d<8;d++)uv[d]+=o[2][d];for(var d=0;d<4;d++)hv[d]+=o[3][d];}for(var d=0;d<8;d++)uv[d]=Math.min(10,Math.round(uv[d]/3));for(var d=0;d<4;d++)hv[d]=Math.min(10,Math.round(hv[d]/Math.max(1,hidMax[d])*10));var top=uv[0],td=0;for(var d=1;d<8;d++)if(uv[d]>top){top=uv[d];td=d;}var pools={combat:['hero','assassin','overlord'],magic:['sage','summoner','traveler'],life:['chef','villager']};var pool;if(td===0||td===4||td===5)pool=pools.combat;else if(td===1||td===2||td===7)pool=pools.magic;else pool=pools.life;var bk=pool[0],bs=-Infinity;pool.forEach(function(k){var v=CHARS[k].vec,dot=0,na=0,nb=0;for(var d=0;d<8;d++){dot+=uv[d]*v[d];na+=uv[d]*uv[d];nb+=v[d]*v[d];}var s=dot/(Math.sqrt(na)*Math.sqrt(nb));if(s>bs){bs=s;bk=k;}});if(bk==='hero'&&uv[4]>=7)bk='assassin';if(bk==='overlord'&&uv[7]>=8)bk='traveler';if(hv[3]>=8&&uv[3]>=9)bk='holy';else if(hv[0]>=8&&uv[2]>=6)bk='shadow';else if(hv[2]>=8&&uv[4]>=7)bk='bone';else if(hv[1]>=7)bk='joker';else if(uv[6]>=9&&uv[0]<=2)bk='bar';return (CHARS[bk]||CHARS.hero).name;}
 function renderR(a){
   var uv=[0,0,0,0,0,0,0,0],hv=[0,0,0,0];
   for(var i=0;i<answers.length;i++){var o=Q[i].o[answers[i]];for(var d=0;d<8;d++)uv[d]+=o[2][d];for(var d=0;d<4;d++)hv[d]+=o[3][d];}
@@ -208,7 +214,7 @@ function renderR(a){
   h+='<canvas id="radar" width="280" height="280" style="display:block;margin:10px auto;"></canvas>';
   h+='<div class="skill-card"><b>👥 推荐队友：</b>'+c.mates+'</div><div class="skill-card"><b>📜 人生轨迹：</b><div class="timeline">'+c.time+'</div></div><div class="death-note">💀 '+c.death+'</div>';
   h+='<div class="result-desc">'+c.tag+'</div><div class="result-meta">';c.tags.forEach(function(t){h+='<span class="meta-tag">'+t+'</span>';});h+='</div>';
-  h+='<button class="btn btn-main" onclick="shareIt()">📋 复制结果发给朋友</button><button class="btn btn-ghost" onclick="restart()">🔄 再来一次</button><a href="index.html" class="home-link">← 返回魔法店</a><p class="notice">霧雨魔法店 · 转生有风险 · 选职业需谨慎</p><div class="qq-section"><img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'"><p><strong style="color:var(--gold);">加群一起玩</strong><br>扫码进群，更多抽象好活</p></div></div>';
+  h+='<button class="btn btn-main" onclick="shareIt()">📋 复制结果发给朋友</button><button class="btn btn-ghost" onclick="restart()">🔄 再来一次</button><a href="index.html" class="home-link">← 返回魔法店</a>'+resultFooterHTML({notice:'霧雨魔法店 · 转生有风险 · 选职业需谨慎'})+'</div>';
   a.innerHTML=h;
   drawRadar(uv);
 }
@@ -236,6 +242,8 @@ function drawRadar(uv){
 }
 function shareIt(){copyToClipboard('🚛 我被卡车撞到异世界了！转生职业是【'+(CHARS[lastKey]||{}).name+'】！天赋是【'+lastTal+'】！你也来测测：'+window.location.href,'已复制！发给朋友一起转生 🚛');}
 function restart(){state='intro';idx=0;answers=[];step='story';render();}
+function resumeQuiz(){var d=quizLoad(STORAGE_KEY);if(!d||d.idx<=0)return;state='quiz';idx=d.idx;answers=d.answers;step='story';render();}
+
 render();
 </script>
 </body>

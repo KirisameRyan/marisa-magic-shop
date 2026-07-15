@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>测测你的男娘指数 · 霧雨魔法店</title>
 <script src="js/analytics.js"></script>
-<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
+<script src="js/page-base.js"></script>
 <link rel="stylesheet" href="css/common.css">
 <style>
 body { background-image: radial-gradient(ellipse at 30% 0%, rgba(236,72,153,.06) 0%, transparent 50%), radial-gradient(ellipse at 70% 100%, rgba(219,39,119,.03) 0%, transparent 50%); }
@@ -60,11 +59,11 @@ body { background-image: radial-gradient(ellipse at 30% 0%, rgba(236,72,153,.06)
 <script src="nav.js"></script>
 
 <div class="container" id="app"></div>
-<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
-
 <script src="js/utils.js"></script>
+<script src="js/reveal-screen.js"></script>
+<script src="js/quiz-storage.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/result-footer.js"></script>
 <script>
 var state = 'intro';
 var idx = 0;
@@ -193,10 +192,12 @@ var LOADING_STEPS = ['正在采集行为数据…','正在比对样本数据库�
 
 var SHARE_TEXT = '我在霧雨魔法店测了男娘指数，得分{score}分！你也来测测：';
 
+var STORAGE_KEY = 'quiz_otokonoko_v1';
+var TRACK_KEY = 'otokonoko_take';
 var lastScore = 0, lastA = 0, lastB = 0, lastC = 0, lastD = 0, foolCount = 0;
 
 function render() {
-  toggleAds(state);
+  toggleAds(state === 'intro' ? 'intro' : (state === 'quiz' || state === 'loading') ? 'quiz' : 'result');
   var app = document.getElementById('app');
   if (state === 'intro') renderIntro(app);
   else if (state === 'quiz') renderQuestion(app);
@@ -212,24 +213,21 @@ function renderIntro(app) {
       '<h1>'+QUIZ_TITLE+'</h1>'+
       '<p class="sub">'+QUIZ_SUBTITLE+'</p>'+
       '<div class="stat-line" id="takeCount">已有 … 人测过！测了都说准！</div>'+
+      resumeButton(STORAGE_KEY, '继续上次测试（男娘指数）')+
       '<button class="btn btn-main btn-start" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">💅 开始测试 →</button>'+
       '<a href="index.html" class="home-link">← 返回魔法店</a>'+
     '</div>';
 
-  fetch('api/readcount.php?egg=otokonoko_take')
-    .then(function(r){return r.json()})
-    .then(function(d){document.getElementById('takeCount').textContent='已有 '+d.count+' 人测过！测了都说准！';})
-    .catch(function(){});
+  getCount(TRACK_KEY, function(c) {
+    document.getElementById('takeCount').textContent = '已有 ' + c + ' 人测过！测了都说准！';
+  });
 }
 
 function startQuiz() {
   if (!confirm('⚠️ 免责声明\n\n本测试纯属娱乐，不构成任何医疗建议，\n也不代表任何性别认同倾向。\n\n仅供娱乐 仅供娱乐 仅供娱乐\n\n确定继续吗？')) return;
 
-  fetch('api/counter.php',{
-    method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body:'egg=otokonoko_take'
-  }).catch(function(){});
-
+  trackStart(TRACK_KEY);
+  quizClear(STORAGE_KEY);
   state = 'quiz'; idx = 0; answers = [];
   render();
 }
@@ -264,10 +262,19 @@ function renderQuestion(app) {
 function answer(choice) {
   answers.push(QUESTIONS[idx].opts[choice]);
   idx++;
+  quizSave(STORAGE_KEY, {idx: idx, answers: answers});
   render();
 }
 
 function goBack() { if (idx > 0) { idx--; answers.pop(); render(); } }
+
+function resumeQuiz() {
+  var d = quizLoad(STORAGE_KEY);
+  if (!d) return;
+  state = 'quiz'; idx = d.idx || 0; answers = d.answers || [];
+  quizClear(STORAGE_KEY);
+  render();
+}
 
 function renderLoading(app) {
   app.innerHTML =
@@ -281,8 +288,10 @@ function renderLoading(app) {
 async function cycleLoading(i) {
   if (i >= LOADING_STEPS.length) {
     calcResult();
-    state = 'result';
-    render();
+    showReveal('💅 鉴定完成', '100%', '#ec4899', '数据偏差校准中…', function() {
+      state = 'result';
+      render();
+    });
     return;
   }
   await sleep(500 + Math.random() * 400);
@@ -308,13 +317,11 @@ function calcResult() {
 }
 
 function renderFake(app) {
-  fetch('api/readcount.php?egg=otokonoko_fooled')
-    .then(function(res){return res.json()})
-    .then(function(d){
-      foolCount = d.count;
-      var el = document.getElementById('foolCountEl');
-      if (el) el.textContent = '已有 '+foolCount+' 人上当受骗';
-    }).catch(function(){});
+  getCount('otokonoko_fooled', function(c) {
+    foolCount = c;
+    var el = document.getElementById('foolCountEl');
+    if (el) el.textContent = '已有 ' + foolCount + ' 人上当受骗';
+  });
 
   app.innerHTML =
     '<div class="result">'+
@@ -331,6 +338,7 @@ function renderFake(app) {
 }
 
 function reveal() {
+  trackFooled('otokonoko_fooled');
   fetch('api/counter.php',{
     method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
     body:'egg=otokonoko_fooled'
@@ -389,6 +397,8 @@ function renderReal(app) {
         '<img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'">'+
         '<p><strong style="color:var(--gold);">加群一起玩</strong><br>群号 702973928 · 更多抽象好活</p>'+
       '</div>'+
+
+  resultFooterHTML()+
     '</div>';
 }
 
@@ -397,7 +407,7 @@ function shareIt() {
   copyToClipboard(text, '已复制！发给朋友试试 😈');
 }
 
-function restart() { state = 'intro'; idx = 0; answers = []; render(); }
+function restart() { state = 'intro'; idx = 0; answers = []; quizClear(STORAGE_KEY); render(); }
 
 render();
 </script>

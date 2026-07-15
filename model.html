@@ -4,10 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
 <!-- 🔧 改标题 -->
 <title>新页面 · 霧雨魔法店</title>
-<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
 <link rel="stylesheet" href="css/common.css">
 <!-- 🔧 页面特有样式写这里 -->
 </head>
@@ -30,6 +29,10 @@
      🔧 你的页面逻辑 —— 从这里开始改
      ======================================== -->
 <script src="js/utils.js"></script>
+<script src="js/reveal-screen.js"></script>
+<script src="js/quiz-storage.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/result-footer.js"></script>
 <script>
 /* ===========================================
    状态机模板
@@ -47,6 +50,8 @@
 var state = 'intro';
 var idx = 0;           // 当前题号
 var answers = [];      // 用户答案
+var STORAGE_KEY = 'quiz_model_v1';
+var TRACK_KEY = 'model_take';
 
 // ==================== 🔧 DATA：改这里 ====================
 
@@ -94,18 +99,22 @@ function render() {
 
 // ── 首页 ──
 function renderIntro(app) {
+  var count = getCount(TRACK_KEY);
+  var resumeHTML = resumeButton(STORAGE_KEY) || '';
   app.innerHTML =
     '<div class="intro">' +
       '<div class="intro-badge">' + BADGE_TEXT + '</div>' +
       '<h1>' + QUIZ_TITLE + '</h1>' +
       '<p class="sub">' + QUIZ_SUBTITLE + '</p>' +
       '<button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">开始测试 →</button>' +
+      resumeHTML +
       '<a href="index.html" class="home-link">← 返回魔法店</a>' +
     '</div>';
 }
 
 function startQuiz() {
   state = 'quiz'; idx = 0; answers = [];
+  trackStart(TRACK_KEY);
   // 🔧 如果你需要打乱题目顺序：
   // QUESTIONS = shuffle(QUESTIONS.slice());
   render();
@@ -144,7 +153,13 @@ function renderQuestion(app) {
 function answer(choice) {
   answers.push(choice);
   idx++;
+  quizSave(STORAGE_KEY, {idx: idx, answers: answers});
   render();
+}
+
+function resumeQuiz() {
+  var d = quizLoad(STORAGE_KEY);
+  if (d && d.idx) { state = 'quiz'; idx = d.idx; answers = d.answers; render(); }
 }
 
 /* 🔧 如果需要计分制，替换成类似这样：
@@ -169,9 +184,12 @@ function renderLoading(app) {
 
 async function cycleLoading(i) {
   if (i >= LOADING_STEPS.length) {
-    state = 'result';
-    // 🔧 如果逻辑复杂，在 showResult 里调用 calcResult()
-    render();
+    quizClear(STORAGE_KEY);
+    var r = showResult();
+    showReveal('🧠 鉴定完成', r.name, 'var(--gold)', '结果生成中…', function() {
+      state = 'result';
+      render();
+    });
     return;
   }
   await sleep(500 + Math.random() * 400);
@@ -229,11 +247,7 @@ function renderResult(app) {
       '<button class="btn btn-main" onclick="shareIt()">📋 复制结果发给朋友</button>' +
       '<button class="btn btn-ghost" onclick="restart()">🔄 再来一次</button>' +
       '<a href="index.html" class="home-link">← 返回魔法店</a>' +
-      '<p class="notice">霧雨魔法店 · 结果仅供参考 · 但魔法是真的</p>' +
-      '<div class="qq-section">' +
-        '<img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'">' +
-        '<p><strong style="color:var(--gold);">加群一起玩</strong><br>扫码进群，更多抽象好活</p>' +
-      '</div>' +
+      resultFooterHTML({notice:'霧雨魔法店 · 结果仅供参考 · 但魔法是真的'}) +
     '</div>';
 
   app.innerHTML = html;
@@ -247,7 +261,7 @@ function shareIt() {
   copyToClipboard(text, '已复制！发给朋友试试 😈');
 }
 
-function restart() { state = 'intro'; idx = 0; answers = []; render(); }
+function restart() { state = 'intro'; idx = 0; answers = []; quizClear(STORAGE_KEY); render(); }
 
 // ==================== 启动 ====================
 render();

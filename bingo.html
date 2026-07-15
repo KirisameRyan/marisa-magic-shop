@@ -4,9 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>社会指数宾果 · 霧雨魔法店</title>
-<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
     <script src="js/analytics.js"></script>
+    <script src="js/page-base.js"></script>
     <link rel="stylesheet" href="css/common.css">
 <style>
 .container { padding: 32px 26px; }
@@ -95,10 +94,9 @@
 <script src="nav.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/canvas-utils.js"></script>
+<script src="js/result-footer.js"></script>
 
 <div class="container" id="app"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
 
 <script>
 var SITE_URL = 'www.azureflame.cloud';
@@ -124,9 +122,6 @@ var state = 'select';
 var on = new Array(25).fill(false);
 
 function render() {
-  var a1=document.getElementById('ad1'),a3=document.getElementById('ad3');
-  if(a1)a1.style.display=state==='select'?'block':'none';
-  if(a3)a3.style.display=state==='result'?'block':'none';
  var app = document.getElementById('app');
  if (state === 'select') renderSelect(app);
  else if (state === 'result') renderResult(app);
@@ -381,13 +376,8 @@ function renderResult(app) {
  '<div class="result-meta">' + tags + '</div>' +
  '<button class="btn btn-main" onclick="shareImage()">📸 生成分享海报</button>' +
  '<button class="btn btn-ghost" onclick="shareIt()">📋 复制结果文案</button>' +
- '<a href="index.html" class="home-link">← 返回魔法店</a>' +
- '<p class="notice">霧雨魔法店 · 结果仅供娱乐 · 但社恐是真的</p>' +
- '<div class="qq-section">' +
- '<img src="' + QQ_IMG + '" alt="QQ群二维码" onerror="this.style.display=\'none\'">' +
- '<p><strong style="color:var(--gold);">加群一起宅</strong><br>群号 ' + QQ_GROUP + ' · 更多抽象好活</p>' +
-  '</div>' +
-  '<p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>' +
+  '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+  resultFooterHTML({ notice: '霧雨魔法店 · 结果仅供娱乐 · 但社恐是真的', qqImg: QQ_IMG, qqGroup: QQ_GROUP }) +
   '</div>';
 }
 

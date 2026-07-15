@@ -3,70 +3,18 @@
 <head>
     <link rel="stylesheet" href="css/common.css">
     <script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>404 · 雾雨魔法店</title>
-<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
     <style>
         /* ── 完全继承主页风格 ── */
-
-        .stars {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            overflow: hidden;
-        }
-        .star {
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            background: var(--star);
-            border-radius: 50%;
-            animation: twinkle 3s infinite alternate;
-        }
-        @keyframes twinkle {
-            0% {
-                opacity: .3;
-                transform: scale(1);
-            }
-            100% {
-                opacity: 1;
-                transform: scale(1.8);
-            }
-        }
 
         .container {
             max-width: 720px;
             width: 100%;
             position: relative;
             z-index: 1;
-        }
-
-        /* ── 顶栏（极简，仅保留店名） ── */
-        .shop-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            background: var(--bg);
-            border-bottom: 1px solid var(--border);
-            padding: 0 16px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 16px rgba(0, 0, 0, .4);
-        }
-        .shop-bar .brand {
-            font-size: 14px;
-            font-weight: 800;
-            letter-spacing: 2px;
-            background: linear-gradient(135deg, var(--gold), #ffe8b0, var(--gold));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-decoration: none;
         }
 
         /* ── 404 主体 ── */
@@ -265,10 +213,8 @@
 </head>
 <body>
 
-    <!-- ── 极简顶栏（仅店名） ── -->
-    <div class="shop-bar">
-        <a href="index.html" class="brand">✦ 霧雨魔法店</a>
-    </div>
+    <div id="shopNav"></div>
+    <script src="nav.js"></script>
 
     <!-- ── 星星 ── -->
     <div class="stars" id="stars"></div>

@@ -4,9 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>读心术 · 你最爱什么水果 · 霧雨魔法店</title>
-<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
-    <script src="js/analytics.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
     <link rel="stylesheet" href="css/common.css">
 <style>
  .container::before {
@@ -49,17 +48,20 @@
 <div id="shopNav"></div>
 <script src="nav.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/reveal-screen.js"></script>
+<script src="js/quiz-storage.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/result-footer.js"></script>
 
 <div class="container" id="app"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
 
 <script>
 var state = 'intro';
 var idx = 0;
 var answers = [];
 var seen = false;
+var STORAGE_KEY = 'quiz_fruit_v1';
+var TRACK_KEY = 'fruit_take';
 
 var QUIZ_TITLE = '六个问题，看穿你最爱什么水果';
 var QUIZ_SUBTITLE = '别想水果的事。回答下面六个无关的问题。<br>读心术会告诉你答案。';
@@ -124,6 +126,8 @@ function render() {
 }
 
 function renderIntro(app) {
+ var count = getCount(TRACK_KEY);
+ var resumeHTML = resumeButton(STORAGE_KEY) || '';
  app.innerHTML =
  '<div class="intro">' +
  '<div class="intro-badge">' + BADGE_TEXT + '</div>' +
@@ -131,12 +135,14 @@ function renderIntro(app) {
  '<p class="sub">' + QUIZ_SUBTITLE + '</p>' +
  '<p class="mind-hint">🧠 别想水果。回答六个问题，我来读你的心。</p>' +
  '<button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">开始读心 →</button>' +
+ resumeHTML +
  '<a href="index.html" class="home-link">← 返回魔法店</a>' +
  '</div>';
 }
 
 function startQuiz() {
  state = 'quiz'; idx = 0; answers = [];
+ trackStart(TRACK_KEY);
  var lastIdx = QUESTIONS.length - 1;
  var rest = QUESTIONS.slice(0, lastIdx);
  var last = QUESTIONS[lastIdx];
@@ -175,7 +181,13 @@ function answer(choice) {
  var q = QUESTIONS[idx];
  answers.push({ q: q.q, opt: q.opts[choice], letter: labels[choice] || '?' });
  idx++;
+ quizSave(STORAGE_KEY, {idx: idx, answers: answers, qOrder: QUESTIONS.map(function(x){return x.q;})});
  render();
+}
+
+function resumeQuiz() {
+ var d = quizLoad(STORAGE_KEY);
+ if (d && d.idx) { state = 'quiz'; idx = d.idx; answers = d.answers; render(); }
 }
 
 function renderLoading(app) {
@@ -225,7 +237,10 @@ function renderMind(app) {
 }
 
 function reveal() {
- seen = true; state = 'result'; render();
+ seen = true; quizClear(STORAGE_KEY);
+ showReveal('🧠 读心术完成', RESULT.name, '#84cc16', '味觉匹配中…', function() {
+  state = 'result'; render();
+ });
 }
 
 function renderResult(app) {
@@ -251,13 +266,8 @@ function renderResult(app) {
  '<button class="btn btn-main" onclick="shareIt()">📋 复制结果发给朋友</button>' +
  '<button class="btn btn-ghost" onclick="restart()">🔄 再来一次</button>' +
  '<a href="index.html" class="home-link">← 返回魔法店</a>' +
- '<p class="notice">霧雨魔法店 · 读心术研究所 · 信则有不信则无</p>' +
- '<div class="qq-section">' +
- '<img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'">' +
- '<p><strong style="color:var(--gold);">加群一起玩</strong><br>扫码进群，更多抽象好活</p>' +
-  '</div>' +
-  '<p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>' +
-  '</div>';
+ resultFooterHTML({notice:'霧雨魔法店 · 读心术研究所 · 信则有不信则无'}) +
+ '</div>';
  app.innerHTML = html;
 }
 
@@ -266,7 +276,7 @@ function shareIt() {
  copyToClipboard(text, '已复制！发给朋友让他们也被读心 🧠');
 }
 
-function restart() { state = 'intro'; idx = 0; answers = []; render(); }
+function restart() { state = 'intro'; idx = 0; answers = []; quizClear(STORAGE_KEY); render(); }
 
 render();
 </script>

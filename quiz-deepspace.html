@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="js/analytics.js"></script>
 <title>测测你的恋与深空本命 · 霧雨魔法店</title>
-<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f472b6'>💘</text></svg>">
 <link rel="stylesheet" href="css/common.css">
+<script src="js/reveal-screen.js"></script>
+<script src="js/page-base.js"></script>
 <style>
 .cover-hearts{text-align:center;margin-bottom:12px;font-size:36px;letter-spacing:8px;animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:.8;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
@@ -17,17 +17,6 @@
 .dim-bar-wrap{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
 .dim-bar{height:100%;border-radius:3px;width:0;transition:width .9s ease;}
 .dim-val{font-size:10px;color:var(--muted);width:24px;text-align:right;}
-.reveal-screen{position:relative;padding:60px 20px;text-align:center;overflow:hidden;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-.reveal-screen .scanline{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#ef4444,transparent);animation:scanDown 1s infinite;}
-@keyframes scanDown{0%{top:0}100%{top:100%}}
-.reveal-screen .reveal-title{font-size:13px;color:#ef4444;letter-spacing:3px;margin-bottom:16px;}
-.reveal-screen .reveal-emoji{font-size:60px;animation:glowPulse 1.2s infinite;}
-@keyframes glowPulse{0%,100%{text-shadow:0 0 20px rgba(239,68,68,.3)}50%{text-shadow:0 0 40px rgba(239,68,68,.8),0 0 80px rgba(239,68,68,.3)}}
-.reveal-screen .reveal-hint{font-size:11px;color:var(--muted);margin-top:12px;animation:blink 1s infinite;}
-@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
-.reveal-particles{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
-.reveal-particle{position:absolute;color:var(--gold);font-size:14px;animation:rise linear infinite;opacity:0;}
-@keyframes rise{0%{opacity:0;transform:translateY(0) rotate(0deg)}10%{opacity:.6}90%{opacity:.2}100%{opacity:0;transform:translateY(-300px) rotate(180deg)}
 </style>
 </head>
 <body>
@@ -37,7 +26,6 @@
 <script src="js/utils.js"></script>
 
 <div class="container" id="app"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
 <script>
 const CHARS = {
 deku:{name:'绿谷出久',hero:'デク',emoji:'🥦',color:'#4ade80',dims:{gentle:90,hot:70,cold:20,dark:35},
@@ -198,24 +186,14 @@ function calcAndReveal() {
   KEYS.forEach(function(k){ if (scores[k] > scores[best]) best = k; });
   revealedChar = CHARS[best];
   renderReveal(document.getElementById('app'));
-  setTimeout(function() { state = 'result'; showResult(); }, 2000);
 }
 
 function renderReveal(app) {
   var c = revealedChar;
-  var particles = '';
-  for (var pi = 0; pi < 16; pi++) {
-    particles += '<span class="reveal-particle" style="left:'+(Math.random()*90+5)+'%;top:'+(Math.random()*80+10)+'%;animation-delay:'+Math.random()*3+'s;animation-duration:'+(2.5+Math.random()*3)+'s;font-size:'+(10+Math.random()*12)+'px;">✦</span>';
-  }
-  app.innerHTML =
-    '<div class="reveal-screen">'+
-      '<div class="scanline"></div>'+
-      '<div class="reveal-particles">'+particles+'</div>'+
-      '<div class="reveal-title">你以为你在测「恋与深空」？</div>'+
-      '<div class="reveal-emoji" style="color:'+c.color+'">'+c.emoji+'</div>'+
-      '<div class="reveal-code" style="color:'+c.color+';font-size:42px;font-weight:900;animation:glowPulse 1.2s infinite;">'+c.hero+'</div>'+
-      '<div class="reveal-hint">结果生成中…</div>'+
-    '</div>';
+  showReveal('你以为你在测「恋与深空」？', c.hero, c.color, '结果生成中…', function() {
+    state = 'result';
+    render();
+  });
 }
 
 function showResult() {

@@ -2,12 +2,11 @@
 <html lang="zh-CN">
 <head>
     <script src="js/analytics.js"></script>
+    <script src="js/page-base.js"></script>
     <link rel="stylesheet" href="css/common.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>测一测你的灵魂动物 · 霧雨魔法店</title>
-<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
 <style>
  :root {
  --accent: #e87d3e; --green: #6a9b4a;
@@ -93,11 +92,12 @@
 <div id="shopNav"></div>
 <script src="nav.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/reveal-screen.js"></script>
+<script src="js/quiz-storage.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/result-footer.js"></script>
 
 <div class="container" id="app"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
 <script>
 const quickQs = [
  { q:'周末下午你一般在干嘛？', opts:['出门浪', '家里瘫', '看心情', '不知道'] },
@@ -121,27 +121,31 @@ const proQs = [
  { q:'你觉得这个测试准吗？', opts:['我先看看结果', '肯定不准但玩一下', '我猜结果都一样', '准不准不重要'] }
 ];
 
+const STORAGE_KEY = 'quiz_animal_v1';
+const TRACK_KEY = 'animal_take';
 let mode = null, questions = [], idx = -1, answers = [];
 
 function render() {
-  var a1=document.getElementById('ad1'),a2=document.getElementById('ad2'),a3=document.getElementById('ad3');
-  if(a1)a1.style.display=mode===null?'block':'none';
-  if(a2)a2.style.display=mode!==null&&idx<questions.length?'block':'none';
-  if(a3)a3.style.display=mode!==null&&idx>=questions.length?'block':'none';
+  toggleAds(mode === null ? 'intro' : idx < questions.length ? 'quiz' : 'result');
  const a = document.getElementById('app');
- if (mode === null) {
- a.innerHTML = `
- <div class="version-select">
- <div class="intro-badge">灵魂鉴定中心</div>
- <h1>🐾 测一测你的灵魂动物</h1>
- <p class="sub">回答几个简单的问题，找到与你灵魂最匹配的动物</p>
- <div class="version-cards">
- <button class="ver-card" onclick="pick('quick')"><div class="icon">⚡</div><div class="title">快速版</div><div class="info">${quickQs.length} 道题 · 一分钟搞定</div></button>
- <button class="ver-card" onclick="pick('pro')"><div class="icon">🔬</div><div class="title">专业版</div><div class="info">${proQs.length} 道题 · 更全面一点</div></button>
- </div>
- <p class="notice">仅供娱乐 · 别太当真</p>
- </div>`;
- } else if (idx < questions.length) {
+  if (mode === null) {
+  a.innerHTML = `
+  <div class="version-select">
+  <div class="intro-badge">灵魂鉴定中心</div>
+  <h1>🐾 测一测你的灵魂动物</h1>
+  <p class="sub">回答几个简单的问题，找到与你灵魂最匹配的动物</p>
+  <div class="stat-line" id="takeCount">已有 … 人测过！</div>${resumeButton(STORAGE_KEY, '继续上次测试（灵魂动物）')}
+  <div class="version-cards">
+  <button class="ver-card" onclick="pick('quick')"><div class="icon">⚡</div><div class="title">快速版</div><div class="info">${quickQs.length} 道题 · 一分钟搞定</div></button>
+  <button class="ver-card" onclick="pick('pro')"><div class="icon">🔬</div><div class="title">专业版</div><div class="info">${proQs.length} 道题 · 更全面一点</div></button>
+  </div>
+  <p class="notice">仅供娱乐 · 别太当真</p>
+  </div>`;
+  getCount(TRACK_KEY, function(c) {
+    var el = document.getElementById('takeCount');
+    if (el) el.textContent = '已有 ' + c + ' 人测过！';
+  });
+  } else if (idx < questions.length) {
  const q = questions[idx]; const pct = Math.round((idx/questions.length)*100);
  a.innerHTML = `
  <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><div class="progress-text">${idx+1} / ${questions.length}</div></div>
@@ -150,9 +154,18 @@ function render() {
  } else { showLoading(); }
 }
 
-function pick(m) { mode = m; questions = m === 'quick' ? quickQs : proQs; idx = 0; answers = []; render(); }
-function answer(i) { answers.push(i); idx++; render(); }
+function pick(m) { trackStart(TRACK_KEY); mode = m; questions = m === 'quick' ? quickQs : proQs; idx = 0; answers = []; quizClear(STORAGE_KEY); render(); }
+function answer(i) { answers.push(i); idx++; quizSave(STORAGE_KEY, {idx: idx, answers: answers, mode: mode}); render(); }
 function goBack() { if(idx<=0) return; idx--; answers.pop(); render(); }
+
+function resumeQuiz() {
+  var d = quizLoad(STORAGE_KEY);
+  if (!d) return;
+  mode = d.mode || 'quick'; questions = d.mode === 'pro' ? proQs : quickQs;
+  idx = d.idx || 0; answers = d.answers || [];
+  quizClear(STORAGE_KEY);
+  render();
+}
 
 async function showLoading() {
  const a = document.getElementById('app');
@@ -160,7 +173,8 @@ async function showLoading() {
  a.innerHTML = '<div class="loading-wrap"><div class="loading-animal" id="lanim">🐱</div><p class="loading-text">正在分析你的灵魂…</p></div>';
  const lanim = document.getElementById('lanim');
  for (let i = 0; i < 12; i++) { await sleep(150+Math.random()*200); lanim.textContent = animals[i%animals.length]; }
- await sleep(300); showResult();
+ await sleep(300);
+ showReveal('🐾 灵魂鉴定完成', '蛆', '#6fcf97', '废话，一定是蛆…', function() { showResult(); });
 }
 
 function showResult() {
@@ -186,11 +200,9 @@ function showResult() {
  <button class="btn btn-main" onclick="shareItDiamond()" style="background:linear-gradient(135deg,#b8d4ff,#80b4ff,#b8d4ff);color:#1a3a5c;">💎 炫耀你的钻石蛆身份</button>
  <button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button>
  <a href="quiz-animal-real.html" class="btn btn-ghost" style="text-decoration:none;border-color:var(--green);color:var(--green);">🐾 试试真实版（真的有不同结果）</a>
- <a href="index.html" class="home-link">← 返回魔法店</a>
- <div style="text-align:center;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);"><img src="images/qq-group.jpg" alt="QQ群二维码" style="width:130px;border-radius:12px;border:2px solid var(--border);margin-bottom:8px;"><p style="font-size:12px;color:var(--muted);"><strong style="color:var(--gold);">加群看更多乐子 还能玩MC服务器</strong><br>扫码进群，一起来玩</p></div>
- <p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>
-  <p class="notice">钻石蛆出现概率：1/20 · 你是有多欧才能看到这句话</p>
- </div>`;
+  <a href="index.html" class="home-link">← 返回魔法店</a>
+  ${resultFooterHTML({notice:'钻石蛆出现概率：1/20 · 你是有多欧才能看到这句话'})}
+  </div>`;
  } else if (tier === 'golden') {
  const traits = ['至尊稀有','金光闪闪','万里挑一','欧皇专属','传说级生物','闪耀夺目'];
  a.innerHTML = `
@@ -207,11 +219,9 @@ function showResult() {
  <button class="btn btn-main" onclick="shareItGolden()" style="background:linear-gradient(135deg,#f0c060,#e8a830);color:#3d2e10;">✨ 分享你的黄金蛆身份</button>
  <button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button>
  <a href="quiz-animal-real.html" class="btn btn-ghost" style="text-decoration:none;border-color:var(--green);color:var(--green);">🐾 试试真实版（真的有不同结果）</a>
- <a href="index.html" class="home-link">← 返回魔法店</a>
- <div style="text-align:center;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);"><img src="images/qq-group.jpg" alt="QQ群二维码" style="width:130px;border-radius:12px;border:2px solid var(--border);margin-bottom:8px;"><p style="font-size:12px;color:var(--muted);"><strong style="color:var(--gold);">加群看更多乐子 还能玩MC服务器</strong><br>扫码进群，一起来玩</p></div>
- <p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>
-  <p class="notice">黄金蛆出现概率：1/10 · 你是天选之人</p>
- </div>`;
+  <a href="index.html" class="home-link">← 返回魔法店</a>
+  ${resultFooterHTML({notice:'黄金蛆出现概率：1/10 · 你是天选之人'})}
+  </div>`;
  } else {
  const traits = ['适应力超强','生命力旺盛','不挑环境','营养丰富','高蛋白含量','生态贡献巨大'];
  a.innerHTML = `
@@ -227,11 +237,9 @@ function showResult() {
  <button class="btn btn-main" onclick="shareIt()">📋 复制结果发给朋友</button>
  <button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button>
  <a href="quiz-animal-real.html" class="btn btn-ghost" style="text-decoration:none;border-color:var(--green);color:var(--green);">🐾 试试真实版（真的有不同结果）</a>
- <a href="index.html" class="home-link">← 返回魔法店</a>
- <div style="text-align:center;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);"><img src="images/qq-group.jpg" alt="QQ群二维码" style="width:130px;border-radius:12px;border:2px solid var(--border);margin-bottom:8px;"><p style="font-size:12px;color:var(--muted);"><strong style="color:var(--gold);">加群看更多乐子 还能玩MC服务器</strong><br>扫码进群，一起来玩</p></div>
- <p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>
-  <p class="notice">本测试仅供娱乐，但蛆是认真的。</p>
- </div>`;
+  <a href="index.html" class="home-link">← 返回魔法店</a>
+  ${resultFooterHTML({notice:'本测试仅供娱乐，但蛆是认真的。'})}
+  </div>`;
  }
 }
 
@@ -248,7 +256,7 @@ function doReveal(tier) {
 function shareIt() { copyToClipboard('我测出来灵魂动物是蛆 🪰 你也来测测：' + window.location.href, '已复制！发给朋友试试 😈'); }
 function shareItGolden() { copyToClipboard('✨ 我测出来灵魂动物是黄金蛆！稀有彩蛋 你也来测测：' + window.location.href, '已复制！快去炫耀 😈'); }
 function shareItDiamond() { copyToClipboard('💎 我测出来灵魂动物是钻石蛆！！！欧到离谱 你也来测测：' + window.location.href, '已复制！欧皇驾到 😈'); }
-function restart() { mode = null; idx = -1; answers = []; render(); }
+function restart() { mode = null; idx = -1; answers = []; quizClear(STORAGE_KEY); render(); }
 render();
 </script>
 

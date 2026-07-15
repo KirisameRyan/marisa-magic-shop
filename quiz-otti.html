@@ -5,9 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OTTI人格测试 · 霧雨魔法店</title>
 <script src="js/analytics.js"></script>
-<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
 <link rel="stylesheet" href="css/common.css">
+<script src="js/page-base.js"></script>
 <style>
 body { background-image: radial-gradient(ellipse at 30% 0%, rgba(14,165,233,.05) 0%, transparent 50%), radial-gradient(ellipse at 70% 100%, rgba(99,102,241,.03) 0%, transparent 50%); }
 .container { max-width: 580px; }
@@ -57,19 +56,6 @@ body { background-image: radial-gradient(ellipse at 30% 0%, rgba(14,165,233,.05)
 .detail-item .d-text { font-size: 12px; color: var(--muted); line-height: 1.8; }
 .btn-detail { background: transparent; border: 1px solid var(--border); color: var(--muted); text-align: center; width: 100%; margin-top: 10px; }
 .btn-detail:hover { border-color: var(--gold-dim); color: var(--gold); }
-
-/* ═══ Reveal 屏 ═══ */
-.reveal-screen { position: relative; padding: 60px 20px; text-align: center; overflow: hidden; min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.reveal-screen .scanline { position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); animation: scanDown 1s infinite; }
-@keyframes scanDown { 0%{top:0} 100%{top:100%} }
-.reveal-screen .reveal-title { font-size: 13px; color: var(--gold); letter-spacing: 3px; margin-bottom: 20px; }
-.reveal-screen .reveal-code { font-size: 64px; font-weight: 900; color: var(--text); animation: glowPulse 1.2s infinite; letter-spacing: 8px; }
-@keyframes glowPulse { 0%,100%{text-shadow:0 0 20px rgba(240,192,96,.3)} 50%{text-shadow:0 0 40px rgba(240,192,96,.8),0 0 80px rgba(240,192,96,.3)} }
-.reveal-screen .reveal-hint { font-size: 11px; color: var(--muted); margin-top: 16px; animation: blink 1s infinite; }
-@keyframes blink { 0%,100%{opacity:.3} 50%{opacity:1} }
-.reveal-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.reveal-particle { position: absolute; color: var(--gold); font-size: 14px; animation: rise linear infinite; opacity: 0; }
-@keyframes rise { 0%{opacity:0;transform:translateY(0) rotate(0deg)} 10%{opacity:.6} 90%{opacity:.2} 100%{opacity:0;transform:translateY(-300px) rotate(180deg)} }
 
 /* ═══ 滑杆维度卡片 ═══ */
 .dim-card { padding: 16px; margin-bottom: 10px; background: rgba(255,255,255,.018); border: 1px solid rgba(255,255,255,.04); border-radius: 14px; opacity: 0; transform: translateY(14px); transition: opacity .4s, transform .4s; }
@@ -137,18 +123,21 @@ body { background-image: radial-gradient(ellipse at 30% 0%, rgba(14,165,233,.05)
 <script src="nav.js"></script>
 
 <div class="container" id="app"></div>
-<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" data-mode="staging" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
 
 <script src="js/utils.js"></script>
 <script src="js/canvas-utils.js"></script>
+<script src="js/reveal-screen.js"></script>
+<script src="js/quiz-storage.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/result-footer.js"></script>
 <script>
 var state = 'intro';
 var idx = 0;
 var answers = [];
 var version = null;
 var QUESTIONS = [];
+var STORAGE_KEY = 'quiz_otti_v1';
+var TRACK_KEY = 'otti_take';
 
 var ALL_Q = [
   // ══ R/W: 网上身份 = 10 ══
@@ -251,9 +240,10 @@ function renderIntro(app) {
         '<div class="version-card" id="verFull" onclick="selVer(\'full\')"><div class="v-title">🔬 完整版</div><div class="v-sub">40 题 · 约 5 分钟</div></div>'+
       '</div>'+
       '<button class="btn btn-main btn-start" id="btnStart" style="max-width:260px;margin:0 auto;opacity:.4;pointer-events:none;" onclick="startQuiz()">选择版本后开始测试 →</button>'+
+      resumeButton(STORAGE_KEY)+
       '<a href="index.html" class="home-link">← 返回魔法店</a>'+
     '</div>';
-  fetch('api/readcount.php?egg=otti_take').then(function(r){return r.json()}).then(function(d){document.getElementById('takeCount').textContent='已有 '+d.count+' 人测过！';}).catch(function(){});
+  getCount(TRACK_KEY, function(cnt) { var el = document.getElementById('takeCount'); if (el) el.textContent = '已有 '+cnt+' 人测过！'; });
 }
 
 function selVer(v) {
@@ -277,8 +267,24 @@ function startQuiz() {
   }
   totalQ = QUESTIONS.length;
   state = 'quiz'; idx = 0; answers = [];
-  fetch('api/counter.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'egg=otti_take'}).catch(function(){});
+  quizClear(STORAGE_KEY);
+  trackStart(TRACK_KEY);
   render();
+}
+
+function resumeQuiz() {
+  var d = quizLoad(STORAGE_KEY);
+  if (d) {
+    version = d.version;
+    if (version === 'lite') {
+      QUESTIONS = [];
+      for (var di = 0; di < 4; di++) { QUESTIONS = QUESTIONS.concat(ALL_Q.slice(di * 10, di * 10 + 6)); }
+    } else { QUESTIONS = ALL_Q.slice(0); }
+    totalQ = QUESTIONS.length;
+    idx = d.idx; answers = d.answers;
+    state = 'quiz';
+    render();
+  }
 }
 
 function renderQuestion(app) {
@@ -296,8 +302,8 @@ function renderQuestion(app) {
   app.innerHTML = html;
 }
 
-function answer(val) { answers.push({d: QUESTIONS[idx].d, v: val}); idx++; render(); }
-function goBack() { if (idx > 0) { idx--; answers.pop(); render(); } }
+function answer(val) { answers.push({d: QUESTIONS[idx].d, v: val}); idx++; quizSave(STORAGE_KEY, {version: version, idx: idx, answers: answers}); render(); }
+function goBack() { if (idx > 0) { idx--; answers.pop(); quizSave(STORAGE_KEY, {version: version, idx: idx, answers: answers}); render(); } }
 
 function renderLoading(app) {
   app.innerHTML = '<div class="loading-wrap"><div class="loading-orb"></div><p class="loading-text" id="ltxt">正在分析行为模式…</p></div>';
@@ -373,24 +379,10 @@ function countUp(el, end, duration) {
 
 function renderReveal(app) {
   var p = PERSONAS[lastType] || PERSONAS['WGBP'];
-  var particles = '';
-  for (var pi = 0; pi < 18; pi++) {
-    particles += '<span class="reveal-particle" style="left:'+(Math.random()*90+5)+'%;top:'+(Math.random()*80+10)+'%;animation-delay:'+Math.random()*3+'s;animation-duration:'+(2.5+Math.random()*3)+'s;font-size:'+(10+Math.random()*12)+'px;">✦</span>';
-  }
-  app.innerHTML =
-    '<div class="reveal-screen">'+
-      '<div class="scanline"></div>'+
-      '<div class="reveal-particles">'+particles+'</div>'+
-      '<div class="reveal-title">⏳ OTTI 人格鉴定完成</div>'+
-      '<div class="reveal-code" style="color:'+p.color+'">'+p.c+'</div>'+
-      '<div class="reveal-hint" style="color:'+p.color+'">人格数据解码中…</div>'+
-    '</div>';
-
-  setTimeout(function() {
+  showReveal('⏳ OTTI 人格鉴定完成', p.c, p.color, '人格数据解码中…', function() {
     state = 'result';
     render();
-    window.scrollTo({top:0,behavior:'smooth'});
-  }, 1400);
+  });
 }
 
 function renderResult(app) {
@@ -469,8 +461,8 @@ function renderResult(app) {
       '<button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button>'+
       '<a href="index.html" class="home-link">← 返回魔法店</a>'+
       '<p style="font-size:10px;text-align:center;margin-top:8px;">想精确匹配到具体人物？<a href="quiz-internet.html" style="color:var(--pink);text-decoration:none;">→ 测测你是哪位抽象圈大手子</a></p>'+
-      '<p class="notice">霧雨魔法店 · 数据仅供参考 · 不构成任何人格诊断</p>'+
-      '<div class="qq-section"><img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'"><p><strong style="color:var(--gold);">加群一起玩</strong><br>群号 702973928 · 更多抽象好活</p></div></div>';
+      resultFooterHTML({notice:'霧雨魔法店 · 数据仅供参考 · 不构成任何人格诊断'})+
+    '</div>';
 
   // 滑杆依次展开 + 数字滚动
   (function() {
@@ -493,15 +485,14 @@ function renderResult(app) {
   })();
 
   // 百分比
-  fetch('api/counter.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'egg=otti_type_'+lastType}).catch(function(){});
-  fetch('api/readcount.php?prefix=otti_type_')
-    .then(function(r){return r.json()}).then(function(d){
-      var pct = 0; var cnt = 0;
-      if (d.items && d.total > 0) { cnt = d.items['otti_type_'+lastType] || 0; pct = Math.round(cnt / d.total * 100); }
-      lastPercent = pct; lastCount = cnt;
-      var el = document.getElementById('pctLine');
-      if (el) el.innerHTML = '你是第 <b style="color:var(--gold)">'+cnt+'</b> 个 '+(p.c||'?')+' 型人格 · 占比 <b style="color:var(--gold)">'+pct+'%</b>';
-    }).catch(function(){});
+  trackStart('otti_type_' + lastType);
+  getTypeStats('otti_type_', function(d) {
+    var pct = 0; var cnt = 0;
+    if (d.items && d.total > 0) { cnt = d.items['otti_type_'+lastType] || 0; pct = Math.round(cnt / d.total * 100); }
+    lastPercent = pct; lastCount = cnt;
+    var el = document.getElementById('pctLine');
+    if (el) el.innerHTML = '你是第 <b style="color:var(--gold)">'+cnt+'</b> 个 '+(p.c||'?')+' 型人格 · 占比 <b style="color:var(--gold)">'+pct+'%</b>';
+  });
 }
 
 function shareIt() {
@@ -509,7 +500,7 @@ function shareIt() {
   copyToClipboard('【OTTI人格测试】我是 '+p.n+'（'+p.c+'）！你也来测测：'+window.location.href, '已复制！发给朋友试试 😈');
 }
 
-function restart() { state = 'intro'; version = null; idx = 0; answers = []; render(); }
+function restart() { state = 'intro'; version = null; idx = 0; answers = []; quizClear(STORAGE_KEY); render(); }
 
 var DETAIL_TEXTS = {
   'R':'你在网上有明显的"第二身份"，会根据不同场合调整表达方式。线上有自己的人设与标签，和线下的你存在差异。这并非伪装，而是一种在不同社会空间中自然切换的适应能力。你喜欢这种角色扮演的自由感——在不同的群、不同的平台，你可以展现不同的面向，这本身就是一种表达。',
@@ -672,6 +663,7 @@ async function buildPoster() {
   else { if (pi && pi.parentNode) { cv.className = 'poster-img'; cv.style.display = 'block'; pi.parentNode.replaceChild(cv, pi); } var hint = document.querySelector('.poster-hint'); if (hint) hint.textContent = '当前环境无法导出图片，部署到线上即可正常保存。'; }
 }
 
+injectAds();
 render();
 </script>
 

@@ -4,9 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>对症下菜 · 霧雨魔法店</title>
-<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
     <script src="js/analytics.js"></script>
+    <script src="js/page-base.js"></script>
     <link rel="stylesheet" href="css/common.css">
 <style>
 
@@ -51,11 +50,12 @@
 <div id="shopNav"></div>
 <script src="nav.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/reveal-screen.js"></script>
+<script src="js/quiz-storage.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/result-footer.js"></script>
 
 <div class="container" id="app"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
 <script>
 const FOODS = ['🍕','🍔','🍣','🍜','🌮','🍛','🥟','🍱','🍩','🫕'];
 
@@ -156,12 +156,11 @@ const MAXS = QUESTIONS.reduce((a,q)=>a+Math.max.apply(null,q.opts.map(o=>o.s)),0
 
 let quizIdx = -1;
 let quizAnswers = [];
+const STORAGE_KEY = 'quiz_foodcare_v1';
+const TRACK_KEY = 'foodcare_take';
 
 function render() {
-  var a1=document.getElementById('ad1'),a2=document.getElementById('ad2'),a3=document.getElementById('ad3');
-  if(a1)a1.style.display=quizIdx===-1?'block':'none';
-  if(a2)a2.style.display=quizIdx>=0&&quizIdx<QUESTIONS.length?'block':'none';
-  if(a3)a3.style.display=quizIdx>=QUESTIONS.length?'block':'none';
+  toggleAds(quizIdx===-1?'intro':(quizIdx>=QUESTIONS.length?'result':'quiz'));
  const a = document.getElementById('app');
  if (quizIdx === -1) renderIntro(a);
  else if (quizIdx < QUESTIONS.length) renderQuiz(a);
@@ -176,12 +175,15 @@ function renderIntro(a) {
  '<p class="sub">站在外卖软件前纠结了二十分钟？<br>答 '+QUESTIONS.length+' 个小问题，魔法店对症给你下一道菜。</p>' +
  '<div class="food-strip">'+strip+'</div>' +
  '<button class="btn btn-start" onclick="startQuiz()">🔮 开始占卜 →</button>' +
+ resumeButton(STORAGE_KEY)+
  '<a href="index.html" class="home-link">← 返回魔法店</a>' +
  '<p class="notice">结果由店里的老魔法决定 · 概不退换</p>' +
+ '<p style="font-size:11px;color:var(--muted);text-align:center;margin-top:2px;" id="takeCount"></p>' +
  '</div>';
+ getCount(TRACK_KEY,function(n){var el=document.getElementById('takeCount');if(el&&n>0)el.textContent='已有 '+n+' 人完成测试';});
 }
 
-function startQuiz() { quizIdx = 0; quizAnswers = []; render(); }
+function startQuiz() { quizIdx = 0; quizAnswers = []; trackStart(TRACK_KEY); quizClear(STORAGE_KEY); render(); }
 
 function renderQuiz(a) {
  const q = QUESTIONS[quizIdx];
@@ -207,10 +209,11 @@ function renderQuiz(a) {
 function quizAnswer(i) {
  quizAnswers.push(QUESTIONS[quizIdx].opts[i]);
  quizIdx++;
+ quizSave(STORAGE_KEY,{idx:quizIdx,answers:quizAnswers});
  if (quizIdx < QUESTIONS.length) render();
  else showQuizLoading();
 }
-function goBack() { if (quizIdx <= 0) return; quizIdx--; quizAnswers.pop(); render(); }
+function goBack() { if (quizIdx <= 0) return; quizIdx--; quizAnswers.pop(); quizSave(STORAGE_KEY,{idx:quizIdx,answers:quizAnswers}); render(); }
 
 async function showQuizLoading() {
  const a = document.getElementById('app');
@@ -223,9 +226,10 @@ async function showQuizLoading() {
  ];
  a.innerHTML = '<div class="loading-wrap"><div class="loading-wheel"></div><p class="loading-text" id="ltxt">'+steps[0]+'</p></div>';
  const lt = document.getElementById('ltxt');
- for (var si = 0; si < steps.length; si++) { await sleep(550 + Math.random()*500); if (lt) lt.textContent = steps[si]; }
- await sleep(450);
- showResult();
+  for (var si = 0; si < steps.length; si++) { await sleep(550 + Math.random()*500); if (lt) lt.textContent = steps[si]; }
+  await sleep(450);
+  var sc=quizAnswers.reduce((t,o)=>t+(o.s||0),0);var rn=RESULTS[tierOf(sc)].name;
+  showReveal('🍲 菜单定制完成',rn,'#f59e0b','药方正在生成…',function(){showResult();});
 }
 
 function tierOf(score) {
@@ -270,21 +274,18 @@ function showResult() {
  '<div class="result-tagline">'+r.tagline+'</div>' +
  '<div class="result-desc">'+r.desc+'</div>' +
  '<div class="result-meta">'+r.tags.map(t=>'<span class="meta-tag">'+t+'</span>').join('')+'</div>' +
- '<button class="btn btn-main" onclick="shareIt()">📋 把这个测试发给朋友</button>' +
- '<button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button>' +
- '<a href="index.html" class="home-link">← 返回魔法店</a>' +
- '<p class="notice">本测试纯属娱乐，不能替代专业诊断 · 霧雨魔法店</p>' +
- '<div class="qq-section">' +
- '<img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'">' +
- '<p><strong style="color:var(--gold);">加群一起玩</strong><br>扫码进群，更多抽象好活</p>' +
-  '</div>' +
-  '<p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>' +
+  '<button class="btn btn-main" onclick="shareIt()">📋 把这个测试发给朋友</button>' +
+  '<button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button>' +
+  '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+  resultFooterHTML({notice:'本测试纯属娱乐，不能替代专业诊断 · 霧雨魔法店'})+
   '</div>';
 }
 
 function shareIt() { copyToClipboard('我让魔法店帮我决定今天吃什么，结果有点出乎意料… 你也来测测：' + window.location.href, '已复制！发给朋友试试 🍽️'); }
 
 function restart() { quizIdx = -1; quizAnswers = []; render(); }
+
+function resumeQuiz(){var d=quizLoad(STORAGE_KEY);if(!d||d.idx<=0)return;quizIdx=d.idx;quizAnswers=d.answers;render();}
 
 render();
 </script>

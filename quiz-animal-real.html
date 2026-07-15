@@ -4,9 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>测一测你的灵魂动物 · 真实版 · 霧雨魔法店</title>
-<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
     <script src="js/analytics.js"></script>
+    <script src="js/page-base.js"></script>
     <link rel="stylesheet" href="css/common.css">
 <style>
 
@@ -53,11 +52,12 @@ body { background-image:radial-gradient(ellipse at 30% 10%,rgba(111,207,151,.06)
 <div id="shopNav"></div>
 <script src="nav.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/reveal-screen.js"></script>
+<script src="js/quiz-storage.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/result-footer.js"></script>
 
 <div class="container" id="app"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
 
 <script>
 const ANIMALS = {
@@ -252,26 +252,37 @@ const QUESTIONS = [
  ]}
 ];
 
+const STORAGE_KEY = 'quiz_animalreal_v1';
+const TRACK_KEY = 'animalreal_take';
 let idx = -1, answers = [];
 
 function render() {
-  var d1=document.getElementById('ad1'),d2=document.getElementById('ad2'),d3=document.getElementById('ad3');
-  if(d1)d1.style.display=idx===-1?'block':'none';
-  if(d2)d2.style.display=idx>=0&&idx<QUESTIONS.length?'block':'none';
-  if(d3)d3.style.display=idx>=QUESTIONS.length?'block':'none';
+  toggleAds(idx === -1 ? 'intro' : idx < QUESTIONS.length ? 'quiz' : 'result');
  const a = document.getElementById('app');
  if (idx === -1) {
  const strip = Object.values(ANIMALS).map(x=>`<div class="mini" title="${x.name}">${x.emoji}</div>`).join('');
- a.innerHTML = `<div class="intro"><div class="intro-badge">霧雨魔法店 · 灵魂鉴定 · 真实版</div><h1>🐾 测一测你的灵魂动物</h1><p class="sub">${QUESTIONS.length} 道题 · 12 种动物 · 这次是真的不一样的</p><div class="animal-strip">${strip}</div><p style="font-size:12px;color:var(--muted);margin-bottom:16px;">认真回答，找到与你灵魂最契合的伙伴<br>每个选项都会影响结果——这次不开玩笑</p><button class="btn btn-start" onclick="start()">🐾 开始测试</button><a href="index.html" class="home-link">← 返回魔法店</a><p class="notice">如果测出来是蛆……就当是老版本的彩蛋吧</p></div>`;
+ a.innerHTML = `<div class="intro"><div class="intro-badge">霧雨魔法店 · 灵魂鉴定 · 真实版</div><h1>🐾 测一测你的灵魂动物</h1><p class="sub">${QUESTIONS.length} 道题 · 12 种动物 · 这次是真的不一样的</p><div class="animal-strip">${strip}</div><p style="font-size:12px;color:var(--muted);margin-bottom:16px;">认真回答，找到与你灵魂最契合的伙伴<br>每个选项都会影响结果——这次不开玩笑</p><div class="stat-line" id="takeCount">已有 … 人测过！</div>${resumeButton(STORAGE_KEY, '继续上次测试（灵魂动物）')}<button class="btn btn-start" onclick="start()">🐾 开始测试</button><a href="index.html" class="home-link">← 返回魔法店</a><p class="notice">如果测出来是蛆……就当是老版本的彩蛋吧</p></div>`;
+ getCount(TRACK_KEY, function(c) {
+   var el = document.getElementById('takeCount');
+   if (el) el.textContent = '已有 ' + c + ' 人测过！';
+ });
  } else if (idx < QUESTIONS.length) {
  const q = QUESTIONS[idx]; const pct = Math.round((idx/QUESTIONS.length)*100);
  a.innerHTML = `<div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><div class="progress-text">${idx+1} / ${QUESTIONS.length}</div></div><div class="q-num">第 ${idx+1} 题</div><div class="q-text">${q.q}</div><div class="options">${q.opts.map((o,i)=>`<button class="opt-btn" onclick="answer(${i})"><span class="opt-letter">${'ABCD'[i]}</span>${o.txt}</button>`).join('')}</div>${idx>0?'<div style="text-align:center;"><button class="btn-back" onclick="goBack()">← 上一题</button></div>':''}`;
  } else { showLoading(); }
 }
 
-function start() { idx = 0; answers = []; render(); }
-function answer(i) { answers.push(QUESTIONS[idx].opts[i]); idx++; render(); }
+function start() { trackStart(TRACK_KEY); idx = 0; answers = []; quizClear(STORAGE_KEY); render(); }
+function answer(i) { answers.push(QUESTIONS[idx].opts[i]); idx++; quizSave(STORAGE_KEY, {idx: idx, answers: answers}); render(); }
 function goBack() { if(idx<=0) return; idx--; answers.pop(); render(); }
+
+function resumeQuiz() {
+  var d = quizLoad(STORAGE_KEY);
+  if (!d) return;
+  idx = d.idx || 0; answers = d.answers || [];
+  quizClear(STORAGE_KEY);
+  render();
+}
 
 async function showLoading() {
  const a = document.getElementById('app');
@@ -279,7 +290,11 @@ async function showLoading() {
  a.innerHTML = '<div class="loading-wrap"><div class="loading-animal" id="lanim">🐱</div><p class="loading-text">正在扫描灵魂波动…</p></div>';
  const lanim = document.getElementById('lanim');
  for (let i = 0; i < 16; i++) { await sleep(120+Math.random()*180); lanim.textContent = animals[i%animals.length]; }
- await sleep(300); showResult();
+ await sleep(300);
+ var result = calcResult();
+ var name = result.easter ? '蛆' : ANIMALS[result.key].name;
+ var color = result.easter ? '#6fcf97' : ANIMALS[result.key].color;
+ showReveal('🧬 灵魂鉴定完成', name, color, '五维匹配中…', function() { showResult(result); });
 }
 
 function calcResult() {
@@ -314,12 +329,12 @@ function calcResult() {
  return { key:top, easter:false, runners:ranked.slice(1,3), vec, sims };
 }
 
-function showResult() {
+function showResult(precomputed) {
  const a = document.getElementById('app');
- const { key, vec, easter, runners } = calcResult();
+ const { key, vec, easter, runners } = precomputed || calcResult();
 
  if (easter) {
- a.innerHTML = `<div class="result"><div class="result-emoji">🪰</div><div class="result-name" style="color:#6fcf97;">蛆</div><div class="result-tagline">……老版本彩蛋触发（1%概率）</div><div class="result-desc"><p>不是吧……你真的触发了 <strong>1% 的隐藏彩蛋</strong>。</p><p style="margin-top:10px;">老版本里不管选什么都是蛆。新版本有 12 种不同的动物——但你硬是抽中了大彩蛋。不知道这是运气好还是差。</p><p style="margin-top:10px;">建议你再测一次，这次应该不会了。大概。</p></div><button class="btn btn-green" onclick="restart()">🔄 再测一次（正经版）</button><a href="index.html" class="home-link">← 返回魔法店</a><p class="notice">1% 彩蛋 · 恭喜你，也算一种欧皇</p></div>`;
+ a.innerHTML = `<div class="result"><div class="result-emoji">🪰</div><div class="result-name" style="color:#6fcf97;">蛆</div><div class="result-tagline">……老版本彩蛋触发（1%概率）</div><div class="result-desc"><p>不是吧……你真的触发了 <strong>1% 的隐藏彩蛋</strong>。</p><p style="margin-top:10px;">老版本里不管选什么都是蛆。新版本有 12 种不同的动物——但你硬是抽中了大彩蛋。不知道这是运气好还是差。</p><p style="margin-top:10px;">建议你再测一次，这次应该不会了。大概。</p></div><button class="btn btn-green" onclick="restart()">🔄 再测一次（正经版）</button><a href="index.html" class="home-link">← 返回魔法店</a>${resultFooterHTML({notice:'1% 彩蛋 · 恭喜你，也算一种欧皇'})}</div>`;
  return;
  }
 
@@ -328,7 +343,7 @@ function showResult() {
  // 根据用户的五维向量生成性格画像条（中点为50，左右各代表一极）
  const dimsHtml = AXES.map(ax => {
  const raw = (vec && vec[ax.key]) || 0;
- const pos = Math.max(8, Math.min(92, 50 + (raw / 7) * 42)); // 把 ±7 映射到 8%~92%
+  const pos = Math.max(5, Math.min(95, 50 + ((raw || 0) / 10) * 42));
  return `<div style="margin-bottom:10px;">
  <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;">
  <span>${ax.low}</span><span>${ax.high}</span></div>
@@ -338,14 +353,15 @@ function showResult() {
  }).join('');
  const dimsBlock = `<div style="background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:14px;padding:18px 18px 8px;margin-bottom:16px;text-align:left;"><div style="font-size:12px;color:var(--green);font-weight:700;letter-spacing:1px;margin-bottom:14px;">📊 你的性格画像</div>${dimsHtml}</div>`;
 
- a.innerHTML = `<div class="result"><div class="result-emoji">${c.emoji}</div><div class="result-name" style="color:${c.color}">${c.name}</div><div class="result-tagline">${c.en} · 「${c.quote}」</div><div class="result-desc">${c.desc}</div>${dimsBlock}<div class="result-meta">${c.tags.map(t=>`<span class="meta-badge">${t}</span>`).join('')}</div>${runners.length?`<p style="font-size:12px;color:var(--muted);margin-bottom:16px;">次匹配：${runners.map(k=>ANIMALS[k].emoji+' '+ANIMALS[k].name).join(' · ')}</p>`:''}<button class="btn btn-green" onclick="shareIt('${key}')">📋 分享我的灵魂动物</button><button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button><a href="index.html" class="home-link">← 返回魔法店</a><div style="text-align:center;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);"><img src="images/qq-group.jpg" alt="QQ群二维码" style="width:130px;border-radius:12px;border:2px solid var(--border);margin-bottom:8px;"><p style="font-size:12px;color:var(--muted);"><strong style="color:var(--gold);">加群看更多乐子 还能玩MC服务器</strong><br>扫码进群，一起来玩</p></div><p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p><p class="notice">12 种动物 · ${QUESTIONS.length} 道题 · 五维匹配 · 1% 概率蛆彩蛋 · 雾雨魔法店出品</p></div>`;
+ a.innerHTML = `<div class="result"><div class="result-emoji">${c.emoji}</div><div class="result-name" style="color:${c.color}">${c.name}</div><div class="result-tagline">${c.en} · 「${c.quote}」</div><div class="result-desc">${c.desc}</div>${dimsBlock}<div class="result-meta">${c.tags.map(t=>`<span class="meta-badge">${t}</span>`).join('')}</div>${runners.length?`<p style="font-size:12px;color:var(--muted);margin-bottom:16px;">次匹配：${runners.map(k=>ANIMALS[k].emoji+' '+ANIMALS[k].name).join(' · ')}</p>`:''}<button class="btn btn-green" onclick="shareIt('${key}')">📋 分享我的灵魂动物</button><button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button><a href="index.html" class="home-link">← 返回魔法店</a>${resultFooterHTML({notice:'12 种动物 · '+QUESTIONS.length+' 道题 · 五维匹配 · 1% 概率蛆彩蛋 · 雾雨魔法店出品'})}</div>`;
 }
 
 function shareIt(key) {
+  if (key === 'maggot') { copyToClipboard('我测出来灵魂动物居然是蛆（1%彩蛋）！你也来测测：' + window.location.href, '已复制！发给朋友试试 😈'); return; }
  const c = ANIMALS[key];
  copyToClipboard('🐾 我测出来灵魂动物是【'+c.name+'】——「'+c.quote+'」你也来测测：' + window.location.href, '已复制！发给朋友测测 😈');
 }
-function restart() { idx = -1; answers = []; render(); }
+function restart() { idx = -1; answers = []; quizClear(STORAGE_KEY); render(); }
 render();
 </script>
 

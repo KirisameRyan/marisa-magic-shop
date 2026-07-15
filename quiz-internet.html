@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<script src="js/analytics.js"></script>
-<link rel="stylesheet" href="css/common.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<link rel="stylesheet" href="css/common.css">
 <title>测一测你是哪位抽象圈大手子 · 2.0 · 霧雨魔法店</title>
-<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
 <style>
 :root {
  --accent:#f0a060; --accent-soft:rgba(240,160,96,.06);
@@ -136,16 +135,17 @@
 <script src="nav.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/canvas-utils.js"></script>
+<script src="js/reveal-screen.js"></script>
+<script src="js/quiz-storage.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/result-footer.js"></script>
 
 <div class="container" id="app"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
 <canvas id="cardCanvas" width="600" height="880" style="display:none"></canvas>
 <script>
 /* ====== 图片: 把照片放到 images/ 目录, 填到对应 key, 留空则用内置 SVG 头像 ====== */
 const CUSTOM_IMAGES={
- sun:'images/sxc.jpg',otto:'images/otto.jpg',xuan:'images/xuan.jpg',lu:'images/lbw.jpg',ding:'images/dingz.jpg',taffy:'images/taffy.jpg',xf:'images/zxf.jpg',kim:'images/kim.jpg',aion:'images/aion.jpg',mao:'images/mao.jpg',
+ sun:'images/sun.jpg',otto:'images/otto.jpg',xuan:'images/xuan.jpg',lu:'images/lbw.jpg',ding:'images/dingz.jpg',taffy:'images/taffy.jpg',xf:'images/zxf.jpg',kim:'images/kim.jpg',aion:'images/aion.jpg',mao:'images/mao.jpg',
  dxl:'images/dxl.jpg',hu:'images/hu.jpg',zm:'images/zmjjkk.jpg',feng:'images/fengge.jpg',lhq:'images/lhq.jpg',tian:'images/tiansuohaoer.jpg',shunfei:'images/zsf.jpg',laoa:'images/laoa.jpg'
 };
 
@@ -412,30 +412,17 @@ const DIM_META=[
 
 /* ====== 状态 ====== */
 var STORAGE_KEY='quiz_internet_v2';
+var TRACK_KEY='internet_take';
 var qOrder=[],idx=-1,answers=[],started=false;
 
-function saveProgress(){
- try{ localStorage.setItem(STORAGE_KEY,JSON.stringify({qOrder:qOrder,idx:idx,answers:answers})); }catch(e){}
-}
-function loadProgress(){
- try{
- var d=JSON.parse(localStorage.getItem(STORAGE_KEY));
- if(d&&d.qOrder&&d.idx>0){ qOrder=d.qOrder;idx=d.idx;answers=d.answers;return true; }
- }catch(e){}
- return false;
-}
-
 function render(){
-  var d1=document.getElementById('ad1'),d2=document.getElementById('ad2'),d3=document.getElementById('ad3');
-  if(d1)d1.style.display=!started?'block':'none';
-  if(d2)d2.style.display=started&&idx<qOrder.length?'block':'none';
-  if(d3)d3.style.display=started&&idx>=qOrder.length?'block':'none';
+  toggleAds(!started?'intro':(idx>=qOrder.length?'result':'quiz'));
  var a=document.getElementById('app');
  if(!started){
- var hasProgress=loadProgress();
+ var hasProgress=quizLoad(STORAGE_KEY);
  var continueHTML='';
- if(hasProgress&&qOrder&&qOrder.length>0&&idx>0){
- continueHTML='<button class="btn btn-ghost" style="max-width:260px;margin:4px auto 0;display:block;" onclick="restoreQuiz()">📋 继续上次测试（第'+(idx+1)+'/'+qOrder.length+'题）</button>';
+ if(hasProgress&&hasProgress.qOrder&&hasProgress.idx>0){
+ continueHTML='<button class="btn btn-ghost" style="max-width:260px;margin:4px auto 0;display:block;" onclick="restoreQuiz()">📋 继续上次测试（第'+(hasProgress.idx+1)+'/'+hasProgress.qOrder.length+'题）</button>';
  }
  var strip=[];
  for(var i=0;i<Math.min(16,REGULAR.length+HIDDEN.length);i++){
@@ -450,7 +437,9 @@ function render(){
  '<div class="avatar-strip">'+strip.join('')+'</div>'+
  '<button class="btn btn-main" onclick="begin()">⚡ 开始鉴定(26题)</button>'+continueHTML+
  '<p class="notice">本测试共 16 位常规人物<br>另有 2 位隐藏人物潜伏其中,缘分到了才能遇见 🌚</p>'+
+ '<p style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;" id="takeCount"></p>'+
  '</div>';
+ getCount(TRACK_KEY,function(n){var el=document.getElementById('takeCount');if(el&&n>0)el.textContent='已有 '+n+' 人完成测试';});
  }else if(idx<qOrder.length){
  var q=qOrder[idx];var pct=Math.round(idx/qOrder.length*100);
  a.innerHTML='<div class="progress-wrap">'+
@@ -464,19 +453,19 @@ function render(){
  }else{ showLoading(); }
 }
 
-function begin(){ started=true; qOrder=shuffle(QUESTIONS).map(function(q){ return {q:q.q,o:shuffle(q.o)}; }); idx=0;answers=[]; try{ localStorage.removeItem(STORAGE_KEY); }catch(e){} saveProgress();render(); }
-function restoreQuiz(){ started=true; render(); }
-function answer(i){ answers[idx]=qOrder[idx].o[i];idx++;saveProgress();render(); }
+function begin(){ started=true; qOrder=shuffle(QUESTIONS).map(function(q){ return {q:q.q,o:shuffle(q.o)}; }); idx=0;answers=[]; trackStart(TRACK_KEY); quizClear(STORAGE_KEY); quizSave(STORAGE_KEY,{qOrder:qOrder,idx:idx,answers:answers}); render(); }
+function restoreQuiz(){ var d=quizLoad(STORAGE_KEY);if(d&&d.qOrder){qOrder=d.qOrder;idx=d.idx;answers=d.answers;} started=true; render(); }
+function answer(i){ answers[idx]=qOrder[idx].o[i];idx++;quizSave(STORAGE_KEY,{qOrder:qOrder,idx:idx,answers:answers});render(); }
 function goBack(){ if(idx>0){idx--;render();} }
-function restart(){ started=false;idx=-1;answers=[];qOrder=[]; try{ localStorage.removeItem(STORAGE_KEY); }catch(e){} render(); }
+function restart(){ started=false;idx=-1;answers=[];qOrder=[]; quizClear(STORAGE_KEY); render(); }
 
 async function showLoading(){
  var a=document.getElementById('app');
  var steps=['正在建立你的五维坐标…','正在比对 18 位人物档案…','正在校准唐氏指数…','正在测量嘴硬程度…','已通知李春姬同志准备播报…'];
  a.innerHTML='<div class="loading-wrap"><div class="loading-avatar">🔍</div><p class="loading-text" id="ltxt">'+steps[0]+'</p></div>';
  var lt=document.getElementById('ltxt');
- for(var si=0;si<steps.length;si++){ await sleep(420+Math.random()*460); if(lt) lt.textContent=steps[si]; }
- await sleep(350);showResult();
+  for(var si=0;si<steps.length;si++){ await sleep(420+Math.random()*460); if(lt) lt.textContent=steps[si]; }
+  await sleep(350);var mr=match();var mc=CHARS[mr.key];showReveal('🌐 鉴定完成',mc.name,mc.color,'赛博人格已锁定…',function(){showResult();});
 }
 
 function rawDims(ans){ var r={a:0,g:0,m:0,s:0,d:0}; for(var i=0;i<ans.length;i++){ var o=ans[i]; if(o&&o.v) for(var k in o.v){ r[k]=(r[k]||0)+(o.v[k]||0); } } return r; }
@@ -550,13 +539,8 @@ function showResult(){
  '<button class="btn btn-main" onclick="downloadCard()">🖼️ 生成并保存结果卡片</button>'+
  '<button class="btn btn-ghost" onclick="copyText()">📋 复制文案发给好兄弟</button>'+
  '<button class="btn btn-ghost" onclick="restart()">🔄 不服,再测一次</button>'+
- '<a href="index.html" class="home-link">← 返回魔法店</a>'+
- '<p class="notice">本结果由五维匹配引擎出具 · 具有完全不可靠的权威性</p>'+
- '<div class="qq-section">'+
- '<img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'">'+
- '<p><strong style="color:var(--gold);">加群一起玩</strong><br>扫码进群,更多抽象好活</p>'+
-  '</div>'+
-  '<p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>'+
+  '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+  resultFooterHTML({notice:'本结果由五维匹配引擎出具 · 具有完全不可靠的权威性'})+
   '</div>';
  requestAnimationFrame(function(){ setTimeout(function(){
  var bars=document.querySelectorAll('.dim-bar');

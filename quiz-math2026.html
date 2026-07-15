@@ -4,9 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
 <title>标准智力测试 · 霧雨魔法店</title>
-<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
 <link rel="stylesheet" href="css/common.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
@@ -30,10 +29,12 @@
 <div id="shopNav"></div>
 <script src="nav.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/quiz-storage.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/reveal-screen.js"></script>
+<script src="js/result-footer.js"></script>
 
 <div class="container" id="app"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
 <script>
 
 var QUESTIONS = [
@@ -55,7 +56,48 @@ QUESTIONS.forEach(function(q){
   q._ans = q.type === 's' ? q.ans : q.ans.slice();
 });
 
+var STORAGE_KEY = 'quiz_math_v1';
+var TRACK_KEY = 'math_take';
+var total = 0, maxScore = 0;
 var state = 'intro', idx = 0, selected = [], startTime = 0;
+
+function resumeQuiz() {
+  var d = quizLoad(STORAGE_KEY);
+  if (!d) return;
+  startQuiz();
+  idx = d.idx || 0;
+  selected = d.selected || [];
+  quizClear(STORAGE_KEY);
+  render();
+}
+
+function goToResult() {
+  total = 0; maxScore = 0;
+  for (var i = 0; i < QUESTIONS.length; i++) {
+    var q = QUESTIONS[i];
+    var user = selected.hasOwnProperty(i) ? selected[i] : (q.type === 'm' ? [] : -1);
+    var max = q.type === 's' ? 5 : 6;
+    maxScore += max;
+    if (q.type === 's') {
+      if (user === q.ans) total += 5;
+    } else {
+      var correct = q.ans;
+      var hasWrong = false;
+      for (var j = 0; j < user.length; j++) { if (correct.indexOf(user[j]) === -1) hasWrong = true; }
+      if (!hasWrong && user.length === correct.length) total += 6;
+      else if (!hasWrong && user.length > 0 && user.length < correct.length) total += 3;
+    }
+  }
+  var grade;
+  if (total >= 55) grade = '认知卓越';
+  else if (total >= 45) grade = '认知优秀';
+  else if (total >= 35) grade = '认知良好';
+  else if (total >= 20) grade = '认知欠佳';
+  else grade = '需要帮助';
+  showReveal('🧠 智力测试完成', grade + ' · ' + total + '/' + maxScore + '分', '#f59e0b', '大脑扫描完成…', function() {
+    state = 'result'; render();
+  });
+}
 
 function renderMath(html) {
   return html.replace(/\$([^$]+)\$/g, function(_, f) {
@@ -81,7 +123,8 @@ function render() {
   var app = document.getElementById('app');
   if (state === 'intro') {
     app.innerHTML =
-      '<div class="intro"><div class="intro-badge">霧雨魔法店 · 认知评估</div><h1>标准智力测试</h1><p class="sub">包含数学逻辑、空间推理、数理思维等综合维度<br>共 ' + QUESTIONS.length + ' 道题 · 单选+多选 · 满分 58 分</p><button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">开始测试 →</button><a href="index.html" class="home-link">← 返回魔法店</a></div>';
+      '<div class="intro"><div class="intro-badge">霧雨魔法店 · 认知评估</div><h1>标准智力测试</h1><p class="sub">包含数学逻辑、空间推理、数理思维等综合维度<br>共 ' + QUESTIONS.length + ' 道题 · 单选+多选 · 满分 58 分</p><button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">开始测试 →</button>' + resumeButton(STORAGE_KEY, '继续上次测试') + '<a href="index.html" class="home-link">← 返回魔法店</a><p style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;" id="takeCount"></p></div>';
+  getCount(TRACK_KEY, function(n) { var el = document.getElementById('takeCount'); if (el && n > 0) el.textContent = '已有 ' + n + ' 人完成测试'; });
   } else if (state === 'quiz') {
     renderQuestion(app);
   } else if (state === 'result') {
@@ -90,13 +133,14 @@ function render() {
 }
 
 function startQuiz() {
+  trackStart(TRACK_KEY); quizClear(STORAGE_KEY);
   state = 'quiz'; idx = 0; selected = []; startTime = Date.now();
   for (var i = 0; i < QUESTIONS.length; i++) shuffleQuestion(QUESTIONS[i]);
   render();
 }
 
 function renderQuestion(app) {
-  if (idx >= QUESTIONS.length) { state = 'result'; render(); return; }
+  if (idx >= QUESTIONS.length) { goToResult(); return; }
   var q = QUESTIONS[idx];
   var isMulti = q.type === 'm';
   var pct = Math.round((idx / QUESTIONS.length) * 100);
@@ -134,7 +178,8 @@ function pick(optIdx) {
 function nextQ() {
   if (selected[idx] === undefined || (Array.isArray(selected[idx]) && selected[idx].length === 0)) return;
   idx++;
-  if (idx >= QUESTIONS.length) { state = 'result'; render(); }
+  quizSave(STORAGE_KEY, { idx: idx, selected: selected });
+  if (idx >= QUESTIONS.length) { goToResult(); }
   else render();
 }
 
@@ -142,7 +187,7 @@ function renderResult(app) {
   var elapsed = Math.round((Date.now() - startTime) / 1000);
   var mins = Math.floor(elapsed / 60), secs = elapsed % 60;
   var timeStr = (mins > 0 ? mins + '分' : '') + secs + '秒';
-  var total = 0, maxScore = 0;
+  total = 0; maxScore = 0;
   var details = '';
 
   for (var i = 0; i < QUESTIONS.length; i++) {
@@ -196,8 +241,7 @@ function renderResult(app) {
   html += '<button class="btn btn-main" onclick="shareIt()">📋 复制结果发给朋友</button>';
   html += '<button class="btn btn-ghost" onclick="restart()">🔄 再来一次</button>';
   html += '<a href="index.html" class="home-link">← 返回魔法店</a>';
-  html += '<p class="notice">霧雨魔法店 · 结果仅供参考 · 但智力是真的（大概）</p>';
-  html += '<div class="qq-section"><img src="images/qq-group.jpg" alt="QQ群二维码" onerror="this.style.display=\'none\'"><p><strong style="color:var(--gold);">加群一起玩</strong><br>扫码进群，更多抽象好活</p></div>';
+  html += resultFooterHTML({ notice: '霧雨魔法店 · 结果仅供参考 · 但智力是真的（大概）' });
   html += '</div>';
   app.innerHTML = html;
 }
@@ -206,7 +250,7 @@ function shareIt() {
   copyToClipboard('我完成了一项标准智力测试，得分 ' + total + '/' + maxScore + ' 分！你也来测测：' + window.location.href, '已复制！发给朋友挑战 🧠');
 }
 
-function restart() { state = 'intro'; idx = 0; selected = []; render(); }
+function restart() { state = 'intro'; idx = 0; selected = []; quizClear(STORAGE_KEY); render(); }
 
 render();
 </script>

@@ -2,12 +2,12 @@
 <html lang="zh-CN">
 <head>
 <script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
 <link rel="stylesheet" href="css/common.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>测测你的二次元老婆 · 霧雨魔法店</title>
-<script type="text/javascript" charset="UTF-8" src="https://cdn.adwork.net/js/makemoney.js" async></script>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a1520'/><text x='16' y='25' text-anchor='middle' font-size='24' fill='%23f0c060'>✦</text></svg>">
+
 
 <style>
 .container { transition: box-shadow .6s, border-color .6s; }
@@ -174,18 +174,20 @@
 <div id="shopNav"></div>
 <script src="nav.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/reveal-screen.js"></script>
+<script src="js/quiz-storage.js"></script>
+<script src="js/quiz-stats.js"></script>
 <script src="js/canvas-utils.js"></script>
 
 <div class="container" id="app"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad1" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad2" style="display:none;max-width:300px;margin:16px auto;"></div>
-<div class="adwork-net adwork-auto" data-id="1097" id="ad3" style="display:none;max-width:300px;margin:16px auto;"></div>
 
 <script>
 var state = 'intro';
 var idx = 0;
 var answers = [];
 var resultKey = null;
+var STORAGE_KEY = 'quiz_waifu_v1';
+var TRACK_KEY = 'waifu_take';
 
 var QUIZ_TITLE = '测测你的二次元老婆';
 var QUIZ_SUBTITLE = '20 道题，鉴定你命中注定的二次元老婆 —— 放心，抽到的都是「好女孩」。';
@@ -359,11 +361,15 @@ function render() {
 }
 
 function renderIntro(app) {
+ var count = getCount(TRACK_KEY);
+ var resumeHTML = resumeButton(STORAGE_KEY) || '';
  app.innerHTML =
  '<div class="intro">' +
  '<div class="intro-badge">' + BADGE_TEXT + '</div>' +
  '<h1>' + QUIZ_TITLE + '</h1>' +
  '<p class="sub">' + QUIZ_SUBTITLE + '</p>' +
+ (count ? '<p style="font-size:11px;color:var(--muted);margin-bottom:8px;">已有 ' + count + ' 人参与鉴定</p>' : '') +
+ resumeHTML +
  '<button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">开始测试 →</button>' +
  '<a href="index.html" class="home-link">← 返回魔法店</a>' +
  '</div>';
@@ -371,6 +377,7 @@ function renderIntro(app) {
 
 function startQuiz() {
  if (!confirm('⚠️ 友情提示\n\n里面的女孩都是「好女孩」。\n确认开始测试吗？')) return;
+ trackStart(TRACK_KEY);
  state = 'quiz'; idx = 0; answers = []; resultKey = null;
  render();
 }
@@ -403,6 +410,7 @@ function renderQuestion(app) {
 function answer(choice) {
  answers.push(QUESTIONS[idx].opts[choice]);
  idx++;
+ quizSave(STORAGE_KEY, {idx: idx, answers: answers});
  if (idx < QUESTIONS.length) { render(); return; }
  advance();
 }
@@ -486,17 +494,20 @@ function renderLoading(app) {
 }
 
 async function cycleLoading(i) {
- if (i >= LOADING_STEPS.length) { finishToResult(); return; }
+ if (i >= LOADING_STEPS.length) {
+  await sleep(800);
+  if (!resultKey) resultKey = calcResult();
+  var r = RESULTS[resultKey];
+  showReveal('💕 二次元鉴定完成', r.name, r.color || 'var(--gold)', '命运连线中…', function() {
+   state = 'result';
+   render();
+  });
+  return;
+ }
  await sleep(500 + Math.random() * 400);
  var lt = document.getElementById('ltxt');
  if (lt) lt.textContent = LOADING_STEPS[i];
  cycleLoading(i + 1);
-}
-
-function finishToResult() {
- if (!resultKey) resultKey = calcResult();
- state = 'result';
- render();
 }
 
 function calcResult() {
@@ -554,13 +565,8 @@ function renderResult(app) {
  '<button class="btn btn-main" onclick="shareImage()">📸 生成分享海报</button>' +
  '<button class="btn btn-ghost" onclick="shareIt()">📋 复制结果文案</button>' +
  '<button class="btn btn-ghost" onclick="restart()">🔄 再来一次</button>' +
- '<a href="index.html" class="home-link">← 返回魔法店</a>' +
- '<p class="notice">霧雨魔法店 · 结果仅供参考 · 但魔法是真的</p>' +
- '<div class="qq-section">' +
- '<img src="' + QQ_IMG + '" alt="QQ群二维码" onerror="this.style.display=\'none\'">' +
- '<p><strong style="color:var(--gold);">加群一起玩</strong><br>群号 ' + QQ_GROUP + ' · 更多抽象好活</p>' +
-  '</div>' +
-  '<p style="font-size:11px;text-align:center;margin-top:8px;"><a href="https://space.bilibili.com/1029138222" target="_blank" style="color:var(--pink);text-decoration:none;">🅱 关注B站 · 霧雨魔法店</a></p>' +
+  '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+  resultFooterHTML({notice:'霧雨魔法店 · 结果仅供参考 · 但魔法是真的'}) +
   '</div>';
 
  app.innerHTML = html;
