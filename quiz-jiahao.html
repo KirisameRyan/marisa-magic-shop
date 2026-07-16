@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>测测你的嘉豪程度 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<script src="js/page-base.js"></script>
+<style>
+body { background-image: radial-gradient(ellipse at 30% 0%, rgba(120,120,120,.04) 0%, transparent 50%), radial-gradient(ellipse at 70% 100%, rgba(40,40,40,.05) 0%, transparent 50%); }
+.container { max-width: 580px; }
+.container::before { background: linear-gradient(90deg, #666, #222, #666); }
+
+.intro-badge { color: #888; border-color: rgba(136,136,136,.35); margin-bottom: 12px; }
+.intro h1 { font-size: 24px; }
+.intro .sub { margin-bottom: 14px; }
+.stat-line { font-size: 12px; color: var(--gold); text-align: center; margin-bottom: 14px; }
+
+.scan-lines { font-size: 11px; color: var(--muted); line-height: 2; text-align: center; margin-bottom: 18px; letter-spacing: 1px; }
+
+.btn-start { background: linear-gradient(135deg, #555, #222); color: #ccc; margin-top: 4px; border: 1px solid #555; }
+.btn-start:hover { background: linear-gradient(135deg, #777, #444); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(100,100,100,.3); }
+
+.progress-fill { background: linear-gradient(90deg, #666, #222); }
+.q-num { color: #888; }
+
+.opt-btn { border: 2px solid var(--border); border-left: 3px solid transparent; }
+.opt-btn:hover { border-color: #888; background: rgba(136,136,136,.04); border-left-color: #888; }
+.opt-btn:hover .opt-letter { background: #666; color: #fff; }
+
+.result-hero { text-align: center; padding: 20px 0; }
+.result-hero .tier-icon { font-size: 72px; margin-bottom: 8px; animation: bounceIn .6s cubic-bezier(.2,1.4,.4,1); }
+@keyframes bounceIn { 0%{opacity:0;transform:scale(0)} 60%{transform:scale(1.15)} 100%{opacity:1;transform:scale(1)} }
+.result-hero .tier-name { font-size: 28px; font-weight: 900; margin-bottom: 8px; }
+.result-hero .tier-desc { font-size: 13px; color: var(--muted); line-height: 1.9; max-width: 400px; margin: 0 auto 14px; }
+
+.score-bar-wrap { margin-bottom: 16px; }
+.score-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.score-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.score-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease; background: linear-gradient(90deg, #444, #888); }
+
+.attr-panel { margin: 16px auto; max-width: 360px; }
+.attr-row { margin-bottom: 12px; opacity: 0; transform: translateX(-12px); transition: opacity .4s, transform .4s; }
+.attr-row.show { opacity: 1; transform: translateX(0); }
+.attr-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.attr-icon { font-size: 16px; }
+.attr-name { font-size: 13px; font-weight: 700; min-width: 52px; }
+.attr-score { margin-left: auto; font-size: 11px; color: var(--muted); }
+.attr-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.attr-fill { height: 100%; border-radius: 4px; transition: width 1s cubic-bezier(.34,1.56,.64,1); }
+
+.act-row { display: flex; gap: 10px; margin-top: 16px; }
+.act-row .btn { flex: 1; }
+
+.poster-wrap { text-align: center; }
+.poster-img { width: 100%; max-width: 300px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 8px 32px rgba(0,0,0,.4); margin: 0 auto 14px; display: none; }
+.poster-hint { font-size: 11px; color: var(--muted); margin-bottom: 16px; line-height: 1.7; }
+
+@media (max-width: 420px) {
+  .result-hero .tier-name { font-size: 24px; }
+  .act-row { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container" id="app"></div>
+<script src="js/utils.js"></script>
+<script src="js/canvas-utils.js"></script>
+<script src="js/reveal-screen.js"></script>
+<script src="js/quiz-storage.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/result-footer.js"></script>
+<script>
+var state = 'intro';
+var idx = 0;
+var answers = [];
+var STORAGE_KEY = 'quiz_jiahao_v1';
+var TRACK_KEY = 'jiahao_take';
+
+var QUESTIONS = [
+  // ══ 第一部分：主角觉醒（Q1-5）══
+  { q:'放学后，你通常怎么离开学校？', opts:[
+    {t:'和朋友一起聊天回家', v:0},
+    {t:'一边玩手机一边走', v:1},
+    {t:'戴着耳机，一个人慢慢走', v:2},
+    {t:'故意走慢一点，享受夕阳和风', v:3},
+    {t:'感觉这一幕应该有片尾曲', v:4}]},
+  { q:'如果下雨，你没有带伞：', opts:[
+    {t:'赶紧找地方避雨', v:0},
+    {t:'淋几步再说', v:1},
+    {t:'戴上耳机继续走', v:2},
+    {t:'抬头看天空，思考人生', v:3},
+    {t:'内心OS："这场雨，是命运给我的铺垫。"', v:4}]},
+  { q:'你有没有幻想过自己突然成为隐藏高手？', opts:[
+    {t:'从来没有', v:0},
+    {t:'偶尔想过', v:1},
+    {t:'经常幻想逆袭', v:2},
+    {t:'觉得自己只是没有机会', v:3},
+    {t:'等待一个懂我的伯乐', v:4}]},
+  { q:'如果你的生活是一部动漫：', opts:[
+    {t:'日常番路人角色', v:0},
+    {t:'普通配角', v:1},
+    {t:'有剧情的角色', v:2},
+    {t:'隐藏实力主角', v:3},
+    {t:'最终Boss兼主角', v:4}]},
+  { q:'你有没有给自己起过特殊代号或称号？', opts:[
+    {t:'没有，用真名就行', v:0},
+    {t:'有过游戏ID', v:1},
+    {t:'有给自己取过网名', v:2},
+    {t:'每个平台都有一个不同代号', v:3},
+    {t:'代号比真名重要', v:4}]},
+
+  // ══ 第二部分：黑色美学（Q6-10）══
+  { q:'你的衣柜里黑色衣服占多少？', opts:[
+    {t:'几乎没有', v:0},
+    {t:'几件普通款', v:1},
+    {t:'黑T恤有很多', v:2},
+    {t:'黑色卫衣外套很多', v:3},
+    {t:'打开衣柜像进入夜晚', v:4}]},
+  { q:'你的手机壁纸是什么？', opts:[
+    {t:'风景', v:0},
+    {t:'喜欢的角色或者明星', v:1},
+    {t:'黑色系艺术图片', v:2},
+    {t:'黑暗天空、孤独背影', v:3},
+    {t:'一个戴着兜帽与口罩的神秘男人', v:4}]},
+  { q:'你的朋友圈/社交账号头像：', opts:[
+    {t:'自拍或者正常照片', v:0},
+    {t:'宠物、美食', v:1},
+    {t:'动漫角色', v:2},
+    {t:'黑白头像', v:3},
+    {t:'一个穿着黑色帽衫的男人，上面印着AW图标', v:4}]},
+  { q:'你喜欢什么颜色？', opts:[
+    {t:'彩虹色', v:0},
+    {t:'蓝色绿色', v:1},
+    {t:'深色系', v:2},
+    {t:'黑灰银', v:3},
+    {t:'"黑色不是颜色，是态度。"', v:4}]},
+  { q:'你手腕或脖子上会装饰什么？', opts:[
+    {t:'不戴什么', v:0},
+    {t:'手表', v:1},
+    {t:'手链', v:2},
+    {t:'黑色护腕', v:3},
+    {t:'黑色绳结，或者十字架', v:4}]},
+
+  // ══ 第三部分：嘉豪行为检测（Q11-15）══
+  { q:'朋友突然问你："你会不会打架？"', opts:[
+    {t:'不会', v:0},
+    {t:'为什么问这个？', v:1},
+    {t:'会一点防身技巧', v:2},
+    {t:'"以前练过。"', v:3},
+    {t:'沉默三秒，然后看向窗外', v:4}]},
+  { q:'你玩游戏的时候：', opts:[
+    {t:'娱乐第一', v:0},
+    {t:'喜欢赢', v:1},
+    {t:'会研究技巧', v:2},
+    {t:'喜欢隐藏实力然后反杀', v:3},
+    {t:'喜欢说："认真起来，你们没机会。"', v:4}]},
+  { q:'你有没有发过意义不明的话？', opts:[
+    {t:'没有', v:0},
+    {t:'很少', v:1},
+    {t:'偶尔', v:2},
+    {t:'比如："有些事情，只有自己懂。"', v:3},
+    {t:'经常', v:4}]},
+  { q:'你自拍的时候：', opts:[
+    {t:'随便拍', v:0},
+    {t:'找角度', v:1},
+    {t:'注意光线', v:2},
+    {t:'低头、侧脸、逆光', v:3},
+    {t:'像拍人物海报', v:4}]},
+  { q:'有人突然对你表示了好感或夸了你：', opts:[
+    {t:'谢谢，我也觉得你很好', v:0},
+    {t:'有点不好意思', v:1},
+    {t:'点点头', v:2},
+    {t:'沉默几秒，然后淡淡地说谢谢', v:3},
+    {t:'内心：被发现了？表面毫无反应', v:4}]},
+
+  // ══ 第四部分：电音觉醒（Q16-20）══
+  { q:'听到 Alan Walker 类似风格音乐：', opts:[
+    {t:'没感觉', v:0},
+    {t:'觉得还不错', v:1},
+    {t:'会收藏', v:2},
+    {t:'感觉自己进入游戏CG', v:3},
+    {t:'走路速度自动提升20%', v:4}]},
+  { q:'你的耳机使用情况：', opts:[
+    {t:'基本不用', v:0},
+    {t:'通勤听歌', v:1},
+    {t:'经常戴着', v:2},
+    {t:'没耳机感觉少点什么', v:3},
+    {t:'耳机是我的精神装备', v:4}]},
+  { q:'有没有想象过自己走路特别帅？', opts:[
+    {t:'没有', v:0},
+    {t:'小时候有', v:1},
+    {t:'偶尔', v:2},
+    {t:'经常', v:3},
+    {t:'我只是正常走路，但别人觉得帅', v:4}]},
+  { q:'夜晚一个人走路：', opts:[
+    {t:'害怕', v:0},
+    {t:'想快点回家', v:1},
+    {t:'喜欢安静', v:2},
+    {t:'享受孤独', v:3},
+    {t:'觉得这是自己的电影片段', v:4}]},
+  { q:'听到一首很燃的背景音乐（BGM）：', opts:[
+    {t:'跟着摇头晃脑', v:0},
+    {t:'觉得很好听，收藏起来', v:1},
+    {t:'已经脑补出了自己的AMV', v:2},
+    {t:'顺便记住节奏，走路用', v:3},
+    {t:'BGM响起的那一刻，故事正式开始', v:4}]},
+
+  // ══ 第五部分：终极嘉豪测试（Q21-25）══
+  { q:'你的中二程度：', opts:[
+    {t:'0', v:0},
+    {t:'有一点', v:1},
+    {t:'偶尔爆发', v:2},
+    {t:'隐藏很深', v:3},
+    {t:'根本不隐藏', v:4}]},
+  { q:'如果获得超能力：', opts:[
+    {t:'帮助别人', v:0},
+    {t:'改善生活', v:1},
+    {t:'保护重要的人', v:2},
+    {t:'隐藏身份生活', v:3},
+    {t:'建立属于自己的传说', v:4}]},
+  { q:'你相信：', opts:[
+    {t:'努力最重要', v:0},
+    {t:'运气也重要', v:1},
+    {t:'每个人都有特殊之处', v:2},
+    {t:'我只是还没被发现', v:3},
+    {t:'世界迟早会认识我', v:4}]},
+  { q:'如果有人说你"有点嘉豪"：', opts:[
+    {t:'听不懂', v:0},
+    {t:'感觉奇怪', v:1},
+    {t:'笑一下', v:2},
+    {t:'默默接受', v:3},
+    {t:'这是对我的认可', v:4}]},
+  { q:'你的微信/QQ个性签名是什么？', opts:[
+    {t:'一句正常的话', v:0},
+    {t:'鸡汤或段子', v:1},
+    {t:'一句歌词', v:2},
+    {t:'意义不明的一行字', v:3},
+    {t:'某个小语种的一句话，自己都不太清楚是什么意思', v:4}]}
+];
+
+var TIERS = [
+  { max:20, icon:'🟢', name:'普通人', color:'#6fcf97', desc:'你的体内没有检测到嘉豪基因。你最大的优点：活得很真实。最大的问题：可能永远无法理解为什么有人走路需要BGM。' },
+  { max:40, icon:'🔵', name:'伪豪', color:'#3b82f6', desc:'你见过嘉豪。你笑过嘉豪。但你不知道……你身体里已经有一点嘉豪。偶尔的深夜emo、单曲循环的电音、不自觉的逆光自拍——都是证据。' },
+  { max:60, icon:'🟣', name:'普通嘉豪', color:'#8b5cf6', desc:'黑色卫衣正在生成。耳机佩戴率提升。主角滤镜开启10%。你已经不只是在"模仿"嘉豪——你正在成为他。走路时偶尔会觉得这一幕该有BGM吧？' },
+  { max:80, icon:'🔴', name:'完全体嘉豪', color:'#ef4444', desc:'你已经掌握：【夕阳凝视】【沉默装高手】【耳机隔绝世界】三大嘉豪秘技。衣柜里黑色是主色调，手机壁纸是孤独背影，每一次转身都像隐藏剧情开始。' },
+  { max:100, icon:'⚫', name:'自在极意豪', color:'#1a1a1a', desc:'你不是在模仿嘉豪。你就是那个传说中的嘉豪。你的每一次转身：都像隐藏剧情开始。你的每一次沉默：都像在酝酿大招。你的存在本身——就是所有人的BGM。' }
+];
+
+var DIM_LABELS = ['主角感', '黑化值', '装杯力', '电音魂', '孤独感'];
+var DIM_ICONS = ['🖤', '🌑', '😎', '🎧', '🌙'];
+var DIM_COLORS = ['#aaa', '#444', '#777', '#3b82f6', '#5a5a8a'];
+var lastTotal = 0, lastDims = [0,0,0,0,0], lastTier = null;
+
+var SITE_URL = 'www.azureflame.cloud';
+var QR_IMG = 'images/qr-code.png';
+var QQ_IMG = 'images/qq-group.png';
+var QQ_GROUP = '702973928';
+var POSTER_W = 600, POSTER_H = 960;
+
+function render() {
+  toggleAds(state);
+  var app = document.getElementById('app');
+  if (state==='intro') renderIntro(app);
+  else if (state==='quiz') renderQuestion(app);
+  else if (state==='loading') renderLoading(app);
+  else if (state==='reveal') renderReveal(app);
+  else if (state==='result') renderResult(app);
+  else if (state==='troll') renderTroll(app);
+  else if (state==='poster') renderPoster(app);
+}
+
+function renderIntro(app) {
+  app.innerHTML =
+    '<div class="intro">'+
+      '<div class="intro-badge">🖤 嘉豪检测中心</div>'+
+      '<h1>测测你的嘉豪程度</h1>'+
+      '<p class="sub">每个人心中，都住着一个想成为主角的少年。<br>有人把它藏起来，有人把它写进日记。<br>而有些人……直接穿上黑色卫衣，戴上耳机，在夕阳下走出自己的BGM。</p>'+
+      '<div class="stat-line" id="takeCount">已有 … 人测过！</div>'+
+      '<button class="btn btn-main btn-start" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">🖤 开始检测 →</button>'+
+      resumeButton(STORAGE_KEY)+
+      '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+    '</div>';
+  getCount(TRACK_KEY, function(cnt) { var el = document.getElementById('takeCount'); if (el) el.textContent = '已有 '+cnt+' 人测过！'; });
+}
+
+function startQuiz() {
+  state = 'quiz'; idx = 0; answers = [];
+  lastTier = null; lastDims = [0,0,0,0,0]; lastTotal = 0;
+  quizClear(STORAGE_KEY);
+  trackStart(TRACK_KEY);
+  render();
+}
+
+function resumeQuiz() {
+  var d = quizLoad(STORAGE_KEY);
+  if (d) {
+    idx = d.idx; answers = d.answers;
+    state = 'quiz';
+    render();
+  }
+}
+
+function renderQuestion(app) {
+  if (idx >= QUESTIONS.length) { state = 'loading'; render(); return; }
+  var q = QUESTIONS[idx];
+  var pct = Math.round((idx / QUESTIONS.length) * 100);
+  var labels = 'ABCDE';
+  var section = Math.floor(idx / 5);
+  var secNames = ['主角觉醒','黑色美学','嘉豪行为','电音觉醒','终极测试'];
+  var html =
+    '<div class="progress-wrap">'+
+      '<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div>'+
+      '<div class="progress-text">'+(idx+1)+' / '+QUESTIONS.length+' · '+secNames[section]+'</div>'+
+    '</div>'+
+    '<div class="q-num">第 '+(idx+1)+' 问</div>'+
+    '<div class="q-text">'+q.q+'</div>'+
+    '<div class="options">';
+  for (var i = 0; i < q.opts.length; i++) {
+    html += '<button class="opt-btn" onclick="answer('+i+')"><span class="opt-letter">'+labels[i]+'</span>'+q.opts[i].t+'</button>';
+  }
+  html += '</div>';
+  if (idx > 0) html += '<div style="text-align:center;"><button class="btn-back" onclick="goBack()">← 返回上一题</button></div>';
+  app.innerHTML = html;
+}
+
+function answer(choice) { answers.push({v: QUESTIONS[idx].opts[choice].v, sec: Math.floor(idx/5)}); idx++; quizSave(STORAGE_KEY, {idx: idx, answers: answers}); render(); }
+function goBack() { if (idx > 0) { idx--; answers.pop(); quizSave(STORAGE_KEY, {idx: idx, answers: answers}); render(); } }
+
+function renderLoading(app) {
+  app.innerHTML = '<div class="loading-wrap"><div class="loading-orb"></div><p class="loading-text" id="ltxt">正在扫描嘉豪基因…</p></div>';
+  var steps = ['正在扫描嘉豪基因…','正在分析主角气场…','正在评估装杯浓度…','分析完成，生成报告…'];
+  var i = 0;
+  function next() {
+    if (i >= steps.length) {
+      calcResult();
+      if (state === 'troll') { render(); return; }
+      state = 'reveal';
+      render();
+      return;
+    }
+    setTimeout(function() {
+      var lt = document.getElementById('ltxt');
+      if (lt) lt.textContent = steps[i];
+      i++;
+      next();
+    }, 500 + Math.random() * 400);
+  }
+  next();
+}
+
+var _trollFirstV = 0;
+function calcResult() {
+  var allSame = true, firstV = answers[0].v;
+  _trollFirstV = firstV;
+  for (var i = 1; i < answers.length; i++) if (answers[i].v !== firstV) { allSame = false; break; }
+  if (allSame) { state = 'troll'; return; }
+
+  lastTotal = 0; lastDims = [0,0,0,0,0];
+  for (var i = 0; i < answers.length; i++) {
+    var a = answers[i];
+    lastTotal += a.v;
+    lastDims[a.sec] += a.v;
+  }
+
+  for (var t = 0; t < TIERS.length; t++) {
+    if (lastTotal <= TIERS[t].max) { lastTier = TIERS[t]; break; }
+  }
+  if (!lastTier) lastTier = TIERS[TIERS.length-1];
+}
+
+function renderTroll(app) {
+  var msgs = {};
+  msgs[0] = '全选第一个——你是一个极度克制的存在。嘉豪检测系统怀疑你在刻意回避真相。重新来过？';
+  msgs[4] = '全选最后一个——你是嘉豪本豪的唯一候选人。这个测试不需要你了，你已经毕业了。';
+  var msg = msgs[_trollFirstV] || '你似乎在做某种行为艺术。嘉豪检测中心建议认真再测一次。';
+  app.innerHTML = '<div class="result"><div class="result-label">⚠️ 嘉豪检测中心</div><div class="result-hero"><div class="tier-icon">🤨</div><div class="tier-desc">'+msg+'</div></div><button class="btn btn-ghost" onclick="restart()">🔄 重新检测</button><a href="index.html" class="home-link">← 返回魔法店</a></div>';
+}
+
+function renderReveal(app) {
+  var tier = lastTier;
+  if (!tier) { state = 'intro'; render(); return; }
+  var particles = '';
+  for (var i = 0; i < 18; i++) {
+    particles += '<span class="reveal-particle" style="left:'+(Math.random()*90+5)+'%;top:'+(Math.random()*80+10)+'%;animation-delay:'+Math.random()*3+'s;animation-duration:'+(2.5+Math.random()*3)+'s;font-size:'+(10+Math.random()*12)+'px;">✦</span>';
+  }
+  app.innerHTML =
+    '<div class="reveal-screen">'+
+      '<div class="scanline"></div>'+
+      '<div class="reveal-particles">'+particles+'</div>'+
+      '<div class="reveal-title">🖤 嘉豪检测完成</div>'+
+      '<div class="reveal-code" style="font-size:28px;font-weight:700;letter-spacing:2px;color:'+tier.color+'">'+tier.name+'</div>'+
+      '<div class="reveal-hint" style="color:var(--muted)">检测报告生成中…</div>'+
+    '</div>';
+  setTimeout(function() {
+    state = 'result';
+    render();
+    window.scrollTo({top:0, behavior:'smooth'});
+  }, 1800);
+}
+
+function renderResult(app) {
+  var tier = lastTier;
+  if (!tier) { state = 'intro'; render(); return; }
+  var scorePct = lastTotal;
+
+  var attrHTML = '';
+  for (var i = 0; i < 5; i++) {
+    var pct = Math.round((lastDims[i]||0) / 20 * 100);
+    attrHTML +=
+      '<div class="attr-row" id="attrRow'+i+'">'+
+        '<div class="attr-head">'+
+          '<span class="attr-icon">'+DIM_ICONS[i]+'</span>'+
+          '<span class="attr-name" style="color:'+DIM_COLORS[i]+'">'+DIM_LABELS[i]+'</span>'+
+          '<span class="attr-score">'+lastDims[i]+' / 20</span>'+
+        '</div>'+
+        '<div class="attr-bar"><div class="attr-fill" id="attrFill'+i+'" style="width:0%;background:'+DIM_COLORS[i]+';"></div></div>'+
+      '</div>';
+  }
+
+  app.innerHTML =
+    '<div class="result">'+
+      '<div class="result-label">霧雨魔法店 · 嘉豪检测中心</div>'+
+      '<div class="score-bar-wrap">'+
+        '<div class="score-bar-label"><span>嘉豪指数</span><span>'+lastTotal+' / 100</span></div>'+
+        '<div class="score-bar"><div class="score-bar-fill" id="scoreFill" style="width:0%"></div></div>'+
+      '</div>'+
+      '<div class="result-hero">'+
+        '<div class="tier-icon">'+tier.icon+'</div>'+
+        '<div class="tier-name" style="color:'+tier.color+'">'+tier.name+'</div>'+
+        '<div class="tier-desc">'+tier.desc+'</div>'+
+      '</div>'+
+      '<p style="font-size:12px;color:var(--muted);margin-bottom:8px;letter-spacing:2px;">━━━━ 五维扫描 ━━━━</p>'+
+      '<div class="attr-panel">'+attrHTML+'</div>'+
+      '<div class="act-row"><button class="btn btn-main" onclick="shareIt()">📋 分享结果</button><button class="btn btn-ghost" onclick="shareImage()" style="border-color:var(--gold-dim);color:var(--gold);">📸 生成分享图</button></div>'+
+      '<button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button>'+
+      '<a href="index.html" class="home-link">← 返回魔法店</a>'+
+      resultFooterHTML({notice:'霧雨魔法店 · 数据仅供参考 · 纯属娱乐 🖤'})+
+    '</div>';
+
+  setTimeout(function() {
+    var sf = document.getElementById('scoreFill');
+    if (sf) sf.style.width = scorePct + '%';
+    for (var i = 0; i < 5; i++) {
+      (function(j){
+        setTimeout(function() {
+          var el = document.getElementById('attrRow'+j);
+          if (el) el.classList.add('show');
+          var fill = document.getElementById('attrFill'+j);
+          if (fill) fill.style.width = Math.round((lastDims[j]||0)/20*100) + '%';
+        }, j * 120);
+      })(i);
+    }
+  }, 200);
+}
+
+function shareIt() {
+  copyToClipboard('【测测你的嘉豪程度】我是「'+lastTier.name+'」('+lastTotal+'/100)！五维：主角感'+lastDims[0]+' / 黑化值'+lastDims[1]+' / 装杯力'+lastDims[2]+' / 电音魂'+lastDims[3]+' / 孤独感'+lastDims[4]+' 你也来测测：'+window.location.href, '已复制！发给朋友试试 🖤');
+}
+
+function restart() { state = 'intro'; idx = 0; answers = []; quizClear(STORAGE_KEY); render(); }
+
+function shareImage() { state = 'poster'; render(); }
+
+function renderPoster(app) {
+  app.innerHTML = '<div class="poster-wrap"><div class="result-label" style="font-size:14px;color:var(--muted);margin-bottom:14px;">长按图片保存 / 分享</div><img class="poster-img" id="posterImg" alt="分享海报"><div class="loading-wrap" id="posterLoading"><div class="loading-orb"></div><p class="loading-text">正在生成海报…</p></div><p class="poster-hint">手机长按上图即可保存；电脑可点下方下载。</p><a class="btn btn-main" id="posterDl" download="嘉豪检测报告.png" style="display:none;">⬇️ 下载海报</a><button class="btn btn-ghost" onclick="restart()">← 返回首页</button></div>';
+  buildPoster();
+}
+
+async function buildPoster() {
+  var tier = lastTier;
+  var W = POSTER_W, H = POSTER_H, pad = 36;
+  var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  var ctx = cv.getContext('2d');
+  var FONT = '-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+
+  // BG
+  ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H);
+  var g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, 'rgba(100,100,100,.06)'); g.addColorStop(1, 'rgba(40,40,40,.04)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#1a1a1a'; roundRect(ctx, pad, pad, W-pad*2, H-pad*2, 24); ctx.fill();
+  var barG = ctx.createLinearGradient(pad, 0, W-pad, 0);
+  barG.addColorStop(0, '#555'); barG.addColorStop(.5, '#888'); barG.addColorStop(1, '#555');
+  ctx.fillStyle = barG; roundRect(ctx, pad, pad, W-pad*2, 5, 3); ctx.fill();
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#888'; ctx.font = '600 15px '+FONT;
+  ctx.fillText('🖤 嘉豪检测中心', W/2, 76);
+
+  // Particles
+  ctx.fillStyle = 'rgba(200,200,200,.08)'; ctx.font = '13px '+FONT;
+  for (var si = 0; si < 8; si++) ctx.fillText('✦', 50+Math.random()*(W-100), 50+Math.random()*(H-100));
+
+  // Tier icon + name
+  ctx.font = '64px sans-serif';
+  ctx.fillText(tier.icon, W/2, 148);
+  ctx.fillStyle = '#f0c060'; ctx.font = '700 28px '+FONT;
+  ctx.fillText(tier.name, W/2, 196);
+
+  // Score bar
+  var sbW = W-pad*2-60, sbX = pad+30, sbY = 216;
+  ctx.fillStyle = '#333'; roundRect(ctx, sbX, sbY, sbW, 8, 4); ctx.fill();
+  ctx.fillStyle = '#888'; roundRect(ctx, sbX, sbY, sbW*(lastTotal/100), 8, 4); ctx.fill();
+  ctx.fillStyle = '#f0c060'; ctx.font = 'bold 13px '+FONT;
+  ctx.fillText(lastTotal+' / 100 嘉豪指数', W/2, sbY+24);
+
+  // Attribute bars
+  var attrY = 270, attrX = pad*2, rowH = 46;
+  var barW = W - attrX*2;
+  for (var i = 0; i < 5; i++) {
+    var pct = Math.round((lastDims[i]||0) / 20 * 100);
+    var ry = attrY + i * rowH;
+    ctx.fillStyle = DIM_COLORS[i]; ctx.font = 'bold 15px '+FONT; ctx.textAlign = 'left';
+    ctx.fillText(DIM_ICONS[i] + ' ' + DIM_LABELS[i], attrX, ry + 12);
+    ctx.fillStyle = '#8a7e9a'; ctx.font = '12px '+FONT; ctx.textAlign = 'right';
+    ctx.fillText(lastDims[i]+' / 20', W - attrX, ry + 12);
+    ctx.fillStyle = '#333'; roundRect(ctx, attrX, ry + 22, barW, 8, 4); ctx.fill();
+    ctx.fillStyle = DIM_COLORS[i]; roundRect(ctx, attrX, ry + 22, barW * pct/100, 8, 4); ctx.fill();
+  }
+
+  // Desc text
+  var descY = attrY + 5 * rowH + 24;
+  ctx.fillStyle = '#8a7e9a'; ctx.font = '12px '+FONT;
+  ctx.textAlign = 'center';
+  var descLines = wrapToLines(ctx, tier.desc, W-pad*2-20);
+  for (var j = 0; j < descLines.length && j < 3; j++) ctx.fillText(descLines[j], W/2, descY + j*20);
+
+  // QR codes
+  var siteImg = await loadImg(QR_IMG), qqImg = await loadImg(QQ_IMG);
+  var qs = 72, gap = 20, tqw = qs*2+gap;
+  var lx = (W-tqw)/2;
+  var qY = descY + Math.min(descLines.length,3)*20 + 36;
+  drawQRBox(ctx, siteImg, lx, qY, qs, '扫码开测', SITE_URL, '#f0c060');
+  drawQRBox(ctx, qqImg, lx+qs+gap, qY, qs, '加 QQ 群', '群号 '+QQ_GROUP, '#b89fff');
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#8a7e9a'; ctx.font = '11px '+FONT;
+  ctx.fillText('霧雨魔法店 · 嘉豪检测中心 · 纯属娱乐 🖤', W/2, H-pad-12);
+
+  var pi = document.getElementById('posterImg'), pl = document.getElementById('posterLoading'), dl = document.getElementById('posterDl');
+  var dataUrl = null;
+  try { dataUrl = cv.toDataURL('image/png'); } catch(e) { dataUrl = null; }
+  if (pl) pl.style.display = 'none';
+  if (dataUrl) { if (pi) { pi.src = dataUrl; pi.style.display = 'block'; } if (dl) { dl.href = dataUrl; dl.style.display = 'inline-flex'; } }
+  else { if (pi && pi.parentNode) { cv.className = 'poster-img'; cv.style.display = 'block'; pi.parentNode.replaceChild(cv, pi); } }
+}
+
+injectAds();
+render();
+</script>
+
+</body>
+</html>
