@@ -249,14 +249,8 @@ document.addEventListener('keyup', function(e) { keys[e.key.length === 1 ? e.key
 var JOY = { x: 105, y: H - 105, r: 62 };
 var joy = { active:false, id:null, sx:0, sy:0, dx:0, dy:0 };
 var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-// 竖屏强制横屏模式（CSS 旋转 -90°）：触摸向量需重映射
-var forcedRotate = false;
-function checkRotate() { forcedRotate = isTouch && window.matchMedia && window.matchMedia('(orientation: portrait)').matches; }
-checkRotate();
-window.addEventListener('resize', checkRotate);
 function toCanvas(cx2, cy2) {
   var rect = cv.getBoundingClientRect();
-  if (forcedRotate) return { x: (1 - (cy2 - rect.top) / rect.height) * W, y: (cx2 - rect.left) / rect.width * H };
   return { x: (cx2 - rect.left) / rect.width * W, y: (cy2 - rect.top) / rect.height * H };
 }
 var wrap = document.querySelector('.canvas-wrap');
@@ -265,7 +259,7 @@ wrap.addEventListener('touchstart', function(e) {
   var t = e.changedTouches[0];
   var pt = toCanvas(t.clientX, t.clientY);
   var jdx = pt.x - JOY.x, jdy = pt.y - JOY.y;
-  if (jdx*jdx + jdy*jdy > (JOY.r + 40) * (JOY.r + 40)) return; // 只响应摇杆区
+  if (jdx*jdx + jdy*jdy > (JOY.r + 55) * (JOY.r + 55)) return; // 只响应摇杆区
   joy.active = true; joy.id = t.identifier;
   joy.sx = t.clientX; joy.sy = t.clientY; joy.dx = 0; joy.dy = 0;
   initAudio();
@@ -277,11 +271,10 @@ wrap.addEventListener('touchmove', function(e) {
     var t = e.changedTouches[i];
     if (t.identifier === joy.id) {
       var sdx = t.clientX - joy.sx, sdy = t.clientY - joy.sy;
-      var gdx = forcedRotate ? -sdy : sdx, gdy = forcedRotate ? sdx : sdy; // 强制横屏 -90° 重映射
-      var d = Math.sqrt(gdx*gdx + gdy*gdy);
+      var d = Math.sqrt(sdx*sdx + sdy*sdy);
       var m = Math.min(d, 60) / 60;
-      joy.dx = d > 1 ? gdx / d * m : 0;
-      joy.dy = d > 1 ? gdy / d * m : 0;
+      joy.dx = d > 1 ? sdx / d * m : 0;
+      joy.dy = d > 1 ? sdy / d * m : 0;
       e.preventDefault();
     }
   }
@@ -294,6 +287,27 @@ function joyEnd(e) {
 }
 wrap.addEventListener('touchend', joyEnd);
 wrap.addEventListener('touchcancel', joyEnd);
+
+// 竖屏横屏引导遮罩（触屏设备）：竖屏弹遮罩并暂停游戏
+var roPaused = false;
+var roSkipped = false;
+try { roSkipped = sessionStorage.getItem('ms_ro_skip') === '1'; } catch(e) {}
+function updateRotateOverlay() {
+  if (!isTouch) return;
+  var portrait = window.matchMedia && window.matchMedia('(orientation: portrait)').matches;
+  var show = !!portrait && !roSkipped;
+  document.getElementById('rotateOverlay').classList.toggle('show', show);
+  if (show) { roPaused = true; }
+  else if (roPaused) { roPaused = false; lastTs = performance.now(); acc = 0; }
+}
+window.addEventListener('resize', updateRotateOverlay);
+window.addEventListener('orientationchange', updateRotateOverlay);
+document.getElementById('roSkip').addEventListener('click', function() {
+  roSkipped = true;
+  try { sessionStorage.setItem('ms_ro_skip', '1'); } catch(e) {}
+  updateRotateOverlay();
+});
+updateRotateOverlay();
 
 function inputVector() {
   var vx = 0, vy = 0;
@@ -914,7 +928,7 @@ function addLabel(x, y, text, color) {
 
 // ═══════════ 主更新（固定 60Hz 步长，全设备同速）═══════════
 function stepGame() {
-  if (gameState !== 'playing') return;
+  if (gameState !== 'playing' || roPaused) return;
   dt = 1;
   frameCount++;
   if (!boss) gameTime += 1 / 60; // Boss 战期间时间暂停（下一波 Boss 不撞车）
