@@ -70,6 +70,8 @@ function setupFrames() {
   spr.mini   = makeSprite(assets.mogu, 26);
   spr.boom   = makeTinted(assets.mogu, 48, '#ef4444', 0.5);
   spr.shield = makeTinted(assets.fairy, 56, '#f0c060', 0.45);
+  spr.redfairy = makeTinted(assets.fairy, 52, '#ef4444', 0.45);
+  spr.crystal  = makeTinted(assets.mogu, 30, '#b89fff', 0.5);
   spr.bossR  = makeSprite(assets.bossR, 190);
   spr.bossF  = makeSprite(assets.bossF, 190);
 }
@@ -124,6 +126,7 @@ function sfxBomb()   { playTone(90, 0.5, 'sawtooth', 0.14, 30); playTone(45, 0.6
 function sfxPickup() { playTone(600, 0.07, 'sine', 0.08, 900); }
 function sfxWarn()   { playTone(220, 0.15, 'square', 0.08); setTimeout(function(){ playTone(220, 0.15, 'square', 0.08); }, 200); }
 function sfxDash()   { playTone(180, 0.2, 'sawtooth', 0.07, 800); }
+function sfxBossIn() { playTone(70, 0.6, 'sawtooth', 0.14, 35); playTone(180, 0.4, 'square', 0.07, 60); setTimeout(function(){ playTone(220, 0.2, 'square', 0.08); }, 250); setTimeout(function(){ playTone(220, 0.2, 'square', 0.08); }, 500); }
 
 // ═══════════ 数据表 ═══════════
 // 武器：cd/伤害等按 Lv1-5 数组；cont=true 表示持续型无冷却
@@ -163,7 +166,9 @@ var ETYPE = {
   split:  { hp:24,  spd:1.25, r:18, dmg:8,  xp:2, spr:'split' },   // 分裂菇：死亡裂成3只小菇
   mini:   { hp:6,   spd:2.2,  r:10, dmg:4,  xp:1, spr:'mini' },
   boom:   { hp:14,  spd:1.5,  r:16, dmg:6,  xp:2, spr:'boom' },    // 自爆菇：近身引信，AOE误伤敌群
-  shieldf:{ hp:30,  spd:1.0,  r:20, dmg:8,  xp:2, spr:'shield' }   // 护盾妖精：子弹减伤75%
+  shieldf:{ hp:30,  spd:1.0,  r:20, dmg:8,  xp:2, spr:'shield' },  // 护盾妖精：子弹减伤75%
+  redfairy:{ hp:20, spd:1.7,  r:20, dmg:9,  xp:1, spr:'redfairy' }, // 红魔使魔（蕾米莉亚召唤）
+  crystal: { hp:8,  spd:1.9,  r:12, dmg:6,  xp:1, spr:'crystal' }   // 水晶小怪（芙兰朵露召唤）
 };
 // Boss 轮换定义（斯卡雷特姐妹）
 var BOSS_DEFS = [
@@ -186,7 +191,8 @@ var deathFlash = 0, shakeT = 0, hurtFlash = 0;
 var pendingLevels = 0;
 var freezeAll = 0; // 时停怀表
 var eliteWave = 0, eliteTimer = 0;
-var boss = null, bossCount = 0;
+var boss = null, bossCount = 0, bossBannerT = 0;
+var mist = null; // 蕾米莉亚红雾领域
 
 var player = {};
 var enemies = [], bullets = [], gems = [], drops = [];
@@ -200,7 +206,7 @@ var enemyPool = [], bulletPool = [], gemPool = [], ebulletPool = [], dmgPopPool 
 function resetPlayer() {
   var c = CHAR[playerChar];
   player = {
-    x:0, y:0, r:c.r, spd:c.spd, hp:100, maxHp:100,
+    x:0, y:0, r:c.r, spd:c.spd, hp:120, maxHp:120,
     fx:1, fy:0, flip:false, inv:0,
     level:1, xp:0, xpNeed:xpNeedFor(1),
     weapons:[{ id:'star', lv:1, t:30, ang:0 }],
@@ -239,14 +245,29 @@ document.addEventListener('keydown', function(e) {
 });
 document.addEventListener('keyup', function(e) { keys[e.key.length === 1 ? e.key.toLowerCase() : e.key] = false; });
 
-// 动态虚拟摇杆（触屏按住任意处拖动）
-var joy = { active:false, id:null, ox:0, oy:0, dx:0, dy:0 };
+// 固定虚拟摇杆（左下角常驻，触屏设备）
+var JOY = { x: 105, y: H - 105, r: 62 };
+var joy = { active:false, id:null, sx:0, sy:0, dx:0, dy:0 };
+var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+// 竖屏强制横屏模式（CSS 旋转 -90°）：触摸向量需重映射
+var forcedRotate = false;
+function checkRotate() { forcedRotate = isTouch && window.matchMedia && window.matchMedia('(orientation: portrait)').matches; }
+checkRotate();
+window.addEventListener('resize', checkRotate);
+function toCanvas(cx2, cy2) {
+  var rect = cv.getBoundingClientRect();
+  if (forcedRotate) return { x: (1 - (cy2 - rect.top) / rect.height) * W, y: (cx2 - rect.left) / rect.width * H };
+  return { x: (cx2 - rect.left) / rect.width * W, y: (cy2 - rect.top) / rect.height * H };
+}
 var wrap = document.querySelector('.canvas-wrap');
 wrap.addEventListener('touchstart', function(e) {
   if (gameState !== 'playing' || joy.active) return;
   var t = e.changedTouches[0];
+  var pt = toCanvas(t.clientX, t.clientY);
+  var jdx = pt.x - JOY.x, jdy = pt.y - JOY.y;
+  if (jdx*jdx + jdy*jdy > (JOY.r + 40) * (JOY.r + 40)) return; // 只响应摇杆区
   joy.active = true; joy.id = t.identifier;
-  joy.ox = t.clientX; joy.oy = t.clientY; joy.dx = 0; joy.dy = 0;
+  joy.sx = t.clientX; joy.sy = t.clientY; joy.dx = 0; joy.dy = 0;
   initAudio();
   e.preventDefault();
 }, { passive:false });
@@ -255,10 +276,12 @@ wrap.addEventListener('touchmove', function(e) {
   for (var i=0; i<e.changedTouches.length; i++) {
     var t = e.changedTouches[i];
     if (t.identifier === joy.id) {
-      var dx = t.clientX - joy.ox, dy = t.clientY - joy.oy;
-      var d = Math.sqrt(dx*dx + dy*dy);
-      if (d > 60) { dx = dx/d*60; dy = dy/d*60; }
-      joy.dx = dx; joy.dy = dy;
+      var sdx = t.clientX - joy.sx, sdy = t.clientY - joy.sy;
+      var gdx = forcedRotate ? -sdy : sdx, gdy = forcedRotate ? sdx : sdy; // 强制横屏 -90° 重映射
+      var d = Math.sqrt(gdx*gdx + gdy*gdy);
+      var m = Math.min(d, 60) / 60;
+      joy.dx = d > 1 ? gdx / d * m : 0;
+      joy.dy = d > 1 ? gdy / d * m : 0;
       e.preventDefault();
     }
   }
@@ -278,7 +301,7 @@ function inputVector() {
   if (keys['d'] || keys['ArrowRight']) vx += 1;
   if (keys['w'] || keys['ArrowUp']) vy -= 1;
   if (keys['s'] || keys['ArrowDown']) vy += 1;
-  if (vx === 0 && vy === 0 && joy.active && (joy.dx || joy.dy)) { vx = joy.dx / 60; vy = joy.dy / 60; }
+  if (vx === 0 && vy === 0 && joy.active) { vx = joy.dx; vy = joy.dy; }
   var d = Math.sqrt(vx*vx + vy*vy);
   if (d > 1) { vx /= d; vy /= d; }
   return { x:vx, y:vy };
@@ -328,7 +351,7 @@ function densestEnemy() {
 // ═══════════ 敌人生成 ═══════════
 function hpMul()  { return 1 + gameTime / 75; }
 function spdMul() { return 1 + Math.min(gameTime / 600, 0.4); }
-function spawnInterval() { return Math.max(13.2, 66 * Math.pow(0.93, gameTime / 15)); }
+function spawnInterval() { return Math.max(13.2, 78 * Math.pow(0.94, gameTime / 15)); } // 降难度：1.3s 起步、增速放缓
 function enemyCap() { return Math.min(40 + Math.floor(gameTime / 30) * 8, 220); }
 
 function spawnEnemy(type, x, y) {
@@ -369,38 +392,53 @@ function spawnBoss() {
   var def = BOSS_DEFS[bossCount % 2];
   var lvl = Math.floor(bossCount / 2); // 每轮两姐妹后 HP ×1.6
   var ang = Math.random() * Math.PI * 2;
+  // 清场：非 Boss 敌人化作粒子消散
+  for (var ci = enemies.length - 1; ci >= 0; ci--) {
+    var m = enemies[ci];
+    spawnParticles(m.x, m.y, '#b89fff', 5, 1, 3);
+    enemies.splice(ci, 1); m.dead = false; enemyPool.push(m);
+  }
   var e = enemyPool.pop() || {};
   e.x = player.x + Math.cos(ang) * 560; e.y = player.y + Math.sin(ang) * 560;
-  e.maxHp = Math.round(2600 * hpMul() * Math.pow(1.6, lvl));
+  e.maxHp = Math.round(1700 * hpMul() * Math.pow(1.6, lvl)); // 血量削弱，不再沙包
   e.hp = e.maxHp;
-  e.spd = 2.6; e.r = 60; e.dmg = 25; e.xpv = 0; // 速度接近玩家，保证持续压制
+  e.spd = 2.15; e.r = 60; e.dmg = 18; e.xpv = 0; // 速度略低于玩家：靠突进+橡皮筋压制而非永久贴脸
   e.type = 'boss'; e.bossIdx = bossCount % 2;
   e.wing = 0; e.hitFlash = 0; e.slowT = 0; e.frozen = 0; e.fuse = 0;
   e.orbHitT = 0; e.yyHitT = 0; e.dead = false; e.elite = false; e.isBoss = true;
-  e.atkT = 130; e.atkPhase = 0; e.chargeT = 0; e.cdx = 0; e.cdy = 0;
+  e.atkT = 150; e.atkPhase = 0; e.chargeT = 0; e.cdx = 0; e.cdy = 0;
+  e.waveN = 0; e.waveT = 0;
   enemies.push(e);
   boss = e; bossCount++;
-  addLabel(player.x, player.y - 70, '⚠ ' + def.name + ' 出现了！', '#ef4444');
-  sfxWarn();
+  // 入场演出：横幅 + 红闪 + 震屏 + 登场爆发
+  bossBannerT = 105;
+  var banner = document.getElementById('bossBanner');
+  banner.textContent = '⚠ ' + def.name + ' 参上！ ⚠';
+  banner.classList.add('show');
+  hurtFlash = 12; shakeT = 14;
+  spawnParticles(e.x, e.y, def.aura, 40, 2, 7);
+  sfxBossIn();
   document.getElementById('bossName').textContent = def.name;
   document.getElementById('bossBar').classList.remove('hide');
 }
 function hideBossBar() { document.getElementById('bossBar').classList.add('hide'); }
-function spawnEbullet(x, y, vx, vy, dmg) {
+function spawnEbullet(x, y, vx, vy, dmg, color, life, spear) {
   if (ebullets.length >= 150) return;
   var b = ebulletPool.pop() || {};
-  b.x = x; b.y = y; b.vx = vx; b.vy = vy; b.dmg = dmg; b.r = 6; b.life = 500;
+  b.x = x; b.y = y; b.vx = vx; b.vy = vy; b.dmg = dmg; b.r = 6;
+  b.life = life || 500; b.color = color || '#ff6b9d'; b.spear = !!spear;
   ebullets.push(b);
 }
-// Boss AI：逼近 + 环形弹幕/瞄准三连/预警突进/召唤 循环，半血二阶段
+// Boss AI：逼近 + 连发波处理 + 各 Boss 差异化技能循环，半血二阶段
 function updateBoss(e) {
   var pdx = player.x - e.x, pdy = player.y - e.y;
   var pd2 = pdx*pdx + pdy*pdy;
   var phase2 = e.hp < e.maxHp * 0.5;
-  // 突进中
+  // 突进中（蕾米莉亚路径留伤害残影）
   if (e.chargeT > 0) {
     e.x += e.cdx * 7.5 * dt; e.y += e.cdy * 7.5 * dt;
     e.chargeT -= dt;
+    if (e.bossIdx === 0 && frameCount % 5 === 0) spawnEbullet(e.x, e.y, 0, 0, 10, '#c02040', 80);
     return;
   }
   var d = Math.sqrt(pd2) || 1;
@@ -413,29 +451,73 @@ function updateBoss(e) {
     sfxWarn();
   }
   if (d > 160) { e.x += pdx / d * e.spd * (phase2 ? 1.5 : 1) * dt; e.y += pdy / d * e.spd * (phase2 ? 1.5 : 1) * dt; }
+  // 芙兰朵露七彩散射连发
+  if (e.waveN > 0) {
+    e.waveT -= dt;
+    if (e.waveT <= 0) {
+      e.waveT = 26; e.waveN--;
+      var cols = ['#ff5b5b','#ffb84d','#fff36b','#7dff7a','#6bd5ff','#b89fff','#ff8fd8'];
+      var wn2 = phase2 ? 12 : 9;
+      for (var wi2 = 0; wi2 < wn2; wi2++) {
+        var wa = (wi2 / wn2) * Math.PI * 2 + e.waveN * 0.4;
+        spawnEbullet(e.x, e.y, Math.cos(wa) * 2.6, Math.sin(wa) * 2.6, phase2 ? 13 : 10, cols[(wi2 + e.waveN) % 7], 300);
+      }
+    }
+  }
   e.atkT -= dt;
   if (e.atkT > 0) return;
   var cd = phase2 ? 0.6 : 1;
+  if (e.bossIdx === 0) remiliaAttack(e, phase2, cd, pdx, pdy, d);
+  else flandreAttack(e, phase2, cd);
+  e.atkPhase++;
+}
+// ── 蕾米莉亚：神枪冈格尼尔 / 红雾领域 / 蝙蝠突进 / 红魔使魔 ──
+function remiliaAttack(e, phase2, cd, pdx, pdy, d) {
   var mode = e.atkPhase % 4;
-  if (mode === 0) { // 环形弹幕
-    var n = phase2 ? 20 : 14;
-    for (var i = 0; i < n; i++) { var a = (i / n) * Math.PI * 2 + e.wing; spawnEbullet(e.x, e.y, Math.cos(a) * 2.2, Math.sin(a) * 2.2, phase2 ? 15 : 12); }
-    e.wing += 0.35;
-    e.atkT = 160 * cd;
-  } else if (mode === 1) { // 瞄准三连
+  if (mode === 0) { // 神枪：细线预警 → 高速穿透红枪
     var ba = Math.atan2(pdy, pdx);
-    for (var s = -1; s <= 1; s++) { var a2 = ba + s * 0.2; spawnEbullet(e.x, e.y, Math.cos(a2) * 3.4, Math.sin(a2) * 3.4, phase2 ? 15 : 12); }
-    e.atkT = 100 * cd;
-  } else if (mode === 2) { // 预警线 → 突进
+    e.cdx = Math.cos(ba); e.cdy = Math.sin(ba);
+    warnings.push({ x: e.x, y: e.y, dx: e.cdx, dy: e.cdy, t: 38, boss: e, spear: true, dmg: phase2 ? 20 : 16 });
+    e.atkT = 130 * cd;
+    sfxWarn();
+  } else if (mode === 1) { // 红雾领域：8 秒持续伤害区
+    mist = { x: e.x, y: e.y, r: phase2 ? 190 : 150, t: 480, dmg: 8, tick: 0 };
+    rings.push({ x: e.x, y: e.y, r: 10, maxR: mist.r, life: 16, maxLife: 16, color: '#c02040' });
+    e.atkT = 320 * cd;
+    sfxBoom();
+  } else if (mode === 2) { // 蝙蝠突进（路径残影）
     e.cdx = pdx / d; e.cdy = pdy / d;
     warnings.push({ x: e.x, y: e.y, dx: e.cdx, dy: e.cdy, t: 42, boss: e, charge: true });
-    e.atkT = 200 * cd;
+    e.atkT = 190 * cd;
     sfxWarn();
-  } else { // 召唤小妖精
-    for (var k = 0; k < 5; k++) { var a3 = (k / 5) * Math.PI * 2; spawnEnemy('fairy', e.x + Math.cos(a3) * 110, e.y + Math.sin(a3) * 110); }
+  } else { // 红魔使魔：快速红色妖精
+    for (var k = 0; k < 4; k++) { var a3 = (k / 4) * Math.PI * 2 + e.wing; spawnEnemy('redfairy', e.x + Math.cos(a3) * 110, e.y + Math.sin(a3) * 110); }
+    e.wing += 0.5;
+    e.atkT = 240 * cd;
+  }
+}
+// ── 芙兰朵露：破坏目光 / 七彩散射 / 瞬移 / 水晶之雨 ──
+function flandreAttack(e, phase2, cd) {
+  var mode = e.atkPhase % 4;
+  if (mode === 0) { // 破坏目光：玩家脚下预警 → 爆炸
+    warnings.push({ x: player.x, y: player.y, r: 110, t: 50, playerBoom: true, pdmg: phase2 ? 22 : 18 });
+    e.atkT = 150 * cd;
+    sfxWarn();
+  } else if (mode === 1) { // 七彩散射：3 波旋转彩弹
+    e.waveN = 3; e.waveT = 0;
+    e.atkT = 180 * cd;
+  } else if (mode === 2) { // 瞬移：消失后出现在玩家附近
+    spawnParticles(e.x, e.y, '#f0c060', 16, 1, 4);
+    var ta2 = Math.random() * Math.PI * 2;
+    e.x = player.x + Math.cos(ta2) * 300; e.y = player.y + Math.sin(ta2) * 300;
+    spawnParticles(e.x, e.y, '#f0c060', 16, 1, 4);
+    rings.push({ x: e.x, y: e.y, r: 10, maxR: 70, life: 12, maxLife: 12, color: '#f0c060' });
+    e.atkT = 140 * cd;
+    sfxDash();
+  } else { // 水晶之雨：玩家周围召唤水晶小怪
+    for (var k2 = 0; k2 < 6; k2++) { var a4 = (k2 / 6) * Math.PI * 2; spawnEnemy('crystal', player.x + Math.cos(a4) * 330, player.y + Math.sin(a4) * 330); }
     e.atkT = 230 * cd;
   }
-  e.atkPhase++;
 }
 function eliteWaveSpawn() {
   eliteWave++;
@@ -503,7 +585,7 @@ function damageEnemy(e, dmg, kind) {
 // 玩家受伤统一入口
 function hurtPlayer(dmg) {
   player.hp -= dmg;
-  player.inv = 36;
+  player.inv = 45; // 0.75s 无敌帧（降难度）
   hurtFlash = 10;
   addDmgPop(player.x, player.y - 30, dmg, false, '#ff5555');
   spawnParticles(player.x, player.y, '#ef4444', 14, 2, 5);
@@ -526,7 +608,7 @@ function killEnemy(e) {
   }
   // Boss 击破：大奖
   if (e.isBoss) {
-    boss = null; hideBossBar();
+    boss = null; hideBossBar(); mist = null;
     scoreBonus += 500;
     for (var bg = 0; bg < 20; bg++) spawnGem(e.x + (Math.random()-0.5)*90, e.y + (Math.random()-0.5)*90, 1);
     eliteDrop(e.x - 24, e.y); eliteDrop(e.x + 24, e.y);
@@ -538,7 +620,7 @@ function killEnemy(e) {
   }
   // 掉落
   if (e.elite) eliteDrop(e.x, e.y);
-  else if (Math.random() < 0.015 * luckMul()) spawnDrop(e.x, e.y, 'heart');
+  else if (Math.random() < 0.025 * luckMul()) spawnDrop(e.x, e.y, 'heart'); // 红心掉率提升（降难度）
 }
 // 自爆菇引爆（也误伤敌群）
 function boomExplode(e, idx) {
@@ -662,6 +744,20 @@ function updateContinuous(w) {
           damageEnemy(e, cfg.dmg[lv] * dmgMul(), 'contact');
         }
       });
+    }
+    // 玉与玉弹性碰撞，防重叠
+    for (var ba2 = 0; ba2 < yyBalls.length; ba2++) for (var bb2 = ba2 + 1; bb2 < yyBalls.length; bb2++) {
+      var A = yyBalls[ba2], B = yyBalls[bb2];
+      var cdx = B.x - A.x, cdy = B.y - A.y;
+      var crr = A.r + B.r, cd2 = cdx*cdx + cdy*cdy;
+      if (cd2 < crr*crr && cd2 > 0.01) {
+        var cd3 = Math.sqrt(cd2), cnx = cdx / cd3, cny = cdy / cd3;
+        var cp = (crr - cd3) / 2;
+        A.x -= cnx * cp; A.y -= cny * cp; B.x += cnx * cp; B.y += cny * cp;
+        var cva = A.vx * cnx + A.vy * cny, cvb = B.vx * cnx + B.vy * cny;
+        A.vx += (cvb - cva) * cnx; A.vy += (cvb - cva) * cny;
+        B.vx += (cva - cvb) * cnx; B.vy += (cva - cvb) * cny;
+      }
     }
   }
 }
@@ -788,7 +884,7 @@ function pickCard(i) {
   if (pendingLevels > 0) { enterLevelUp(); return; }
   document.getElementById('levelOverlay').classList.add('hide');
   gameState = 'playing';
-  lastTs = performance.now();
+  lastTs = performance.now(); acc = 0;
 }
 function gainXp(v) {
   player.xp += v * xpMul();
@@ -816,15 +912,12 @@ function addLabel(x, y, text, color) {
   floatingTexts.push({ x:x, y:y, text:text, color:color, life:80, maxLife:80, vy:-1.2 });
 }
 
-// ═══════════ 主更新 ═══════════
-function update() {
+// ═══════════ 主更新（固定 60Hz 步长，全设备同速）═══════════
+function stepGame() {
   if (gameState !== 'playing') return;
-  var now = performance.now();
-  dt = Math.min((now - lastTs) / 16.67, 3);
-  if (dt <= 0) dt = 1; // 时钟冻结环境下（如无头虚拟时间）保底推进
-  lastTs = now;
+  dt = 1;
   frameCount++;
-  gameTime += dt / 60;
+  if (!boss) gameTime += 1 / 60; // Boss 战期间时间暂停（下一波 Boss 不撞车）
   score = kills * 50 + Math.floor(gameTime) * 10 + scoreBonus;
 
   // ── 玩家移动 ──
@@ -846,12 +939,22 @@ function update() {
     updateContinuous(player.weapons[wi]);
   }
 
-  // ── 生成 ──
+  // ── 红雾领域（蕾米莉亚）──
+  if (mist) {
+    mist.t -= dt; mist.tick -= dt;
+    if (mist.tick <= 0) {
+      mist.tick = 30;
+      var mdx = player.x - mist.x, mdy = player.y - mist.y;
+      if (player.inv <= 0 && mdx*mdx + mdy*mdy < mist.r * mist.r) hurtPlayer(mist.dmg);
+    }
+    if (gameState !== 'playing') return;
+    if (mist.t <= 0) mist = null;
+  }
+
+  // ── 生成（Boss 战期间停刷普通怪，Boss 召唤技除外）──
   spawnTimer += dt;
-  var ivl = spawnInterval();
-  if (boss) ivl *= 2; // Boss 在场普通刷怪减半
-  if (spawnTimer >= ivl) { trySpawn(); spawnTimer = 0; }
-  if (gameTime >= 180) {
+  if (!boss && spawnTimer >= spawnInterval()) { trySpawn(); spawnTimer = 0; }
+  if (gameTime >= 180 && !boss) {
     eliteTimer += dt;
     if (eliteTimer >= 90 * 60) { eliteWaveSpawn(); eliteTimer = 0; }
   }
@@ -890,7 +993,7 @@ function update() {
     }
     // 撞玩家（接触伤害随时间小幅成长）
     if (player.inv <= 0 && pd2 < (e.r + player.r) * (e.r + player.r)) {
-      hurtPlayer(Math.round(e.dmg * (1 + gameTime / 360)));
+      hurtPlayer(Math.round(e.dmg * (1 + gameTime / 480))); // 接触伤害成长放缓（降难度）
       if (gameState !== 'playing') return;
     }
   }
@@ -935,6 +1038,27 @@ function update() {
     wn.t -= dt;
     if (wn.charge) {
       if (wn.t <= 0) { if (wn.boss && !wn.boss.dead) { wn.boss.chargeT = 40; sfxDash(); } warnings.splice(ci, 1); }
+    } else if (wn.spear) {
+      if (wn.t <= 0) {
+        if (wn.boss && !wn.boss.dead) {
+          for (var sp2 = -1; sp2 <= 1; sp2++) {
+            var sa = Math.atan2(wn.dy, wn.dx) + sp2 * 0.07;
+            spawnEbullet(wn.boss.x, wn.boss.y, Math.cos(sa) * 6.5, Math.sin(sa) * 6.5, wn.dmg, '#ff3b30', 200, true);
+          }
+          sfxSpark();
+        }
+        warnings.splice(ci, 1);
+      }
+    } else if (wn.playerBoom) {
+      if (wn.t <= 0) {
+        rings.push({ x: wn.x, y: wn.y, r: 10, maxR: wn.r, life: 14, maxLife: 14, color: '#ef4444' });
+        spawnParticles(wn.x, wn.y, '#ef4444', 16, 2, 5);
+        var pbd = (player.x - wn.x) * (player.x - wn.x) + (player.y - wn.y) * (player.y - wn.y);
+        if (player.inv <= 0 && pbd < (wn.r + player.r) * (wn.r + player.r)) hurtPlayer(wn.pdmg);
+        sfxBoom();
+        warnings.splice(ci, 1);
+      }
+      if (gameState !== 'playing') return;
     } else if (wn.t <= 0) {
       explosion(wn.x, wn.y, wn.r, wn.dmg, false);
       shakeT = 8;
@@ -979,6 +1103,7 @@ function updateFx() {
   for (var bm = beams.length - 1; bm >= 0; bm--) { beams[bm].life -= dt; if (beams[bm].life <= 0) beams.splice(bm, 1); }
   for (var rg = rings.length - 1; rg >= 0; rg--) { var r2 = rings[rg]; r2.r += (r2.maxR - 10) / r2.maxLife * dt; r2.life -= dt; if (r2.life <= 0) rings.splice(rg, 1); }
   for (var dp3 = dmgPops.length - 1; dp3 >= 0; dp3--) { var pp = dmgPops[dp3]; pp.y += pp.vy * dt; pp.life -= dt; if (pp.life <= 0) { dmgPops.splice(dp3, 1); dmgPopPool.push(pp); } }
+  if (bossBannerT > 0) { bossBannerT -= dt; if (bossBannerT <= 0) document.getElementById('bossBanner').classList.remove('show'); }
   if (shakeT > 0) shakeT -= dt;
 }
 
@@ -1020,7 +1145,12 @@ function drawStarShape(cx, cy, r) {
   }
   ctx.closePath(); ctx.fill();
 }
+var drawTs = 0;
 function draw() {
+  // 闪光类特效按真实时间衰减（与逻辑步长解耦）
+  var dnow = performance.now();
+  var ddt = Math.min((dnow - drawTs) / 16.67, 3); if (ddt <= 0) ddt = 1;
+  drawTs = dnow;
   var camX = player.x - W / 2, camY = player.y - H / 2;
   if (shakeT > 0) { camX += (Math.random()-0.5) * 6; camY += (Math.random()-0.5) * 6; }
   ctx.clearRect(0, 0, W, H);
@@ -1075,6 +1205,22 @@ function draw() {
       ctx.lineWidth = 26; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(px2, py2); ctx.lineTo(px2 + wn.dx * 560, py2 + wn.dy * 560); ctx.stroke();
       ctx.lineCap = 'butt';
+      continue;
+    }
+    if (wn.spear) { // 冈格尼尔细线预警
+      ctx.strokeStyle = 'rgba(255,59,48,' + (Math.floor(wn.t / 5) % 2 === 0 ? 0.6 : 0.25) + ')';
+      ctx.lineWidth = 7; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(px2, py2); ctx.lineTo(px2 + wn.dx * 620, py2 + wn.dy * 620); ctx.stroke();
+      ctx.lineCap = 'butt';
+      continue;
+    }
+    if (wn.playerBoom) { // 破坏目光：玩家脚下红圈
+      ctx.strokeStyle = 'rgba(239,68,68,0.8)';
+      ctx.setLineDash([6, 5]); ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(px2, py2, wn.r, 0, Math.PI*2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(239,68,68,0.3)';
+      ctx.beginPath(); ctx.arc(px2, py2, wn.r * (wn.t / 50), 0, Math.PI*2); ctx.fill();
       continue;
     }
     ctx.strokeStyle = 'rgba(239,68,68,0.7)';
@@ -1204,6 +1350,14 @@ function draw() {
     ctx.beginPath(); ctx.arc(sx(rg2.x), sy(rg2.y), rg2.r, 0, Math.PI*2); ctx.stroke();
     ctx.globalAlpha = 1;
   }
+  // 红雾领域（蕾米莉亚）
+  if (mist) {
+    var ma2 = 0.13 + Math.sin(frameCount * 0.06) * 0.04;
+    ctx.fillStyle = 'rgba(192,32,64,' + ma2 + ')';
+    ctx.beginPath(); ctx.arc(sx(mist.x), sy(mist.y), mist.r, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = 'rgba(192,32,64,0.4)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(sx(mist.x), sy(mist.y), mist.r, 0, Math.PI*2); ctx.stroke();
+  }
   // 子弹
   for (var bu = 0; bu < bullets.length; bu++) {
     var bl = bullets[bu];
@@ -1217,13 +1371,25 @@ function draw() {
     ctx.fillStyle = '#fff';
     ctx.beginPath(); ctx.arc(sx(bl.x), sy(bl.y), bl.r * 0.45, 0, Math.PI*2); ctx.fill();
   }
-  // 敌方弹幕（粉色，与玩家金色弹区分）
+  // 敌方弹幕（粉色/彩色/神枪，与玩家金色弹区分）
   for (var ebd = 0; ebd < ebullets.length; ebd++) {
     var eb2 = ebullets[ebd];
-    ctx.globalAlpha = 0.35; ctx.fillStyle = '#ff6b9d';
+    if (!onScreen(eb2.x, eb2.y, 30)) continue;
+    if (eb2.spear) { // 冈格尼尔：沿速度方向的光枪
+      ctx.save();
+      ctx.translate(sx(eb2.x), sy(eb2.y));
+      ctx.rotate(Math.atan2(eb2.vy, eb2.vx));
+      ctx.globalAlpha = 0.45; ctx.fillStyle = eb2.color;
+      ctx.fillRect(-18, -5, 36, 10);
+      ctx.globalAlpha = 1; ctx.fillStyle = '#fff';
+      ctx.fillRect(-18, -2, 36, 4);
+      ctx.restore();
+      continue;
+    }
+    ctx.globalAlpha = 0.35; ctx.fillStyle = eb2.color;
     ctx.beginPath(); ctx.arc(sx(eb2.x), sy(eb2.y), eb2.r + 4, 0, Math.PI*2); ctx.fill();
     ctx.globalAlpha = 1;
-    ctx.fillStyle = '#ff6b9d';
+    ctx.fillStyle = eb2.color;
     ctx.beginPath(); ctx.arc(sx(eb2.x), sy(eb2.y), eb2.r, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle = '#fff';
     ctx.beginPath(); ctx.arc(sx(eb2.x), sy(eb2.y), eb2.r * 0.4, 0, Math.PI*2); ctx.fill();
@@ -1259,22 +1425,18 @@ function draw() {
     ctx.fillText(dp2.val, sx(dp2.x), sy(dp2.y));
   }
   ctx.globalAlpha = 1;
-  // 虚拟摇杆
-  if (joy.active) {
-    var rect = cv.getBoundingClientRect();
-    var kx = W / rect.width, ky = H / rect.height;
-    var jx = (joy.ox - rect.left) * kx, jy = (joy.oy - rect.top) * ky;
-    var jdx = (joy.ox + joy.dx - rect.left) * kx, jdy = (joy.oy + joy.dy - rect.top) * ky;
-    ctx.globalAlpha = 0.25; ctx.fillStyle = '#b89fff';
-    ctx.beginPath(); ctx.arc(jx, jy, 50, 0, Math.PI*2); ctx.fill();
-    ctx.globalAlpha = 0.5;
-    ctx.beginPath(); ctx.arc(jdx, jdy, 24, 0, Math.PI*2); ctx.fill();
+  // 固定虚拟摇杆（触屏设备常驻左下）
+  if (isTouch) {
+    ctx.globalAlpha = joy.active ? 0.32 : 0.16; ctx.fillStyle = '#b89fff';
+    ctx.beginPath(); ctx.arc(JOY.x, JOY.y, JOY.r, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = joy.active ? 0.6 : 0.32;
+    ctx.beginPath(); ctx.arc(JOY.x + joy.dx * (JOY.r - 22), JOY.y + joy.dy * (JOY.r - 22), 24, 0, Math.PI*2); ctx.fill();
     ctx.globalAlpha = 1;
   }
   // 受伤红闪
-  if (hurtFlash > 0) { ctx.fillStyle = 'rgba(239,68,68,' + (hurtFlash/10*0.16) + ')'; ctx.fillRect(0, 0, W, H); hurtFlash -= dt; }
+  if (hurtFlash > 0) { ctx.fillStyle = 'rgba(239,68,68,' + (hurtFlash/10*0.16) + ')'; ctx.fillRect(0, 0, W, H); hurtFlash -= ddt; }
   // 死亡白闪
-  if (deathFlash > 0) { ctx.fillStyle = 'rgba(255,255,255,' + (deathFlash/18*0.6) + ')'; ctx.fillRect(0, 0, W, H); deathFlash -= dt; }
+  if (deathFlash > 0) { ctx.fillStyle = 'rgba(255,255,255,' + (deathFlash/18*0.6) + ')'; ctx.fillRect(0, 0, W, H); deathFlash -= ddt; }
 }
 
 // ═══════════ HUD ═══════════
@@ -1303,12 +1465,13 @@ function startGame() {
   yyBalls = [];
   gameTime = 0; kills = 0; score = 0; spawnTimer = 0;
   scoreBonus = 0; hurtFlash = 0; ebullets = []; dmgPops = [];
-  boss = null; bossCount = 0; hideBossBar();
+  boss = null; bossCount = 0; hideBossBar(); mist = null;
+  bossBannerT = 0; document.getElementById('bossBanner').classList.remove('show');
   pendingLevels = 0; freezeAll = 0; eliteWave = 0; eliteTimer = 0;
   deathFlash = 0; shakeT = 0; frameCount = 0;
   joy.active = false;
   gameState = 'playing';
-  lastTs = performance.now();
+  lastTs = performance.now(); acc = 0;
   document.getElementById('startOverlay').classList.add('hide');
   document.getElementById('lbArea').innerHTML = '';
   document.getElementById('lbArea').classList.add('hide');
@@ -1418,16 +1581,23 @@ function submitLB(area) {
 }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-// ═══════════ 主循环 ═══════════
+// ═══════════ 主循环（累加器固定步长）═══════════
+var acc = 0;
 function gameLoop() {
-  update();
+  var now = performance.now();
+  if (!lastTs) lastTs = now;
+  acc += Math.min(now - lastTs, 100); // 长暂停最多追 100ms，防死亡螺旋
+  lastTs = now;
+  var steps = 0;
+  while (acc >= 16.67 && steps < 4) { acc -= 16.67; steps++; stepGame(); }
+  if (steps >= 4) acc = 0;
   draw();
   requestAnimationFrame(gameLoop);
 }
 document.addEventListener('visibilitychange', function() {
   if (document.hidden) { if (bgm) bgm.pause(); }
   else {
-    lastTs = performance.now();
+    lastTs = performance.now(); acc = 0;
     if (bgm) { var pr = bgm.play(); if (pr && pr.catch) pr.catch(function(){}); }
   }
 });
@@ -1457,7 +1627,7 @@ gameLoop();
 // ═══════════ 选人界面（全局函数）═══════════
 // 调试钩子（调平衡用）：__ms.spawnBoss() 立即召唤 Boss；__ms.skip(秒) 快进游戏时间；__ms.overlap() 采样重叠率
 window.__ms = {
-  spawnBoss: function() { if (!boss && gameState === 'playing') spawnBoss(); },
+  spawnBoss: function(idx) { if (!boss && gameState === 'playing') { if (typeof idx === 'number') bossCount = idx; spawnBoss(); } },
   skip: function(sec) { if (gameState === 'playing') gameTime += sec; },
   overlap: function() {
     var n = 0;
