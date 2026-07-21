@@ -30,6 +30,10 @@
 - [今天吃什么](quiz-food.html) — 转盘抽取 + 智能问答
 - [对症下菜](quiz-food-care.html) — 18 道题食疗开方
 
+### 🎮 小游戏
+- [魔理沙快跑](marisa_dash.html) — 三通道飞行跑酷 · 擦弹连击 · DASH 冲刺
+- [魔理沙幸存者](marisa_survivor.html) — 幸存者like · 自动攻击 · 17 种强化卡三选一 · 在线排行榜
+
 ---
 
 ## 🛠 技术栈

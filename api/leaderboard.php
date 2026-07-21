@@ -2,8 +2,13 @@
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 
-// ── 数据文件 ──
-$file = __DIR__ . '/../data/leaderboard.json';
+// ── 数据文件（可选 game 参数 → 各游戏独立榜单，默认保持原跑酷榜）──
+$game = '';
+if (isset($_REQUEST['game'])) {
+    $g = strtolower(preg_replace('/[^a-z0-9_-]/', '', (string)$_REQUEST['game']));
+    if ($g !== '' && strlen($g) <= 20) $game = $g;
+}
+$file = __DIR__ . '/../data/leaderboard' . ($game !== '' ? '_' . $game : '') . '.json';
 
 // ═══════════ GET: 返回 Top 20 ═══════════
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
