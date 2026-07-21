@@ -13,6 +13,15 @@
 
  .container { max-width: 780px; width: 100%; position:relative; z-index:1; }
 
+ /* 入场动效(common.css fadeUp) */
+ .header, .marisa-frame, .divider, .shelf { animation: fadeUp .5s ease both; }
+ .marisa-frame { animation-delay: .08s; }
+ .divider { animation-delay: .14s; }
+ .cards .card { animation: fadeUp .45s ease both; }
+ .cards .card:nth-child(2) { animation-delay: .06s; }
+ .cards .card:nth-child(3) { animation-delay: .12s; }
+ .cards .card:nth-child(4) { animation-delay: .18s; }
+
  /* Header */
  .header { text-align: center; margin-bottom: 36px; }
  .shop-sign { display:inline-block; position:relative; margin-bottom: 8px; }
@@ -159,8 +168,6 @@
 
 <div id="shopNav"></div>
 <script src="nav.js"></script>
-
-<div class="stars" id="stars"></div>
 
 <div class="container">
  <div class="header">
@@ -385,7 +392,6 @@
  </div>
 </div>
 
-<script src="js/starfield.js"></script>
 <script>
 function toggleMore() {
   var cards = document.getElementById('moreCards');

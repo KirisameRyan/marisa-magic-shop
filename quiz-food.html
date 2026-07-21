@@ -91,6 +91,7 @@
 <script src="nav.js"></script>
 
 <div class="container" id="app"></div>
+<script src="js/utils.js"></script>
 <script src="js/reveal-screen.js"></script>
 <script src="js/quiz-storage.js"></script>
 <script src="js/quiz-stats.js"></script>
@@ -452,9 +453,6 @@ function shareIt() {
  } else { prompt('复制这段文字发给朋友：', text); }
 }
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-injectAds();
 render();
 </script>
 

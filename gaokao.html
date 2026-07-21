@@ -388,7 +388,6 @@ function renderIntro(app) {
     if (saved.selectedPrime) selectedPrime = saved.selectedPrime;
     if (saved.selectedElecs) selectedElecs = saved.selectedElecs.slice();
   }
-  var count = getCount(TRACK_KEY);
   app.innerHTML =
     '<div class="intro-wrap">'+
       '<div class="exam-badge">🎓 '+CURRENT_YEAR+' 年普通高等学校招生全国统一考试</div>'+
@@ -584,7 +583,7 @@ function renderResult(app) {
       '<button class="btn btn-again" onclick="doAgain()">🔄 重新查分</button>'+
     '</div>'+
     '<a href="index.html" class="home-link">← 返回魔法店</a>'+
-    resultFooterHTML({notice:'霧雨魔法店 · 纯属娱乐 · 分数已调高讨个彩头<br>祝各位考生金榜题名，得偿所愿 ✨'}) +
+    resultFooterHTML({notice:'霧雨魔法店 · 纯属娱乐 · 分数已调高讨个彩头<br>祝各位考生金榜题名，得偿所愿 ✨'});
 
   if (d._eggName) {
     fetch('api/counter.php', {

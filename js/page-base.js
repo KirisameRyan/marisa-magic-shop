@@ -1,7 +1,7 @@
 // =============================================
 //  霧雨魔法店 · 页面公用基础
-//  注入: 星场CSS/元素 + 广告div + toggleAds
-//  每个页面只需 <script src="js/page-base.js"></script>
+//  注入: favicon + 广告 + 全站星空(sky.js) + toggleAds
+//  每个页面只需在 head 引入 js/page-base.js
 // =============================================
 (function() {
   // ── favicon ──
@@ -19,13 +19,11 @@
   adScript.async = true;
   document.head.appendChild(adScript);
 
-  // ── 星场 CSS ──
-  var starStyle = document.createElement('style');
-  starStyle.textContent =
-    '.stars{position:fixed;inset:0;pointer-events:none;overflow:hidden;}'+
-    '.star{position:absolute;width:2px;height:2px;background:var(--star);border-radius:50%;animation:twinkle 3s infinite alternate;}'+
-    '@keyframes twinkle{0%{opacity:.3;transform:scale(1)}100%{opacity:1;transform:scale(1.8)}}';
-  document.head.appendChild(starStyle);
+  // ── 全站星空(canvas 视差星野 + 流星)──
+  var skyScript = document.createElement('script');
+  skyScript.src = 'js/sky.js';
+  skyScript.defer = true;
+  document.head.appendChild(skyScript);
 
   // ── 自动注入广告 div（有 #app 的页面）──
   if (document.readyState === 'loading') {

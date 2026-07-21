@@ -236,7 +236,6 @@ function render() {
 }
 
 function renderIntro(app) {
-  var count = getCount(TRACK_KEY);
   var resumeHTML = resumeButton(STORAGE_KEY) || '';
   app.innerHTML =
     '<div class="intro">' +
@@ -244,11 +243,12 @@ function renderIntro(app) {
       '<h1>' + QUIZ_TITLE + '</h1>' +
       '<p class="sub">' + QUIZ_SUBTITLE + '</p>' +
       '<div class="intro-deco" style="font-size:48px;margin-bottom:16px;">🗺️</div>' +
-      (count ? '<p style="font-size:11px;color:var(--muted);margin-bottom:8px;">已有 ' + count + ' 人参与鉴定</p>' : '') +
+      '<p style="font-size:11px;color:var(--muted);margin-bottom:8px;" id="takeCount"></p>' +
       resumeHTML +
       '<button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">🏠 开始寻找灵魂故乡</button>' +
       '<a href="index.html" class="home-link">← 返回魔法店</a>' +
     '</div>';
+  bindCount('takeCount', {template:'已有 {n} 人参与鉴定'});
 }
 
 function startQuiz() { trackStart(TRACK_KEY); state = 'quiz'; idx = 0; answers = []; render(); }

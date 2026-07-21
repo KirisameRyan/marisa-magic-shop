@@ -38,9 +38,10 @@
 
 | 目录 | 内容 |
 |------|------|
-| `css/` | 公共样式表 |
-| `js/` | 工具函数、导航、Canvas 海报、敏感词过滤、彩蛋词库 |
+| `css/` | 公共样式表(设计系统:变量、组件、标准 keyframes、reduced-motion) |
+| `js/` | 共享模块:`quiz-engine.js` 测验引擎、`radar.js` 雷达图、`poster.js` 海报、`particles.js` 粒子、`sky.js` 全站星空、`quiz-stats.js` 统计、`quiz-storage.js` 续答、`reveal-screen.js` 揭示屏等 |
 | `images/` | 角色立绘 & 二维码 |
+| `model.html` | 新测试页模板(基于 `MQ.engine`,复制即用) |
 
 ---
 

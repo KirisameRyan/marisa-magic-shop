@@ -321,8 +321,7 @@ function render() {
 }
 
 function renderIntro(app) {
-  var count = getCount(TRACK_KEY);
-  var resumeHTML = resumeButton(STORAGE_KEY) || '';
+  var resumeHTML = resumeButton(STORAGE_KEY, '继续上次测试') || '';
   app.innerHTML =
     '<div class="intro">' +
       '<div class="intro-badge">' + BADGE_TEXT + '</div>' +
@@ -330,14 +329,22 @@ function renderIntro(app) {
       '<p class="sub">' + QUIZ_SUBTITLE + '</p>' +
       '<div class="intro-deco">🗺️</div>' +
       '<p style="font-size:12px;color:var(--muted);margin-bottom:18px;">28个地域·8维画像·找到你DNA里的故乡</p>' +
-      (count ? '<p style="font-size:11px;color:var(--muted);margin-bottom:8px;">已有 ' + count + ' 人参与鉴定</p>' : '') +
+      '<p style="font-size:11px;color:var(--muted);margin-bottom:8px;" id="takeCount"></p>' +
       resumeHTML +
       '<button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">🏠 开始寻找灵魂故乡</button>' +
       '<a href="index.html" class="home-link">← 返回魔法店</a>' +
     '</div>';
+  bindCount('takeCount', {template:'已有 {n} 人参与鉴定'});
 }
 
 function startQuiz() { trackStart(TRACK_KEY); state = 'quiz'; idx = 0; answers = []; render(); }
+
+function resumeQuiz() {
+  var d = quizLoad(STORAGE_KEY);
+  if (!d || d.idx <= 0) return;
+  state = 'quiz'; idx = d.idx; answers = d.answers || [];
+  render();
+}
 
 function renderQuestion(app) {
   if (idx >= QUESTIONS.length) { state = 'loading'; render(); return; }

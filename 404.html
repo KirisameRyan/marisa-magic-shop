@@ -104,7 +104,7 @@
             position: relative;
             z-index: 1;
         }
-        .btn {
+        .error-actions .btn {
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -118,13 +118,14 @@
             background: var(--card-hover);
             color: var(--text);
             letter-spacing: 1px;
+            width: auto;
         }
-        .btn-gold {
+        .error-actions .btn-gold {
             background: linear-gradient(135deg, rgba(240, 192, 96, .15), rgba(240, 192, 96, .05));
             border-color: var(--gold-dim);
             color: var(--gold);
         }
-        .btn-gold:hover {
+        .error-actions .btn-gold:hover {
             background: linear-gradient(135deg, rgba(240, 192, 96, .25), rgba(240, 192, 96, .1));
             border-color: var(--gold);
             transform: translateY(-2px);
@@ -204,7 +205,7 @@
                 flex-direction: column;
                 align-items: center;
             }
-            .btn {
+            .error-actions .btn {
                 width: 100%;
                 justify-content: center;
             }
@@ -215,9 +216,6 @@
 
     <div id="shopNav"></div>
     <script src="nav.js"></script>
-
-    <!-- ── 星星 ── -->
-    <div class="stars" id="stars"></div>
 
     <!-- ── 主内容 ── -->
     <div class="container">
@@ -262,7 +260,6 @@
         </div>
     </div>
 
-    <script src="js/starfield.js"></script>
 
 </body>
 </html>

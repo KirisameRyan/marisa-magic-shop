@@ -362,24 +362,31 @@ function render() {
 }
 
 function renderIntro(app) {
- var count = getCount(TRACK_KEY);
- var resumeHTML = resumeButton(STORAGE_KEY) || '';
+ var resumeHTML = resumeButton(STORAGE_KEY, '继续上次测试') || '';
  app.innerHTML =
  '<div class="intro">' +
  '<div class="intro-badge">' + BADGE_TEXT + '</div>' +
  '<h1>' + QUIZ_TITLE + '</h1>' +
  '<p class="sub">' + QUIZ_SUBTITLE + '</p>' +
- (count ? '<p style="font-size:11px;color:var(--muted);margin-bottom:8px;">已有 ' + count + ' 人参与鉴定</p>' : '') +
+ '<p style="font-size:11px;color:var(--muted);margin-bottom:8px;" id="takeCount"></p>' +
  resumeHTML +
  '<button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">开始测试 →</button>' +
  '<a href="index.html" class="home-link">← 返回魔法店</a>' +
  '</div>';
+ bindCount('takeCount', {template:'已有 {n} 人参与鉴定'});
 }
 
 function startQuiz() {
  if (!confirm('⚠️ 友情提示\n\n里面的女孩都是「好女孩」。\n确认开始测试吗？')) return;
  trackStart(TRACK_KEY);
  state = 'quiz'; idx = 0; answers = []; resultKey = null;
+ render();
+}
+
+function resumeQuiz() {
+ var d = quizLoad(STORAGE_KEY);
+ if (!d || d.idx <= 0) return;
+ state = 'quiz'; idx = d.idx; answers = d.answers || []; resultKey = null;
  render();
 }
 
