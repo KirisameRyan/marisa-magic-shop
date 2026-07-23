@@ -28,7 +28,8 @@
           { href: 'quiz-jiahao.html',      emoji: '🖤', text: '嘉豪程度检测' },
           { href: 'quiz-genshin.html',      emoji: '✨', text: '原神人格' },
           { href: 'quiz-major.html',       emoji: '🏗️', text: '张雪峰选专业' },
-          { href: 'quiz-otti.html',        emoji: '🎭', text: 'OTTI人格' }
+          { href: 'quiz-otti.html',        emoji: '🎭', text: 'OTTI人格' },
+          { href: 'quiz-lolicon.html',   emoji: '💘', text: '隐藏人格' }
         ]
       },
       {

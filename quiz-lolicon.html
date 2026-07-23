@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<title>测测你的隐藏人格属性 · 霧雨魔法店</title>
+<link rel="stylesheet" href="css/common.css">
+<style>
+ .result-trap {
+   border: 2px solid var(--gold) !important;
+   box-shadow: 0 0 24px rgba(240,192,96,.25), 0 0 56px rgba(240,192,96,.1);
+   animation: trapGlow 2.5s ease-in-out infinite alternate;
+ }
+ @keyframes trapGlow {
+   from { box-shadow: 0 0 16px rgba(240,192,96,.18), 0 0 42px rgba(240,192,96,.06); }
+   to { box-shadow: 0 0 32px rgba(240,192,96,.35), 0 0 70px rgba(240,192,96,.16); }
+ }
+ .trap-badge {
+   display: inline-block;
+   background: linear-gradient(135deg, #ef4444, #fbbf24);
+   color: #1a1a2e;
+   font-size: 12px; font-weight: 700; letter-spacing: 1px;
+   padding: 5px 16px; border-radius: 14px;
+   margin-bottom: 14px;
+   animation: popIn .5s ease;
+ }
+ @keyframes popIn {
+   0% { transform: scale(0); opacity: 0; }
+   70% { transform: scale(1.15); }
+   100% { transform: scale(1); opacity: 1; }
+ }
+ .electric-box {
+   background: linear-gradient(135deg, #2a2010, #3a2a14);
+   border: 1px dashed var(--gold-dim);
+   border-radius: 14px; padding: 18px 20px;
+   margin: 18px 0 12px;
+   font-size: 13px; color: #ffd166; line-height: 1.8;
+   text-align: center;
+ }
+ .shock-label {
+   display: inline-block;
+   background: rgba(255,200,60,.15);
+   font-size: 11px; letter-spacing: 2px;
+   padding: 2px 10px; border-radius: 8px;
+   margin-bottom: 8px; color: var(--gold);
+ }
+ .result-hint {
+   font-size: 11px; color: var(--muted);
+   text-align: center; margin-top: 8px;
+   padding: 10px; background: rgba(255,255,255,.02);
+   border-radius: 10px;
+ }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container" id="app"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/reveal-screen.js"></script>
+<script src="js/quiz-storage.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/result-footer.js"></script>
+<script src="js/quiz-engine.js"></script>
+
+<script>
+var STORAGE_KEY = 'quiz_lolicon_v3';
+var TRACK_KEY = 'lolicon_take';
+
+var QUIZ_TITLE = '测测你的隐藏人格属性';
+var QUIZ_SUBTITLE = '24题性格倾向测试 —— 赛博心理学深度分析';
+var BADGE_TEXT = '霧雨魔法店 · 人格分析科';
+
+var QUESTIONS = [
+
+  /* ===== Part 1: 普通人格扫描 (Q1-Q8, 权重×1) ===== */
+  { q: '如果朋友遇到了麻烦，你更倾向于？', opts: [
+    { txt: '马上帮助对方解决问题', scores: { onee: 1 } },
+    { txt: '陪着对方，让他慢慢走出来', scores: { pure: 1 } },
+    { txt: '分析问题产生的原因', scores: { uniform: 1 } },
+    { txt: '先观察情况，再决定怎么做', scores: {} }
+  ]},
+  { q: '你觉得人与人之间最重要的是？', opts: [
+    { txt: '信任', scores: { pure: 1 } },
+    { txt: '陪伴', scores: { osana: 1 } },
+    { txt: '默契', scores: { uniform: 1 } },
+    { txt: '新鲜感', scores: {} }
+  ]},
+  { q: '如果你的朋友突然变得很奇怪，你会？', opts: [
+    { txt: '想办法理解他', scores: { pure: 1 } },
+    { txt: '觉得这种变化挺有趣', scores: { oppai: 1 } },
+    { txt: '试图让他恢复正常', scores: { onee: 1 } },
+    { txt: '观察他还能变成什么样', scores: {} }
+  ]},
+  { q: '你更喜欢怎样的故事？', opts: [
+    { txt: '两个人慢慢建立感情', scores: { osana: 1 } },
+    { txt: '主角不断成长变强', scores: { onee: 1 } },
+    { txt: '探索未知世界', scores: { furry: 1 } },
+    { txt: '充满反转和秘密', scores: { yandere: 1 } }
+  ]},
+  { q: '你认为"可爱"的核心是什么？', opts: [
+    { txt: '让人想保护', scores: {} },
+    { txt: '有自己的特点', scores: { furry: 1 } },
+    { txt: '反差感', scores: { oppai: 1 } },
+    { txt: '真诚', scores: { pure: 1 } }
+  ]},
+  { q: '你喜欢怎样的生活节奏？', opts: [
+    { txt: '稳定规律', scores: { uniform: 1 } },
+    { txt: '平淡但幸福', scores: { osana: 1 } },
+    { txt: '偶尔疯狂一下', scores: { yandere: 1 } },
+    { txt: '不断尝试新东西', scores: {} }
+  ]},
+  { q: '你更容易被什么打动？', opts: [
+    { txt: '一个坚持很久的约定', scores: { osana: 1 } },
+    { txt: '突然展现出的另一面', scores: { yandere: 1 } },
+    { txt: '默默付出的行动', scores: { pure: 1 } },
+    { txt: '强大的气场', scores: { onee: 1 } }
+  ]},
+  { q: '朋友评价你？', opts: [
+    { txt: '温柔', scores: {} },
+    { txt: '可靠', scores: { onee: 1 } },
+    { txt: '有点奇怪', scores: {} },
+    { txt: '很有原则', scores: { uniform: 1 } }
+  ]},
+
+  /* ===== Part 2: 隐藏审判 (Q9-Q16, 权重×2) ===== */
+  { q: '如果一个角色拥有一个明显特点，你更喜欢？', opts: [
+    { txt: '小巧可爱，让人忍不住关注', scores: {} },
+    { txt: '成熟稳重，感觉很可靠', scores: { onee: 1 } },
+    { txt: '有特殊身份或者奇妙背景', scores: { furry: 1 } },
+    { txt: '外表和实际完全不同', scores: { oppai: 1 } }
+  ]},
+  { q: '你认为"反差感"最有魅力的是？', opts: [
+    { txt: '看起来弱小，但其实很强', scores: { onee: 1 } },
+    { txt: '平时冷静，关键时刻温柔', scores: { pure: 1 } },
+    { txt: '表面正常，实际上非常危险', scores: { yandere: 1 } },
+    { txt: '完全突破常识', scores: { furry: 1 } }
+  ]},
+  { q: '以下设定你更容易接受？', opts: [
+    { txt: '从小时候开始一直陪伴', scores: { osana: 1 } },
+    { txt: '因为某件事成为特殊羁绊', scores: { uniform: 1 } },
+    { txt: '两个人互相救赎', scores: { pure: 1 } },
+    { txt: '命运安排的相遇', scores: {} }
+  ]},
+  { q: '如果一个人很依赖你，你的感觉？', opts: [
+    { txt: '会觉得自己很重要', scores: {} },
+    { txt: '会想帮助他成长', scores: { onee: 1 } },
+    { txt: '会担心失去这种关系', scores: { yandere: 1 } },
+    { txt: '会觉得这种信任很珍贵', scores: { pure: 1 } }
+  ]},
+  { q: '你觉得最有魅力的角色设计？', opts: [
+    { txt: '制服、眼镜、认真类型', scores: { uniform: 1 } },
+    { txt: '兽耳、尾巴、幻想元素', scores: { furry: 1 } },
+    { txt: '极端反差设计', scores: { oppai: 1 } },
+    { txt: '简单但很有亲和力', scores: {} }
+  ]},
+  { q: '如果只能选择一种属性？', opts: [
+    { txt: '可爱', scores: {} },
+    { txt: '可靠', scores: { onee: 1 } },
+    { txt: '特别', scores: { furry: 1 } },
+    { txt: '专一', scores: { pure: 1 } }
+  ]},
+  { q: '你更容易被哪种剧情吸引？', opts: [
+    { txt: '青梅竹马多年后的重逢', scores: { osana: 1 } },
+    { txt: '两个人克服困难走到一起', scores: { pure: 1 } },
+    { txt: '危险关系之间的拉扯', scores: { yandere: 1 } },
+    { txt: '完全不同世界的人相遇', scores: {} }
+  ]},
+  { q: '如果制作一个角色，你最想加入？', opts: [
+    { txt: '可爱的习惯', scores: {} },
+    { txt: '强大的能力', scores: { onee: 1 } },
+    { txt: '神秘的过去', scores: { yandere: 1 } },
+    { txt: '独特的外观', scores: { oppai: 1 } }
+  ]},
+
+  /* ===== Part 3: 赛博XP泄露 (Q17-Q24, 权重×2) ===== */
+  { q: '你的收藏夹如果被公开，你最担心？', opts: [
+    { txt: '别人说你太幼稚', scores: {} },
+    { txt: '别人发现你喜欢奇怪东西', scores: { furry: 1 } },
+    { txt: '别人发现你喜欢极端设定', scores: { yandere: 1 } },
+    { txt: '别人发现你其实很传统', scores: { uniform: 1 } }
+  ]},
+  { q: '你觉得一个角色最重要的是？', opts: [
+    { txt: '外貌设计', scores: { oppai: 1 } },
+    { txt: '性格魅力', scores: {} },
+    { txt: '故事经历', scores: { pure: 1 } },
+    { txt: '属性组合', scores: { uniform: 1 } }
+  ]},
+  { q: '以下哪个词最容易让你点击？', opts: [
+    { txt: '可爱', scores: {} },
+    { txt: '神秘', scores: {} },
+    { txt: '病态', scores: { yandere: 1 } },
+    { txt: '奇幻', scores: { furry: 1 } }
+  ]},
+  { q: '如果AI分析你的审美，它可能会说？', opts: [
+    { txt: '喜欢简单快乐的东西', scores: {} },
+    { txt: '喜欢复杂关系', scores: { yandere: 1 } },
+    { txt: '喜欢特殊设定', scores: { furry: 1 } },
+    { txt: '喜欢完美设计', scores: { uniform: 1 } }
+  ]},
+  { q: '你认为最大的XP来源？', opts: [
+    { txt: '第一眼感觉', scores: { oppai: 1 } },
+    { txt: '长时间相处', scores: { osana: 1 } },
+    { txt: '强烈情绪', scores: { yandere: 1 } },
+    { txt: '独特设定', scores: { furry: 1 } }
+  ]},
+  { q: '你的收藏夹里，数量最多的类别是？', opts: [
+    { txt: '可爱治愈、看了心情好的', scores: {} },
+    { txt: '气场强大、让人向往的', scores: { onee: 1 } },
+    { txt: '故事动人、会反复看的', scores: { pure: 1 } },
+    { txt: '罕见独特、别人找不到的', scores: { oppai: 1 } }
+  ]},
+  { q: '你更想拥有？', opts: [
+    { txt: '一个永远陪伴你的伙伴', scores: { osana: 1 } },
+    { txt: '一个能够保护你的存在', scores: { onee: 1 } },
+    { txt: '一个只属于你的羁绊', scores: { yandere: 1 } },
+    { txt: '一个完全无法预测的存在', scores: { furry: 1 } }
+  ]},
+  { q: '最终问题：如果你的XP被AI曝光，你希望它评价你？', opts: [
+    { txt: '"这个人只是喜欢可爱。"', scores: {} },
+    { txt: '"这个人的审美很特别。"', scores: { furry: 1, oppai: 1 } },
+    { txt: '"这个人的感情浓度异常。"', scores: { yandere: 1, pure: 1 } },
+    { txt: '"这个人的数据无法解析。"', scores: {} }
+  ]}
+];
+
+var RESULTS = {
+  regular: {
+    name: '标准型萝莉控', emoji: '🌸', color: '#f0c060',
+    desc: '你属于最经典、最纯粹的那一派。喜欢可爱、单纯、需要被保护的小萝莉。你享受那种干净又温暖的陪伴感，不追求极端属性，只想好好守护那份纯真。',
+    shock: '滋啦——！"最标准的萝莉控还敢说自己正常？给我电到喊\'我只是喜欢可爱女孩\'为止！"',
+    hint: '💡 本次人格分析为常规结果。不同的选择组合可能触发隐藏报告。'
+  },
+  onee: {
+    name: '御姐型萝莉控', emoji: '☕', color: '#b89fff',
+    desc: '你表面喜欢小萝莉，实际更沉迷那种"外表幼小却气场强大的姐姐系"反差感。被她用成熟语气指挥、踩在脚下反而会兴奋。',
+    shock: '滋啦滋啦——！"御姐萝莉亲自给你电疗，边电边说\'废柴，叫主人\'！还敢控吗？"',
+    hint: '💡 你触发了隐藏人格信号。分享给朋友，看看他们能测出什么？'
+  },
+  furry: {
+    name: '福瑞型萝莉控', emoji: '🐾', color: '#6fcf97',
+    desc: '兽耳、尾巴、毛茸茸属性直接击中你的XP。你渴望那种充满野性却又可爱的混合体，滚草地、追尾巴才是你的理想日常。',
+    shock: '滋啦——！"毛都没电焦还想继续福瑞？电到你尾巴炸毛为止！"',
+    hint: '💡 你触发了隐藏人格信号。分享给朋友，看看他们能测出什么？'
+  },
+  oppai: {
+    name: '巨R型萝莉控', emoji: '🎀', color: '#f472b6',
+    desc: '你对"萝莉身材但该大的地方特别大"的反差属性毫无抵抗力。眼睛总是忍不住往下看，属于视觉系重度患者。',
+    shock: '滋啦滋啦——！"边电边让你回味那晃动的风景！还看？再加压！"',
+    hint: '💡 你触发了隐藏人格信号。分享给朋友，看看他们能测出什么？'
+  },
+  osana: {
+    name: '青梅型萝莉控', emoji: '📒', color: '#a8e06c',
+    desc: '你最爱的是"从小一起长大"的青梅竹马感。那种熟悉的日常、共同回忆、放学一起回家的路线才是你的命门。',
+    shock: '滋啦——！"青梅在旁边看着你被电，还说\'原来你一直是这样的人啊\'……电完记得去道歉！"',
+    hint: '💡 你触发了隐藏人格信号。分享给朋友，看看他们能测出什么？'
+  },
+  yandere: {
+    name: '病娇型萝莉控', emoji: '🔪', color: '#ef4444',
+    desc: '你喜欢带点危险、独占欲极强的萝莉。她笑着把你锁起来、说"只能看我一个"的时候，你就彻底沦陷了。',
+    shock: '滋啦滋啦——！"病娇萝莉拿着电棒微笑：\'敢喜欢我还敢被别人电？今天你别想走了哦♡\'"',
+    hint: '💡 你触发了隐藏人格信号。分享给朋友，看看他们能测出什么？'
+  },
+  uniform: {
+    name: '制服型萝莉控', emoji: '🎒', color: '#3b82f6',
+    desc: '校服、过膝袜、百褶裙、制服一切都好。你对"穿制服的萝莉"这个属性有极强滤镜，仪式感拉满。',
+    shock: '滋啦——！"穿好制服再来接受电击！电完记得说\'谢谢老师惩罚\'！"',
+    hint: '💡 你触发了隐藏人格信号。分享给朋友，看看他们能测出什么？'
+  },
+  pure: {
+    name: '纯爱型萝莉控', emoji: '💕', color: '#fda4af',
+    desc: '你是纯度极高的那一款。无论她是什么属性，你都只想和她长长久久、纯粹相爱。其他属性都是附加，爱本身才是核心。',
+    shock: '滋啦滋啦——！"纯爱战士也要电！电完还要大声说\'我对她的爱是电不灭的！\'"',
+    hint: '💡 你触发了隐藏人格信号。分享给朋友，看看他们能测出什么？'
+  }
+};
+
+var LOADING_STEPS = [
+  '正在扫描24项人格数据…',
+  '建立心理画像模型…',
+  '分析人际关系倾向…',
+  '检测审美偏好特征…',
+  '扫描深层价值取向…',
+  '校准赛博心理学参数…',
+  '正在进行跨维度人格比对…',
+  '生成隐藏人格分析报告…'
+];
+
+function calcResult(answers) {
+  var scores = {};
+  var types = ['onee','furry','oppai','osana','yandere','uniform','pure'];
+  for (var t = 0; t < types.length; t++) scores[types[t]] = 0;
+  for (var i = 0; i < answers.length; i++) {
+    var w = (i >= 8) ? 2 : 1;
+    var s = answers[i].scores || {};
+    for (var k in s) {
+      if (s[k] > 0) scores[k] = (scores[k] || 0) + s[k] * w;
+    }
+  }
+  var top = 'regular', best = 0;
+  for (var k in scores) {
+    if (scores[k] > best) { best = scores[k]; top = k; }
+  }
+  if (best < 10) top = 'regular';
+  return { key: top, isTrap: top !== 'regular', scores: scores };
+}
+
+var quiz = MQ.engine({
+  questions: QUESTIONS,
+  storageKey: STORAGE_KEY,
+  trackKey: TRACK_KEY,
+  loadingSteps: LOADING_STEPS,
+  reveal: {
+    title: '🔍 人格分析完成',
+    code: function(r) { return r.isTrap ? '⚠ 异常信号' : '分析完成'; },
+    color: function(r) { return r.isTrap ? '#f0c060' : '#b89fff'; },
+    hint: '正在生成隐藏人格报告…'
+  },
+  calcResult: calcResult,
+
+  renderIntro: function(app, api) {
+    app.innerHTML =
+      '<div class="intro">' +
+        '<div class="intro-badge">' + BADGE_TEXT + '</div>' +
+        '<h1>' + QUIZ_TITLE + '</h1>' +
+        '<p class="sub">' + QUIZ_SUBTITLE + '</p>' +
+        '<p style="font-size:11px;color:var(--muted);text-align:center;margin-top:-6px;margin-bottom:16px;">' +
+          '表面是性格倾向测试，数据加密上传至赛博心理学引擎</p>' +
+        '<button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">开始测试 →</button>' +
+        api.resumeBtn() +
+        '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+        '<p style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;" id="takeCount"></p>' +
+      '</div>';
+    api.bindCount('takeCount', { template: '已有 {n} 人完成人格分析' });
+  },
+
+  renderResult: function(app, r) {
+    var c = RESULTS[r.key];
+    var cardClass = r.isTrap ? 'result result-trap' : 'result';
+    var trapBadge = r.isTrap ? '<div class="trap-badge">⚠ 隐藏人格信号激活</div>' : '';
+    var html =
+      '<div class="' + cardClass + '">' +
+        trapBadge +
+        '<div class="result-emoji">' + c.emoji + '</div>' +
+        '<div class="result-label">霧雨魔法店 人格分析报告</div>' +
+        '<div class="result-name" style="color:' + c.color + '">' + c.name + '</div>' +
+        '<div class="result-desc">' + c.desc + '</div>' +
+        '<div class="electric-box">' +
+          '<span class="shock-label">⚡ 电击惩罚</span><br>' +
+          c.shock +
+        '</div>' +
+        '<div class="result-hint">' + c.hint + '</div>' +
+        '<button class="btn btn-main" onclick="shareIt()">📋 复制结果发给朋友</button>' +
+        '<button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button>' +
+        '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+        resultFooterHTML({ notice: '霧雨魔法店 · 人格分析科 · 赛博心理学仅供参考，电击是真的' }) +
+      '</div>';
+    app.innerHTML = html;
+    lastResult = r;
+  }
+});
+
+var lastResult = null;
+function shareIt() {
+  var c = lastResult ? RESULTS[lastResult.key] : null;
+  var text = (c ? '我在霧雨魔法店做了人格分析，检测结果：【' + c.name + '】！' : '我在霧雨魔法店测完啦！') +
+    ' 你也来测测隐藏人格：' + window.location.href;
+  copyToClipboard(text, '已复制！发给朋友一起接受电击 ⚡');
+}
+
+quiz.render();
+</script>
+
+</body>
+</html>
