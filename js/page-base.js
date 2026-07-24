@@ -17,8 +17,10 @@
   skyScript.defer = true;
   document.head.appendChild(skyScript);
 
-  // ── 赞助码注入 ──
+  // ── 赞助码注入（游戏页除外）──
   function injectSponsor() {
+    var page = (window.location.pathname.split('/').pop() || '').toLowerCase();
+    if (page === 'marisa_dash.html' || page === 'marisa_survivor.html') return;
     var img = document.createElement('img');
     img.src = 'images/sponsor-qr.jpg';
     img.alt = '赞助码';
