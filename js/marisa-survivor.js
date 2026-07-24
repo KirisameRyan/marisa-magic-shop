@@ -12,7 +12,8 @@ var CELL = 64;
 // ═══════════ 可配置素材（填路径即生效，留空 '' 关闭）═══════════
 var CONFIG = {
   BGM: 'audio/bgm.mp3',      // 背景音乐（首次点击/按键后自动起播，循环）
-  BG: 'images/game_bg.jpg'   // 背景图（自动压暗 + 世界坐标视差平铺），留空用程序星空
+  BG: 'images/game_bg.jpg',   // 背景图（自动压暗 + 世界坐标视差平铺），留空用程序星空
+  BGM_VOL: 0.18               // 背景音乐音量（0~1）
 };
 
 // ═══════════ 素材 ═══════════
@@ -89,7 +90,7 @@ function initBgm() {
   if (bgm || !CONFIG.BGM) return;
   try {
     bgm = new Audio(CONFIG.BGM);
-    bgm.loop = true; bgm.volume = 0.45;
+    bgm.loop = true; bgm.volume = CONFIG.BGM_VOL || 0.18;
     var pr = bgm.play(); if (pr && pr.catch) pr.catch(function(){});
   } catch(e) { bgm = null; }
 }
@@ -242,6 +243,8 @@ document.addEventListener('keydown', function(e) {
   initAudio();
   // 升级界面快捷键
   if (gameState === 'levelup' && ['1','2','3'].indexOf(e.key) >= 0) pickCard(parseInt(e.key) - 1);
+  // ESC 暂停
+  if (e.key === 'Escape' && (gameState === 'playing' || gameState === 'paused')) { e.preventDefault(); togglePause(); }
 });
 document.addEventListener('keyup', function(e) { keys[e.key.length === 1 ? e.key.toLowerCase() : e.key] = false; });
 
@@ -926,9 +929,28 @@ function addLabel(x, y, text, color) {
   floatingTexts.push({ x:x, y:y, text:text, color:color, life:80, maxLife:80, vy:-1.2 });
 }
 
+// ═══════════ 暂停 ═══════════
+var gamePaused = false;
+function togglePause() {
+  if (gameState !== 'playing' && gameState !== 'paused') return;
+  gamePaused = !gamePaused;
+  if (gamePaused) {
+    gameState = 'paused';
+    document.getElementById('pauseOverlay').classList.remove('hide');
+    if (bgm) bgm.pause();
+  } else {
+    gameState = 'playing';
+    document.getElementById('pauseOverlay').classList.add('hide');
+    lastTs = performance.now(); acc = 0;
+    if (bgm) { var pr = bgm.play(); if (pr && pr.catch) pr.catch(function(){}); }
+  }
+}
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
+document.getElementById('btnResume').addEventListener('click', togglePause);
+
 // ═══════════ 主更新（固定 60Hz 步长，全设备同速）═══════════
 function stepGame() {
-  if (gameState !== 'playing' || roPaused) return;
+  if (gameState !== 'playing' || roPaused || gamePaused) return;
   dt = 1;
   frameCount++;
   if (!boss) gameTime += 1 / 60; // Boss 战期间时间暂停（下一波 Boss 不撞车）
@@ -1481,6 +1503,7 @@ function startGame() {
   scoreBonus = 0; hurtFlash = 0; ebullets = []; dmgPops = [];
   boss = null; bossCount = 0; hideBossBar(); mist = null;
   bossBannerT = 0; document.getElementById('bossBanner').classList.remove('show');
+  gamePaused = false; document.getElementById('pauseOverlay').classList.add('hide');
   pendingLevels = 0; freezeAll = 0; eliteWave = 0; eliteTimer = 0;
   deathFlash = 0; shakeT = 0; frameCount = 0;
   joy.active = false;
