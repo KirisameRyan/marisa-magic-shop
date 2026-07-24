@@ -11,9 +11,6 @@ function resultFooterHTML(options) {
   var extra = options.extra || '';
   var notice = options.notice || '霧雨魔法店 · 数据仅供娱乐';
   return '<div class="qq-section">'+
-    '<img src="images/sponsor-qr.jpg" alt="赞助码" style="max-width:220px;border-radius:16px;border:2px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.3);" onerror="this.style.display=\'none\'">'+
-    '</div>'+
-    '<div class="qq-section">'+
     '<img src="'+qqImg+'" alt="QQ群二维码" onerror="this.style.display=\'none\'">'+
     '<p><strong style="color:var(--gold);">加群一起玩</strong><br>群号 '+qqGroup+' · 更多抽象好活</p>'+
     '</div>'+
