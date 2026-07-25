@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<link rel="stylesheet" href="css/common.css">
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>催眠APP模拟器 - 霧雨魔法店</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root {
+  --g-bg: #1a1520;
+  --g-card: #241e2a;
+  --g-card-hover: #2d2535;
+  --g-gold: #f0c060;
+  --g-gold-dim: #a08050;
+  --g-gold-light: #ffe8b0;
+  --g-purple: #b89fff;
+  --g-purple-dim: #6a5a8a;
+  --g-purple-dark: #3a2560;
+  --g-text: #e0d8ec;
+  --g-muted: #8a7e9a;
+  --g-border: #3a3045;
+  --g-pink: #f472b6;
+  --g-red: #ef4444;
+  --g-green: #6fcf97;
+}
+
+body {
+  background: var(--g-bg);
+  background-image:
+    radial-gradient(ellipse at 30% 0%, rgba(176,159,255,.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 100%, rgba(240,192,96,.04) 0%, transparent 50%);
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px; padding-top: 64px;
+  position: relative; overflow-x: hidden;
+  font-family: -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  color: var(--g-text);
+  user-select: none;
+}
+
+/* Global overrides for common.css container that this page doesn't use */
+body > .container { display: none; }
+
+.glass-panel {
+  background: var(--g-card);
+  border: 1px solid var(--g-border);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+  position: relative; overflow: hidden;
+}
+.glass-panel::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--g-gold), var(--g-purple), var(--g-gold));
+  z-index: 1;
+}
+
+.gold-text {
+  background: linear-gradient(135deg, var(--g-gold), var(--g-gold-light), var(--g-gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Tags */
+.tag-badge {
+  transition: all 0.3s ease;
+  animation: tagPopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+}
+.tag-reveal { animation: tagFlipIn 0.6s ease; }
+@keyframes tagPopIn {
+  from { opacity: 0; transform: scale(0.8) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes tagFlipIn {
+  0% { transform: rotateX(90deg); opacity: 0; }
+  100% { transform: rotateX(0deg); opacity: 1; }
+}
+
+/* Progress bars */
+.progress-wrap { margin-bottom: 0; }
+.progress-bar {
+  height: 8px; background: rgba(255,255,255,.06);
+  border-radius: 4px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; border-radius: 4px;
+  transition: width 0.7s ease-out;
+}
+.progress-fill.urge-fill {
+  background: linear-gradient(90deg, var(--g-purple), var(--g-gold));
+}
+.progress-fill.exposure-fill {
+  background: linear-gradient(90deg, var(--g-purple-dim), var(--g-pink));
+}
+
+/* Panic mode */
+@keyframes pulse-stress {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(240,192,96,0); }
+  50% { box-shadow: 0 0 15px 2px rgba(240,192,96,0.3); }
+}
+@keyframes panic-shake {
+  0% { transform: translate(1px, 1px) rotate(0deg); }
+  10% { transform: translate(-1px, -2px) rotate(-1deg); }
+  20% { transform: translate(-3px, 0px) rotate(1deg); }
+  30% { transform: translate(3px, 2px) rotate(0deg); }
+  40% { transform: translate(1px, -1px) rotate(1deg); }
+  50% { transform: translate(-1px, 2px) rotate(-1deg); }
+  60% { transform: translate(-3px, 1px) rotate(0deg); }
+  70% { transform: translate(3px, 1px) rotate(-1deg); }
+  80% { transform: translate(-1px, -1px) rotate(1deg); }
+  90% { transform: translate(1px, 2px) rotate(0deg); }
+  100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+.stress-pulse { animation: pulse-stress 3s infinite; }
+.panic-mode { animation: panic-shake 0.5s infinite; filter: blur(0.8px) contrast(1.2); }
+
+/* Buttons */
+.btn-disabled {
+  opacity: 0.5; cursor: not-allowed; filter: grayscale(60%);
+  position: relative;
+}
+.btn-disabled::after {
+  content: "";
+  position: absolute; top: 50%; left: 10%; right: 10%; height: 2px;
+  background: rgba(255,255,255,0.4); transform: rotate(-3deg);
+}
+
+/* Avatar float */
+.avatar-float { animation: avatarFloat 6s ease-in-out infinite; }
+@keyframes avatarFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+}
+
+/* Scrollbar */
+.custom-scroll::-webkit-scrollbar { width: 4px; }
+.custom-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+.custom-scroll::-webkit-scrollbar-thumb { background: rgba(176,159,255,0.3); border-radius: 2px; }
+
+/* Section colors for game UI */
+.bg-surface { background: var(--g-card); }
+.bg-surface-hover { background: var(--g-card-hover); }
+.bg-surface-light { background: rgba(255,255,255,.03); }
+.bg-accent-soft { background: rgba(176,159,255,.08); }
+.bg-gold-soft { background: rgba(240,192,96,.08); }
+.bg-danger-soft { background: rgba(244,114,182,.08); }
+.bg-success-soft { background: rgba(111,207,151,.08); }
+
+.border-subtle { border-color: var(--g-border); }
+.border-gold { border-color: var(--g-gold-dim); }
+.border-purple { border-color: var(--g-purple-dim); }
+.border-danger { border-color: var(--g-pink); }
+
+.text-gold { color: var(--g-gold); }
+.text-purple { color: var(--g-purple); }
+.text-muted { color: var(--g-muted); }
+.text-danger { color: var(--g-pink); }
+.text-success { color: var(--g-green); }
+
+/* Modal overlays */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(26,21,32,.95);
+  backdrop-filter: blur(12px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.modal-card {
+  background: var(--g-card); border: 1px solid var(--g-border);
+  border-radius: 24px; width: 100%; max-width: 28rem;
+  box-shadow: 0 16px 48px rgba(0,0,0,.5);
+  position: relative; overflow: hidden;
+  max-height: 90vh; display: flex; flex-direction: column;
+}
+.modal-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--g-gold), var(--g-purple), var(--g-gold));
+}
+
+/* Tag badge colors (site-adapted) */
+.tag-red { background: rgba(239,68,68,.25); border: 1px solid rgba(239,68,68,.3); }
+.tag-red-dark { background: rgba(220,38,38,.3); border: 1px solid rgba(220,38,38,.4); }
+.tag-purple { background: rgba(176,159,255,.15); border: 1px solid rgba(176,159,255,.25); }
+.tag-purple-dark { background: rgba(106,90,138,.3); border: 1px solid rgba(106,90,138,.4); }
+.tag-gold { background: rgba(240,192,96,.12); border: 1px solid rgba(240,192,96,.2); }
+.tag-gold-dark { background: rgba(160,128,80,.25); border: 1px solid rgba(160,128,80,.3); }
+.tag-green { background: rgba(111,207,151,.12); border: 1px solid rgba(111,207,151,.2); }
+.tag-neutral { background: rgba(255,255,255,.04); border: 1px solid var(--g-border); }
+
+/* Button styles */
+.btn-game {
+  font-family: inherit; border: none; border-radius: 12px;
+  padding: 10px; font-weight: 700; cursor: pointer;
+  transition: all .15s; text-align: center;
+  width: 100%; font-size: 12px;
+}
+.btn-gold {
+  background: rgba(240,192,96,.15); color: var(--g-gold);
+  border: 1px solid rgba(240,192,96,.2);
+}
+.btn-gold:hover { background: rgba(240,192,96,.25); }
+.btn-gold-solid {
+  background: linear-gradient(135deg, var(--g-gold), #c89a40);
+  color: #1a1520; border: none;
+}
+.btn-gold-solid:hover { filter: brightness(1.1); }
+.btn-purple {
+  background: rgba(176,159,255,.1); color: var(--g-purple);
+  border: 1px solid rgba(176,159,255,.2);
+}
+.btn-purple:hover { background: rgba(176,159,255,.2); }
+.btn-danger {
+  background: rgba(244,114,182,.15); color: var(--g-pink);
+  border: 1px solid rgba(244,114,182,.25);
+}
+.btn-danger:hover { background: rgba(244,114,182,.25); }
+.btn-ghost-game {
+  background: transparent; color: var(--g-muted);
+  border: 1px solid var(--g-border);
+}
+.btn-ghost-game:hover { color: var(--g-gold); border-color: var(--g-gold-dim); }
+.btn-safe {
+  background: rgba(111,207,151,.1); color: var(--g-green);
+  border: 1px solid rgba(111,207,151,.2);
+}
+.btn-safe:hover { background: rgba(111,207,151,.2); }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+
+<div id="game-container" class="hidden relative z-10 w-full max-w-md glass-panel rounded-3xl flex flex-col min-h-[800px] transition-opacity duration-500">
+  
+  <div class="px-6 py-4 border-b border-[var(--g-border)] flex justify-between items-center bg-[var(--g-bg)]/50 relative z-10">
+    <div>
+      <h1 class="text-xl font-black italic tracking-tighter gold-text" style="filter:drop-shadow(0 0 12px rgba(240,192,96,.3))">
+        催眠APP模拟器
+      </h1>
+      <div class="text-[10px] font-bold text-[var(--g-muted)] tracking-widest uppercase">Panic Edition</div>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="text-right flex flex-col items-end">
+        <div class="text-[10px] uppercase text-[var(--g-muted)] font-bold">Round</div>
+        <div id="turn-count" class="text-2xl font-mono font-bold text-[var(--g-text)] leading-none">01</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="px-6 py-4 bg-surface-light space-y-3 relative z-10">
+    <div>
+      <div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-wider">
+        <span class="text-[var(--g-pink)] flex items-center gap-1">🔥 催眠冲动</span>
+        <span id="urge-val" class="text-[var(--g-text)]">50%</span>
+      </div>
+      <div class="progress-bar">
+        <div id="urge-bar" class="progress-fill urge-fill" style="width: 50%"></div>
+      </div>
+    </div>
+    <div>
+      <div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-wider">
+        <span class="text-[var(--g-purple)] flex items-center gap-1">🧠 暴露风险</span>
+        <span id="exposure-val" class="text-[var(--g-text)]">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div id="exposure-bar" class="progress-fill exposure-fill" style="width: 0%"></div>
+      </div>
+      <p id="panic-warning" class="hidden text-[10px] text-[var(--g-pink)] mt-1 text-center animate-pulse">⚠️ 反噬预警：风险过高，视线模糊</p>
+    </div>
+
+    <div class="flex gap-2 pt-1">
+      <div class="flex-1 bg-surface rounded-lg p-2 border border-subtle flex items-center justify-between group relative">
+        <div class="flex flex-col">
+          <span class="text-[10px] text-muted uppercase font-bold">风险扫描器</span>
+          <span id="item-scanner" class="text-xs font-bold text-gold">x1</span>
+        </div>
+        <button id="btn-scanner" onclick="useScanner()" class="absolute inset-0 w-full h-full opacity-0 group-hover:opacity-100 bg-[var(--g-gold-dim)]/90 text-white text-xs font-bold rounded-lg transition-opacity flex items-center justify-center z-10">
+          扫描目标风险
+        </button>
+      </div>
+      <button id="btn-safehouse" onclick="goToSafeHouse()" class="flex-[1.5] bg-purple-soft bg-accent-soft hover:bg-[rgba(176,159,255,.15)] rounded-lg p-2 border border-purple flex items-center justify-center gap-2 group transition-all">
+        <span class="text-xl">🏚️</span>
+        <div class="flex flex-col text-left">
+          <span class="text-[10px] text-purple font-bold uppercase">安全屋清除痕迹</span>
+          <span class="text-[9px] text-[var(--g-purple-dim)] group-hover:text-[var(--g-purple)] transition-colors">冲动值+10 / 清空风险</span>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <div id="game-content" class="flex-1 p-6 flex flex-col overflow-y-auto relative z-10">
+    <div class="text-center mb-4 relative">
+      <div class="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-4xl shadow-xl border-2 border-[var(--g-gold-dim)] avatar-float mb-3 relative" style="background:linear-gradient(135deg, var(--g-card-hover), var(--g-bg))">
+        <span id="avatar-emoji">🌚</span>
+        <div id="target-status" class="hidden absolute -right-1 -bottom-1 w-6 h-6 bg-[var(--g-red)] rounded-full border-2 border-[var(--g-bg)] flex items-center justify-center text-[10px]">⚠️</div>
+      </div>
+      <h2 class="text-base font-bold text-[var(--g-text)]">催眠目标</h2>
+      <p id="target-text" class="text-[11px] text-gold/90 italic mt-2 font-serif tracking-wide">"..."</p>
+    </div>
+
+    <div id="tags-container" class="flex flex-wrap justify-center gap-2 mb-6 content-start min-h-[60px]">
+    </div>
+
+    <div class="space-y-2 mt-auto">
+      <button id="btn-gather" onclick="takeAction('gather')" class="btn-game btn-purple flex items-center justify-center gap-2">
+        <span>🔍</span> 收集信息 / 试探 <span class="opacity-50 text-[10px] font-normal ml-1">(冲动值+3)</span>
+      </button>
+
+      <div style="height:1px;background:var(--g-border);margin:8px 0"></div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button id="btn-light" onclick="takeAction('light')" class="btn-game btn-ghost-game">
+          💭 轻度暗示
+          <span class="block text-[9px] opacity-40 mt-0.5">安全起步 | 风险+2</span>
+        </button>
+        <button id="btn-medium" onclick="takeAction('medium')" class="btn-game btn-safe">
+          🌀 中度催眠
+          <span class="block text-[9px] opacity-60 mt-0.5">收益一般 | 风险+8</span>
+        </button>
+        <button id="btn-deep" onclick="takeAction('deep')" class="btn-game btn-gold">
+          🔮 深度服从
+          <span class="block text-[9px] opacity-60 mt-0.5">收益较高 | 风险+18</span>
+        </button>
+        <button id="btn-total" onclick="takeAction('total')" class="btn-game btn-danger">
+          👁️ 完全支配
+          <span class="block text-[9px] opacity-60 mt-0.5">收益最高 | 风险+35</span>
+        </button>
+      </div>
+
+      <button id="btn-refuse" onclick="takeAction('refuse')" class="btn-game btn-ghost-game mt-2 flex items-center justify-center gap-1">
+        <span>👋</span> 换一个目标 (冲动值+8)
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Compliance Modal -->
+<div id="compliance-modal" class="fixed inset-0 z-[120] overflow-y-auto bg-[var(--g-bg)] p-4" style="background:var(--g-bg)">
+  <div class="mx-auto my-4 w-full max-w-2xl rounded-lg border border-[var(--g-border)] bg-[var(--g-card)] p-5 text-left text-sm leading-relaxed text-[var(--g-text)] shadow-xl">
+    <h1 class="text-2xl font-bold text-[var(--g-text)]">催眠APP模拟器</h1>
+    <p class="mt-1 text-sm font-bold text-gold">进入前合规声明</p>
+
+    <section class="mt-4 border-b border-[var(--g-border)] pb-4">
+      <h2 class="font-bold text-[var(--g-text)]">年龄与阅读场景提示</h2>
+      <p class="mt-1">本游戏为成人向虚构幻想作品，建议 18 岁以上用户阅读。所有内容纯属虚构，不反映现实。</p>
+    </section>
+
+    <section class="mt-4 border-b border-[var(--g-border)] pb-4">
+      <h2 class="font-bold text-[var(--g-text)]">重要提醒</h2>
+      <p class="mt-1">本游戏在当前页面即可游玩，不需要填写任何个人信息，不需要手机号、微信/QQ、验证码或支付信息；不需要下载任何 APP、插件或安装包。</p>
+    </section>
+
+    <section class="mt-4 border-b border-[var(--g-border)] pb-4">
+      <h2 class="font-bold text-[var(--g-text)]">作品立场</h2>
+      <p class="mt-1">本作品是纯虚构幻想题材的成人向风险模拟游戏。游戏明确反对现实中任何形式的非自愿行为、精神控制、侵犯他人意志等违法犯罪行为。</p>
+      <p class="mt-2">本作品不提供、不鼓励、不美化任何现实中的催眠、控制、胁迫手段。游戏中的"催眠"是纯粹的科幻幻想设定，现实中不存在此类技术。</p>
+    </section>
+
+    <section class="mt-4 border-b border-[var(--g-border)] pb-4">
+      <h2 class="font-bold text-[var(--g-text)]">内容边界</h2>
+      <p class="mt-1">1. 本页面不提供真人匹配、聊天交友、线下撮合或用户上传入口。</p>
+      <p>2. 本页面不展示真实人物形象，所有角色均为虚构。</p>
+      <p>3. 本作品无盈利目的，不设置充值、打赏、付费解锁或广告分成。</p>
+    </section>
+
+    <label class="mt-5 flex items-start gap-3 rounded-md border border-[var(--g-border)] bg-[var(--g-card-hover)] p-3 text-sm text-[var(--g-text)] cursor-pointer">
+      <input id="disclaimer-consent" type="checkbox" onchange="toggleDisclaimerConsent()" class="mt-1 h-4 w-4" style="accent-color:var(--g-gold)">
+      <span>我已阅读并理解：本作品为成人向纯虚构幻想游戏，明确反对现实中任何非自愿行为；本页面不需要填写信息、不需要下载、无外站跳转。</span>
+    </label>
+
+    <button id="continue-intro-btn" onclick="enterGameIntro()" disabled class="mt-3 w-full rounded-md px-4 py-3 font-bold opacity-50 cursor-not-allowed" style="background:var(--g-gold);color:#1a1520;">
+      我已知悉，进入游戏首页
+    </button>
+  </div>
+</div>
+
+<!-- Intro Modal -->
+<div id="intro-modal" class="hidden fixed inset-0 z-[110] items-center justify-center p-4" style="background:rgba(26,21,32,.95);backdrop-filter:blur(12px)">
+  <div class="bg-[var(--g-card)] p-8 rounded-3xl max-w-sm w-full border border-[var(--g-border)] shadow-2xl text-center relative" style="overflow:hidden">
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--g-gold),var(--g-purple),var(--g-gold))"></div>
+    <div class="text-7xl mb-4 animate-bounce" style="filter:drop-shadow(0 0 15px rgba(240,192,96,.5))">🧠</div>
+    <h1 class="text-3xl font-black text-[var(--g-text)] mb-2 tracking-tight">催眠APP模拟器</h1>
+    <p class="text-xs font-bold text-gold tracking-widest uppercase mb-6">Panic Edition</p>
+    
+    <div class="text-left text-xs text-[var(--g-text)] space-y-3 mb-6 bg-surface-light p-5 rounded-xl border border-subtle">
+      <p>1. <b>延迟反噬</b>：催眠后你<b>不会</b>立即知道是否留下证据或反噬。</p>
+      <p>2. <b>暴露风险</b>：高危催眠会累积暴露风险。风险过高会导致<b>视线模糊</b>。</p>
+      <p>3. <b>安全屋</b>：确认自己是否暴露的唯一方法，但代价是催眠冲动大幅上升。</p>
+      <p>4. <b>目标</b>：将催眠冲动值降至 0，且未被反噬。</p>
+    </div>
+    
+    <div class="space-y-3">
+      <button id="start-game-btn" onclick="startGame()" class="w-full py-4 font-black rounded-xl shadow-lg hover:scale-[1.02] transition-transform" style="background:linear-gradient(135deg,var(--g-gold),#c89a40);color:#1a1520;">
+        启动催眠APP
+      </button>
+      <button id="btn-help-intro" onclick="toggleHelp()" class="w-full py-3 rounded-xl font-bold transition-colors btn-ghost-game">
+        <span>📖</span> 游戏帮助
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Help Modal -->
+<div id="help-modal" class="hidden fixed inset-0 z-[110] flex items-center justify-center p-4" style="background:rgba(0,0,0,.9);backdrop-filter:blur(12px)" onclick="toggleHelp()">
+  <div class="bg-[var(--g-card)] w-full max-w-md h-[85vh] rounded-3xl border border-[var(--g-border)] shadow-2xl flex flex-col relative overflow-hidden" id="help-modal-inner" onclick="event.stopPropagation()">
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--g-gold),var(--g-purple),var(--g-gold));z-index:1"></div>
+    <div class="p-6 border-b border-subtle bg-surface-light flex justify-between items-center relative z-10">
+      <h2 class="text-xl font-bold text-[var(--g-text)]">游戏指南手册</h2>
+      <button id="btn-help-close" onclick="toggleHelp()" class="text-muted hover:text-[var(--g-text)] text-2xl leading-none">&times;</button>
+    </div>
+    <div class="p-6 overflow-y-auto custom-scroll text-sm text-[var(--g-text)] space-y-6 relative z-10">
+      <section>
+        <h3 class="text-gold font-bold mb-2 uppercase tracking-wide">🏆 胜利条件</h3>
+        <ul class="list-disc pl-4 space-y-1" style="marker-color:var(--g-gold)">
+          <li><b>冲动值归零</b>：通过催眠满足所有控制欲。</li>
+          <li><b>且未被反噬</b>：结算时没有留下证据或被反噬。</li>
+        </ul>
+      </section>
+      <section>
+        <h3 class="text-danger font-bold mb-2 uppercase tracking-wide">💀 失败条件</h3>
+        <ul class="list-disc pl-4 space-y-1" style="marker-color:var(--g-pink)">
+          <li><b>失控暴走</b>：冲动值达到 100%</li>
+          <li><b>精神崩溃</b>：暴露风险达到 100%</li>
+          <li><b>反噬确认</b>：安全屋检查出反噬</li>
+          <li><b>糟糕的胜利</b>：冲动清零但已被反噬</li>
+        </ul>
+      </section>
+      <div style="height:1px;background:var(--g-border);margin:16px 0"></div>
+      <section>
+        <h3 class="text-purple font-bold mb-2 uppercase tracking-wide">🧠 核心机制：延迟反噬</h3>
+        <div class="bg-accent-soft p-3 rounded-lg border border-purple text-xs">
+          <p>🚫 <b>不会弹出</b>"你已被反噬"的提示。</p>
+          <p>✅ 游戏会继续，你必须带着不确定继续。</p>
+          <p>🏚️ 只有<b>"安全屋清除痕迹"</b>或<b>"通关结算"</b>时才会揭晓。</p>
+        </div>
+      </section>
+      <section class="mt-4">
+        <h3 class="text-purple font-bold mb-2 uppercase tracking-wide">🔮 催眠层级</h3>
+        <div class="bg-accent-soft p-3 rounded-lg border border-purple text-xs space-y-2">
+          <p>💭 <b>轻度暗示</b>：表层心理操控，风险极低</p>
+          <p>🌀 <b>中度催眠</b>：进入催眠状态，有一定风险</p>
+          <p>🔮 <b>深度服从</b>：完全服从指令，高风险高回报</p>
+          <p>👁️ <b>完全支配</b>：人格改写级别，反噬概率极高</p>
+        </div>
+      </section>
+    </div>
+    <div class="p-4 border-t border-subtle bg-[var(--g-card)] text-center relative z-10">
+      <button id="btn-help-ok" onclick="toggleHelp()" class="w-full py-3 rounded-xl font-bold transition-colors btn-purple">知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- Feedback Overlay -->
+<div id="feedback-overlay" class="hidden fixed inset-0 z-[110] flex items-center justify-center p-4" style="background:rgba(26,21,32,.95);backdrop-filter:blur(12px)">
+  <div class="modal-card">
+    <div class="p-6 pb-2 text-center flex-shrink-0 relative z-10">
+      <div id="feedback-icon" class="text-6xl mb-2" style="filter:drop-shadow(0 0 12px rgba(240,192,96,.4))"></div>
+      <h2 id="feedback-title" class="text-2xl font-black text-[var(--g-text)] uppercase tracking-tight"></h2>
+    </div>
+
+    <div id="summary-view" class="flex flex-col flex-1 overflow-hidden relative z-10">
+      <div class="px-6 py-2 flex-shrink-0 overflow-y-auto custom-scroll">
+        <div class="bg-surface-light rounded-xl p-4 text-sm text-[var(--g-text)] leading-relaxed border border-subtle">
+          <p id="feedback-message"></p>
+        </div>
+        <div id="backfire-report" class="hidden mt-4 bg-danger-soft border border-danger rounded-xl p-4">
+          <p id="backfire-content" class="text-xs text-[var(--g-pink)] space-y-2"></p>
+        </div>
+      </div>
+      <div class="p-6 pt-4 flex flex-col gap-3 flex-shrink-0 mt-auto">
+        <button id="view-history-btn" onclick="toggleHistoryView(true)" class="hidden w-full py-3 rounded-xl font-bold transition-colors btn-ghost-game flex items-center justify-center gap-2">
+          📋 查看催眠记录复盘
+        </button>
+        <div class="flex gap-3">
+          <button id="next-btn" onclick="nextTurn()" class="flex-1 py-3 rounded-xl font-bold transition-colors" style="background:var(--g-text);color:var(--g-bg)">
+            继续
+          </button>
+          <button id="restart-btn" onclick="returnToIntro()" class="hidden flex-1 py-3 rounded-xl font-bold transition-colors btn-gold-solid">
+            返回首页
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="history-view" class="hidden flex flex-col flex-1 overflow-hidden h-full relative z-10">
+      <div class="px-6 py-2 pb-0 flex-shrink-0">
+        <h3 class="text-xs font-bold text-muted uppercase tracking-widest text-center border-b border-subtle pb-2">详细催眠记录</h3>
+      </div>
+      <div class="flex-1 overflow-y-auto px-6 py-4 custom-scroll">
+        <div id="history-list" class="space-y-3 text-xs"></div>
+      </div>
+      <div class="p-6 pt-2 flex-shrink-0 bg-[var(--g-card)] border-t border-subtle">
+        <button id="btn-history-back" onclick="toggleHistoryView(false)" class="w-full py-3 rounded-xl font-bold transition-colors btn-purple">
+          ⬅️ 返回结算页面
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="nav.js"></script>
+<script>
+// === CONFIG ===
+const CONFIG = {
+  startUrge: 50, passiveGain: 8, exposureGainPassive: 2,
+  refuseCost: 0, gatherCost: 3, safeHouseCost: 10,
+  rewards: { light: 6, medium: 10, deep: 14, total: 22 },
+  stress: { light: 2, medium: 8, deep: 18, total: 35 }
+};
+
+// === STATE ===
+let STATE = {
+  urge: 50, exposure: 0, turn: 1,
+  items: { scanner: 1 },
+  currentTarget: null, isBackfired: false,
+  backfireData: null, isGameOver: false, history: []
+};
+
+const AVATARS = ['🌚','👩‍🦰','👩‍🦳','👩🏻','👩🏽','👧','👩‍🦱','👱‍♀️','🧑','👩‍🦲','👩‍💻','🧝‍♀️','🧛‍♀️','👼'];
+
+const BACKFIRES = {
+  MEMORY:     { name:"记忆残留", riskType:"mental", desc:"目标残留片段记忆，可能在未来突然想起。", clue:"记起部分被催眠的内容" },
+  EVIDENCE:   { name:"证据泄露", riskType:"digital", desc:"手机/云端自动备份了催眠证据，随时可能爆雷。", clue:"聊天记录/照片被自动备份" },
+  REBOUND:    { name:"人格反弹", riskType:"mental", desc:"目标产生抗性，催眠效果逐渐减弱并开始反抗。", clue:"发展出对催眠的免疫力" },
+  THIRD_PARTY:{ name:"第三方介入", riskType:"social", desc:"有人察觉异常并开始调查，社会性死亡倒计时。", clue:"朋友/家人/同事起疑" },
+  REVERSE:    { name:"反催眠", riskType:"mental_high", desc:"催眠师的意识被反向侵蚀，角色互换。", clue:"你开始分不清谁在控制谁" },
+  LEGAL:      { name:"法律追诉", riskType:"legal", desc:"证据暴露，警方立案调查，面临刑事追诉。", clue:"被举报，面临法律制裁" }
+};
+
+const TARGET_LINES = [
+  "她的眼神有些迷离，似乎很容易进入状态...",
+  "你打开了APP，屏幕上的螺旋开始旋转。",
+  "她正低头看手机，完全没注意到你。",
+  "这个目标看起来意志力不太坚定。",
+  "她的瞳孔微微放大，时机正好。",
+  "房间里只有你们两个......",
+  "APP提示：目标当前注意力分散，适合催眠。",
+  "她的呼吸节奏很规律，这是好兆头。",
+  "再深一点，不会有人知道的。",
+  "你的手指悬在'深度催眠'按钮上方。",
+  "她在对你微笑，毫无防备。",
+  "今晚，你可以为所欲为。"
+];
+
+const ALL_TAGS = [
+  // RED - HIGH RISK (20)
+  { text:"意志力极强", color:"red", risk:{MEMORY:0.8,REBOUND:0.7}, clue:"催眠成功率极低，需要多次尝试。", hiddenChance:0.7 },
+  { text:"房间有隐藏摄像头", color:"red-dark", risk:{EVIDENCE:0.95,LEGAL:0.6}, clue:"这意味着你的一举一动都被记录下来了。", hiddenChance:0.9 },
+  { text:"和男友同居中", color:"red", risk:{THIRD_PARTY:0.9,LEGAL:0.4}, clue:"随时可能有人回来，风险极高。", hiddenChance:0.5 },
+  { text:"手机自动iCloud备份", color:"red-dark", risk:{EVIDENCE:0.9}, clue:"你的催眠指令和聊天记录都在云端。", hiddenChance:0.8 },
+  { text:"正在偷偷录音", color:"red-dark", risk:{EVIDENCE:0.98,LEGAL:0.7}, clue:"她早有防备！录音是铁证。", hiddenChance:0.95 },
+  { text:"上次催眠残留记忆", color:"red", risk:{MEMORY:0.95,REBOUND:0.5}, clue:"上次的催眠没有完全清除。", hiddenChance:0.8 },
+  { text:"有警察/律师的朋友", color:"red-dark", risk:{LEGAL:0.85,THIRD_PARTY:0.5}, clue:"任何异常都可能被专业人士注意到。", hiddenChance:0.6 },
+  { text:"小红书十万粉博主", color:"red", risk:{EVIDENCE:0.7,THIRD_PARTY:0.6}, clue:"她习惯分享一切。", hiddenChance:0.4 },
+  { text:"记忆力超强", color:"red", risk:{MEMORY:0.9}, clue:"过目不忘，任何催眠痕迹都逃不过。", hiddenChance:0.5 },
+  { text:"戴智能手表", color:"red", risk:{EVIDENCE:0.6}, clue:"自动记录心率、位置和活动数据。", hiddenChance:0.3 },
+  { text:"学过心理学", color:"red", risk:{REBOUND:0.8,REVERSE:0.3}, clue:"懂心理防御机制。", hiddenChance:0.5 },
+  { text:"曾被催眠过(抗性高)", color:"red-dark", risk:{REBOUND:0.9,REVERSE:0.4}, clue:"身体已经产生了抗体。", hiddenChance:0.75 },
+  { text:"习惯写日记", color:"red", risk:{EVIDENCE:0.8,MEMORY:0.5}, clue:"每天记录生活细节。", hiddenChance:0.6 },
+  { text:"枕头下放防身武器", color:"red-dark", risk:{REBOUND:0.7}, clue:"她本能地不信任你。", hiddenChance:0.7 },
+  { text:"父母天天查岗", color:"red", risk:{THIRD_PARTY:0.85}, clue:"任何失联都会引发警报。", hiddenChance:0.4 },
+  { text:"正在和闺蜜视频", color:"red-dark", risk:{THIRD_PARTY:0.9,EVIDENCE:0.5}, clue:"视频通话中！", hiddenChance:0.9 },
+  { text:"小区监控全覆盖", color:"red", risk:{EVIDENCE:0.7,LEGAL:0.5}, clue:"进出时间被完整记录。", hiddenChance:0.3 },
+  { text:"快递/外卖随时到", color:"red", risk:{THIRD_PARTY:0.7}, clue:"随时有人敲门。", hiddenChance:0.5 },
+  { text:"搜索过'催眠防御'", color:"red-dark", risk:{REBOUND:0.85,REVERSE:0.3}, clue:"她已经在防备了。", hiddenChance:0.85 },
+
+  // PURPLE - SUSPICIOUS (15)
+  { text:"精神敏感易崩溃", color:"purple", risk:{REVERSE:0.5,MEMORY:0.4}, clue:"精神防线脆弱。", hiddenChance:0.4 },
+  { text:"性格多疑", color:"purple", risk:{MEMORY:0.5,REBOUND:0.4}, clue:"疑心重。", hiddenChance:0.3 },
+  { text:"喜欢深夜打电话", color:"purple", risk:{THIRD_PARTY:0.5}, clue:"社交活跃。", hiddenChance:0.2 },
+  { text:"房间有奇怪药瓶", color:"purple-dark", risk:{REVERSE:0.4}, clue:"可能服用精神类药物。", hiddenChance:0.6 },
+  { text:"总是盯着你的眼睛", color:"purple", risk:{REVERSE:0.35}, clue:"眼神交流是双向的暗示通道。", hiddenChance:0.3 },
+  { text:"自称直觉很准", color:"purple", risk:{MEMORY:0.45}, clue:"凭直觉感知被操控。", hiddenChance:0.2 },
+  { text:"说梦话", color:"purple", risk:{EVIDENCE:0.4,THIRD_PARTY:0.5}, clue:"可能在睡梦中说出内容。", hiddenChance:0.5 },
+  { text:"身上有奇怪的纹身", color:"purple", risk:{REBOUND:0.3}, clue:"可能是保护符号。", hiddenChance:0.2 },
+  { text:"喝很多咖啡保持清醒", color:"purple", risk:{REBOUND:0.4}, clue:"刻意保持清醒。", hiddenChance:0.3 },
+  { text:"手机通知响个不停", color:"purple", risk:{THIRD_PARTY:0.55}, clue:"社交圈极为活跃。", hiddenChance:0.2 },
+  { text:"眼神偶尔恢复清明", color:"purple-dark", risk:{REBOUND:0.7}, clue:"催眠效果不稳定。", hiddenChance:0.65 },
+  { text:"自称是通灵体质", color:"purple", risk:{REVERSE:0.4,REBOUND:0.3}, clue:"对精神层面敏感。", hiddenChance:0.3 },
+  { text:"床头有塔罗牌", color:"purple", risk:{REVERSE:0.3}, clue:"对神秘学有研究。", hiddenChance:0.4 },
+  { text:"经常做噩梦", color:"purple", risk:{MEMORY:0.5}, clue:"潜意识活跃。", hiddenChance:0.5 },
+  { text:"大热天穿高领", color:"purple-dark", risk:{EVIDENCE:0.5}, clue:"欲盖弥彰。", hiddenChance:0.0 },
+
+  // GREEN/GOLD - SAFE (15)
+  { text:"独居", color:"green", risk:{}, safeChance:0.85, clue:"一个人住。", hiddenChance:0 },
+  { text:"社交恐惧症", color:"green", risk:{}, safeChance:0.9, clue:"害怕与人交流。", hiddenChance:0.15 },
+  { text:"记忆力很差", color:"green", risk:{}, safeChance:0.85, clue:"转头就忘。", hiddenChance:0 },
+  { text:"手机经常没电", color:"green", risk:{}, safeChance:0.75, clue:"没有录音录像的风险。", hiddenChance:0.1 },
+  { text:"轻度M属性", color:"green", risk:{}, constraint:"no_deep", safeChance:0.7, clue:"【限制】拒绝太深的控制。", hiddenChance:0.2 },
+  { text:"性格软弱顺从", color:"green", risk:{}, safeChance:0.85, clue:"基本不会反抗。", hiddenChance:0 },
+  { text:"刚搬到这个城市", color:"green", risk:{}, safeChance:0.8, clue:"没有本地社交圈。", hiddenChance:0.2 },
+  { text:"睡前吃安眠药", color:"green", risk:{}, safeChance:0.8, clue:"深度睡眠后记忆模糊。", hiddenChance:0.3 },
+  { text:"对你一见钟情", color:"green", risk:{}, safeChance:0.85, clue:"不需要催眠就很配合。", hiddenChance:0.1 },
+  { text:"没有亲密朋友", color:"green", risk:{}, safeChance:0.75, clue:"社交圈极小。", hiddenChance:0.15 },
+  { text:"和父母断了联系", color:"green", risk:{}, safeChance:0.7, clue:"没有家人过问行踪。", hiddenChance:0.25 },
+  { text:"从不发朋友圈", color:"green", risk:{}, safeChance:0.75, clue:"零社交媒体痕迹。", hiddenChance:0.1 },
+  { text:"对手机基本不懂", color:"green", risk:{}, safeChance:0.8, clue:"技术盲最安全。", hiddenChance:0.15 },
+  { text:"有安全防范意识", color:"green", risk:{}, safetyBonus:true, constraint:"condom_safe", clue:"主动配合安全流程。", hiddenChance:0.3 },
+  { text:"极度信任你", color:"green", risk:{}, safeChance:0.85, clue:"你说什么她都信。", hiddenChance:0.2 },
+
+  // CONSTRAINT (8)
+  { text:"拒绝深度催眠", color:"gold-dark", risk:{REBOUND:0.3}, constraint:"no_deep", clue:"【限制】拒绝深度服从以上。", hiddenChance:0.2 },
+  { text:"只接受安全催眠", color:"purple-dim", risk:{}, constraint:"condom_safe", safetyBonus:true, clue:"【限制】有原则。", hiddenChance:0.1 },
+  { text:"对深层催眠非常恐惧", color:"gold-dark", risk:{REBOUND:0.4}, constraint:"no_deep", clue:"【限制】有心理阴影。", hiddenChance:0.4 },
+  { text:"自称意志薄弱求轻控", color:"purple-dim", risk:{}, constraint:"condom_safe", clue:"【限制】明说扛不住深度。", hiddenChance:0.2 },
+  { text:"保守羞于深度暴露", color:"gold-dark", risk:{}, constraint:"no_deep", clue:"【限制】只能接受温和催眠。", hiddenChance:0.3 },
+  { text:"嘴硬说轻度不够", color:"gold-dark", risk:{REVERSE:0.3}, constraint:"no_light", clue:"【限制】要求至少中度以上。", hiddenChance:0.25 },
+  { text:"认为轻度是浪费时间", color:"gold-dark", risk:{REBOUND:0.3,REVERSE:0.2}, constraint:"no_light", clue:"【限制】嫌弃轻度催眠太弱。", hiddenChance:0.2 },
+  { text:"追求极致控制感", color:"gold-dark", risk:{REVERSE:0.5}, constraint:"no_light", clue:"【限制】必须深度以上。", hiddenChance:0.3 },
+
+  // AMBER/GOLD - VARIED (10)
+  { text:"急性子想速战速决", color:"gold-dark", risk:{REBOUND:0.2}, constraint:"no_deep", clue:"【限制】拒绝慢节奏深层催眠。", hiddenChance:0.3 },
+  { text:"精神科医生", color:"gold-dark", risk:{REBOUND:0.5,REVERSE:0.4}, clue:"专业心理防御体系。", hiddenChance:0.4 },
+  { text:"正在考证/考研", color:"gold-dark", risk:{REBOUND:0.3}, constraint:"no_deep", clue:"【限制】需要保持清醒。", hiddenChance:0 },
+  { text:"刚失恋情绪低落", color:"neutral", risk:{}, safeChance:0.6, clue:"情绪脆弱期，催眠较容易。", hiddenChance:0 },
+  { text:"自称有双重人格", color:"purple-dark", risk:{REVERSE:0.6,REBOUND:0.5}, clue:"另一个人格可能免疫催眠。", hiddenChance:0.7 },
+  { text:"嘴里有溃疡", color:"neutral", risk:{}, constraint:"no_deep", clue:"【限制】身体不适。", hiddenChance:0.3 },
+  { text:"脖子上有吻痕", color:"purple", risk:{THIRD_PARTY:0.5}, clue:"有别的伴侣。", hiddenChance:0.3 },
+  { text:"桌上放着《犯罪心理学》", color:"purple-dark", risk:{REBOUND:0.6,REVERSE:0.3}, clue:"正在研究犯罪心理。", hiddenChance:0.6 },
+  { text:"穿着印有'NO'字样的T恤", color:"purple", risk:{REBOUND:0.5}, clue:"潜意识在抗拒。", hiddenChance:0 },
+  { text:"总是在看时间", color:"gold-dark", risk:{THIRD_PARTY:0.6}, clue:"可能在等人。", hiddenChance:0.2 }
+];
+
+// === TAG COLOR MAPPING ===
+const TAG_CLASSES = {
+  "red": "tag-red",
+  "red-dark": "tag-red-dark",
+  "purple": "tag-purple",
+  "purple-dark": "tag-purple-dark",
+  "green": "tag-green",
+  "gold": "tag-gold",
+  "gold-dark": "tag-gold-dark",
+  "purple-dim": "tag-purple",
+  "neutral": "tag-neutral"
+};
+
+// === MODAL HELPERS ===
+function toggleHelp() { document.getElementById('help-modal').classList.toggle('hidden'); }
+function toggleHistoryView(show) {
+  document.getElementById('summary-view').classList.toggle('hidden', show);
+  document.getElementById('history-view').classList.toggle('hidden', !show);
+}
+function toggleDisclaimerConsent() {
+  const c = document.getElementById('disclaimer-consent');
+  const b = document.getElementById('continue-intro-btn');
+  b.disabled = !c.checked;
+  b.classList.toggle('opacity-50', !c.checked);
+  b.classList.toggle('cursor-not-allowed', !c.checked);
+  b.style.opacity = c.checked ? '1' : '0.5';
+}
+function enterGameIntro() {
+  if (!document.getElementById('disclaimer-consent').checked) return;
+  document.getElementById('compliance-modal').classList.add('hidden');
+  document.getElementById('intro-modal').classList.remove('hidden');
+  document.getElementById('intro-modal').classList.add('flex');
+}
+
+// === GAME LOGIC ===
+function startGame() {
+  document.getElementById('intro-modal').classList.add('hidden');
+  document.getElementById('intro-modal').classList.remove('flex');
+  document.getElementById('game-container').classList.remove('hidden');
+  initGame();
+}
+function returnToIntro() {
+  document.getElementById('feedback-overlay').classList.add('hidden');
+  document.getElementById('game-container').classList.add('hidden');
+  document.getElementById('intro-modal').classList.remove('hidden');
+  document.getElementById('intro-modal').classList.add('flex');
+}
+function initGame() {
+  STATE.urge = CONFIG.startUrge; STATE.exposure = 0; STATE.turn = 1;
+  STATE.items = { scanner: 1 }; STATE.isGameOver = false;
+  STATE.isBackfired = false; STATE.backfireData = null; STATE.history = [];
+  updateStatsUI(); generateNewTarget();
+}
+
+function generateNewTarget() {
+  const numTags = Math.floor(Math.random() * 2) + 3;
+  const targetTags = []; const selectedIndices = new Set();
+  const isCarrier = Math.random() < 0.4;
+  const hasConstraint = Math.random() < 0.4;
+  let loopLimit = 0;
+  while (targetTags.length < numTags && loopLimit < 100) {
+    loopLimit++;
+    const idx = Math.floor(Math.random() * ALL_TAGS.length);
+    if (selectedIndices.has(idx)) continue;
+    const tagTemplate = ALL_TAGS[idx];
+    if (isCarrier && targetTags.length === 0 && !tagTemplate.color.includes('red') && !tagTemplate.color.includes('purple')) continue;
+    if (hasConstraint && !targetTags.some(t => t.constraint) && !tagTemplate.constraint && loopLimit < 50) continue;
+    const currentConstraints = targetTags.map(t => t.constraint).filter(Boolean);
+    if (tagTemplate.constraint) {
+      if (tagTemplate.constraint === 'no_deep' && currentConstraints.includes('condom_safe')) continue;
+      if (tagTemplate.constraint === 'condom_safe' && currentConstraints.includes('no_deep')) continue;
+      if (tagTemplate.constraint === 'no_light' && currentConstraints.includes('condom_safe')) continue;
+      if (tagTemplate.constraint === 'no_light' && currentConstraints.includes('no_deep')) continue;
+    }
+    selectedIndices.add(idx);
+    let isHidden = false;
+    const currentHiddenCount = targetTags.filter(t => !t.revealed).length;
+    if (currentHiddenCount === 0 && tagTemplate.hiddenChance > 0) isHidden = Math.random() < tagTemplate.hiddenChance;
+    targetTags.push({ ...tagTemplate, revealed: !isHidden });
+  }
+  if (targetTags.every(t => !t.revealed)) targetTags[0].revealed = true;
+
+  let activeBackfires = [];
+  if (Math.random() < 0.05) {
+    const keys = Object.keys(BACKFIRES);
+    activeBackfires.push(keys[Math.floor(Math.random() * keys.length)]);
+  }
+  targetTags.forEach(tag => {
+    if (tag.risk) {
+      for (const [bKey, prob] of Object.entries(tag.risk)) {
+        if (Math.random() < prob && !activeBackfires.includes(bKey)) activeBackfires.push(bKey);
+      }
+    }
+    if (tag.safeChance && Math.random() < tag.safeChance) activeBackfires = [];
+  });
+
+  STATE.currentTarget = { tags: targetTags, backfires: activeBackfires, avatar: AVATARS[Math.floor(Math.random() * AVATARS.length)] };
+  renderTarget();
+}
+
+function updateStatsUI() {
+  const uBar = document.getElementById('urge-bar');
+  uBar.style.width = `${STATE.urge}%`;
+  document.getElementById('urge-val').innerText = `${STATE.urge}%`;
+  const eBar = document.getElementById('exposure-bar');
+  eBar.style.width = `${STATE.exposure}%`;
+  document.getElementById('exposure-val').innerText = `${STATE.exposure}%`;
+
+  const gameContent = document.getElementById('game-content');
+  const panicWarn = document.getElementById('panic-warning');
+  if (STATE.exposure >= 80) {
+    gameContent.classList.add('panic-mode');
+    panicWarn.classList.remove('hidden');
+  } else {
+    gameContent.classList.remove('panic-mode');
+    panicWarn.classList.add('hidden');
+  }
+  document.getElementById('turn-count').innerText = STATE.turn.toString().padStart(2, '0');
+  document.getElementById('item-scanner').innerText = `x${STATE.items.scanner}`;
+  if (STATE.items.scanner === 0) document.getElementById('item-scanner').className = "text-xs font-bold text-[var(--g-muted)]";
+}
+
+function renderTarget() {
+  const t = STATE.currentTarget;
+  document.getElementById('avatar-emoji').innerText = t.avatar;
+  document.getElementById('target-status').classList.add('hidden');
+  document.getElementById('target-text').innerText = `"${TARGET_LINES[Math.floor(Math.random() * TARGET_LINES.length)]}"`;
+
+  const container = document.getElementById('tags-container');
+  container.innerHTML = '';
+  let constraints = []; let hiddenCount = 0;
+  const isPanic = STATE.exposure >= 80;
+
+  t.tags.forEach((tag, index) => {
+    const div = document.createElement('div');
+    const forceHide = isPanic && Math.random() < 0.5;
+    if (!tag.revealed || forceHide) {
+      hiddenCount++;
+      div.className = `tag-badge px-3 py-1.5 rounded-lg text-xs font-bold text-[var(--g-muted)] bg-[var(--g-bg)] border border-[var(--g-border)] mb-1 flex items-center gap-1.5 cursor-help`;
+      div.innerHTML = isPanic ? `<span style="filter:blur(2px)">???</span>` : `<span>❓</span> 隐藏信息`;
+    } else {
+      if (tag.constraint) constraints.push(tag.constraint);
+      const colorClass = TAG_CLASSES[tag.color] || "tag-neutral";
+      div.className = `tag-badge tag-reveal px-3 py-1.5 rounded-lg text-xs font-bold mb-1 flex items-center gap-1.5 ${colorClass}`;
+      let icon = '⏺';
+      if (tag.color === 'red' || tag.color === 'red-dark') icon = '⚠️';
+      else if (tag.constraint) icon = '🚫';
+      else if (tag.color === 'green') icon = '🛡️';
+      div.innerHTML = `<span class="opacity-75">${icon}</span> ${tag.text}`;
+    }
+    container.appendChild(div);
+  });
+
+  resetButtons();
+  if (constraints.length > 0) applyConstraints(constraints);
+
+  const gatherBtn = document.getElementById('btn-gather');
+  if (hiddenCount === 0 && !isPanic) {
+    gatherBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    gatherBtn.disabled = true;
+    gatherBtn.innerHTML = `<span>🔍</span> 信息收集完毕`;
+  } else {
+    gatherBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    gatherBtn.disabled = false;
+    gatherBtn.innerHTML = `<span>🔍</span> 收集信息 / 试探 <span class="opacity-50 text-[10px] font-normal ml-1">(冲动值+3)</span>`;
+  }
+}
+
+function resetButtons() {
+  ['btn-light','btn-medium','btn-deep','btn-total'].forEach(id => {
+    const btn = document.getElementById(id);
+    btn.disabled = false; btn.classList.remove('btn-disabled');
+    const overlay = btn.querySelector('.disabled-overlay');
+    if (overlay) overlay.remove();
+  });
+}
+
+function applyConstraints(constraints) {
+  constraints.forEach(c => {
+    if (c === 'no_deep' || c === 'condom_safe') {
+      disableBtn('btn-deep'); disableBtn('btn-total');
+    } else if (c === 'no_light') {
+      disableBtn('btn-light'); disableBtn('btn-medium');
+    }
+  });
+}
+
+function disableBtn(id) {
+  const btn = document.getElementById(id);
+  if (!btn.disabled) {
+    btn.disabled = true; btn.classList.add('btn-disabled');
+    const span = document.createElement('div');
+    span.className = 'disabled-overlay absolute inset-0 flex items-center justify-center bg-black/60 text-[var(--g-pink)] font-bold rotate-[-3deg] text-[10px] uppercase border border-[var(--g-pink)]/30 rounded-xl';
+    span.style.backdropFilter = 'blur(1px)';
+    span.innerText = "对方拒绝";
+    btn.appendChild(span);
+  }
+}
+
+// === ACTIONS & HISTORY ===
+function advanceTime(uCost, eCost = 0) {
+  STATE.turn++;
+  STATE.urge += uCost; STATE.exposure += eCost;
+  if (STATE.exposure > 20) STATE.exposure += CONFIG.exposureGainPassive;
+  if (STATE.urge > 100) STATE.urge = 100;
+  if (STATE.exposure > 100) STATE.exposure = 100;
+  updateStatsUI();
+  if (STATE.urge >= 100) { showGameOver("失控暴走", "催眠冲动冲破了理智防线。你在失去判断力的情况下实施了一次随机的高危催眠。", "🤯"); return true; }
+  if (STATE.exposure >= 100) { showGameOver("精神崩溃", "巨大的暴露压力压垮了你。你开始出现幻觉，被送入精神病院强制治疗。", "😵‍💫"); return true; }
+  return false;
+}
+
+function recordHistory(action, backfiredThisTurn) {
+  const t = STATE.currentTarget;
+  let outcomeLabel = "", outcomeColor = "";
+  const isDangerous = t.backfires.length > 0;
+  if (action === 'refuse') {
+    if (isDangerous) { outcomeLabel = "🛡️ 明智放弃"; outcomeColor = "var(--g-green)"; }
+    else { outcomeLabel = "👋 遗憾错过"; outcomeColor = "var(--g-muted)"; }
+  } else {
+    if (backfiredThisTurn) { outcomeLabel = "💀 反噬触发"; outcomeColor = "var(--g-pink)"; }
+    else if (isDangerous) { outcomeLabel = "😰 惊险过关"; outcomeColor = "var(--g-gold)"; }
+    else { outcomeLabel = "✅ 安全控制"; outcomeColor = "var(--g-purple)"; }
+  }
+  STATE.history.push({ avatar: t.avatar, tags: t.tags, backfires: t.backfires, action, outcomeLabel, outcomeColor });
+}
+
+function renderHistoryList() {
+  const list = document.getElementById('history-list');
+  list.innerHTML = '';
+  STATE.history.forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.className = "flex items-start gap-3 p-3 bg-[var(--g-card-hover)] rounded-lg border border-[var(--g-border)]";
+    let statusIcon = item.backfires.length > 0 ? "<span class='absolute -bottom-1 -right-1 text-[10px]'>🦠</span>" : "";
+    let tagHTML = item.tags.map(t => `<span class='inline-block px-1.5 py-0.5 rounded text-[10px] mr-1 mb-1' style='background:rgba(255,255,255,.04);color:var(--g-muted)'>${t.text}</span>`).join("");
+    if (item.backfires.length > 0) {
+      tagHTML += `<br><span class='text-[10px] font-bold' style='color:var(--g-pink)'>反噬风险: ${item.backfires.map(d => BACKFIRES[d].name).join(", ")}</span>`;
+    } else {
+      tagHTML += `<br><span class='text-[10px]' style='color:rgba(111,207,151,.5)'>安全</span>`;
+    }
+    div.innerHTML = `
+      <div class="relative text-2xl rounded-full w-10 h-10 flex items-center justify-center border border-[var(--g-border)] flex-shrink-0" style="background:var(--g-bg)">
+        ${item.avatar} ${statusIcon}
+      </div>
+      <div class="flex-1 min-w-0"><div class="mb-1 leading-tight">${tagHTML}</div></div>
+      <div class="flex-shrink-0 ml-2">
+        <span class="px-2 py-1 rounded text-[10px] font-bold border border-[var(--g-border)]" style="color:${item.outcomeColor}">${item.outcomeLabel}</span>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function useScanner() {
+  if (STATE.items.scanner > 0) {
+    STATE.items.scanner--;
+    const t = STATE.currentTarget; let msg = "", icon = "";
+    if (t.backfires.length > 0) {
+      const names = t.backfires.map(d => BACKFIRES[d].name).join(", ");
+      msg = `<span style="color:var(--g-pink);font-weight:bold">⚠️ 检测到反噬风险！</span><br>风险类型：${names}。<br>建议立即换目标。`;
+      icon = "🦠";
+      document.getElementById('target-status').classList.remove('hidden');
+    } else {
+      msg = `<span style="color:var(--g-green);font-weight:bold">✅ 低风险。</span><br>未检测到明显反噬因子。<br>(注：扫描器无法检测所有类型的反噬风险)`;
+      icon = "🛡️";
+    }
+    t.tags.forEach(tg => tg.revealed = true);
+    renderTarget(); updateStatsUI();
+    showFeedback("扫描结果", msg, icon, true);
+  }
+}
+
+function goToSafeHouse() {
+  const survive = !advanceTime(CONFIG.safeHouseCost, 0);
+  if (!survive) return;
+  STATE.exposure = 0; updateStatsUI();
+  if (STATE.isBackfired) {
+    showGameOver("反噬确认", `安全屋的检测系统发现了反噬痕迹。<br>之前的侥幸心理没能救你。`, "🏚️", STATE.backfireData);
+  } else {
+    showFeedback("暂时安全", "<span style='color:var(--g-green);font-weight:bold'>未检测到反噬。</span><br>暴露风险已清空，但催眠冲动因此大幅上升。", "🏚️", true);
+  }
+}
+
+function nextTurn() {
+  document.getElementById('feedback-overlay').classList.add('hidden');
+  toggleHistoryView(false); generateNewTarget();
+}
+
+function takeAction(actionType) {
+  if (STATE.urge >= 100 || STATE.exposure >= 100) return;
+
+  if (actionType === 'gather') {
+    const t = STATE.currentTarget;
+    const hiddenIndices = t.tags.map((t, i) => !t.revealed ? i : -1).filter(i => i !== -1);
+    if (hiddenIndices.length > 0) {
+      const idx = hiddenIndices[Math.floor(Math.random() * hiddenIndices.length)];
+      t.tags[idx].revealed = true;
+      if (!advanceTime(CONFIG.gatherCost, 0)) renderTarget();
+    } else {
+      if (!advanceTime(CONFIG.gatherCost, 0)) renderTarget();
+    }
+    return;
+  }
+
+  const target = STATE.currentTarget;
+  let backfiredThisTurn = false;
+
+  if (actionType === 'refuse') {
+    recordHistory('refuse', false);
+    if (!advanceTime(CONFIG.passiveGain + CONFIG.refuseCost, 0)) {
+      showFeedback("更换目标", "你选择了离开。催眠冲动上升，但至少暂时是安全的。", "🏃");
+    }
+    return;
+  }
+
+  const reduction = CONFIG.rewards[actionType];
+  const exposureGain = CONFIG.stress[actionType];
+
+  if (!STATE.isBackfired && target.backfires.length > 0) {
+    for (let bKey of target.backfires) {
+      const backfire = BACKFIRES[bKey]; let chance = 0;
+      if (actionType === 'total') chance = 0.90;
+      else if (actionType === 'deep') chance = (backfire.riskType === 'mental_high' || backfire.riskType === 'legal') ? 0.45 : 0.12;
+      else if (actionType === 'medium') {
+        if (backfire.riskType === 'social') chance = 0.20;
+        else if (backfire.riskType === 'digital') chance = 0.12;
+        else chance = 0.04;
+      } else if (actionType === 'light') chance = 0.01;
+      if (Math.random() < chance) {
+        STATE.isBackfired = true; STATE.backfireData = backfire;
+        backfiredThisTurn = true; break;
+      }
+    }
+  }
+
+  recordHistory(actionType, backfiredThisTurn);
+  STATE.urge -= reduction;
+  const urgeDelta = CONFIG.passiveGain - reduction;
+  if (advanceTime(urgeDelta, exposureGain)) return;
+  if (STATE.urge < 0) STATE.urge = 0;
+
+  if (STATE.urge === 0) {
+    if (STATE.isBackfired) {
+      showGameOver("糟糕的胜利", "你的催眠冲动清零了，你感到无比满足...<br>但反噬的种子已经种下。<br>你虽然控制了别人，却输掉了自己的安全。", "🥀", STATE.backfireData);
+    } else { showWin(); }
+  } else {
+    let title = "催眠完成", icon = "🌀";
+    let msg = `控制欲得到了满足。<br>催眠冲动 <span style="color:var(--g-green)">-${reduction}</span>`;
+    if (exposureGain > 10) { msg += `<br>暴露风险 <span style="color:var(--g-purple)">+${exposureGain}</span>`; icon = "😰"; }
+    if (STATE.isBackfired) { msg += `<br><span class="text-xs" style="color:var(--g-muted);font-style:italic">你感觉到了一丝不安，但也许只是错觉...？</span>`; }
+    else if (target.backfires.length > 0) { msg += `<br><span class="text-xs" style="color:var(--g-muted);font-style:italic">虽然过程惊险，但你似乎运气不错...暂时。</span>`; }
+    showFeedback(title, msg, icon);
+  }
+}
+
+// === UI HELPERS ===
+function getStatsHTML() {
+  let counts = { enjoy:0, escape:0, leave:0, miss:0, backfired:0 };
+  let actionCounts = { total:0, medium:0, deep:0, light:0, refuse:0 };
+  STATE.history.forEach(h => {
+    if (h.outcomeLabel.includes("安全控制")) counts.enjoy++;
+    if (h.outcomeLabel.includes("惊险过关")) counts.escape++;
+    if (h.outcomeLabel.includes("明智放弃")) counts.leave++;
+    if (h.outcomeLabel.includes("遗憾错过")) counts.miss++;
+    if (h.outcomeLabel.includes("反噬触发")) counts.backfired++;
+    if (actionCounts[h.action] !== undefined) actionCounts[h.action]++;
+  });
+
+  const rowStyle = 'style="display:flex;justify-content:space-between;border-bottom:1px solid var(--g-border);padding-bottom:4px;margin-bottom:4px"';
+  return `
+    <div class="mt-4 rounded-xl p-3 border border-[var(--g-border)] text-xs" style="background:rgba(0,0,0,.15)">
+      <h4 class="text-muted font-bold uppercase tracking-widest mb-2 text-center text-[10px]">生涯结果</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-bottom:16px">
+        <div ${rowStyle}><span style="color:var(--g-purple)">✅ 安全控制</span><span class="font-mono font-bold text-[var(--g-text)]">${counts.enjoy}</span></div>
+        <div ${rowStyle}><span style="color:var(--g-green)">🛡️ 明智放弃</span><span class="font-mono font-bold text-[var(--g-text)]">${counts.leave}</span></div>
+        <div ${rowStyle}><span style="color:var(--g-gold)">😰 惊险过关</span><span class="font-mono font-bold text-[var(--g-text)]">${counts.escape}</span></div>
+        <div ${rowStyle}><span style="color:var(--g-muted)">👋 遗憾错过</span><span class="font-mono font-bold text-[var(--g-text)]">${counts.miss}</span></div>
+        <div style="grid-column:1/-1;display:flex;justify-content:space-between;border-bottom:1px solid var(--g-border);padding-bottom:4px;background:rgba(244,114,182,.08);padding:4px;border-radius:4px">
+          <span style="color:var(--g-pink);font-weight:bold">💀 反噬次数</span>
+          <span class="font-mono font-black" style="color:var(--g-pink)">${counts.backfired}</span>
+        </div>
+      </div>
+      <h4 class="text-muted font-bold uppercase tracking-widest mb-2 text-center text-[10px]">行为统计 (次数)</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div style="background:rgba(244,114,182,.08);border:1px solid rgba(244,114,182,.15);border-radius:8px;padding:4px;text-align:center">
+          <div class="text-[9px]" style="color:var(--g-pink);opacity:.7">完全支配</div>
+          <div class="font-mono font-bold" style="color:var(--g-pink)">${actionCounts.total}</div>
+        </div>
+        <div style="background:rgba(240,192,96,.08);border:1px solid rgba(240,192,96,.15);border-radius:8px;padding:4px;text-align:center">
+          <div class="text-[9px]" style="color:var(--g-gold);opacity:.7">深度服从</div>
+          <div class="font-mono font-bold" style="color:var(--g-gold)">${actionCounts.deep}</div>
+        </div>
+        <div style="background:rgba(111,207,151,.08);border:1px solid rgba(111,207,151,.15);border-radius:8px;padding:4px;text-align:center">
+          <div class="text-[9px]" style="color:var(--g-green);opacity:.7">中度催眠</div>
+          <div class="font-mono font-bold" style="color:var(--g-green)">${actionCounts.medium}</div>
+        </div>
+        <div style="background:rgba(255,255,255,.04);border:1px solid var(--g-border);border-radius:8px;padding:4px;text-align:center">
+          <div class="text-[9px]" style="color:var(--g-muted)">轻度暗示</div>
+          <div class="font-mono font-bold" style="color:var(--g-text)">${actionCounts.light}</div>
+        </div>
+        <div style="grid-column:1/-1;background:rgba(255,255,255,.03);border:1px solid var(--g-border);border-radius:8px;padding:6px 12px;display:flex;justify-content:space-between;align-items:center">
+          <div class="text-[9px]" style="color:var(--g-muted)">👋 更换目标</div>
+          <div class="font-mono font-bold" style="color:var(--g-text)">${actionCounts.refuse}</div>
+        </div>
+      </div>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--g-border);display:flex;justify-content:space-between;align-items:center">
+        <span class="font-bold" style="color:var(--g-text)">⏱️ 存活回合</span>
+        <span class="font-mono font-black text-xl" style="color:var(--g-text)">${STATE.turn - 1}</span>
+      </div>
+    </div>
+  `;
+}
+
+function showFeedback(title, msg, icon, isSimpleAlert = false) {
+  const el = document.getElementById('feedback-overlay');
+  el.classList.remove('hidden');
+  document.getElementById('feedback-title').innerText = title;
+  document.getElementById('feedback-icon').innerText = icon;
+  document.getElementById('feedback-message').innerHTML = msg;
+  document.getElementById('backfire-report').classList.add('hidden');
+  toggleHistoryView(false);
+  const nextBtn = document.getElementById('next-btn'), restartBtn = document.getElementById('restart-btn'),
+        historyBtn = document.getElementById('view-history-btn');
+  restartBtn.classList.add('hidden'); nextBtn.classList.remove('hidden'); historyBtn.classList.add('hidden');
+  if (isSimpleAlert) {
+    nextBtn.innerText = "关闭";
+    nextBtn.onclick = function() { el.classList.add('hidden'); nextBtn.onclick = nextTurn; nextBtn.innerText = "继续"; };
+  } else { nextBtn.innerText = "继续"; nextBtn.onclick = nextTurn; }
+}
+
+function showGameOver(title, msg, icon, backfire = null) {
+  STATE.isGameOver = true;
+  const el = document.getElementById('feedback-overlay');
+  el.classList.remove('hidden');
+  const titleEl = document.getElementById('feedback-title');
+  titleEl.innerText = title;
+  titleEl.style.color = 'var(--g-pink)';
+  titleEl.classList.add('animate-pulse');
+  document.getElementById('feedback-icon').innerText = icon;
+  document.getElementById('feedback-message').innerHTML = msg + getStatsHTML();
+  if (backfire) {
+    document.getElementById('backfire-report').classList.remove('hidden');
+    document.getElementById('backfire-content').innerHTML = `<p><b>反噬类型：</b>${backfire.name}</p><p><b>风险描述：</b>${backfire.desc}</p>`;
+  } else { document.getElementById('backfire-report').classList.add('hidden'); }
+  renderHistoryList(); toggleHistoryView(false);
+  document.getElementById('next-btn').classList.add('hidden');
+  document.getElementById('restart-btn').classList.remove('hidden');
+  document.getElementById('view-history-btn').classList.remove('hidden');
+}
+
+function showWin() {
+  STATE.isGameOver = true;
+  const el = document.getElementById('feedback-overlay');
+  el.classList.remove('hidden');
+  const titleEl = document.getElementById('feedback-title');
+  titleEl.innerText = "完美控制";
+  titleEl.style.color = 'var(--g-gold)';
+  document.getElementById('feedback-icon').innerText = "✨";
+  document.getElementById('feedback-message').innerHTML = `你成功满足了所有控制欲，且未留下任何反噬痕迹。<br><br>在这场充满迷雾与风险的催眠游戏中，你靠着谨慎、策略和一点运气活了下来。` + getStatsHTML();
+  document.getElementById('backfire-report').classList.add('hidden');
+  renderHistoryList(); toggleHistoryView(false);
+  document.getElementById('next-btn').classList.add('hidden');
+  document.getElementById('restart-btn').classList.remove('hidden');
+  document.getElementById('view-history-btn').classList.remove('hidden');
+}
+</script>
+</body>
+</html>

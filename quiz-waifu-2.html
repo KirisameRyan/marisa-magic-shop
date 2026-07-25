@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>测测你的二次元老婆 · 正式鉴定 · 霧雨魔法店</title>
+
+<style>
+.intro-badge { border-color: rgba(224,64,128,.35); color: #e04080; }
+
+/* ── 角色卡片 ── */
+.char-card { text-align: center; }
+.char-img-wrap {
+  width: 150px; height: 150px; border-radius: 50%;
+  margin: 0 auto 16px; overflow: hidden; position: relative;
+  border: 4px solid var(--char-color, var(--gold));
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  animation: popIn .5s cubic-bezier(.2,1.4,.4,1);
+}
+.char-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.char-fallback {
+  width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 44px; font-weight: 900; color: rgba(255,255,255,.55);
+  background: var(--char-bg, linear-gradient(135deg, #2a2030, #4a3050));
+}
+.char-source {
+  font-size: 11px; color: var(--muted); margin: 2px 0 6px;
+}
+.char-source b { color: var(--text); }
+.char-desc {
+  text-align: left; line-height: 1.85; font-size: 13px;
+  background: rgba(255,255,255,.02); border-radius: 14px;
+  padding: 18px; margin-bottom: 12px;
+  border: 1px solid var(--border);
+}
+.char-quote {
+  font-size: 12px; font-style: italic; padding: 8px 14px;
+  border-left: 3px solid; display: inline-block; margin-bottom: 16px;
+  background: rgba(255,255,255,.02); border-radius: 0 10px 10px 0;
+  color: var(--char-color, var(--gold));
+}
+.char-accent { color: var(--char-color, var(--gold)); }
+
+/* ── 免责声明 ── */
+.disclaimer {
+  font-size: 9px; color: var(--muted); margin-top: 16px;
+  padding-top: 12px; border-top: 1px dashed var(--border);
+  line-height: 1.6; text-align: center;
+}
+
+/* ── 海报 ── */
+.poster-wrap { text-align: center; }
+.poster-img {
+  width: 100%; max-width: 320px; border-radius: 16px;
+  border: 1px solid var(--border); box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  margin: 0 auto 14px;
+}
+.poster-hint { font-size: 11px; color: var(--muted); margin-bottom: 16px; line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="js/utils.js"></script>
+<script src="js/reveal-screen.js"></script>
+<script src="js/quiz-storage.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/result-footer.js"></script>
+<script src="js/canvas-utils.js"></script>
+<script src="nav.js"></script>
+
+<div class="container" id="app"></div>
+
+<script>
+var state = 'intro';
+var idx = 0;
+var answers = [];
+var resultKey = null;
+var STORAGE_KEY = 'quiz_waifu_cx_v1';
+var TRACK_KEY = 'waifu_cx_take';
+
+var QUIZ_TITLE = '测测你的二次元老婆 2';
+var QUIZ_SUBTITLE = '12 道人格测试，基于赛博心理学引擎精准匹配你的二次元灵魂伴侣。\n本鉴定由霧雨魔法店荣誉出品。';
+var BADGE_TEXT = '霧雨魔法店 · 正式鉴定';
+
+var SITE_URL = 'www.azureflame.cloud';
+var QR_IMG = 'images/qr-code.png';
+var QQ_IMG = 'images/qq-group.png';
+var QQ_GROUP = '702973928';
+var POSTER_W = 640;
+var POSTER_H = 960;
+
+var QUESTIONS = [
+  { q:'你更喜欢和什么样的人一起度过日常？', opts:[
+    { t:'节奏慢、比较随意的人', s:{} },
+    { t:'看起来普通但很有主见的人', s:{} },
+    { t:'存在感比较强的人', s:{} },
+    { t:'情绪丰富、表达直接的人', s:{} } ] },
+  { q:'理想中的相处氛围更接近？', opts:[
+    { t:'安静、有生活气息', s:{} },
+    { t:'轻松但带着一点不确定', s:{} },
+    { t:'稳定、让人有安全感', s:{} },
+    { t:'热情、互动较多', s:{} } ] },
+  { q:'对方最吸引你的特质是？', opts:[
+    { t:'自然，不做作', s:{} },
+    { t:'有自己坚持的东西', s:{} },
+    { t:'大，很大', s:{} },
+    { t:'情感表达很鲜明', s:{} } ] },
+  { q:'当对方状态不好时，你更倾向于？', opts:[
+    { t:'陪在旁边，不多说', s:{} },
+    { t:'帮她处理实际的事情', s:{} },
+    { t:'给她足够的空间', s:{} },
+    { t:'主动关心并回应她的情绪', s:{} } ] },
+  { q:'你觉得一段关系里最重要的是？', opts:[
+    { t:'彼此习惯对方的节奏', s:{} },
+    { t:'能一起面对现实问题', s:{} },
+    { t:'彼此信任彼此支持', s:{} },
+    { t:'情感上的紧密连接', s:{} } ] },
+  { q:'如果对方突然很忙或联系变少，你会？', opts:[
+    { t:'保持自己的节奏，等她回来', s:{} },
+    { t:'适当关心一下近况', s:{} },
+    { t:'先做好自己的安排', s:{} },
+    { t:'会比较在意，想多了解情况', s:{} } ] },
+  { q:'你更能接受对方的哪种小缺点？', opts:[
+    { t:'生活上比较随性', s:{} },
+    { t:'偶尔有点固执', s:{} },
+    { t:'存在感有点强', s:{} },
+    { t:'情绪起伏比较明显', s:{} } ] },
+  { q:'理想中的约会或相处方式更偏向？', opts:[
+    { t:'待在熟悉的地方就好', s:{} },
+    { t:'一起做点实际的事情', s:{} },
+    { t:'去开阔或特别的地方', s:{} },
+    { t:'以聊天和互动为主', s:{} } ] },
+  { q:'对方用什么方式表达在乎，你比较有感觉？', opts:[
+    { t:'默默待在你身边', s:{} },
+    { t:'用行动证明', s:{} },
+    { t:'经济上的支持', s:{} },
+    { t:'直接把情绪和需求告诉你', s:{} } ] },
+  { q:'你更看重关系中的哪一点？', opts:[
+    { t:'长期稳定的陪伴感', s:{} },
+    { t:'一起经历过的真实感', s:{} },
+    { t:'彼此不被束缚的感觉', s:{} },
+    { t:'情感上的深度依赖', s:{} } ] },
+  { q:'如果用一种氛围形容理想对象，你更喜欢？', opts:[
+    { t:'温暖但有点生活痕迹的', s:{} },
+    { t:'带着一点现实感的', s:{} },
+    { t:'特别、印象深刻的', s:{} },
+    { t:'情绪浓度比较高的', s:{} } ] },
+  { q:'你愿意为一段关系付出的是？', opts:[
+    { t:'接受不完美的日常', s:{} },
+    { t:'一起承担现实中的压力', s:{} },
+    { t:'经济上的花费', s:{} },
+    { t:'在情感上成为她的支撑', s:{} } ] }
+];
+
+var RESULTS = {
+  nicotineko: {
+    key:'nicotineko',
+    name:'尼古喵喵',
+    source:'《尼古喵喵》',
+    img:'images/waifu-cx/nigumiaomiao.jpeg',
+    color:'#a0a0a4',
+    bg:'linear-gradient(135deg, #3a383c, #5a585c)',
+    tags:['烟鬼','废物','邋遢疗愈'],
+    desc:'没钱、没生活能力，礼仪和道德都跟烟蒂一起被扔掉的猫娘。整天躺在烟味和垃圾堆里，唯一还像样的只有脸和身材。你负责买烟买饭，她负责躺着抽着，偶尔用那张脸让你破防。',
+    quote:'钱呢？烟呢？别烦我。'
+  },
+  shayinliu: {
+    key:'shayinliu',
+    name:'纱音琉',
+    source:'《地元最高！》',
+    img:'images/waifu-cx/shayinliu.jpeg',
+    color:'#e04080',
+    bg:'linear-gradient(135deg, #3a2030, #5a3848)',
+    tags:['缺牙','骨钉','地元最高'],
+    desc:'金发双马尾、缺牙、满耳骨钉的少女。画风再可爱也改变不了她活在暴力、毒品和灰色地带里的事实。不谈未来，只活现在。跟她在一起，「明天」是个奢侈的词。',
+    quote:'地元最高……'
+  },
+  bogang: {
+    key:'bogang',
+    name:'波刚',
+    source:'《成龙历险记》',
+    img:'images/waifu-cx/bogang.jpeg',
+    color:'#5cb85c',
+    bg:'linear-gradient(135deg, #2a3a28, #4a5a48)',
+    tags:['巨型','暴食','山之恶魔'],
+    desc:'八大恶魔里的大姐，体型最大的绿色肥胖山怪。四肢短小，身上长着黄色肿块，防御高到离谱。核心技能只有一个：吃。吃越多越大、越强。你的冰箱——乃至你的房子——都在她的菜单上。',
+    quote:'再给本座拿点吃的来。'
+  },
+  senie: {
+    key:'senie',
+    name:'色孽',
+    source:'战锤40K / 战锤幻想',
+    img:'images/waifu-cx/senie.jpeg',
+    color:'#e04080',
+    bg:'linear-gradient(135deg, #381830, #583050)',
+    tags:['感官深渊','混沌神','雌雄同体'],
+    desc:'混沌四神中最年轻的那位。美丽到令人疯狂，欲望到令人崩溃。雌雄同体却常以极致魅惑的女性形态出现。靠近就会被拖进无止境的感官深渊——而你，正是被选中的那个祭品。',
+    quote:'再多一点……还不够。'
+  },
+  shaye: {
+    key:'shaye',
+    name:'沙耶',
+    source:'《沙耶之歌》',
+    img:'images/waifu-cx/shaye.jpeg',
+    color:'#9b59b6',
+    bg:'linear-gradient(135deg, #2a2040, #4a3868)',
+    tags:['滤镜纯爱','异界怪物','世界崩坏'],
+    desc:'在你眼里是世界上唯一正常、唯一美丽的白裙少女。在别人眼里是血肉与触手构成的不可名状生物。你选择了爱她，于是整个世界开始跟着崩坏——但你不在乎。',
+    quote:'只要和你在一起就好……'
+  },
+  mengduo: {
+    key:'mengduo',
+    name:'蒙多',
+    source:'英雄联盟',
+    img:'images/waifu-cx/mengduo.jpeg',
+    color:'#7c4dff',
+    bg:'linear-gradient(135deg, #2a2048, #4a3870)',
+    tags:['自由','疯狂','想去哪就去哪'],
+    desc:'「蒙多，想去哪就去哪。」不讲逻辑、不讲常理、不讲你的感受。紫皮、注射、自残式变强，纯粹的混沌移动炮台。你问他为什么选你？因为他想去哪就去哪！',
+    quote:'蒙多，想去哪就去哪！'
+  },
+  tangtang: {
+    key:'tangtang',
+    name:'糖糖',
+    source:'《主播女孩重度依赖》',
+    img:'images/waifu-cx/tangtang.jpeg',
+    color:'#f06292',
+    bg:'linear-gradient(135deg, #381830, #583050)',
+    tags:['精神依赖','天使酱','病娇'],
+    desc:'现实里是任性、易怒、迫切想被认可的家里蹲少女。直播时摇身一变成为「超绝最可爱天使酱」。吃药、崩溃、讨好观众、重度依赖你。爱意和破坏欲同时爆表——你是她的阿P，也是她的药。',
+    quote:'P……再多看看我嘛。'
+  }
+};
+
+var LOADING_STEPS = [
+  '正在扫描恋爱人格特征…',
+  '匹配二次元灵魂数据库…',
+  '校准赛博心理学引擎参数…',
+  '鉴定完成！'
+];
+var SHARE_TEXT = '我在霧雨魔法店抽到的二次元老婆是【{name}】！你也来测测：';
+
+function render() {
+  toggleAds(state);
+  var app = document.getElementById('app');
+  if (!app) return;
+  if (state === 'intro') renderIntro(app);
+  else if (state === 'quiz') renderQuestion(app);
+  else if (state === 'loading') renderLoading(app);
+  else if (state === 'result') renderResult(app);
+  else if (state === 'poster') renderPoster(app);
+}
+
+function renderIntro(app) {
+  var resumeHTML = resumeButton(STORAGE_KEY, '继续上次测试') || '';
+  app.innerHTML =
+    '<div class="intro">' +
+    '<div class="intro-badge">' + BADGE_TEXT + '</div>' +
+    '<h1>' + QUIZ_TITLE + '</h1>' +
+    '<p class="sub" style="white-space:pre-line;">' + QUIZ_SUBTITLE + '</p>' +
+    '<p style="font-size:11px;color:var(--muted);margin-bottom:8px;" id="takeCount"></p>' +
+    resumeHTML +
+    '<button class="btn btn-main" style="max-width:260px;margin:0 auto;background:linear-gradient(135deg,#e04080,#7c4dff);" onclick="startQuiz()">开始鉴定 →</button>' +
+    '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+    '</div>';
+  bindCount('takeCount', {template:'已有 {n} 人完成鉴定'});
+}
+
+function startQuiz() {
+  trackStart(TRACK_KEY);
+  state = 'quiz'; idx = 0; answers = []; resultKey = null;
+  quizClear(STORAGE_KEY);
+  render();
+}
+
+function resumeQuiz() {
+  var d = quizLoad(STORAGE_KEY);
+  if (!d || d.idx <= 0) return;
+  state = 'quiz'; idx = d.idx; answers = d.answers || []; resultKey = null;
+  render();
+}
+
+function renderQuestion(app) {
+  if (idx >= QUESTIONS.length) { state = 'loading'; render(); return; }
+  var q = QUESTIONS[idx];
+  var pct = Math.round((idx / QUESTIONS.length) * 100);
+  var labels = 'ABCDEFGH';
+  var html =
+    (idx > 0 ? '<button class="btn-back" onclick="goBack()" style="display:block;margin:0 auto;">← 上一题</button>' : '') +
+    '<div class="progress-wrap">' +
+    '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+    '<div class="progress-text">' + (idx + 1) + ' / ' + QUESTIONS.length + '</div>' +
+    '</div>' +
+    '<div class="q-num">第 ' + (idx + 1) + ' 问</div>' +
+    '<div class="q-text">' + q.q + '</div>' +
+    '<div class="options">';
+  for (var i = 0; i < q.opts.length; i++) {
+    html +=
+      '<button class="opt-btn" onclick="answer(' + i + ')">' +
+      '<span class="opt-letter">' + (labels[i] || '?') + '</span>' +
+      q.opts[i].t +
+      '</button>';
+  }
+  html += '</div>';
+  app.innerHTML = html;
+}
+
+function answer(choice) {
+  answers.push(QUESTIONS[idx].opts[choice]);
+  idx++;
+  quizSave(STORAGE_KEY, {idx: idx, answers: answers});
+  if (idx < QUESTIONS.length) { render(); return; }
+  state = 'loading';
+  render();
+}
+
+function goBack() {
+  if (idx <= 0 || answers.length === 0) return;
+  idx--; answers.pop();
+  quizSave(STORAGE_KEY, {idx: idx, answers: answers});
+  render();
+}
+
+// ── 加载 + 揭示 ──
+function renderLoading(app) {
+  app.innerHTML =
+    '<div class="loading-wrap">' +
+    '<div class="loading-orb"></div>' +
+    '<p class="loading-text" id="ltxt">' + LOADING_STEPS[0] + '</p>' +
+    '</div>';
+  cycleLoading(1);
+}
+
+async function cycleLoading(i) {
+  if (i >= LOADING_STEPS.length) {
+    await sleep(800);
+    resultKey = calcResult();
+    var r = RESULTS[resultKey];
+    showReveal('🔮 二次元鉴定完成', r.name, r.color || 'var(--gold)', '赛博心理学引擎 · 结果生成中…', function() {
+      state = 'result';
+      render();
+    });
+    return;
+  }
+  await sleep(500 + Math.random() * 500);
+  var lt = document.getElementById('ltxt');
+  if (lt) lt.textContent = LOADING_STEPS[i];
+  cycleLoading(i + 1);
+}
+
+function calcResult() {
+  var keys = Object.keys(RESULTS);
+  return keys[Math.floor(Math.random() * keys.length)];
+}
+
+// ── 结果页 ──
+function renderResult(app) {
+  var r = RESULTS[resultKey] || RESULTS[Object.keys(RESULTS)[0]];
+  var html =
+    '<div class="char-card" style="--char-color:' + r.color + ';--char-bg:' + r.bg + ';">' +
+    '<div class="char-img-wrap">' +
+    '<img class="char-img" src="' + r.img + '" alt="' + r.name + '" ' +
+    'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+    '<div class="char-fallback" style="display:none;">' + r.name.charAt(0) + '</div>' +
+    '</div>' +
+    '<div class="result-label">霧雨魔法店 鉴定结果</div>' +
+    '<div class="result-name char-accent">' + r.name + '</div>' +
+    '<div class="char-source">出自 <b>' + r.source + '</b></div>' +
+    '<div class="result-meta">';
+  for (var i = 0; i < r.tags.length; i++) {
+    html += '<span class="meta-tag" style="border-color:' + r.color + ';color:' + r.color + ';">' + r.tags[i] + '</span>';
+  }
+  html +=
+    '</div>' +
+    '<div class="char-desc">' + r.desc + '</div>' +
+    '<div class="char-quote" style="border-color:' + r.color + ';">' + r.quote + '</div>' +
+    '<button class="btn btn-main" onclick="shareImage()" style="background:linear-gradient(135deg,' + r.color + ',var(--purple));">📸 生成分享海报</button>' +
+    '<button class="btn btn-ghost" onclick="shareIt()">📋 复制结果文案</button>' +
+    '<button class="btn btn-ghost" onclick="restart()">🔄 再来一次</button>' +
+    '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+    resultFooterHTML({notice:'霧雨魔法店 · 结果仅供参考 · 但魔法是真的'}) +
+    '<div class="disclaimer">⚠️ 本鉴定结果完全随机，魔法店对任何精神损害不负责</div>' +
+    '</div>';
+  app.innerHTML = html;
+}
+
+function shareIt() {
+  var name = (resultKey && RESULTS[resultKey]) ? RESULTS[resultKey].name : '';
+  var text = SHARE_TEXT.replace('{name}', name) + ' ' + window.location.href;
+  copyToClipboard(text, '已复制！发给朋友试试 💀');
+}
+
+function restart() {
+  state = 'intro'; idx = 0; answers = []; resultKey = null; render();
+}
+
+function shareImage() { state = 'poster'; render(); }
+
+// ── 海报 ──
+function renderPoster(app) {
+  app.innerHTML =
+    '<div class="poster-wrap">' +
+    '<div class="result-label" style="margin-bottom:14px;">长按图片保存 / 分享</div>' +
+    '<img class="poster-img" id="posterImg" alt="分享海报" style="display:none;">' +
+    '<div class="loading-wrap" id="posterLoading" style="padding:24px 0;">' +
+    '<div class="loading-orb"></div>' +
+    '<p class="loading-text">正在生成海报…</p>' +
+    '</div>' +
+    '<p class="poster-hint">手机长按上图即可保存到相册；电脑可点下方按钮下载。</p>' +
+    '<a class="btn btn-main" id="posterDl" download="二次元老婆鉴定结果.png" style="display:none;">⬇️ 下载海报</a>' +
+    '<button class="btn btn-ghost" onclick="state=\'result\';render();">← 返回结果</button>' +
+    '</div>';
+  buildPoster();
+}
+
+async function buildPoster() {
+  var r = RESULTS[resultKey] || RESULTS[Object.keys(RESULTS)[0]];
+  var W = POSTER_W, H = POSTER_H;
+  var cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  var ctx = cv.getContext('2d');
+
+  ctx.fillStyle = '#16121a'; ctx.fillRect(0, 0, W, H);
+  var g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, 'rgba(224,64,128,.06)');
+  g.addColorStop(1, 'rgba(124,77,255,.06)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  var pad = 40;
+  ctx.fillStyle = '#201a26';
+  roundRect(ctx, pad, pad, W - pad * 2, H - pad * 2, 28); ctx.fill();
+
+  var bar = ctx.createLinearGradient(pad, 0, W - pad, 0);
+  bar.addColorStop(0, r.color || '#e04080');
+  bar.addColorStop(.5, '#7c4dff');
+  bar.addColorStop(1, r.color || '#e04080');
+  ctx.fillStyle = bar;
+  roundRect(ctx, pad, pad, W - pad * 2, 6, 3); ctx.fill();
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = r.color || '#e04080';
+  ctx.font = '600 20px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText('霧 雨 魔 法 店 · 二次元老婆鉴定', W / 2, 110);
+
+  var portrait = await loadImg(r.img);
+  var cx = W / 2, cy = 260, R = 96;
+
+  // 光晕
+  var glow = ctx.createRadialGradient(cx, cy, R * .6, cx, cy, R * 1.5);
+  glow.addColorStop(0, r.color + '30');
+  glow.addColorStop(.5, r.color + '08');
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow; ctx.fillRect(cx - R * 1.5, cy - R * 1.5, R * 3, R * 3);
+
+  // 圆形裁切绘制头像
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+  if (portrait) {
+    var s = Math.max((R * 2) / portrait.width, (R * 2) / portrait.height);
+    var dw = portrait.width * s, dh = portrait.height * s;
+    ctx.drawImage(portrait, cx - dw / 2, cy - dh / 2, dw, dh);
+  } else {
+    ctx.fillStyle = '#201a26'; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
+    ctx.fillStyle = 'rgba(255,255,255,.5)';
+    ctx.font = '80px sans-serif'; ctx.textBaseline = 'middle';
+    ctx.fillText(r.name.charAt(0), cx, cy + 8); ctx.textBaseline = 'alphabetic';
+  }
+  ctx.restore();
+
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = r.color || '#e04080';
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(255,255,255,.15)';
+  ctx.beginPath(); ctx.arc(cx, cy, R + 4, 0, Math.PI * 2); ctx.stroke();
+
+  ctx.fillStyle = '#8a7e9a';
+  ctx.font = '14px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText('我命中注定的二次元老婆是', W / 2, 420);
+
+  ctx.fillStyle = r.color || '#e04080';
+  ctx.shadowColor = r.color + '50'; ctx.shadowBlur = 14;
+  ctx.font = '800 48px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText(r.name, W / 2, 480);
+  ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+
+  ctx.fillStyle = '#8a7e9a';
+  ctx.font = '14px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText('出自 ' + r.source, W / 2, 510);
+
+  // 标签
+  ctx.font = '13px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  var tags = r.tags, gap = 14, ty = 555;
+  var widths = tags.map(function(t) { return ctx.measureText(t).width + 28; });
+  var totalW = widths.reduce(function(a, b) { return a + b; }, 0) + gap * (tags.length - 1);
+  var tx = (W - totalW) / 2;
+  for (var i = 0; i < tags.length; i++) {
+    ctx.fillStyle = 'rgba(255,255,255,.03)';
+    ctx.strokeStyle = r.color + '50';
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, tx, ty - 20, widths[i], 32, 15); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = r.color || '#e04080';
+    ctx.fillText(tags[i], tx + widths[i] / 2, ty + 1);
+    tx += widths[i] + gap;
+  }
+
+  // 简介
+  ctx.fillStyle = '#c8c0d4';
+  ctx.font = '14px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  wrapText(ctx, r.desc, W / 2, 620, W - pad * 2 - 60, 24);
+
+  // 台词
+  ctx.fillStyle = r.color || '#e04080';
+  ctx.font = 'italic 15px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  var quoteLines = wrapToLines(ctx, '「' + r.quote + '」', W - pad * 2 - 80);
+  var qy = H - pad - 255 - quoteLines.length * 22;
+  for (var k = 0; k < quoteLines.length; k++) {
+    ctx.fillText(quoteLines[k], W / 2, qy + k * 24);
+  }
+
+  // QR 码
+  var siteImg = await loadImg(QR_IMG);
+  var qqImg = await loadImg(QQ_IMG);
+  var qs = 126, gap2 = 48;
+  var totalQW = qs * 2 + gap2;
+  var leftX = (W - totalQW) / 2;
+  var rightX = leftX + qs + gap2;
+  var qy2 = H - pad - 232;
+  drawQRBox(ctx, siteImg, leftX, qy2, qs, '扫码开测', SITE_URL, r.color || '#e04080');
+  drawQRBox(ctx, qqImg, rightX, qy2, qs, '加 QQ 群', '群号 ' + QQ_GROUP, '#b89fff');
+
+  var pi = document.getElementById('posterImg');
+  var pl = document.getElementById('posterLoading');
+  var dl = document.getElementById('posterDl');
+  var dataUrl = null;
+  try { dataUrl = cv.toDataURL('image/png'); } catch (e) { dataUrl = null; }
+
+  if (pl) { pl.style.display = 'none'; }
+  if (dataUrl) {
+    if (pi) { pi.src = dataUrl; pi.style.display = 'block'; }
+    if (dl) { dl.href = dataUrl; dl.style.display = 'inline-flex'; }
+  } else {
+    if (pi && pi.parentNode) {
+      cv.className = 'poster-img';
+      cv.style.display = 'block';
+      pi.parentNode.replaceChild(cv, pi);
+    }
+    var hint = document.querySelector('.poster-hint');
+    if (hint) hint.textContent = '当前环境无法导出图片。部署到 ' + SITE_URL + ' 线上访问即可正常保存。';
+  }
+}
+
+render();
+</script>
+
+</body>
+</html>

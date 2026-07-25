@@ -19,7 +19,8 @@
         label: '🎮 玩玩小游戏',
         links: [
           { href: 'marisa_dash.html', emoji: '🧹', text: '魔理沙快跑' },
-          { href: 'marisa_survivor.html', emoji: '⭐', text: '魔理沙幸存者' }
+          { href: 'marisa_survivor.html', emoji: '⭐', text: '魔理沙幸存者' },
+          { href: 'hypno-app.html', emoji: '🧠', text: '催眠APP模拟器' }
         ]
       },
       {
