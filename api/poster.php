@@ -191,7 +191,7 @@ if ($fontPath) {
     $nameBox  = imagettfbbox($nameSize, 0, $fontPath, $name);
     $nameW    = $nameBox[2] - $nameBox[0];
     imagettftext($img, $nameSize, 0, (int)(($W - $nameW) / 2), $textY + 36, $gold, $fontPath, $name);
-    $textY += 55;
+    $textY += 70;
 
     // 日文名
     if ($native) {
@@ -199,7 +199,7 @@ if ($fontPath) {
         $natBox  = imagettfbbox($natSize, 0, $fontPath, $native);
         $natW    = $natBox[2] - $natBox[0];
         imagettftext($img, $natSize, 0, (int)(($W - $natW) / 2), $textY, $gray, $fontPath, $native);
-        $textY += 28;
+        $textY += 42;
     }
 
     // 来源动漫
@@ -209,7 +209,7 @@ if ($fontPath) {
         $srcBox  = imagettfbbox($srcSize, 0, $fontPath, $srcText);
         $srcW    = $srcBox[2] - $srcBox[0];
         imagettftext($img, $srcSize, 0, (int)(($W - $srcW) / 2), $textY, $white, $fontPath, $srcText);
-        $textY += 40;
+        $textY += 55;
     }
 
     // 匹配度
@@ -218,7 +218,7 @@ if ($fontPath) {
     $matchBox  = imagettfbbox($matchSize, 0, $fontPath, $matchText);
     $matchW    = $matchBox[2] - $matchBox[0];
     imagettftext($img, $matchSize, 0, (int)(($W - $matchW) / 2), $textY + 10, $pink, $fontPath, $matchText);
-    $textY += 60;
+    $textY += 75;
 
     // 标签泡泡（圆角椭圆）
     $tagX    = 30;
