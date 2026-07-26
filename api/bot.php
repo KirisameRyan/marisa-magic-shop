@@ -229,12 +229,13 @@ function loadWaifuDB() {
         botLog("waifuDB: 找到 {$file} ({$size} bytes)");
 
         $raw = file_get_contents($file);
+        $raw = ltrim($raw, "\xEF\xBB\xBF");  // strip UTF-8 BOM if present
         $head = mb_substr($raw, 0, 50);
         $tail = mb_substr($raw, max(0, $size - 50));
         botLog("waifuDB: 文件头[{$head}] 文件尾[{$tail}]");
 
         if (str_ends_with($file, '.js')) {
-            if (preg_match('/var\s+WAIFU_DB\s*=\s*(\[[\s\S]*\]);?/', $raw, $m)) {
+            if (preg_match('/window\.WAIFU_DB\s*=\s*(\[[\s\S]*\]);?/', $raw, $m)) {
                 $db = json_decode($m[1], true);
             } else {
                 botLog("waifuDB: JS regex 匹配失败");
@@ -415,7 +416,11 @@ function renderWaifuQuestion($q, $qIndex, $total) {
     $buttons = [];
     $row = [];
     foreach ($q['opts'] as $i => $opt) {
-        $row[] = quickButton(($i + 1), "/答 " . ($i + 1), 1);
+        $short = $opt['t'];
+        $pos   = mb_strpos($short, ' — ');
+        if ($pos !== false) $short = mb_substr($short, 0, $pos);
+        $short = ($i + 1) . '.' . $short;
+        $row[] = quickButton($short, "/答 " . ($i + 1), 1);
         if (count($row) >= 3) {
             $buttons[] = $row;
             $row = [];
@@ -522,7 +527,7 @@ function handleWaifuAnswer($memberOpenid, $groupOpenid, $msgId, $num) {
 
         $results = computeWaifuResults($session['answers']);
         $rendered = renderWaifuResults($results);
-        sendGroupMarkdown($groupOpenid, $rendered['markdown'], $rendered['keyboard']);
+        sendGroupMarkdown($groupOpenid, $rendered['markdown'], $rendered['keyboard'], $msgId);
 
         // Clean up session
         unset($sessions[$memberOpenid]);
@@ -539,8 +544,7 @@ function handleWaifuAnswer($memberOpenid, $groupOpenid, $msgId, $num) {
     $pos = mb_strpos($chosen['t'], ' — ');
     $ack = ($pos !== false) ? mb_substr($chosen['t'], 0, $pos) : $chosen['t'];
     sendGroupMessage($groupOpenid, "✅ 已选择「{$ack}」", $msgId);
-
-    sendGroupMarkdown($groupOpenid, $rendered['markdown'], $rendered['keyboard']);
+    sendGroupMarkdown($groupOpenid, $rendered['markdown'], $rendered['keyboard'], $msgId);
 }
 
 // ═══════════════════════════════════════════
