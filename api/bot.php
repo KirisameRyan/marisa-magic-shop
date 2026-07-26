@@ -75,7 +75,7 @@ function quickButton($label, $data, $style = 1) {
     return [
         'id'          => 'btn_' . substr(md5($data), 0, 8),
         'render_data' => ['label' => $label, 'style' => $style],
-        'action'      => ['type' => 2, 'permission' => ['type' => 2], 'data' => $data, 'enter' => true],
+        'action'      => ['type' => 2, 'permission' => ['type' => 2], 'data' => $data, 'enter' => false],
     ];
 }
 
@@ -213,19 +213,37 @@ function loadWaifuDB() {
     static $db = null;
     if ($db !== null) return $db;
 
-    $file = __DIR__ . '/../data/waifu-db-zh.json';
-    if (!file_exists($file)) {
-        $file = __DIR__ . '/../data/waifu-db-zh.js';
-        if (file_exists($file)) {
-            $content = file_get_contents($file);
-            if (preg_match('/var\s+WAIFU_DB\s*=\s*(\[[\s\S]*\]);?/', $content, $m)) {
+    $candidates = [
+        __DIR__ . '/../data/waifu-db-zh.json',
+        __DIR__ . '/../data/waifu-db-zh.js',
+        '/www/wwwroot/www.azureflame.cloud/data/waifu-db-zh.json',
+        '/www/wwwroot/www.azureflame.cloud/data/waifu-db-zh.js',
+    ];
+
+    foreach ($candidates as $file) {
+        if (!file_exists($file)) {
+            botLog("waifuDB: 未找到 {$file}");
+            continue;
+        }
+        botLog("waifuDB: 找到 {$file}");
+
+        $raw = file_get_contents($file);
+        if (str_ends_with($file, '.js')) {
+            if (preg_match('/var\s+WAIFU_DB\s*=\s*(\[[\s\S]*\]);?/', $raw, $m)) {
                 $db = json_decode($m[1], true);
             }
+        } else {
+            $db = json_decode($raw, true);
         }
-    } else {
-        $db = json_decode(file_get_contents($file), true);
+
+        if (is_array($db)) {
+            botLog("waifuDB: 加载成功，共 " . count($db) . " 个角色");
+            return $db;
+        }
+        botLog("waifuDB: JSON 解析失败: " . (json_last_error_msg() ?: 'unknown'));
     }
-    if (!is_array($db)) $db = [];
+
+    $db = [];
     return $db;
 }
 
