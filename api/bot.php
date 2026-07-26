@@ -71,25 +71,49 @@ function sendGroupMarkdown($groupOpenid, $markdown, $keyboard = null, $msgId = n
     }
 }
 
-function sendGroupCard($groupOpenid, $title, $desc, $picUrl, $linkUrl = '', $msgId = null, $msgSeq = 1) {
+function sendGroupImage($groupOpenid, $imageUrl, $msgId = null, $msgSeq = 1) {
     $token = getBotAccessToken();
 
-    $cardContent = [
-        'title'       => $title,
-        'description' => $desc,
-        'pic_url'     => $picUrl,
-    ];
-    if ($linkUrl !== '') $cardContent['url'] = $linkUrl;
+    // Step 1: 上传图片文件到 QQ（URL 模式）
+    $uploadBody = json_encode([
+        'file_type' => 1,
+        'url'       => $imageUrl,
+    ], JSON_UNESCAPED_UNICODE);
 
-    $body = [
-        'msg_type' => 8,
-        'card'     => [
-            'type'    => 'tuwen',
-            'content' => $cardContent,
+    $ch = curl_init("https://api.bot.qq.com/v2/groups/{$groupOpenid}/files");
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER     => [
+            'Authorization: QQBot ' . $token,
+            'Content-Type: application/json',
         ],
+        CURLOPT_POSTFIELDS     => $uploadBody,
+        CURLOPT_TIMEOUT        => 15,
+    ]);
+    $uploadRes = curl_exec($ch);
+    $uploadCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($uploadCode !== 200 || !$uploadRes) {
+        botLog("上传图片失败 HTTP{$uploadCode}: {$uploadRes}");
+        return false;
+    }
+
+    $uploadData = json_decode($uploadRes, true);
+    $fileInfo = $uploadData['file_info'] ?? '';
+    if (!$fileInfo) {
+        botLog("上传图片响应无 file_info: {$uploadRes}");
+        return false;
+    }
+
+    // Step 2: 发 msg_type=7 媒体消息
+    $sendBody = [
+        'msg_type' => 7,
+        'media'    => ['file_info' => $fileInfo],
         'msg_seq'  => $msgSeq,
     ];
-    if ($msgId) $body['msg_id'] = $msgId;
+    if ($msgId) $sendBody['msg_id'] = $msgId;
 
     $ch = curl_init("https://api.bot.qq.com/v2/groups/{$groupOpenid}/messages");
     curl_setopt_array($ch, [
@@ -99,7 +123,7 @@ function sendGroupCard($groupOpenid, $title, $desc, $picUrl, $linkUrl = '', $msg
             'Authorization: QQBot ' . $token,
             'Content-Type: application/json',
         ],
-        CURLOPT_POSTFIELDS     => json_encode($body, JSON_UNESCAPED_UNICODE),
+        CURLOPT_POSTFIELDS     => json_encode($sendBody, JSON_UNESCAPED_UNICODE),
         CURLOPT_TIMEOUT        => 10,
     ]);
     $res      = curl_exec($ch);
@@ -107,8 +131,10 @@ function sendGroupCard($groupOpenid, $title, $desc, $picUrl, $linkUrl = '', $msg
     curl_close($ch);
 
     if ($httpCode !== 200) {
-        botLog("发送Card失败 HTTP{$httpCode}: {$res}");
+        botLog("发送图片失败 HTTP{$httpCode}: {$res}");
+        return false;
     }
+    return true;
 }
 
 function quickButton($label, $data, $style = 1) {
@@ -518,19 +544,12 @@ function renderWaifuQuestion($q, $qIndex, $total) {
 }
 
 function renderWaifuResults($results) {
-    if (empty($results)) return ['markdown' => '匹配失败，请重试...', 'keyboard' => null, 'card' => null];
-
+    if (empty($results)) return ['markdown' => '匹配失败，请重试...', 'keyboard' => null, 'poster_url' => ''];
     $top = $results[0];
-    $imageUrl = '';
 
-    // Card for TOP 1
+    // Poster URL
     $posterUrl = 'https://www.azureflame.cloud/api/poster.php?id='
                . ($top['id'] ?? 0) . '&match=' . $top['match'];
-    $card = [
-        'title'   => $top['name'],
-        'desc'    => ($top['source_anime'] ?? '') . ' · 匹配度 ' . $top['match'] . '%',
-        'pic_url' => $posterUrl,
-    ];
 
     $md  = "**{$top['name']}**";
     if ($top['name_native']) $md .= "（{$top['name_native']}）";
@@ -557,7 +576,7 @@ function renderWaifuResults($results) {
         [quickButton('再来一次', '/老婆测试', 1), linkButton('去网站测完整版', 'https://www.azureflame.cloud/quiz-waifu-3.html', 0)],
     ];
 
-    return ['markdown' => $md, 'keyboard' => buildKeyboard($buttons), 'card' => $card];
+    return ['markdown' => $md, 'keyboard' => buildKeyboard($buttons), 'poster_url' => $posterUrl];
 }
 
 function handleStartWaifuQuiz($memberOpenid, $groupOpenid, $msgId) {
@@ -621,12 +640,10 @@ function handleWaifuAnswer($memberOpenid, $groupOpenid, $msgId, $num) {
         $results = computeWaifuResults($session['answers']);
         $rendered = renderWaifuResults($results);
 
-        // Send TOP 1 poster card (pic_url → 本地海报生成器, url → 空串避免域名限制)
-        if (!empty($rendered['card']['pic_url'])) {
-            sendGroupCard($groupOpenid, $rendered['card']['title'], $rendered['card']['desc'],
-                $rendered['card']['pic_url'], '', $msgId, 2);
+        // Send poster image
+        if (!empty($rendered['poster_url'])) {
+            sendGroupImage($groupOpenid, $rendered['poster_url'], $msgId, 2);
         }
-        // Results markdown with msgSeq 3 (1=confirm text, 2=card, 3=markdown)
         sendGroupMarkdown($groupOpenid, $rendered['markdown'], $rendered['keyboard'], $msgId, 3);
 
         unset($sessions[$memberOpenid]);
@@ -1027,11 +1044,10 @@ function handleRandomWaifuCard($groupOpenid, $msgId) {
     $image  = $char['image'] ?? '';
     $match  = rand(80, 98);
 
-    // Card
-    $desc = $source ? "《{$source}》 · 匹配度 {$match}%" : "匹配度 {$match}%";
+    // Send poster image
     $posterUrl = 'https://www.azureflame.cloud/api/poster.php?id='
                . ($char['id'] ?? 0) . '&match=' . $match;
-    sendGroupCard($groupOpenid, $name, $desc, $posterUrl, '', $msgId);
+    sendGroupImage($groupOpenid, $posterUrl, $msgId, 1);
 
     // Markdown details
     $tagNames = translateTags($char['tags'] ?? []);
