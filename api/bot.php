@@ -71,6 +71,44 @@ function sendGroupMarkdown($groupOpenid, $markdown, $keyboard = null, $msgId = n
     }
 }
 
+function sendGroupCard($groupOpenid, $title, $desc, $picUrl, $linkUrl, $msgId = null) {
+    $token = getBotAccessToken();
+
+    $body = [
+        'msg_type' => 8,
+        'card'     => [
+            'type'    => 'tuwen',
+            'content' => [
+                'title'       => $title,
+                'description' => $desc,
+                'pic_url'     => $picUrl,
+                'url'         => $linkUrl,
+            ],
+        ],
+        'msg_seq'  => 1,
+    ];
+    if ($msgId) $body['msg_id'] = $msgId;
+
+    $ch = curl_init("https://api.bot.qq.com/v2/groups/{$groupOpenid}/messages");
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER     => [
+            'Authorization: QQBot ' . $token,
+            'Content-Type: application/json',
+        ],
+        CURLOPT_POSTFIELDS     => json_encode($body, JSON_UNESCAPED_UNICODE),
+        CURLOPT_TIMEOUT        => 10,
+    ]);
+    $res      = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($httpCode !== 200) {
+        botLog("发送Card失败 HTTP{$httpCode}: {$res}");
+    }
+}
+
 function quickButton($label, $data, $style = 1) {
     return [
         'id'          => 'btn_' . substr(md5($data), 0, 8),
@@ -255,6 +293,48 @@ function loadWaifuDB() {
     return $db;
 }
 
+function loadWaifuTags() {
+    static $tagMap = null;
+    if ($tagMap !== null) return $tagMap;
+
+    $file = __DIR__ . '/../data/waifu-tags.json';
+    if (!file_exists($file)) {
+        botLog("waifuTags: 未找到 waifu-tags.json");
+        $tagMap = [];
+        return $tagMap;
+    }
+
+    $raw = file_get_contents($file);
+    $raw = ltrim($raw, "\xEF\xBB\xBF");
+    $data = json_decode($raw, true);
+    if (!$data) {
+        botLog("waifuTags: JSON解析失败 " . json_last_error_msg());
+        $tagMap = [];
+        return $tagMap;
+    }
+
+    $tagMap = [];
+    foreach (($data['dimensions'] ?? []) as $dim) {
+        foreach (($dim['tags'] ?? []) as $tag) {
+            $tagMap[$tag['id']] = $tag['name'];
+        }
+    }
+    botLog("waifuTags: 加载成功，共 " . count($tagMap) . " 个标签");
+    return $tagMap;
+}
+
+function translateTags($charTags) {
+    $map = loadWaifuTags();
+    $names = [];
+    foreach ($charTags as $dim => $tagObjs) {
+        foreach ($tagObjs as $t) {
+            $cn = $map[$t['id']] ?? $t['id'];
+            if (!in_array($cn, $names)) $names[] = $cn;
+        }
+    }
+    return $names;
+}
+
 function getCharTagIds($char, $dim) {
     if (!isset($char['tags'][$dim])) return [];
     $ids = [];
@@ -374,6 +454,7 @@ function formatWaifuChar($char, $match) {
         'name_native'  => $char['name_native'] ?? '',
         'source_anime' => $char['source_anime'] ?? '',
         'description'  => $char['description'] ?? '',
+        'image'        => $char['image'] ?? '',
         'tags'         => $char['tags'] ?? [],
         'match'        => $match,
     ];
@@ -435,25 +516,35 @@ function renderWaifuQuestion($q, $qIndex, $total) {
 }
 
 function renderWaifuResults($results) {
-    if (empty($results)) return ['markdown' => '匹配失败，请重试...', 'keyboard' => null];
+    if (empty($results)) return ['markdown' => '匹配失败，请重试...', 'keyboard' => null, 'card' => null];
 
     $top = $results[0];
-    $md = "## ✨ 测试完成！你的二次元老婆\n\n";
-    $md .= "### 🥇 {$top['name']}";
+    $imageUrl = '';
+
+    // Card for TOP 1
+    $card = [
+        'title'   => $top['name'],
+        'desc'    => ($top['source_anime'] ?? '') . ' · 匹配度 ' . $top['match'] . '%',
+        'pic_url' => $top['image'] ?? '',
+        'url'     => 'https://www.azureflame.cloud/quiz-waifu-3.html',
+    ];
+
+    $md  = "**{$top['name']}**";
     if ($top['name_native']) $md .= "（{$top['name_native']}）";
     $md .= "\n";
-    if ($top['source_anime']) $md .= "**{$top['source_anime']}** · ";
+    if ($top['source_anime']) $md .= "《{$top['source_anime']}》 · ";
     $md .= "匹配度 **{$top['match']}%**\n\n";
-    if ($top['description']) {
-        $desc = mb_substr($top['description'], 0, 120);
-        $md .= "{$desc}\n\n";
+
+    $tagNames = translateTags($top['tags']);
+    if (!empty($tagNames)) {
+        $md .= '属性：' . implode(' · ', array_slice($tagNames, 0, 6)) . "\n";
     }
 
     // TOP 2-5
     if (count($results) > 1) {
-        $md .= "---\n**备选结果：**\n";
+        $md .= "\n**备选结果：**\n";
         foreach (array_slice($results, 1) as $i => $r) {
-            $no = $i + 2;
+            $no  = $i + 2;
             $src = $r['source_anime'] ? " · *{$r['source_anime']}*" : '';
             $md .= "{$no}. **{$r['name']}**{$src}  —  {$r['match']}%\n";
         }
@@ -463,7 +554,7 @@ function renderWaifuResults($results) {
         [quickButton('再来一次', '/老婆测试', 1), linkButton('去网站测完整版', 'https://www.azureflame.cloud/quiz-waifu-3.html', 0)],
     ];
 
-    return ['markdown' => $md, 'keyboard' => buildKeyboard($buttons)];
+    return ['markdown' => $md, 'keyboard' => buildKeyboard($buttons), 'card' => $card];
 }
 
 function handleStartWaifuQuiz($memberOpenid, $groupOpenid, $msgId) {
@@ -523,13 +614,19 @@ function handleWaifuAnswer($memberOpenid, $groupOpenid, $msgId, $num) {
         $session['state'] = 'done';
         saveSessions($sessions);
 
-        sendGroupMessage($groupOpenid, '✨ 测试完成！正在进行智能匹配...', $msgId);
+        sendGroupMessage($groupOpenid, '✨ 测试完成！正在进行智能匹配...', $msgId, 1);
 
         $results = computeWaifuResults($session['answers']);
         $rendered = renderWaifuResults($results);
-        sendGroupMarkdown($groupOpenid, $rendered['markdown'], $rendered['keyboard'], $msgId);
 
-        // Clean up session
+        // Send TOP 1 card
+        if (!empty($rendered['card']['pic_url'])) {
+            sendGroupCard($groupOpenid, $rendered['card']['title'], $rendered['card']['desc'],
+                $rendered['card']['pic_url'], $rendered['card']['url'], $msgId);
+        }
+        // Send results markdown (msgSeq=2 to avoid collision with the card/text above)
+        sendGroupMarkdown($groupOpenid, $rendered['markdown'], $rendered['keyboard'], $msgId, 2);
+
         unset($sessions[$memberOpenid]);
         saveSessions($sessions);
         return;
@@ -537,14 +634,13 @@ function handleWaifuAnswer($memberOpenid, $groupOpenid, $msgId, $num) {
 
     saveSessions($sessions);
 
-    // Send next question
     $q = $questions[$session['current_q']];
     $rendered = renderWaifuQuestion($q, $session['current_q'] + 1, count($questions));
 
     $pos = mb_strpos($chosen['t'], ' — ');
     $ack = ($pos !== false) ? mb_substr($chosen['t'], 0, $pos) : $chosen['t'];
     sendGroupMessage($groupOpenid, "✅ 已选择「{$ack}」", $msgId);
-    sendGroupMarkdown($groupOpenid, $rendered['markdown'], $rendered['keyboard'], $msgId);
+    sendGroupMarkdown($groupOpenid, $rendered['markdown'], $rendered['keyboard'], $msgId, 2);
 }
 
 // ═══════════════════════════════════════════
@@ -689,6 +785,12 @@ function handleAtMessage($event) {
         return;
     }
 
+    // /老婆 (card + markdown, handled directly)
+    if (preg_match('#^/?(老婆|waifu|二次元老婆|随机角色)\s*$#i', $content)) {
+        handleRandomWaifuCard($groupOpenid, $msgId);
+        return;
+    }
+
     // Normal command routing
     $result = routeCommand($content);
 
@@ -779,11 +881,6 @@ function routeCommand($content) {
         $name = trim($m[2]);
         $name = mb_substr($name, 0, 10);
         return getGaokaoMarkdown($name);
-    }
-
-    // /老婆 (random waifu — quick version, no quiz)
-    if (preg_match('#^/?(老婆|waifu|二次元老婆|随机角色)\s*$#i', $content)) {
-        return getRandomWaifuMarkdown();
     }
 
     // Fallback guard
@@ -911,50 +1008,44 @@ function getGaokaoMarkdown($name) {
     return ['markdown' => $md, 'keyboard' => buildKeyboard($buttons)];
 }
 
-function getRandomWaifuMarkdown() {
+function handleRandomWaifuCard($groupOpenid, $msgId) {
     $db = loadWaifuDB();
     if (empty($db)) {
-        return '角色库读取失败，待我来修修……';
+        sendGroupMessage($groupOpenid, '角色库读取失败，待我来修修……', $msgId);
+        return;
     }
 
     $char = $db[array_rand($db)];
-    $name = $char['name'] ?? '不知名角色';
+    $name   = $char['name'] ?? '不知名角色';
     $native = $char['name_native'] ?? '';
     $source = $char['source_anime'] ?? '';
-    $desc = $char['description'] ?? '';
-    $tags = $char['tags'] ?? [];
+    $image  = $char['image'] ?? '';
+    $match  = rand(80, 98);
 
-    $tagLines = [];
-    foreach ($tags as $dim => $tagObjs) {
-        foreach ($tagObjs as $t) {
-            $tagLines[] = $t['id'];
-        }
+    // Card
+    $desc = $source ? "《{$source}》 · 匹配度 {$match}%" : "匹配度 {$match}%";
+    if (!empty($image)) {
+        sendGroupCard($groupOpenid, $name, $desc, $image,
+            'https://www.azureflame.cloud/quiz-waifu-3.html', $msgId);
     }
-    shuffle($tagLines);
-    $showTags = implode(' · ', array_slice($tagLines, 0, 6));
 
-    $match = rand(80, 98);
-
-    $md = "## ✨ 你的随缘老婆\n\n";
-    $md .= "### {$name}";
+    // Markdown details
+    $tagNames = translateTags($char['tags'] ?? []);
+    $md  = "**{$name}**";
     if ($native) $md .= "（{$native}）";
     $md .= "\n";
-    if ($source) $md .= "**{$source}** · ";
+    if ($source) $md .= "《{$source}》\n";
     $md .= "匹配度 **{$match}%**\n\n";
-    if ($desc) {
-        $md .= mb_substr($desc, 0, 100) . "\n\n";
-    }
-    if ($showTags) {
-        $md .= "属性：{$showTags}\n";
+    if (!empty($tagNames)) {
+        $md .= '属性：' . implode(' · ', array_slice($tagNames, 0, 8)) . "\n";
     }
 
-    $buttons = [[
-        quickButton('换一个', '/老婆', 3),
-        quickButton('做完整测试', '/老婆测试', 1),
-        linkButton('去网站测', 'https://www.azureflame.cloud/quiz-waifu-3.html', 0),
-    ]];
+    $buttons = [
+        [quickButton('换一个', '/老婆', 3), quickButton('做完整测试', '/老婆测试', 1)],
+        [linkButton('去网站测', 'https://www.azureflame.cloud/quiz-waifu-3.html', 0)],
+    ];
 
-    return ['markdown' => $md, 'keyboard' => buildKeyboard($buttons)];
+    sendGroupMarkdown($groupOpenid, $md, buildKeyboard($buttons), $msgId, 2);
 }
 
 function getStats() {
