@@ -71,13 +71,27 @@ function sendGroupMarkdown($groupOpenid, $markdown, $keyboard = null, $msgId = n
     }
 }
 
-function sendGroupImage($groupOpenid, $imageUrl, $msgId = null, $msgSeq = 1) {
+function sendGroupImage($groupOpenid, $charId, $match, $msgId = null, $msgSeq = 1) {
     $token = getBotAccessToken();
 
-    // Step 1: 上传图片文件到 QQ（URL 模式）
+    // 先触发生成海报（内部 curl 调用 poster.php，确保缓存 PNG 已就绪）
+    $genUrl = "https://www.azureflame.cloud/api/poster.php?id={$charId}&match={$match}";
+    $ch = curl_init($genUrl);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 15,
+    ]);
+    curl_exec($ch);
+    $genCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    // 直接引用缓存 PNG（必须有 .png 后缀，QQ 才会识别为图片）
+    $pngUrl = "https://www.azureflame.cloud/data/cache/posters/waifu_{$charId}_{$match}.png";
+
+    // Step 1: URL 上传（QQ File Upload API）
     $uploadBody = json_encode([
         'file_type' => 1,
-        'url'       => $imageUrl,
+        'url'       => $pngUrl,
     ], JSON_UNESCAPED_UNICODE);
 
     $ch = curl_init("https://api.bot.qq.com/v2/groups/{$groupOpenid}/files");
@@ -107,7 +121,7 @@ function sendGroupImage($groupOpenid, $imageUrl, $msgId = null, $msgSeq = 1) {
         return false;
     }
 
-    // Step 2: 发 msg_type=7 媒体消息
+    // Step 2: 发送媒体消息
     $sendBody = [
         'msg_type' => 7,
         'media'    => ['file_info' => $fileInfo],
@@ -544,10 +558,9 @@ function renderWaifuQuestion($q, $qIndex, $total) {
 }
 
 function renderWaifuResults($results) {
-    if (empty($results)) return ['markdown' => '匹配失败，请重试...', 'keyboard' => null, 'poster_url' => ''];
+    if (empty($results)) return ['markdown' => '匹配失败，请重试...', 'keyboard' => null, 'top_id' => 0, 'top_match' => 0];
     $top = $results[0];
 
-    // Poster URL
     $posterUrl = 'https://www.azureflame.cloud/api/poster.php?id='
                . ($top['id'] ?? 0) . '&match=' . $top['match'];
 
@@ -576,7 +589,7 @@ function renderWaifuResults($results) {
         [quickButton('再来一次', '/老婆测试', 1), linkButton('去网站测完整版', 'https://www.azureflame.cloud/quiz-waifu-3.html', 0)],
     ];
 
-    return ['markdown' => $md, 'keyboard' => buildKeyboard($buttons), 'poster_url' => $posterUrl];
+    return ['markdown' => $md, 'keyboard' => buildKeyboard($buttons), 'top_id' => $top['id'] ?? 0, 'top_match' => $top['match']];
 }
 
 function handleStartWaifuQuiz($memberOpenid, $groupOpenid, $msgId) {
@@ -640,9 +653,8 @@ function handleWaifuAnswer($memberOpenid, $groupOpenid, $msgId, $num) {
         $results = computeWaifuResults($session['answers']);
         $rendered = renderWaifuResults($results);
 
-        // Send poster image
-        if (!empty($rendered['poster_url'])) {
-            sendGroupImage($groupOpenid, $rendered['poster_url'], $msgId, 2);
+        if (!empty($rendered['top_id'])) {
+            sendGroupImage($groupOpenid, $rendered['top_id'], $rendered['top_match'], $msgId, 2);
         }
         sendGroupMarkdown($groupOpenid, $rendered['markdown'], $rendered['keyboard'], $msgId, 3);
 
@@ -1045,9 +1057,7 @@ function handleRandomWaifuCard($groupOpenid, $msgId) {
     $match  = rand(80, 98);
 
     // Send poster image
-    $posterUrl = 'https://www.azureflame.cloud/api/poster.php?id='
-               . ($char['id'] ?? 0) . '&match=' . $match;
-    sendGroupImage($groupOpenid, $posterUrl, $msgId, 1);
+    sendGroupImage($groupOpenid, $char['id'] ?? 0, $match, $msgId, 1);
 
     // Markdown details
     $tagNames = translateTags($char['tags'] ?? []);
