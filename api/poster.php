@@ -165,7 +165,12 @@ if (file_exists($avatarFile)) {
         }
 
         $avX = (int) (($W - $thumbW) / 2);
-        $avY = 20;
+        $avY = 30;
+
+        // 紫色光晕圈
+        $glow = imagecolorallocatealpha($img, 160, 100, 230, 60);
+        imagefilledellipse($img, (int)($avX + $thumbW/2), (int)($avY + $thumbH/2), $thumbW + 20, $thumbH + 20, $glow);
+
         imagecopy($img, $thumb, $avX, $avY, 0, 0, $thumbW, $thumbH);
         imagedestroy($thumb);
         imagedestroy($mask);
@@ -174,7 +179,7 @@ if (file_exists($avatarFile)) {
 }
 
 // ═══ 文字排版 ═══
-$textY = 310;
+$textY = 320;
 
 if ($fontPath) {
     // 装饰分隔线
@@ -215,45 +220,48 @@ if ($fontPath) {
     imagettftext($img, $matchSize, 0, (int)(($W - $matchW) / 2), $textY + 10, $pink, $fontPath, $matchText);
     $textY += 60;
 
-    // 标签泡泡
+    // 标签泡泡（圆角椭圆）
     $tagX    = 30;
-    $tagRowH = 38;
+    $tagRowH = 36;
     foreach ($tagNames as $tag) {
-        $tagSize = 14;
+        $tagSize = 13;
         $tagBox  = imagettfbbox($tagSize, 0, $fontPath, $tag);
-        $tw      = $tagBox[2] - $tagBox[0] + 22;
-        $th      = $tagBox[1] - $tagBox[7] + 16;
+        $tw      = $tagBox[2] - $tagBox[0] + 20;
+        $th      = $tagBox[1] - $tagBox[7] + 12;
 
         if ($tagX + $tw > $W - 30) {
             $tagX  = 30;
             $textY += $tagRowH;
         }
 
-        imagefilledrectangle($img, (int)$tagX, (int)$textY, (int)($tagX + $tw), (int)($textY + $th), $tagBg);
-        imagerectangle($img, (int)$tagX, (int)$textY, (int)($tagX + $tw), (int)($textY + $th), $tagBorder);
-        imagettftext($img, $tagSize, 0, (int)($tagX + 11), (int)($textY + $th - 7), $white, $fontPath, $tag);
-        $tagX += $tw + 8;
+        // 圆角椭圆底
+        imagefilledellipse($img, (int)($tagX + $tw/2), (int)($textY + $th/2), $tw, $th, $tagBg);
+        imageellipse($img, (int)($tagX + $tw/2), (int)($textY + $th/2), $tw, $th, $tagBorder);
+        // 填充中心，修正椭圆视觉
+        imagefilledrectangle($img, (int)($tagX + $tw/4), (int)$textY, (int)($tagX + $tw*3/4), (int)($textY + $th), $tagBg);
+
+        imagettftext($img, $tagSize, 0, (int)($tagX + 10), (int)($textY + $th - 6), $white, $fontPath, $tag);
+        $tagX += $tw + 10;
     }
 
     // ═══ 底部品牌 ═══
     $footerY = 720;
-    imageline($img, 150, $footerY, $W - 150, $footerY, $lightPurp);
 
-    $brandText = '🧹 霧雨魔法店';
+    $brandText = '霧雨魔法店';
     $brandSize = 18;
     $brandBox  = imagettfbbox($brandSize, 0, $fontPath, $brandText);
     $brandW    = $brandBox[2] - $brandBox[0];
-    imagettftext($img, $brandSize, 0, (int)(($W - $brandW) / 2), $footerY + 35, $gold, $fontPath, $brandText);
+    imagettftext($img, $brandSize, 0, (int)(($W - $brandW) / 2), $footerY + 30, $gold, $fontPath, $brandText);
 
     $urlText = 'www.azureflame.cloud';
     $urlSize = 14;
     $urlBox  = imagettfbbox($urlSize, 0, $fontPath, $urlText);
     $urlW    = $urlBox[2] - $urlBox[0];
-    imagettftext($img, $urlSize, 0, (int)(($W - $urlW) / 2), $footerY + 58, $gray, $fontPath, $urlText);
+    imagettftext($img, $urlSize, 0, (int)(($W - $urlW) / 2), $footerY + 55, $gray, $fontPath, $urlText);
 
     // 星星
-    imagettftext($img, 16, 0, 120, $footerY + 2, $gold, $fontPath, '★');
-    imagettftext($img, 16, 0, $W - 140, $footerY + 2, $gold, $fontPath, '★');
+    imagettftext($img, 14, 0, 100, $footerY + 2, $gold, $fontPath, '★');
+    imagettftext($img, 14, 0, $W - 120, $footerY + 2, $gold, $fontPath, '★');
 
 } else {
     // 无字体 fallback
