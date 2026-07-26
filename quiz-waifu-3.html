@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>测测你的二次元老婆 · 正式鉴定 · 霧雨魔法店</title>
+
+<style>
+.intro-badge { border-color: rgba(124,77,255,.35); color: #9b7cff; }
+.btn-main { background: linear-gradient(135deg, #7c4dff, #e04080); color: #fff; }
+.btn-main:hover { filter: brightness(1.12); }
+.progress-fill { background: linear-gradient(90deg, #e04080, #7c4dff); }
+
+/* ── DB加载状态 ── */
+.db-status { font-size: 11px; color: var(--muted); text-align: center; margin-bottom: 10px; }
+
+/* ── 层标识 ── */
+.layer-badge {
+  display: inline-block; font-size: 10px; letter-spacing: 2px;
+  color: var(--purple); border: 1px solid var(--purple-dim);
+  border-radius: 10px; padding: 3px 10px; margin-bottom: 10px;
+}
+
+/* ── 结果页 ── */
+.result-top1 { text-align: center; margin-bottom: 24px; }
+.top1-img-wrap {
+  width: 140px; height: 140px; border-radius: 50%; margin: 0 auto 14px;
+  overflow: hidden; border: 4px solid var(--purple);
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  animation: popIn .5s cubic-bezier(.2,1.4,.4,1);
+}
+.top1-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.top1-fallback {
+  width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 50px; font-weight: 900; color: rgba(255,255,255,.5);
+  background: linear-gradient(135deg, #2a2040, #4a3060);
+}
+.top1-name { font-size: 30px; font-weight: 800; background: linear-gradient(135deg, #e04080, #7c4dff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 2px; }
+.top1-source { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.top1-match {
+  display: inline-block; font-size: 28px; font-weight: 900; color: var(--purple);
+  margin-bottom: 8px;
+}
+
+.top2to5 { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.top2to5-item {
+  background: rgba(255,255,255,.02); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 10px;
+  transition: all .2s;
+}
+.top2to5-item:hover { border-color: var(--purple-dim); }
+.top2to5-rank {
+  font-size: 18px; font-weight: 900; color: var(--purple-dim);
+  min-width: 28px; text-align: center;
+}
+.top2to5-img {
+  width: 48px; height: 48px; border-radius: 50%; object-fit: cover;
+  border: 2px solid var(--border);
+}
+.top2to5-fallback {
+  width: 48px; height: 48px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700; color: rgba(255,255,255,.4);
+  background: linear-gradient(135deg, #2a2040, #3a2850);
+  border: 2px solid var(--border);
+}
+.top2to5-info { flex: 1; min-width: 0; }
+.top2to5-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top2to5-src { font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top2to5-pct { font-size: 16px; font-weight: 800; color: var(--purple); }
+
+/* ── 海报 ── */
+.poster-wrap { text-align: center; }
+.poster-img {
+  width: 100%; max-width: 320px; border-radius: 16px;
+  border: 1px solid var(--border); box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  margin: 0 auto 14px;
+}
+.poster-hint { font-size: 11px; color: var(--muted); margin-bottom: 16px; line-height: 1.7; }
+.disclaimer { font-size: 9px; color: var(--muted); margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--border); text-align: center; line-height: 1.6; }
+
+<
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="js/utils.js"></script>
+<script src="js/reveal-screen.js"></script>
+<script src="js/quiz-storage.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/result-footer.js"></script>
+<script src="js/canvas-utils.js"></script>
+<script src="nav.js"></script>
+<script src="data/waifu-db-zh.js"></script>
+
+<div class="container" id="app"></div>
+
+<script>
+var state = 'intro';
+var idx = 0;
+var answers = [];
+var results = null;
+var characterDB = null;
+var STORAGE_KEY = 'quiz_waifu3_v1';
+var TRACK_KEY = 'waifu3_take';
+
+var QUIZ_TITLE = '测测你的二次元老婆 · 正式鉴定';
+var QUIZ_SUBTITLE = '14 维标签体系 × 500 角色数据库 × 4 层渐进筛选\n基于 AniList 热门角色 — 真正的灵魂匹配';
+var BADGE_TEXT = '霧雨魔法店 · 正式鉴定';
+var SITE_URL = 'www.azureflame.cloud';
+var QR_IMG = 'images/qr-code.png';
+var QQ_IMG = 'images/qq-group.png';
+var QQ_GROUP = '702973928';
+var POSTER_W = 640;
+var POSTER_H = 960;
+
+var QUESTIONS = [
+  // ═══ LAYER 1 (3题 · 硬过滤) ═══
+  { q:'你偏好哪种性格气质？', layer:1, dim:'personality', opts:[
+    { t:'温柔治愈 — 善解人意，给人安心感', tags:['gentle'] },
+    { t:'傲娇反差 — 表面冷淡心里火热', tags:['tsundere'] },
+    { t:'元气活泼 — 精力充沛，带动气氛', tags:['genki','airhead'] },
+    { t:'冷傲神秘 — 话少但有深度、有故事', tags:['kuudere','mysterious'] },
+    { t:'成熟可靠 — 理性担当，像姐姐一样', tags:['mature'] },
+    { t:'强势执着 — 极致人格、危险又迷人', tags:['queen','yandere','cold'] }
+  ]},
+  { q:'你偏好什么年龄段（外表）？', layer:1, dim:'age_visual', opts:[
+    { t:'萝莉型 — 娇小可爱，让人想保护', tags:['age_v_loli'] },
+    { t:'少女型 — 青春年华，最经典的二次元', tags:['age_v_teen'] },
+    { t:'御姐型 — 成熟魅力，气场全开', tags:['age_v_mature'] },
+    { t:'不太在意 — 觉得感觉对了就好', tags:['age_v_loli','age_v_teen','age_v_mature'] }
+  ]},
+  { q:'你偏好什么样的作品氛围？', layer:1, dim:'series_tone', opts:[
+    { t:'热血战斗 — 燃到爆炸的世界', tags:['tone_battle'] },
+    { t:'恋爱日常 — 甜蜜温馨的校园', tags:['tone_romance'] },
+    { t:'黑暗深沉 — 有代价的世界观', tags:['tone_dark','tone_survival'] },
+    { t:'治愈温情 — 温暖慢节奏', tags:['tone_healing'] },
+    { t:'搞笑欢乐 — 每天都有乐子', tags:['tone_comedy'] },
+    { t:'科幻奇幻 — 超越现实', tags:['tone_scifi'] }
+  ]},
+
+  // ═══ LAYER 2 (4题 · 硬过滤) ═══
+  { q:'你偏好什么身份设定？', layer:2, dim:'role', opts:[
+    { t:'学生/校园 — 青春的校园生活', tags:['student','transfer','class_officer'] },
+    { t:'战士/战斗系 — 并肩作战的英姿', tags:['warrior','assassin'] },
+    { t:'偶像/艺人 — 聚光灯下的她', tags:['idol'] },
+    { t:'魔法/异能者 — 超越常人的力量', tags:['mage','godly'] },
+    { t:'贵族/大小姐 — 高贵优雅', tags:['noble'] },
+    { t:'职场/社会人 — 独立成熟', tags:['office_lady','scientist','detective'] }
+  ]},
+  { q:'你偏好什么样的相处模式？', layer:2, dim:'relationship', opts:[
+    { t:'她依靠你 — 你是她的港湾', tags:['rel_dependent'] },
+    { t:'并肩作战 — 恋人就是战友', tags:['rel_equal'] },
+    { t:'她引领你 — 她有你想要的力量', tags:['rel_leader'] },
+    { t:'她治愈你 — 温暖你的心', tags:['rel_healer'] },
+    { t:'轻松搭子 — 各自安好有默契', tags:['rel_buddy'] }
+  ]},
+  { q:'你偏好什么样的沟通风格？', layer:2, dim:'communication', opts:[
+    { t:'直接坦率 — 有什么说什么', tags:['comm_frank'] },
+    { t:'含蓄内敛 — 话不多但走心', tags:['comm_reserved'] },
+    { t:'毒舌吐槽 — 犀利幽默日常', tags:['comm_snarky'] },
+    { t:'寡言少语 — 静静的陪伴', tags:['comm_silent'] },
+    { t:'甜美可爱 — 声音甜到心里', tags:['comm_sweet'] },
+    { t:'理性冷静 — 沟通高效', tags:['comm_rational'] }
+  ]},
+  { q:'你更看重什么样的价值观？', layer:2, dim:'values', opts:[
+    { t:'正义秩序 — 是非分明', tags:['val_justice'] },
+    { t:'自由不羁 — 不被束缚', tags:['val_freedom'] },
+    { t:'善良利他 — 愿为他人付出', tags:['val_kindness'] },
+    { t:'守护奉献 — 愿为重要之人牺牲', tags:['val_protective'] },
+    { t:'独立自主 — 坚定的自我', tags:['val_independent'] }
+  ]},
+
+  // ═══ LAYER 3 (4题 · 软加权) ═══
+  { q:'你偏好什么发色？', layer:3, dim:'hair', opts:[
+    { t:'黑发 / 深色 — 东方经典', tags:['hair_black','hair_brown'] },
+    { t:'白毛 / 银发 — 清冷仙气', tags:['hair_white'] },
+    { t:'金发 — 耀眼洋气', tags:['hair_blonde'] },
+    { t:'红粉系 — 热情可爱', tags:['hair_red'] },
+    { t:'蓝/紫/绿 — 冷静神秘', tags:['hair_blue','hair_purple','hair_green'] },
+    { t:'不太在意发色', tags:[] }
+  ]},
+  { q:'你偏好什么身材肤色？', layer:3, dim:'body', opts:[
+    { t:'纤细/贫乳 — 萝莉体型', tags:['body_petite','body_slim','body_loli_height'] },
+    { t:'丰满/巨乳 — 傲人曲线', tags:['body_busty'] },
+    { t:'高挑修长 — 御姐身材', tags:['body_tall'] },
+    { t:'白皙皮肤 — 瓷娃娃般', tags:['skin_pale'] },
+    { t:'小麦/黑皮 — 健康活力', tags:['skin_tanned'] },
+    { t:'不太在意身材肤色', tags:[] }
+  ]},
+  { q:'你喜欢什么样的瞳色？', layer:3, dim:'eye', opts:[
+    { t:'红瞳 — 危险魅惑', tags:['eye_red'] },
+    { t:'蓝/青瞳 — 冷静清澈', tags:['eye_blue'] },
+    { t:'紫瞳 — 神秘高贵', tags:['eye_purple'] },
+    { t:'金瞳 — 威严神性', tags:['eye_gold'] },
+    { t:'棕/黑瞳 — 自然邻家', tags:['eye_brown'] },
+    { t:'不太在意瞳色', tags:[] }
+  ]},
+  { q:'你喜欢什么服装风格？', layer:3, dim:'wardrobe', opts:[
+    { t:'校服/制服 — 青春感', tags:['cloth_uniform'] },
+    { t:'战斗装/铠甲 — 英姿飒爽', tags:['cloth_armor'] },
+    { t:'和风/巫女服 — 东方美', tags:['cloth_kimono'] },
+    { t:'优雅礼服 — 高贵动人', tags:['cloth_elegant'] },
+    { t:'休闲便服 — 自然舒适', tags:['cloth_casual'] },
+    { t:'哥特/暗黑 — 独特气质', tags:['cloth_gothic'] }
+  ]},
+
+  // ═══ LAYER 4 (2题 · 精排) ═══
+  { q:'这么多特质里，你觉得最重要的是？', layer:4, dim:'priority', opts:[
+    { t:'性格契合 — 脾气要对', weightDims:['personality'] },
+    { t:'外貌吸引 — 看着要心动', weightDims:['hair','body','eye','wardrobe','expression'] },
+    { t:'相处舒适 — 在一起要舒服', weightDims:['relationship','communication','values'] },
+    { t:'世界观共鸣 — 来自对的作品', weightDims:['series_tone','role'] }
+  ]},
+  { q:'有没有绝对不能接受的？', layer:4, dim:'penalty', opts:[
+    { t:'病娇/危险人格 — 太可怕', penaltyTags:['yandere','cold'] },
+    { t:'太黏人 — 需要独立空间', penaltyTags:['imouto','rel_dependent'] },
+    { t:'太冷淡 — 像隔着墙', penaltyTags:['no_expression','kuudere','comm_silent'] },
+    { t:'黑暗残酷背景 — 怕虐', penaltyTags:['tone_dark','tone_survival'] },
+    { t:'特殊外形(兽耳等) — 不习惯', penaltyTags:['sp_nekomimi','sp_tail','sp_horn','sp_wings','sp_inhuman'] },
+    { t:'没什么特别不能接受的', penaltyTags:[] }
+  ]}
+];
+
+var LOADING_STEPS = [
+  '正在加载 500 角色数据库…',
+  '第 1 层筛选：性格 + 年龄 + 世界观…',
+  '第 2 层筛选：身份 + 相处模式 + 沟通…',
+  '第 3 层细筛：外貌匹配度计算…',
+  '第 4 层精排：加权排序中…',
+  '鉴定完成！'
+];
+var SHARE_TEXT = '我在霧雨魔法店测出的二次元老婆 TOP 1 是【{name}】！500 角色数据库 + 4 层精准筛选，你也来测：';
+
+// ── 渲染 ──
+function render() {
+  toggleAds(state);
+  var app = document.getElementById('app');
+  if (!app) return;
+  if (state === 'intro') renderIntro(app);
+  else if (state === 'quiz') renderQuestion(app);
+  else if (state === 'loading') renderLoading(app);
+  else if (state === 'result') renderResult(app);
+  else if (state === 'poster') renderPoster(app);
+}
+
+function renderIntro(app) {
+  var resumeHTML = resumeButton(STORAGE_KEY, '继续上次测试') || '';
+  app.innerHTML =
+    '<div class="intro">' +
+    '<div class="intro-badge">' + BADGE_TEXT + '</div>' +
+    '<h1>' + QUIZ_TITLE + '</h1>' +
+    '<p class="sub" style="white-space:pre-line;">' + QUIZ_SUBTITLE + '</p>' +
+    '<p style="font-size:11px;color:var(--muted);margin-bottom:8px;" id="takeCount"></p>' +
+    resumeHTML +
+    '<button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="startQuiz()">开始鉴定 →</button>' +
+    '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+    '</div>';
+  bindCount('takeCount', {template:'已有 {n} 人完成鉴定'});
+}
+
+function startQuiz() {
+  trackStart(TRACK_KEY);
+  characterDB = window.WAIFU_DB;
+  state = 'quiz'; idx = 0; answers = []; results = null;
+  quizClear(STORAGE_KEY);
+  render();
+}
+
+function resumeQuiz() {
+  var d = quizLoad(STORAGE_KEY);
+  if (!d || d.idx <= 0) return;
+  state = 'quiz'; idx = d.idx; answers = d.answers || []; results = null;
+  render();
+}
+
+function getLayerLabel(q) {
+  if (q.layer === 1) return '<span class="layer-badge">第 1 层 · 粗筛</span>';
+  if (q.layer === 2) return '<span class="layer-badge">第 2 层 · 中筛</span>';
+  if (q.layer === 3) return '<span class="layer-badge">第 3 层 · 细筛</span>';
+  if (q.layer === 4) return '<span class="layer-badge">第 4 层 · 精排</span>';
+  return '';
+}
+
+function renderQuestion(app) {
+  if (idx >= QUESTIONS.length) { state = 'loading'; render(); return; }
+  var q = QUESTIONS[idx];
+  var pct = Math.round((idx / QUESTIONS.length) * 100);
+  var labels = 'ABCDEFGH';
+  var html =
+    (idx > 0 ? '<button class="btn-back" onclick="goBack()" style="display:block;margin:0 auto;">← 上一题</button>' : '') +
+    '<div class="progress-wrap">' +
+    '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+    '<div class="progress-text">' + (idx + 1) + ' / ' + QUESTIONS.length + '</div>' +
+    '</div>' +
+    getLayerLabel(q) +
+    '<div class="q-num">第 ' + (idx + 1) + ' 问</div>' +
+    '<div class="q-text">' + q.q + '</div>' +
+    '<div class="options">';
+  for (var i = 0; i < q.opts.length; i++) {
+    html +=
+      '<button class="opt-btn" onclick="answer(' + i + ')">' +
+      '<span class="opt-letter">' + (labels[i] || '?') + '</span>' +
+      q.opts[i].t +
+      '</button>';
+  }
+  html += '</div>';
+  app.innerHTML = html;
+}
+
+function answer(choice) {
+  answers.push({ idx: idx, choice: choice, dim: QUESTIONS[idx].dim, tags: QUESTIONS[idx].opts[choice].tags, layer: QUESTIONS[idx].layer, weightDims: QUESTIONS[idx].opts[choice].weightDims, penaltyTags: QUESTIONS[idx].opts[choice].penaltyTags });
+  idx++;
+  quizSave(STORAGE_KEY, { idx: idx, answers: answers });
+  if (idx < QUESTIONS.length) { render(); return; }
+  state = 'loading';
+  render();
+}
+
+function goBack() {
+  if (idx <= 0 || answers.length === 0) return;
+  idx--; answers.pop();
+  quizSave(STORAGE_KEY, { idx: idx, answers: answers });
+  render();
+}
+
+// ── 加载动画 ──
+function renderLoading(app) {
+  app.innerHTML =
+    '<div class="loading-wrap">' +
+    '<div class="loading-orb"></div>' +
+    '<p class="loading-text" id="ltxt">' + LOADING_STEPS[0] + '</p>' +
+    '</div>';
+  cycleLoading(1);
+}
+
+async function cycleLoading(i) {
+  if (i >= LOADING_STEPS.length) {
+    await sleep(600);
+    results = computeResults();
+    if (!results || results.length === 0) {
+      state = 'result';
+      render();
+      return;
+    }
+    var top = results[0];
+    showReveal('🔮 二次元鉴定完成', top.name, '#e04080', '500 角色数据库中精准匹配…', function() {
+      state = 'result';
+      render();
+    });
+    return;
+  }
+  await sleep(400 + Math.random() * 400);
+  var lt = document.getElementById('ltxt');
+  if (lt) lt.textContent = LOADING_STEPS[i];
+  cycleLoading(i + 1);
+}
+
+// ── 核心匹配引擎（4 级渐进放宽 + 兜底随机）──
+function computeResults() {
+  if (!characterDB || characterDB.length === 0) return [];
+
+  var l1Answers = answers.filter(function(a) { return a.layer === 1; });
+  var l2Answers = answers.filter(function(a) { return a.layer === 2; });
+  var l3Answers = answers.filter(function(a) { return a.layer === 3; });
+  var l4Answers = answers.filter(function(a) { return a.layer === 4; });
+  var q12 = l4Answers[0] || null;
+  var q13 = l4Answers[1] || null;
+
+  // Level 0: 严格模式 — L1+L2 硬过滤 + L3 软加权
+  var r = matchAndScore(l1Answers.concat(l2Answers), l3Answers, q12, q13, characterDB);
+  if (r.length >= 3) return r.slice(0, 5);
+
+  // Level 1: 放宽 — 仅 L1 硬过滤，L2+L3 都转软加权
+  r = matchAndScore(l1Answers, l2Answers.concat(l3Answers), q12, q13, characterDB);
+  if (r.length >= 3) return r.slice(0, 5);
+
+  // Level 2: 再放宽 — 全部软加权，无硬过滤
+  r = matchAndScore([], l1Answers.concat(l2Answers, l3Answers), q12, q13, characterDB);
+  if (r.length >= 3) return r.slice(0, 5);
+
+  // Level 3: 究极兜底 — 纯随机排名
+  var shuffled = characterDB.slice().sort(function() { return Math.random() - 0.5; });
+  return shuffled.slice(0, 5).map(function(c, i) { return fmtChar(c, 93 - i * 4); });
+}
+
+function matchAndScore(hardFilters, softFilters, q12, q13, pool) {
+  // 硬过滤
+  var passed = pool.filter(function(char) {
+    for (var i = 0; i < hardFilters.length; i++) {
+      var a = hardFilters[i];
+      if (!a.tags || a.tags.length === 0) continue;
+      if (!hasAny(getTagIds(char, a.dim), a.tags)) return false;
+    }
+    return true;
+  });
+
+  // 软加权打分
+  var scored = passed.map(function(char) {
+    var score = 0;
+    for (var i = 0; i < softFilters.length; i++) {
+      var a = softFilters[i];
+      if (!a.tags || a.tags.length === 0) continue;
+      var ct = getTagIds(char, a.dim);
+      for (var j = 0; j < a.tags.length; j++) {
+        if (ct.indexOf(a.tags[j]) !== -1) score += 1;
+      }
+    }
+    return { char: char, score: score };
+  });
+
+  // Q12 加权 + Q13 惩罚
+  scored.forEach(function(item) {
+    if (q12 && q12.weightDims) {
+      var allAns = hardFilters.concat(softFilters);
+      for (var i = 0; i < allAns.length; i++) {
+        var a = allAns[i];
+        if (!a || !a.tags || a.tags.length === 0) continue;
+        if (q12.weightDims.indexOf(a.dim) !== -1) {
+          var ct = getTagIds(item.char, a.dim);
+          for (var j = 0; j < a.tags.length; j++) {
+            if (ct.indexOf(a.tags[j]) !== -1) item.score += 2;
+          }
+        }
+      }
+    }
+    if (q13 && q13.penaltyTags && q13.penaltyTags.length > 0) {
+      for (var dim in item.char.tags) {
+        var ct = item.char.tags[dim].map(function(t) { return t.id; });
+        for (var k = 0; k < q13.penaltyTags.length; k++) {
+          if (ct.indexOf(q13.penaltyTags[k]) !== -1) item.score -= 2;
+        }
+      }
+    }
+  });
+
+  scored.sort(function(a, b) { return b.score - a.score; });
+  if (scored.length === 0) return [];
+  var max = scored[0].score;
+  return scored.map(function(item) {
+    var pct = max > 0 ? Math.round(80 + (Math.max(0, item.score) / Math.max(1, max)) * 18) : 80;
+    return fmtChar(item.char, pct);
+  });
+}
+
+function getTagIds(char, dim) {
+  return (char.tags && char.tags[dim]) ? char.tags[dim].map(function(t) { return t.id; }) : [];
+}
+
+function fmtChar(char, match) {
+  return {
+    id: char.id, name: char.name, name_native: char.name_native,
+    image: char.image, description: char.description,
+    source_anime: char.source_anime, tags: char.tags, match: match
+  };
+}
+
+function hasAny(charTags, answerTags) {
+  for (var i = 0; i < answerTags.length; i++) {
+    if (charTags.indexOf(answerTags[i]) !== -1) return true;
+  }
+  return false;
+}
+
+// ── 结果页 ──
+function renderResult(app) {
+  if (!results || results.length === 0) {
+    app.innerHTML = '<div class="intro"><p>出错了，请重试。</p><button class="btn btn-main" onclick="restart()">重试</button></div>';
+    return;
+  }
+  var top1 = results[0];
+  var rest = results.slice(1, 5);
+  var html = '';
+
+  // TOP 1
+  html +=
+    '<div class="result-top1">' +
+    '<div class="result-label">霧雨魔法店 · 鉴定结果</div>' +
+    '<div style="position:relative;display:inline-block;">' +
+    '<div class="top1-img-wrap">' +
+    '<img src="' + top1.image + '" alt="' + top1.name + '" ' +
+    'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+    '<div class="top1-fallback" style="display:none;">' + (top1.name||'?').charAt(0) + '</div>' +
+    '</div>' +
+    '</div>' +
+    '<div class="top1-name">' + top1.name + '</div>' +
+    '<div class="top1-source">' + (top1.source_anime || '') + '</div>' +
+    '<div class="top1-match">匹配度 ' + top1.match + '%</div>' +
+    '<div class="result-desc">' + (top1.description || '').slice(0, 280) + '</div>' +
+    '</div>';
+
+  // TOP 2-5
+  if (rest.length > 0) {
+    html += '<div class="result-label" style="margin-bottom:10px;">其他高匹配结果</div><div class="top2to5">';
+    for (var i = 0; i < rest.length; i++) {
+      var c = rest[i];
+      html +=
+        '<div class="top2to5-item">' +
+        '<div class="top2to5-rank">#' + (i + 2) + '</div>' +
+        '<img class="top2to5-img" src="' + c.image + '" alt="' + c.name + '" ' +
+        'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+        '<div class="top2to5-fallback" style="display:none;">' + (c.name||'?').charAt(0) + '</div>' +
+        '<div class="top2to5-info">' +
+        '<div class="top2to5-name">' + c.name + '</div>' +
+        '<div class="top2to5-src">' + (c.source_anime || '') + '</div>' +
+        '</div>' +
+        '<div class="top2to5-pct">' + c.match + '%</div>' +
+        '</div>';
+    }
+    html += '</div>';
+  }
+
+  html +=
+    '<button class="btn btn-main" onclick="shareImage()">📸 生成分享海报</button>' +
+    '<button class="btn btn-ghost" onclick="shareIt()">📋 复制结果文案</button>' +
+    '<button class="btn btn-ghost" onclick="restart()">🔄 再来一次</button>' +
+    '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+    resultFooterHTML({notice:'霧雨魔法店 · 基于 500 角色数据库 · 结果仅供参考'}) +
+    '<div class="disclaimer">⚠️ 本鉴定基于标签匹配引擎，匹配结果可能因标签覆盖度而有偏差。数据来源：AniList。</div>';
+
+  app.innerHTML = html;
+}
+
+function shareIt() {
+  var name = (results && results[0]) ? results[0].name : '';
+  var text = SHARE_TEXT.replace('{name}', name) + ' ' + window.location.href;
+  copyToClipboard(text, '已复制！发给朋友试试 🔮');
+}
+
+function restart() {
+  state = 'intro'; idx = 0; answers = []; results = null; render();
+}
+
+// ── 海报 ──
+function shareImage() { state = 'poster'; render(); }
+
+function renderPoster(app) {
+  app.innerHTML =
+    '<div class="poster-wrap">' +
+    '<div class="result-label" style="margin-bottom:14px;">长按图片保存 / 分享</div>' +
+    '<img class="poster-img" id="posterImg" alt="分享海报" style="display:none;">' +
+    '<div class="loading-wrap" id="posterLoading" style="padding:24px 0;">' +
+    '<div class="loading-orb"></div>' +
+    '<p class="loading-text">正在生成海报…</p>' +
+    '</div>' +
+    '<p class="poster-hint">手机长按上图即可保存到相册；电脑可点下方按钮下载。</p>' +
+    '<a class="btn btn-main" id="posterDl" download="二次元老婆鉴定结果.png" style="display:none;">⬇️ 下载海报</a>' +
+    '<button class="btn btn-ghost" onclick="state=\'result\';render();">← 返回结果</button>' +
+    '</div>';
+  buildPoster();
+}
+
+async function buildPoster() {
+  var r = results[0];
+  if (!r) return;
+  var W = POSTER_W, H = POSTER_H;
+  var cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  var ctx = cv.getContext('2d');
+
+  ctx.fillStyle = '#16121a'; ctx.fillRect(0, 0, W, H);
+  var g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, 'rgba(224,64,128,.06)');
+  g.addColorStop(1, 'rgba(124,77,255,.06)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  var pad = 40;
+  ctx.fillStyle = '#201a26';
+  roundRect(ctx, pad, pad, W - pad * 2, H - pad * 2, 28); ctx.fill();
+
+  var bar = ctx.createLinearGradient(pad, 0, W - pad, 0);
+  bar.addColorStop(0, '#e04080');
+  bar.addColorStop(.5, '#7c4dff');
+  bar.addColorStop(1, '#e04080');
+  ctx.fillStyle = bar;
+  roundRect(ctx, pad, pad, W - pad * 2, 6, 3); ctx.fill();
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#e04080';
+  ctx.font = '600 18px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText('霧 雨 魔 法 店 · 二次元老婆鉴定', W / 2, 110);
+
+  var portrait = await loadImg(r.image);
+  var cx = W / 2, cy = 255, R = 96;
+
+  var glow = ctx.createRadialGradient(cx, cy, R * .6, cx, cy, R * 1.5);
+  glow.addColorStop(0, 'rgba(224,64,128,.15)');
+  glow.addColorStop(.5, 'rgba(124,77,255,.06)');
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow; ctx.fillRect(cx - R * 1.5, cy - R * 1.5, R * 3, R * 3);
+
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+  if (portrait) {
+    var s = Math.max((R * 2) / portrait.width, (R * 2) / portrait.height);
+    ctx.drawImage(portrait, cx - portrait.width * s / 2, cy - portrait.height * s / 2, portrait.width * s, portrait.height * s);
+  } else {
+    ctx.fillStyle = '#201a26'; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
+    ctx.fillStyle = 'rgba(255,255,255,.5)';
+    ctx.font = '80px sans-serif'; ctx.textBaseline = 'middle';
+    ctx.fillText(r.name.charAt(0), cx, cy + 8); ctx.textBaseline = 'alphabetic';
+  }
+  ctx.restore();
+
+  ctx.lineWidth = 5; ctx.strokeStyle = '#e04080';
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+
+  ctx.fillStyle = '#8a7e9a';
+  ctx.font = '14px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText('我命中注定的二次元老婆是', W / 2, 415);
+
+  var gradient = ctx.createLinearGradient(W / 2 - 150, 430, W / 2 + 150, 430);
+  gradient.addColorStop(0, '#e04080'); gradient.addColorStop(.5, '#7c4dff'); gradient.addColorStop(1, '#e04080');
+  ctx.fillStyle = gradient;
+  ctx.shadowColor = 'rgba(224,64,128,.4)'; ctx.shadowBlur = 14;
+  ctx.font = '800 48px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText(r.name, W / 2, 475);
+  ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+
+  ctx.fillStyle = '#8a7e9a';
+  ctx.font = '14px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText(r.source_anime || '', W / 2, 505);
+
+  ctx.fillStyle = '#e04080';
+  ctx.font = '900 26px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText('匹配度 ' + r.match + '%', W / 2, 545);
+
+  ctx.fillStyle = '#c8c0d4';
+  ctx.font = '13px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  wrapText(ctx, (r.description || '').slice(0, 200), W / 2, 600, W - pad * 2 - 60, 24);
+
+  if (results.length > 1) {
+    ctx.fillStyle = '#8a7e9a';
+    ctx.font = '13px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+    var altText = 'TOP ' + (results.length > 1 ? '2-5' : '') + ': ';
+    for (var k = 1; k < Math.min(results.length, 5); k++) {
+      altText += results[k].name + '  ';
+    }
+    var altLines = wrapToLines(ctx, altText, W - pad * 2 - 40);
+    for (var m = 0; m < altLines.length; m++) {
+      ctx.fillText(altLines[m], W / 2, 750 + m * 20);
+    }
+  }
+
+  var siteImg = await loadImg(QR_IMG);
+  var qqImg = await loadImg(QQ_IMG);
+  var qs = 120, gap2 = 48;
+  var totalQW = qs * 2 + gap2;
+  var leftX = (W - totalQW) / 2;
+  var rightX = leftX + qs + gap2;
+  var qy2 = H - pad - 230;
+  drawQRBox(ctx, siteImg, leftX, qy2, qs, '扫码开测', SITE_URL, '#e04080');
+  drawQRBox(ctx, qqImg, rightX, qy2, qs, '加 QQ 群', '群号 ' + QQ_GROUP, '#b89fff');
+
+  var pi = document.getElementById('posterImg');
+  var pl = document.getElementById('posterLoading');
+  var dl = document.getElementById('posterDl');
+  var dataUrl = null;
+  try { dataUrl = cv.toDataURL('image/png'); } catch (e) { dataUrl = null; }
+
+  if (pl) pl.style.display = 'none';
+  if (dataUrl) {
+    if (pi) { pi.src = dataUrl; pi.style.display = 'block'; }
+    if (dl) { dl.href = dataUrl; dl.style.display = 'inline-flex'; }
+  } else {
+    if (pi && pi.parentNode) {
+      cv.className = 'poster-img';
+      cv.style.display = 'block';
+      pi.parentNode.replaceChild(cv, pi);
+    }
+  }
+}
+
+// ── 启动 ──
+characterDB = window.WAIFU_DB;
+render();
+</script>
+
+</body>
+</html>
