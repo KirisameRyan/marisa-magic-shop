@@ -74,7 +74,7 @@ function sendGroupMarkdown($groupOpenid, $markdown, $keyboard = null, $msgId = n
 function quickButton($label, $data, $style = 1) {
     return [
         'id'          => 'btn_' . substr(md5($data), 0, 8),
-        'render_data' => ['label' => $label, 'style' => $style],
+        'render_data' => ['label' => (string)$label, 'style' => $style],
         'action'      => ['type' => 2, 'permission' => ['type' => 2], 'data' => $data, 'enter' => false],
     ];
 }
@@ -82,7 +82,7 @@ function quickButton($label, $data, $style = 1) {
 function linkButton($label, $url, $style = 0) {
     return [
         'id'          => 'lnk_' . substr(md5($url), 0, 8),
-        'render_data' => ['label' => $label, 'style' => $style],
+        'render_data' => ['label' => (string)$label, 'style' => $style],
         'action'      => ['type' => 0, 'permission' => ['type' => 2], 'data' => $url],
     ];
 }
@@ -225,12 +225,19 @@ function loadWaifuDB() {
             botLog("waifuDB: 未找到 {$file}");
             continue;
         }
-        botLog("waifuDB: 找到 {$file}");
+        $size = filesize($file);
+        botLog("waifuDB: 找到 {$file} ({$size} bytes)");
 
         $raw = file_get_contents($file);
+        $head = mb_substr($raw, 0, 50);
+        $tail = mb_substr($raw, max(0, $size - 50));
+        botLog("waifuDB: 文件头[{$head}] 文件尾[{$tail}]");
+
         if (str_ends_with($file, '.js')) {
             if (preg_match('/var\s+WAIFU_DB\s*=\s*(\[[\s\S]*\]);?/', $raw, $m)) {
                 $db = json_decode($m[1], true);
+            } else {
+                botLog("waifuDB: JS regex 匹配失败");
             }
         } else {
             $db = json_decode($raw, true);
