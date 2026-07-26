@@ -114,7 +114,7 @@ function handleValidation($payload) {
     }
 
     $keypair   = getBotKeypair();
-    $secretKey = sodium_crypto_sign_privatekey($keypair);
+        $secretKey = sodium_crypto_sign_secretkey($keypair);
 
     $message   = $eventTs . $plainToken;
     $signature = sodium_crypto_sign_detached($message, $secretKey);
