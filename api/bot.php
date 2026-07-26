@@ -71,21 +71,23 @@ function sendGroupMarkdown($groupOpenid, $markdown, $keyboard = null, $msgId = n
     }
 }
 
-function sendGroupCard($groupOpenid, $title, $desc, $picUrl, $linkUrl, $msgId = null) {
+function sendGroupCard($groupOpenid, $title, $desc, $picUrl, $linkUrl = '', $msgId = null, $msgSeq = 1) {
     $token = getBotAccessToken();
+
+    $cardContent = [
+        'title'       => $title,
+        'description' => $desc,
+        'pic_url'     => $picUrl,
+    ];
+    if ($linkUrl !== '') $cardContent['url'] = $linkUrl;
 
     $body = [
         'msg_type' => 8,
         'card'     => [
             'type'    => 'tuwen',
-            'content' => [
-                'title'       => $title,
-                'description' => $desc,
-                'pic_url'     => $picUrl,
-                'url'         => $linkUrl,
-            ],
+            'content' => $cardContent,
         ],
-        'msg_seq'  => 1,
+        'msg_seq'  => $msgSeq,
     ];
     if ($msgId) $body['msg_id'] = $msgId;
 
@@ -522,11 +524,12 @@ function renderWaifuResults($results) {
     $imageUrl = '';
 
     // Card for TOP 1
+    $posterUrl = 'https://www.azureflame.cloud/api/poster.php?id='
+               . ($top['id'] ?? 0) . '&match=' . $top['match'];
     $card = [
         'title'   => $top['name'],
         'desc'    => ($top['source_anime'] ?? '') . ' · 匹配度 ' . $top['match'] . '%',
-        'pic_url' => $top['image'] ?? '',
-        'url'     => 'https://www.azureflame.cloud/quiz-waifu-3.html',
+        'pic_url' => $posterUrl,
     ];
 
     $md  = "**{$top['name']}**";
@@ -612,35 +615,37 @@ function handleWaifuAnswer($memberOpenid, $groupOpenid, $msgId, $num) {
     if ($session['current_q'] >= count($questions)) {
         // Quiz complete
         $session['state'] = 'done';
-        saveSessions($sessions);
 
         sendGroupMessage($groupOpenid, '✨ 测试完成！正在进行智能匹配...', $msgId, 1);
 
         $results = computeWaifuResults($session['answers']);
         $rendered = renderWaifuResults($results);
 
-        // Send TOP 1 card
+        // Send TOP 1 poster card (pic_url → 本地海报生成器, url → 空串避免域名限制)
         if (!empty($rendered['card']['pic_url'])) {
             sendGroupCard($groupOpenid, $rendered['card']['title'], $rendered['card']['desc'],
-                $rendered['card']['pic_url'], $rendered['card']['url'], $msgId);
+                $rendered['card']['pic_url'], '', $msgId, 2);
         }
-        // Send results markdown (msgSeq=2 to avoid collision with the card/text above)
-        sendGroupMarkdown($groupOpenid, $rendered['markdown'], $rendered['keyboard'], $msgId, 2);
+        // Results markdown with msgSeq 3 (1=confirm text, 2=card, 3=markdown)
+        sendGroupMarkdown($groupOpenid, $rendered['markdown'], $rendered['keyboard'], $msgId, 3);
 
         unset($sessions[$memberOpenid]);
         saveSessions($sessions);
         return;
     }
 
-    saveSessions($sessions);
-
+    // Build next question BEFORE saving session (prevent skip on send failure)
     $q = $questions[$session['current_q']];
     $rendered = renderWaifuQuestion($q, $session['current_q'] + 1, count($questions));
 
     $pos = mb_strpos($chosen['t'], ' — ');
     $ack = ($pos !== false) ? mb_substr($chosen['t'], 0, $pos) : $chosen['t'];
+
     sendGroupMessage($groupOpenid, "✅ 已选择「{$ack}」", $msgId);
     sendGroupMarkdown($groupOpenid, $rendered['markdown'], $rendered['keyboard'], $msgId, 2);
+
+    // Only persist after successful send
+    saveSessions($sessions);
 }
 
 // ═══════════════════════════════════════════
@@ -1024,10 +1029,9 @@ function handleRandomWaifuCard($groupOpenid, $msgId) {
 
     // Card
     $desc = $source ? "《{$source}》 · 匹配度 {$match}%" : "匹配度 {$match}%";
-    if (!empty($image)) {
-        sendGroupCard($groupOpenid, $name, $desc, $image,
-            'https://www.azureflame.cloud/quiz-waifu-3.html', $msgId);
-    }
+    $posterUrl = 'https://www.azureflame.cloud/api/poster.php?id='
+               . ($char['id'] ?? 0) . '&match=' . $match;
+    sendGroupCard($groupOpenid, $name, $desc, $posterUrl, '', $msgId);
 
     // Markdown details
     $tagNames = translateTags($char['tags'] ?? []);
