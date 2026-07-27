@@ -10,27 +10,26 @@
       {
         label: '🔥 热门测试',
         links: [
-          { href: 'waifu-test.html',       emoji: '💕', text: '二次元老婆' },
-          { href: 'quiz-animal-real.html', emoji: '🧬', text: '灵魂动物' },
-          { href: 'quiz-internet.html',    emoji: '🌐', text: '抽象大手子' }
+          { href: 'waifu-test.html',     emoji: '💕', text: '二次元老婆',   topNav: true },
+          { href: 'quiz-animal.html',    emoji: '🐾', text: '灵魂动物',     topNav: true },
+          { href: 'quiz-lolicon.html',   emoji: '💘', text: '隐藏人格',     topNav: true },
+          { href: 'quiz-internet.html',  emoji: '🌐', text: '抽象大手子',   topNav: true }
         ]
       },
       {
         label: '🎮 玩玩小游戏',
         links: [
-          { href: 'marisa_dash.html', emoji: '🧹', text: '魔理沙快跑' },
-          { href: 'marisa_survivor.html', emoji: '⭐', text: '魔理沙幸存者' },
-          { href: 'hypno-app.html', emoji: '🧠', text: '催眠APP模拟器' }
+          { href: 'marisa_dash.html',     emoji: '🧹', text: '魔理沙快跑',   topNav: true },
+          { href: 'marisa_survivor.html', emoji: '⭐', text: '魔理沙幸存者', topNav: true }
         ]
       },
       {
         label: '🆕 最新上线',
         links: [
-          { href: 'quiz-jiahao.html',      emoji: '🖤', text: '嘉豪程度检测' },
-          { href: 'quiz-genshin.html',      emoji: '✨', text: '原神人格' },
-          { href: 'quiz-major.html',       emoji: '🏗️', text: '张雪峰选专业' },
-          { href: 'quiz-otti.html',        emoji: '🎭', text: 'OTTI人格' },
-          { href: 'quiz-lolicon.html',   emoji: '💘', text: '隐藏人格' }
+          { href: 'quiz-jiahao.html',    emoji: '🖤', text: '嘉豪程度检测' },
+          { href: 'quiz-major.html',     emoji: '🏗️', text: '张雪峰选专业' },
+          { href: 'quiz-waifu-2.html',   emoji: '💀', text: '二次元老婆2' },
+          { href: 'quiz-waifu-3.html',   emoji: '🔮', text: '二次元老婆3' }
         ]
       },
       {
@@ -50,7 +49,6 @@
           { href: 'quiz-isekai.html',           emoji: '🚛', text: '异世界转生' },
           { href: 'quiz-math2026.html',         emoji: '🧠', text: '智力测试' },
           { href: 'quiz-hometown.html',           emoji: '🏠', text: '灵魂故乡' },
-          { href: 'quiz-animal.html',             emoji: '🐾', text: '灵魂动物·旧' },
           { href: 'quiz-otokonoko.html',        emoji: '💅', text: '男娘指数' },
           { href: 'quiz-sexual.html',           emoji: '⚠️', text: 'X压抑程度' },
           { href: 'collect.html',                 emoji: '📝', text: '建议新彩蛋' }
@@ -73,7 +71,7 @@
     var links = navData.sections[s].links;
     for (var l = 0; l < links.length; l++) {
       var ln = links[l];
-      if (ln.ext) continue;
+      if (ln.ext || !ln.topNav) continue;
       var active = isActive(ln.href);
       navLinksHTML += '<a href="' + ln.href + '"' + (active ? ' style="color:var(--gold);"' : '') + '>' + ln.text + '</a>';
     }
