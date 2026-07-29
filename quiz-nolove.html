@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<title>测测你未来的对象在哪里 · 霧雨魔法店</title>
+<link rel="stylesheet" href="css/common.css">
+<style>
+.result-trap {
+  border: 2px solid var(--gold) !important;
+  box-shadow: 0 0 24px rgba(240,192,96,.25), 0 0 56px rgba(240,192,96,.1);
+  animation: trapGlow 2.5s ease-in-out infinite alternate;
+}
+@keyframes trapGlow {
+  from { box-shadow: 0 0 16px rgba(240,192,96,.18), 0 0 42px rgba(240,192,96,.06); }
+  to { box-shadow: 0 0 32px rgba(240,192,96,.35), 0 0 70px rgba(240,192,96,.16); }
+}
+.trap-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #ef4444, #fbbf24);
+  color: #1a1a2e;
+  font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  padding: 5px 16px; border-radius: 14px;
+  margin-bottom: 14px;
+  animation: popIn .5s ease;
+}
+@keyframes popIn {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.verdict-box {
+  background: linear-gradient(135deg, #2a1010, #3a1414);
+  border: 1px dashed var(--gold-dim);
+  border-radius: 14px; padding: 18px 20px;
+  margin: 18px 0 12px;
+  font-size: 13px; color: #ff6b6b; line-height: 1.8;
+  text-align: center;
+}
+.verdict-label {
+  display: inline-block;
+  background: rgba(255,80,80,.15);
+  font-size: 11px; letter-spacing: 2px;
+  padding: 2px 10px; border-radius: 8px;
+  margin-bottom: 8px; color: #ff8080;
+}
+.result-hint {
+  font-size: 11px; color: var(--muted);
+  text-align: center; margin-top: 8px;
+  padding: 10px; background: rgba(255,255,255,.02);
+  border-radius: 10px;
+}
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.7);
+  z-index: 9999; display: flex; align-items: center; justify-content: center;
+  animation: fadeIn .25s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-box {
+  background: var(--card); border: 1px solid var(--gold-dim);
+  border-radius: 18px; padding: 28px 24px; max-width: 340px; width: 90%;
+  text-align: center; animation: scaleIn .3s ease;
+}
+@keyframes scaleIn { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.modal-box .modal-icon { font-size: 36px; margin-bottom: 10px; }
+.modal-box h3 { font-size: 16px; color: var(--gold); margin-bottom: 10px; letter-spacing: 2px; }
+.modal-box p { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 18px; }
+.modal-box .btn { margin: 0 auto; }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container" id="app"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/reveal-screen.js"></script>
+<script src="js/quiz-storage.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/result-footer.js"></script>
+<script src="js/quiz-engine.js"></script>
+
+<script>
+var STORAGE_KEY = 'quiz_nolove_v1';
+var TRACK_KEY = 'nolove_take';
+
+var QUIZ_TITLE = '测测你未来的对象在哪里';
+var QUIZ_SUBTITLE = '听说测一测就能知道对象在哪？测给你看——不管你怎么选，结果都一样真诚。';
+var BADGE_TEXT = '霧雨魔法店 · 姻缘科';
+
+var QUESTIONS = [
+  { q: '你理想中的对象，最重要的是？', opts: [
+    { txt: '长得好看', scores: {} },
+    { txt: '性格合得来', scores: {} },
+    { txt: '有钱有房', scores: {} },
+    { txt: '对我好就行', scores: {} }
+  ]},
+  { q: '你平时最常在哪里刷到「好想谈恋爱」的想法？', opts: [
+    { txt: '朋友圈别人秀恩爱', scores: {} },
+    { txt: '深夜刷短视频', scores: {} },
+    { txt: '看到同事/同学有对象', scores: {} },
+    { txt: '其实很少想，偶尔才会', scores: {} }
+  ]},
+  { q: '如果现在有人跟你表白，你的第一反应是？', opts: [
+    { txt: '怀疑是不是整蛊', scores: {} },
+    { txt: '先看看对方条件', scores: {} },
+    { txt: '内心狂喜但表面冷静', scores: {} },
+    { txt: '「等等，我好像还没准备好」', scores: {} }
+  ]},
+  { q: '你觉得自己目前最缺的是什么？', opts: [
+    { txt: '好看的脸', scores: {} },
+    { txt: '稳定的收入', scores: {} },
+    { txt: '社交能力', scores: {} },
+    { txt: '一点点运气', scores: {} }
+  ]},
+  { q: '你理想的约会场景是？', opts: [
+    { txt: '安静的咖啡馆慢慢聊', scores: {} },
+    { txt: '一起看电影吃火锅', scores: {} },
+    { txt: '去爬山看日落', scores: {} },
+    { txt: '其实在家躺着也挺好', scores: {} }
+  ]},
+  { q: '你认为「对象」出现的概率，大概是？', opts: [
+    { txt: '今年内肯定有', scores: {} },
+    { txt: '明年吧，差不多了', scores: {} },
+    { txt: '再等等，缘分未到', scores: {} },
+    { txt: '随缘就好', scores: {} }
+  ]},
+  { q: '如果不考虑现实因素，你理想中的对象最像？', opts: [
+    { txt: '某个动画/游戏角色', scores: {} },
+    { txt: '某个明星/网红', scores: {} },
+    { txt: '身边认识的某个人', scores: {} },
+    { txt: '没有具体的，纯想象', scores: {} }
+  ]},
+  { q: '你有没有为了脱单做过特别的事？', opts: [
+    { txt: '积极社交，扩大圈子', scores: {} },
+    { txt: '下载过交友软件（然后又删了）', scores: {} },
+    { txt: '让朋友介绍过', scores: {} },
+    { txt: '一直在幻想中努力', scores: {} }
+  ]},
+  { q: '你觉得自己单身的主要原因是什么？', opts: [
+    { txt: '眼光太高', scores: {} },
+    { txt: '太忙/太宅', scores: {} },
+    { txt: '圈子太小，认识不到新人', scores: {} },
+    { txt: '说不清，就是没有', scores: {} }
+  ]},
+  { q: '如果明天就遇到命中注定的那个人，你猜TA会在哪？', opts: [
+    { txt: '工作/学校场合', scores: {} },
+    { txt: '朋友聚会', scores: {} },
+    { txt: '网上认识', scores: {} },
+    { txt: '月老表示：这个假设不成立', scores: {} }
+  ]}
+];
+
+var RESULT = {
+  name: '没有对象',
+  emoji: '💀',
+  color: '#ef4444',
+  verdict: '系统已认真分析你的全部答案，综合颜值、性格、运气、社交、经济、缘分等多个维度后，得出唯一且确定的结论：<br><br><strong style="color:#ff6b6b;font-size:16px;">你未来的对象在——不存在。</strong><br><br>准确点说：<br>目前没有。<br>短期没有。<br>可预见的未来，大概率也没有。<br><br>不过别灰心。至少你现在知道答案了，不用再浪费时间测别的「对象在哪里」了。',
+  extra: '对象这种东西，有的人天生自带，有的人靠努力终于等到，而你……属于被系统直接判定为「暂无分配」的那一类。<br><br>建议下一步：关掉这个测试，继续过自己的日子。毕竟——<strong>没有对象，也是一种稳定状态。</strong>'
+};
+
+var LOADING_STEPS = [
+  '正在搜索候选人…',
+  '发现候选人数量：0',
+  '正在生成鉴定报告…'
+];
+
+function calcResult(answers) {
+  return { key: 'none', isTrap: true };
+}
+
+var quiz = MQ.engine({
+  questions: QUESTIONS,
+  storageKey: STORAGE_KEY,
+  trackKey: TRACK_KEY,
+  loadingSteps: LOADING_STEPS,
+  reveal: {
+    title: '🔮 月老数据库检索完毕',
+    code: function(r) { return '没有对象'; },
+    color: function(r) { return '#ef4444'; },
+    hint: '结果马上揭晓…'
+  },
+  calcResult: calcResult,
+
+  renderIntro: function(app, api) {
+    app.innerHTML =
+      '<div class="intro">' +
+        '<div class="intro-badge">' + BADGE_TEXT + '</div>' +
+        '<h1>' + QUIZ_TITLE + '</h1>' +
+        '<p class="sub">' + QUIZ_SUBTITLE + '</p>' +
+        '<p style="font-size:11px;color:var(--muted);text-align:center;margin-top:-6px;margin-bottom:16px;">准备好了吗？</p>' +
+        '<button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="showWarning()">开始测试 ↓</button>' +
+        api.resumeBtn() +
+        '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+        '<p style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;" id="takeCount"></p>' +
+      '</div>';
+    api.bindCount('takeCount', { template: '已有 {n} 人查询了对象' });
+  },
+
+  renderResult: function(app, r) {
+    var c = RESULT;
+    var html =
+      '<div class="result result-trap">' +
+        '<div class="trap-badge">⚠ 鉴定结果</div>' +
+        '<div class="result-emoji">' + c.emoji + '</div>' +
+        '<div class="result-label">霧雨魔法店 · 姻缘科</div>' +
+        '<div class="result-name" style="color:' + c.color + '">' + c.name + '</div>' +
+        '<div class="result-desc">恭喜你完成测试。</div>' +
+        '<div class="verdict-box">' +
+          '<span class="verdict-label">🔮 月老批语</span><br>' +
+          c.verdict +
+        '</div>' +
+        '<div class="result-hint">' + c.extra + '</div>' +
+        '<button class="btn btn-main" onclick="shareIt()">📋 复制结果发给朋友</button>' +
+        '<button class="btn btn-ghost" onclick="restart()">🔄 再测一次也还是这个结果</button>' +
+        '<a href="index.html" class="home-link">← 返回魔法店</a>' +
+        resultFooterHTML({ notice: '霧雨魔法店 · 姻缘科 · 月老都救不了你' }) +
+      '</div>';
+    app.innerHTML = html;
+  }
+});
+
+var lastResult = null;
+function shareIt() {
+  var text = '💀 月老鉴定报告：你未来的对象在——不存在。你也来查查：' + window.location.href;
+  copyToClipboard(text, '已复制！发给朋友一起查无此人 💀');
+}
+
+function showWarning() {
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'warningModal';
+  overlay.innerHTML =
+    '<div class="modal-box">' +
+      '<div class="modal-icon">⚠️</div>' +
+      '<h3>温馨提示</h3>' +
+      '<p>本测试由赛博月老系统驱动，结果可能引起轻微不适。<br>心理承受能力较弱者，建议带上朋友一起测。</p>' +
+      '<button class="btn btn-main" onclick="dismissWarning()">知道了，继续</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
+}
+function dismissWarning() {
+  var m = document.getElementById('warningModal');
+  if (m) m.remove();
+  startQuiz();
+}
+
+quiz.render();
+</script>
+
+</body>
+</html>

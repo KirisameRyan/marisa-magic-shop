@@ -29,7 +29,8 @@
           { href: 'quiz-jiahao.html',    emoji: '🖤', text: '嘉豪程度检测' },
           { href: 'quiz-major.html',     emoji: '🏗️', text: '张雪峰选专业' },
           { href: 'quiz-waifu-2.html',   emoji: '💀', text: '二次元老婆2' },
-          { href: 'quiz-waifu-3.html',   emoji: '🔮', text: '二次元老婆3' }
+          { href: 'quiz-waifu-3.html',   emoji: '🔮', text: '二次元老婆3' },
+          { href: 'quiz-nolove.html',    emoji: '💔', text: '对象在哪' }
         ]
       },
       {

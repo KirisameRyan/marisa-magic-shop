@@ -144,7 +144,11 @@ function render() {
   var d1=document.getElementById('ad1');
   if(d1)d1.style.display=idx===-1?'block':'none';
   var a = document.getElementById('app');
-  if (idx === -1) {
+  if (state === 'reveal') {
+    renderReveal(a);
+  } else if (state === 'result') {
+    showResult();
+  } else if (idx === -1) {
     a.innerHTML = '<div class="intro"><div class="intro-badge">💘 霧雨魔法店 · 乙女鉴定</div><h1>测测你在《恋与深空》<br>的本命是谁</h1><p class="sub">' + QUESTIONS.length + ' 道深度问题 · 精准匹配你的深空恋人 · 抽到谁就是谁</p><div class="cover-hearts">💗💕💖💘💓</div><button class="btn btn-main" style="max-width:260px;margin:0 auto;" onclick="start()">开始测试 →</button><a href="index.html" class="home-link">← 返回魔法店</a></div>';
   } else if (idx < QUESTIONS.length) {
     var q = QUESTIONS[idx];
@@ -158,12 +162,8 @@ function render() {
     html += '</div>';
     a.innerHTML = html;
   } else if (idx === QUESTIONS.length) {
-    state = 'reveal'; calcAndReveal();
-  } else if (state === 'reveal') {
-    renderReveal(a);
-  } else {
-    showResult();
-  }
+     state = 'reveal'; calcAndReveal();
+   }
 }
 
 var state = 'intro';
