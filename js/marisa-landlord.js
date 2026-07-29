@@ -27,7 +27,7 @@ var CONFIG = {
   START_DECK: ['coin', 'mushroom', 'onigiri', 'tea', 'frog'],
   RARE_W: [[52, 32, 13, 3], [45, 33, 17, 5]],   // 符号稀有度权重 [前期, 第6天起]
   ITEM_W: [50, 32, 15, 3],                       // 道具稀有度权重
-  BGM: 'audio/landlord_bgm.mp3',
+  BGM: 'audio/sfx/上海爱莉丝幻乐团 - 冷吟閑酔.mp3',
   SAVE_KEY: 'ml_save_v1', BEST_KEY: 'ml_best_v1', MUTE_KEY: 'ml_muted',
   LB_GAME: 'landlord'
 };
@@ -585,7 +585,7 @@ var SND = (function() {
   };
   return {
     unlock: function() { ensureCtx(); if (!bgmTried) { bgmTried = true; tryLoad();
-      bgm = new Audio(); bgm.loop = true; bgm.volume = 0.35;
+      bgm = new Audio(); bgm.loop = true; bgm.volume = 0.2;
       bgm.addEventListener('error', function() { bgm = null; });
       bgm.src = CONFIG.BGM;
       if (bgm) { var p = bgm.play(); if (p && p.catch) p.catch(function() {}); }
