@@ -33,6 +33,7 @@
 ### 🎮 小游戏
 - [魔理沙快跑](marisa_dash.html) — 三通道飞行跑酷 · 擦弹连击 · DASH 冲刺
 - [魔理沙幸存者](marisa_survivor.html) — 幸存者like · 自动攻击 · 17 种强化卡三选一 · 在线排行榜
+- [魔理沙的赛钱危机](marisa_landlord.html) — 幸运房东like · 58 符号构筑 · 灵梦收租 · 断点续玩 · 在线排行榜
 
 ---
 

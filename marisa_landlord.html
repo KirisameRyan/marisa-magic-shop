@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>魔理沙的赛钱危机 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#1a1520;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;touch-action:manipulation;user-select:none;-webkit-user-select:none;min-height:100vh;color:#e0d8ec;}
+.game-wrap{max-width:480px;margin:0 auto;padding:10px 12px 30px;position:relative;}
+/* ── HUD ── */
+.hud-top{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#8a7e9a;margin-bottom:6px;}
+.hud-top strong{color:#f0c060;font-weight:800;}
+#hudCoins{color:#f0c060;font-weight:800;font-size:16px;transition:color .2s;}
+#hudCoins.flash{color:#ffe8b0;}
+.rent-bar-wrap{background:#241e2a;border:1px solid #3a3045;border-radius:12px;padding:8px 12px;margin-bottom:10px;}
+.rent-info{display:flex;justify-content:space-between;font-size:12px;color:#b8acc8;margin-bottom:5px;}
+.rent-info b{color:#ef4444;}
+.rent-info .spins-left{color:#8fd8ff;font-weight:700;}
+.rent-bar{height:7px;background:#3a3045;border-radius:4px;overflow:hidden;}
+#rentFill{height:100%;background:linear-gradient(90deg,#8fd8ff,#b89fff);border-radius:4px;transition:width .3s;}
+/* ── 转盘 ── */
+.board{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;background:#241e2a;border:2px solid #3a3045;border-radius:16px;padding:10px;margin-bottom:10px;}
+.board.shake{animation:shk .4s;}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.cell{aspect-ratio:1;background:#1a1520;border:1px solid #3a3045;border-radius:12px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.cell .sym{font-size:clamp(20px,6.5vw,32px);line-height:1;transition:transform .15s;}
+.cell .sym img{width:88%;height:88%;object-fit:contain;}
+.cell .val{position:absolute;right:3px;bottom:2px;font-size:9px;color:#8a7e9a;font-weight:700;}
+.cell.empty{opacity:.35;}
+.cell.rolling .sym{animation:rollblur .12s infinite;}
+@keyframes rollblur{0%{transform:translateY(-30%);filter:blur(2px);opacity:.5}50%{filter:blur(0);opacity:1}100%{transform:translateY(30%);filter:blur(2px);opacity:.5}}
+.cell.hit{border-color:#f0c060;box-shadow:0 0 12px rgba(240,192,96,.45);}
+.cell.hit .sym{animation:pop .3s;}
+@keyframes pop{50%{transform:scale(1.35)}}
+.cell.dying .sym{animation:die .45s forwards;}
+@keyframes die{to{transform:scale(0) rotate(180deg);opacity:0}}
+.cell.born .sym{animation:born .4s;}
+@keyframes born{from{transform:scale(0);opacity:0}}
+.cell.legendary-cell{border-color:rgba(240,192,96,.5);}
+.cell.linked{border-color:#f0c060 !important;box-shadow:0 0 12px rgba(240,192,96,.6);}
+.cell.linked.user{border-color:#b89fff !important;box-shadow:0 0 12px rgba(184,159,255,.6);}
+.floater{position:absolute;font-weight:800;color:#f0c060;font-size:15px;pointer-events:none;z-index:6;text-shadow:0 1px 3px #000;animation:floatUp .95s forwards;white-space:nowrap;}
+.floater.big{color:#ffe8b0;font-size:19px;}
+.floater.eat{color:#ff9d6b;}
+.floater.grow{color:#6fcf97;}
+@keyframes floatUp{0%{opacity:0;transform:translateY(6px)}20%{opacity:1}100%{opacity:0;transform:translateY(-26px)}}
+/* ── 收入条 ── */
+.income-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#8a7e9a;margin-bottom:10px;min-height:20px;}
+#spinGain{color:#f0c060;font-weight:800;font-size:15px;}
+/* ── 按钮区 ── */
+.ctrl-row{display:flex;gap:8px;align-items:center;}
+#btnSpin{flex:1;font-size:19px;font-weight:800;padding:14px 0;border-radius:16px;border:none;background:linear-gradient(135deg,#f0c060,#e8a830);color:#1a1520;cursor:pointer;letter-spacing:3px;transition:transform .12s,opacity .2s;}
+#btnSpin:hover{transform:scale(1.03);}
+#btnSpin:active{transform:scale(.96);}
+#btnSpin:disabled{opacity:.4;cursor:default;transform:none;}
+.ctrl-btn{background:#241e2a;border:1px solid #3a3045;border-radius:12px;color:#b8acc8;font-size:15px;padding:12px 13px;cursor:pointer;transition:all .15s;line-height:1;}
+.ctrl-btn:hover{border-color:#f0c060;color:#f0c060;}
+.ctrl-btn .bdg{font-size:10px;background:#3a3045;border-radius:8px;padding:1px 5px;margin-left:3px;}
+/* ── 弹层 ── */
+.overlay{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(26,21,32,.96);padding:18px;overflow-y:auto;}
+.overlay.hide{display:none;}
+.overlay h1{font-size:24px;color:#f0c060;margin-bottom:8px;text-align:center;}
+.overlay h2{font-size:16px;color:#e0d8ec;margin-bottom:10px;text-align:center;}
+.overlay .tip{font-size:13px;color:#8a7e9a;text-align:center;line-height:1.9;margin-bottom:14px;max-width:400px;}
+.btn-main{font-size:17px;font-weight:800;padding:13px 42px;border-radius:16px;border:none;background:linear-gradient(135deg,#f0c060,#e8a830);color:#1a1520;cursor:pointer;letter-spacing:2px;transition:transform .15s;margin:4px;}
+.btn-main:hover{transform:scale(1.05);}
+.btn-ghost{background:transparent;border:1px solid #3a3045;border-radius:12px;padding:10px 20px;color:#8a7e9a;font-size:13px;cursor:pointer;margin:4px;}
+.btn-ghost:hover{border-color:#f0c060;color:#f0c060;}
+/* ── 三选一卡 ── */
+.pick-cards{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;max-width:440px;margin-bottom:12px;}
+.pick-card{width:126px;background:#241e2a;border:2px solid #3a3045;border-radius:16px;padding:14px 8px 12px;cursor:pointer;text-align:center;transition:all .15s;position:relative;}
+.pick-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(240,192,96,.12);}
+.pick-card .pc-sym{font-size:36px;line-height:1.2;}
+.pick-card .pc-sym img{width:56px;height:56px;object-fit:contain;}
+.pick-card .pc-name{font-size:14px;font-weight:800;color:#e0d8ec;margin-top:5px;}
+.pick-card .pc-val{font-size:11px;color:#f0c060;margin-top:2px;}
+.pick-card .pc-desc{font-size:11px;color:#b8acc8;margin-top:6px;line-height:1.5;min-height:32px;}
+.pick-card.r0{border-color:#4a4356;}
+.pick-card.r1{border-color:#6fcf97;}
+.pick-card.r2{border-color:#8fd8ff;}
+.pick-card.r3{border-color:#f0c060;box-shadow:0 0 14px rgba(240,192,96,.2);}
+.pick-card .pc-rare{font-size:9px;letter-spacing:2px;margin-top:4px;}
+.r0 .pc-rare{color:#8a7e9a;}.r1 .pc-rare{color:#6fcf97;}.r2 .pc-rare{color:#8fd8ff;}.r3 .pc-rare{color:#f0c060;}
+/* ── 收租 ── */
+.rent-char{width:150px;border-radius:14px;border:2px solid #3a3045;margin-bottom:10px;}
+.rent-amt{font-size:30px;color:#ef4444;font-weight:900;margin:6px 0 12px;}
+.rent-amt small{font-size:13px;color:#8a7e9a;font-weight:400;}
+/* ── 收藏/图鉴 ── */
+.modal-box{background:#241e2a;border:1px solid #3a3045;border-radius:18px;padding:16px;max-width:440px;width:100%;max-height:78vh;overflow-y:auto;}
+.coll-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:10px 0;}
+.coll-cell{aspect-ratio:1;background:#1a1520;border:1px solid #3a3045;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:24px;position:relative;cursor:default;}
+.coll-cell img{width:80%;height:80%;object-fit:contain;}
+.coll-cell .cnt{position:absolute;right:3px;top:2px;font-size:9px;color:#f0c060;font-weight:700;}
+.coll-cell .pp{position:absolute;left:3px;bottom:1px;font-size:9px;color:#6fcf97;font-weight:700;}
+.coll-cell.removable{cursor:pointer;}
+.coll-cell.removable:hover{border-color:#ef4444;box-shadow:0 0 8px rgba(239,68,68,.4);}
+.coll-sec-title{font-size:12px;color:#f0c060;letter-spacing:1px;margin:4px 0 6px;}
+.item-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.coll-item{background:#1a1520;border:1px solid #3a3045;border-radius:10px;padding:5px 10px;font-size:13px;color:#e0d8ec;cursor:pointer;transition:border-color .15s;}
+.coll-item:hover{border-color:#f0c060;}
+.coll-item .ci-name{font-size:11px;color:#b8acc8;margin-left:4px;}
+.dex-sec{font-size:12px;color:#8a7e9a;margin:12px 0 6px;letter-spacing:1px;}
+.dex-row{display:flex;flex-wrap:wrap;gap:6px;}
+.dex-item{width:52px;text-align:center;background:#1a1520;border:1px solid #3a3045;border-radius:10px;padding:5px 2px;cursor:pointer;}
+.dex-item .di-sym{font-size:22px;}
+.dex-item .di-sym img{width:34px;height:34px;object-fit:contain;}
+.dex-item .di-name{font-size:9px;color:#b8acc8;margin-top:2px;}
+.dex-item.locked{opacity:.35;}
+.dex-item.locked .di-name{color:#4a4356;}
+/* ── 结算 ── */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:340px;width:100%;margin:10px 0 14px;}
+.stat-box{background:#241e2a;border:1px solid #3a3045;border-radius:12px;padding:10px;text-align:center;}
+.stat-box .sv{font-size:20px;font-weight:800;color:#f0c060;}
+.stat-box .sl{font-size:11px;color:#8a7e9a;margin-top:2px;}
+/* ── 排行榜(与幸存者一致) ── */
+#lbArea{margin-top:10px;width:100%;max-width:380px;}
+.lb-wrap{text-align:center;}
+.lb-submit{display:flex;gap:8px;justify-content:center;margin-bottom:10px;flex-wrap:wrap;}
+.lb-input{background:#241e2a;border:1px solid #3a3045;border-radius:10px;padding:8px 14px;color:#e0d8ec;font-size:13px;width:140px;outline:none;font-family:inherit;}
+.lb-input:focus{border-color:#f0c060;}
+.lb-btn{background:linear-gradient(135deg,#f0c060,#e8a830);border:none;border-radius:10px;padding:8px 20px;color:#1a1520;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;}
+.lb-btn:disabled{opacity:.5;cursor:default;}
+.lb-btn-ghost{background:transparent;border:1px solid #3a3045;border-radius:10px;padding:8px 16px;color:#8a7e9a;font-size:12px;cursor:pointer;font-family:inherit;}
+.lb-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px;}
+.lb-table th{color:#8a7e9a;font-weight:400;padding:5px 4px;border-bottom:1px solid #3a3045;}
+.lb-table td{padding:5px 4px;color:#e0d8ec;border-bottom:1px solid rgba(58,48,69,.3);}
+.lb-table .lb-my td{color:#f0c060;font-weight:700;background:rgba(240,192,96,.06);}
+.lb-note,.lb-ok,.lb-err{font-size:12px;margin:6px 0;}
+.lb-ok{color:#6fcf97;}
+.lb-err{color:#ef4444;}
+.lb-note{color:#8a7e9a;}
+.lb-toggle{text-align:center;font-size:12px;color:#8a7e9a;cursor:pointer;padding:6px 0;margin-top:4px;transition:color .2s;}
+.lb-toggle:hover{color:#f0c060;}
+.lb-table-wrap{overflow-x:auto;}
+/* ── 说明 ── */
+.howto{background:#241e2a;border:1px solid #3a3045;border-radius:14px;padding:12px 16px;font-size:12px;color:#b8acc8;line-height:1.9;max-width:400px;margin-bottom:14px;text-align:left;}
+.howto b{color:#f0c060;}
+/* ── 联动面板 ── */
+.link-panel{position:fixed;left:50%;bottom:0;width:100%;max-width:480px;background:#241e2a;border:1px solid #3a3045;border-top:2px solid #f0c060;border-radius:16px 16px 0 0;padding:12px 14px 16px;z-index:15;max-height:46vh;overflow-y:auto;transform:translateX(-50%) translateY(110%);transition:transform .25s ease-out;}
+.link-panel.show{transform:translateX(-50%) translateY(0);}
+.lp-close{position:absolute;top:8px;right:10px;background:none;border:1px solid #3a3045;border-radius:8px;color:#8a7e9a;width:26px;height:26px;cursor:pointer;font-size:12px;line-height:1;}
+.lp-close:hover{border-color:#f0c060;color:#f0c060;}
+.lp-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;padding-right:30px;}
+.lp-sym{font-size:32px;line-height:1;}
+.lp-sym img{width:42px;height:42px;object-fit:contain;}
+.lp-name{font-size:16px;font-weight:800;color:#e0d8ec;}
+.lp-meta{font-size:11px;color:#8a7e9a;margin-top:2px;}
+.lp-desc{font-size:12px;color:#b8acc8;line-height:1.6;margin-bottom:6px;}
+.lp-sec{font-size:11px;color:#f0c060;margin:8px 0 4px;letter-spacing:1px;}
+.lp-chips{display:flex;flex-wrap:wrap;gap:5px;}
+.lp-chip{background:#1a1520;border:1px solid #3a3045;border-radius:10px;padding:3px 9px;font-size:12px;color:#e0d8ec;cursor:pointer;transition:border-color .15s;}
+.lp-chip:hover{border-color:#f0c060;}
+.lp-chip img{width:16px;height:16px;object-fit:contain;vertical-align:-3px;}
+.lp-chip.static{cursor:default;color:#8a7e9a;}
+.pc-links{font-size:12px;margin-top:5px;min-height:16px;color:#8a7e9a;letter-spacing:1px;}
+.pc-links img{width:14px;height:14px;object-fit:contain;vertical-align:-2px;}
+@media (max-width:420px){
+  .pick-card{width:30vw;padding:10px 6px;}
+  .pick-card .pc-desc{font-size:10px;}
+}
+@media (prefers-reduced-motion:reduce){
+  .board.shake{animation:none;}
+  .cell.rolling .sym{animation:none;}
+}
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="game-wrap" aria-label="魔理沙的赛钱危机">
+
+  <!-- HUD -->
+  <div class="hud-top">
+    <span>⛩️ <strong id="hudDay">第 1 天</strong></span>
+    <span>🪙 <span id="hudCoins">10</span></span>
+    <span>🏆 <span id="hudBest">-</span></span>
+  </div>
+  <div class="rent-bar-wrap">
+    <div class="rent-info">
+      <span>灵梦收租:<b id="hudRent">25</b> 🪙</span>
+      <span class="spins-left" id="hudSpins">剩 5 转</span>
+    </div>
+    <div class="rent-bar"><div id="rentFill" style="width:0%"></div></div>
+  </div>
+
+  <!-- 转盘 -->
+  <div class="board" id="board"></div>
+
+  <!-- 收入 -->
+  <div class="income-row">
+    <span id="spinMsg">点击「祈愿」转动转盘</span>
+    <span id="spinGain"></span>
+  </div>
+
+  <!-- 控制 -->
+  <div class="ctrl-row">
+    <button class="ctrl-btn" id="btnColl" title="收藏">📦<span class="bdg" id="collCount">12</span></button>
+    <button class="ctrl-btn" id="btnDex" title="图鉴">📖</button>
+    <button id="btnSpin">🎰 祈 愿</button>
+    <button class="ctrl-btn" id="btnMute" title="音效">🔊</button>
+    <button class="ctrl-btn" id="btnHelp" title="玩法">❓</button>
+  </div>
+</div>
+
+<!-- 开场 -->
+<div class="overlay hide" id="startOverlay">
+  <h1>⛩️ 魔理沙的赛钱危机</h1>
+  <p class="tip">你(魔理沙)租下了魔法之森的小店,<b style="color:#ef4444;">灵梦每隔几天就上门收赛钱</b>!<br>转动祈愿转盘,请幻想乡的伙伴们帮你赚赛钱。<br>凑不齐租金……可是会被退治的!</p>
+  <div class="howto">
+    <b>玩法</b><br>
+    🎰 每次转动后 <b>三选一</b> 获得新伙伴/道具<br>
+    🍄 伙伴之间有<b>联动</b>:幽幽子吃食物、魔理沙采蘑菇……<br>
+    ⛩️ 转数耗尽就要交租,租金越来越贵<br>
+    🏆 撑过 12 次收租即通关,之后挑战无尽模式
+  </div>
+  <div>
+    <button class="btn-main" id="btnNewGame">✦ 新的一局</button>
+    <button class="btn-ghost hide" id="btnResume">▶ 继续上次</button>
+  </div>
+  <p class="tip" style="margin-top:10px;margin-bottom:0;" id="bestLine"></p>
+</div>
+
+<!-- 符号三选一 -->
+<div class="overlay hide" id="offerOverlay">
+  <h2>✨ 选择一位伙伴加入</h2>
+  <div class="pick-cards" id="offerCards"></div>
+  <div>
+    <button class="btn-ghost" id="btnReroll">🔄 重抽 (<span id="rerollCnt">0</span>)</button>
+    <button class="btn-ghost" id="btnSkip">跳过 +3🪙</button>
+  </div>
+</div>
+
+<!-- 收租 -->
+<div class="overlay hide" id="rentOverlay">
+  <h1>⛩️ 灵梦来收租了!</h1>
+  <img class="rent-char" id="rentImg" src="images/sprites/reimu_show.png" alt="灵梦" onerror="this.style.display='none'">
+  <div class="rent-amt"><small>第 <span id="rentDay">1</span> 次收租</small><br><span id="rentAmt">25</span> 🪙</div>
+  <button class="btn-main" id="btnPay">💰 缴纳赛钱</button>
+</div>
+
+<!-- 道具三选一 -->
+<div class="overlay hide" id="itemOverlay">
+  <h2>🎁 灵梦走后,你捡到了……</h2>
+  <div class="pick-cards" id="itemCards"></div>
+  <button class="btn-ghost" id="btnItemSkip">跳过 +5🪙</button>
+</div>
+
+<!-- 收藏 -->
+<div class="overlay hide" id="collOverlay">
+  <div class="modal-box">
+    <h2>📦 我的收藏 <span style="font-size:12px;color:#8a7e9a;" id="collInfo"></span></h2>
+    <div id="collItemsWrap" class="hide">
+      <div class="coll-sec-title">🎁 我的道具</div>
+      <div class="item-row" id="collItems"></div>
+    </div>
+    <div class="coll-grid" id="collGrid"></div>
+    <div style="text-align:center;">
+      <button class="btn-ghost" id="btnRemoveMode">🗑️ 移除符号 (<span id="removeCnt">0</span>)</button>
+      <button class="btn-ghost" id="btnCollClose">关闭</button>
+    </div>
+    <p class="tip" style="margin:8px 0 0;" id="collTip">转盘每转从收藏中抽 20 个填满格子,多余的随机抽取。</p>
+  </div>
+</div>
+
+<!-- 图鉴 -->
+<div class="overlay hide" id="dexOverlay">
+  <div class="modal-box">
+    <h2>📖 幻想乡图鉴</h2>
+    <div id="dexBody"></div>
+    <div style="text-align:center;margin-top:12px;"><button class="btn-ghost" id="btnDexClose">关闭</button></div>
+  </div>
+</div>
+
+<!-- 玩法 -->
+<div class="overlay hide" id="helpOverlay">
+  <div class="modal-box">
+    <h2>❓ 玩法说明</h2>
+    <div class="howto" style="max-width:none;">
+      🎰 点「祈愿」转动转盘,20 个格子从你的收藏中抽取<br>
+      ✨ 每转结束 <b>三选一</b> 加新符号,可跳过(+3🪙)<br>
+      ⛩️ 转数耗尽 → 灵梦收租 → 交完租 <b>三选一道具</b><br>
+      🍄 <b>联动</b>是灵魂:魔理沙按蘑菇数量加钱、幽幽子吃掉食物永久成长、琪露诺冻青蛙……<br>
+      🔄 重抽代币:重新抽三选一 &nbsp; 🗑️ 移除代币:删掉收藏中的符号(每过 3 次收租各 +1)<br>
+      💀 交不起租 = 被退治!<br>
+      🏆 撑过 12 次收租通关,之后进入无尽模式
+    </div>
+    <div style="text-align:center;"><button class="btn-ghost" id="btnHelpClose">关闭</button></div>
+  </div>
+</div>
+
+<!-- 通关 -->
+<div class="overlay hide" id="winOverlay">
+  <h1>🏆 灵梦满意地离开了!</h1>
+  <p class="tip">你撑过了 12 次收租,小店保住了!<br>要继续挑战无尽模式吗?租金会不停上涨……</p>
+  <div class="stat-grid" id="winStats"></div>
+  <div>
+    <button class="btn-main" id="btnEndless">🔥 继续无尽模式</button>
+    <button class="btn-ghost" id="btnWinRestart">新的一局</button>
+  </div>
+  <div id="lbAreaWin"></div>
+</div>
+
+<!-- 游戏结束 -->
+<div class="overlay hide" id="overOverlay">
+  <h1>💥 被退治了……</h1>
+  <img class="rent-char" src="images/sprites/reimu_show.png" alt="灵梦" onerror="this.style.display='none'">
+  <p class="tip" id="overLine">「交不起赛钱就给我出去!」</p>
+  <div class="stat-grid" id="overStats"></div>
+  <button class="btn-main" id="btnOverRestart">🔄 再来一局</button>
+  <div id="lbArea"></div>
+</div>
+
+<!-- 联动面板 -->
+<div class="link-panel" id="linkPanel">
+  <button class="lp-close" id="lpClose">✕</button>
+  <div class="lp-head" id="lpHead"></div>
+  <div id="lpBody"></div>
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/particles.js"></script>
+<script src="js/marisa-landlord.js"></script>
+
+</body>
+</html>
