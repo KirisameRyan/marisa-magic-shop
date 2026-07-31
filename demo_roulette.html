@@ -243,10 +243,10 @@ function startMatch(){
     S.rid=res.rid; S.peer=parseInt(res.peer);
     if(res.state==='matched'){
       S.peer=1; S.loader=false; S.shooter=true; S.phase='load';
-      startPolling();
+      startPolling(); renderGame();
     } else {
       S.peer=0; S.loader=true; S.shooter=false;
-      startPolling();
+      startPolling(); renderGame();
     }
   });
 }
@@ -365,7 +365,7 @@ function showResult(){
   if(S.mode==='pvp'&&S.winner!==null&&S.winner!==S.peer&&S.result&&S.result.msg&&S.result.msg.indexOf('未响应')>=0) msg=esc(S.result.msg);
   document.getElementById('resMsg').innerHTML=msg+(S.mode==='pvp'?'<br><span style="font-size:11px;color:#8a7e9a">'+(won?'对手已被你送下赌桌。':'这局运气不在你这边。')+'</span>':'<br><span style="font-size:11px;color:#8a7e9a">AI 模式 · 娱乐局</span>');
   var acts='<button class="btn btn-gold" onclick="rematch()">🔄 再来一局</button>';
-  acts+='<button class="btn btn-ghost" onclick="renderMenu()">返回菜单</button>';
+  acts+='<button class="btn btn-ghost" onclick="renderMenu2()">返回菜单</button>';
   document.getElementById('resActions').innerHTML=acts;
 }
 function rematch(){
