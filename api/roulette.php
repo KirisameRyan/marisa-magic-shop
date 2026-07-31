@@ -10,7 +10,7 @@ header('Access-Control-Allow-Origin: *');
 define('DATA_DIR', __DIR__ . '/../data/');
 define('MATCH_FILE', DATA_DIR . 'roulette_match.json');
 define('ROOM_TTL', 180);     // 房间闲置 3 分钟过期
-define('MATCH_TTL', 30);     // 匹配等待 30 秒
+define('MATCH_TTL', 60);     // 匹配等待 60 秒
 define('IDLE_MAX', 30);      // 对手 30 秒无响应判负
 
 // ── 基础读写 ──
@@ -39,19 +39,24 @@ function safeWrite($file, $data) {
 // ── 加锁读改写事务(防匹配竞态) ──
 function lockedUpdate($file, $fn) {
     $dir = dirname($file);
-    if (!is_dir($dir)) mkdir($dir, 0777, true);
+    if (!is_dir($dir)) {
+        if (!mkdir($dir, 0777, true)) return [null, 'mkdir_fail'];
+        chmod($dir, 0777);
+    }
+    if (!is_writable($dir) && !chmod($dir, 0777)) return [null, 'dir_not_writable'];
     $h = @fopen($file, 'c+');
-    if (!$h) return [null, 'lock_fail'];
-    flock($h, LOCK_EX);
+    if (!$h) return [null, 'fopen_fail:' . error_get_last()['message']];
+    if (!flock($h, LOCK_EX)) { fclose($h); return [null, 'flock_fail']; }
     $raw = stream_get_contents($h);
     $data = $raw ? json_decode($raw, true) : null;
-    $out = $fn($data);              // 回调返回 [新数据, 返回值]
+    $out = $fn($data);
     ftruncate($h, 0);
     rewind($h);
-    fwrite($h, json_encode($out[0], JSON_UNESCAPED_UNICODE));
+    $bytes = fwrite($h, json_encode($out[0], JSON_UNESCAPED_UNICODE));
     fflush($h);
     flock($h, LOCK_UN);
     fclose($h);
+    if ($bytes === false || $bytes === 0) return [null, 'fwrite_fail'];
     return $out[1];
 }
 function genId($len = 8) {
@@ -80,19 +85,21 @@ case 'match':
     cleanRooms();
     $result = lockedUpdate(MATCH_FILE, function($match) {
         if (!is_array($match)) $match = [];
-        // 清理过期等待票
         $match = array_values(array_filter($match, function($m) {
             return ($m['time'] ?? 0) > time() - MATCH_TTL;
         }));
         if (!empty($match)) {
             $waiter = array_shift($match);
-            // 房间号 = 等待者的票号(双方自然共享同一 ID)
             return [$match, ['matched', $waiter['rid']]];
         }
         $rid = genId();
         $match[] = ['rid' => $rid, 'time' => time()];
         return [$match, ['waiting', $rid]];
     });
+    if (!is_array($result)) {
+        echo json_encode(['error' => 'match_file_error: ' . $result]);
+        exit;
+    }
     if ($result[0] === 'matched') {
         $rid = $result[1];
         $room = [
@@ -103,7 +110,10 @@ case 'match':
             'shootTarget' => null, 'result' => null, 'winner' => null,
             'updated' => time(), 'lastActive' => [time(), time()]
         ];
-        safeWrite(DATA_DIR . "roulette_{$rid}.json", $room);
+        if (!safeWrite(DATA_DIR . "roulette_{$rid}.json", $room)) {
+            echo json_encode(['error' => 'room_create_fail']);
+            exit;
+        }
         echo json_encode(['ok' => true, 'state' => 'matched', 'rid' => $rid, 'peer' => 1]);
     } else {
         echo json_encode(['ok' => true, 'state' => 'waiting', 'rid' => $result[1], 'peer' => 0]);

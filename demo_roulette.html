@@ -235,14 +235,16 @@ function startMatch(){
   S.matchStart=Date.now();
   renderGame();
   api('match',{},function(res){
-    if(!res||!res.ok){alert('匹配失败,请检查网络');renderMenu();return}
+    if(!res||!res.ok){
+      var err=res&&res.error?res.error:'网络错误';
+      if(err.indexOf('match_file_error')>=0) err='服务器文件系统异常,请联系管理员';
+      alert('匹配失败: '+err); renderMenu(); return;
+    }
     S.rid=res.rid; S.peer=parseInt(res.peer);
     if(res.state==='matched'){
-      // 直接配上了(我是加入者 B)
       S.peer=1; S.loader=false; S.shooter=true; S.phase='load';
       startPolling();
     } else {
-      // 我在等待(我是 A,轮询 match_status)
       S.peer=0; S.loader=true; S.shooter=false;
       startPolling();
     }
@@ -273,8 +275,8 @@ function pollMatchStatus(){
       renderGame();
       return;
     }
-    // 仍在等待 — 检查是否超过 30s
-    if(Date.now()-S.matchStart>30000){
+    // 仍在等待 — 检查是否超过 60s(与服务端 TTL 一致)
+    if(Date.now()-S.matchStart>60000){
       api('cancel_match',{});
       clearInterval(S.polling);
       S.phase='match_timeout';
@@ -404,11 +406,12 @@ function renderGame(){
 
   // 阶段 UI
   if(S.phase==='matching'){
-    var sec=Math.floor((Date.now()-S.matchStart)/1000);
-    h+='<div class="wait-text">🔥 正在寻找对手……<br><span style="font-size:11px">已等待 '+sec+'s</span></div>';
+    var elapsed=Math.floor((Date.now()-S.matchStart)/1000);
+    var left=60-elapsed;
+    h+='<div class="wait-text">🔥 正在寻找对手……<br><span style="font-size:11px">已等待 '+elapsed+'s'+(left>0?' · 剩余 <b style="color:#f0c060">'+left+'s</b>':'')+'</span></div>';
     h+='<button class="btn btn-ghost" onclick="cancelMatch()">取消匹配</button>';
   } else if(S.phase==='match_timeout'){
-    h+='<div class="wait-text">😔 暂时没有对手在线<br><span style="font-size:11px">可以挑战 AI 解解闷</span></div>';
+    h+='<div class="wait-text">😔 暂时没有对手在线<br><span style="font-size:11px">60 秒内无人加入,推荐试试 AI 模式</span></div>';
     h+='<div style="display:flex;flex-direction:column;gap:8px">';
     h+='<button class="btn btn-gold" onclick="startAI()">🤖 挑战 AI</button>';
     h+='<button class="btn btn-pink" onclick="startMatch()">🔥 再试一次</button>';
