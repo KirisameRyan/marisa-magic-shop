@@ -115,6 +115,7 @@ body>.container{display:none}
   <div class="px-5 py-3 border-t border-[var(--g-border)] flex gap-2 relative z-10 bg-[var(--g-bg)]/50">
     <button onclick="openShop()" class="btn-outline flex-1 flex items-center justify-center gap-1">🏪 商店</button>
     <button onclick="openInventory()" class="btn-outline flex-1 flex items-center justify-center gap-1">🎒 背包</button>
+    <button id="btn-stall" onclick="useStall()" class="btn-outline hidden flex-1" style="border-color:var(--g-gold);color:var(--g-gold)">🥞 摊位</button>
     <div class="flex-1 text-center flex items-center justify-center font-mono font-bold text-[var(--g-gold)] text-lg" id="money-display">💵 8</div>
   </div>
 </div>
@@ -200,7 +201,7 @@ body>.container{display:none}
 <script>
 // ═══ 状态 ═══
 var S = { hunger:40, danger:0, money:8, day:1, period:0, events:[], items:[], passiveItems:[], alive:true, won:false, defend:0,
-  flags:{}, skills:{work:0,beg:0,scav:0}, winMoney:500, rerolls:0, peakMoney:8, totalEarned:0, specialsSeen:{} };
+  flags:{}, skills:{work:0,beg:0,scav:0}, winMoney:1000, rerolls:0, peakMoney:8, totalEarned:0, specialsSeen:{} };
 
 // ═══ 三个时段的事件池 ═══
 var POOLS = {
@@ -255,21 +256,36 @@ var SPECIALS = {
   ]
 };
 
+function useStall(){
+  if(!S.flags.stallUnlocked) return;
+  if(S._stallUsed) return;  // 每天限一次
+  S.hunger=Math.min(100,S.hunger+10);
+  S.money+=25;
+  S._stallUsed=true;
+  showFeedback('🥞 煎饼摊','你支了一个多小时摊,卖了几个煎饼。赚了 <b>25 元</b>,但站这么久有点饿了。','🪙',true);
+}
 // ═══ 商店 ═══
 var SHOP = [
   {id:'baozi',t:'馒头',e:'🥟',c:3,desc:'🍞 饥饿 -8（立即）',use:function(h){h.hunger-=8}},
   {id:'noodle',t:'方便面',e:'🍜',c:5,desc:'🍞 饥饿 -15（立即）',use:function(h){h.hunger-=15}},
-  {id:'water',t:'矿泉水',e:'💧',c:2,desc:'⚠️ 危险 -3（立即）',use:function(h){h.danger-=3}},
+  {id:'water',t:'矿泉水',e:'💧',c:2,desc:'⚠️ 危险 -1（立即）',use:function(h){h.danger-=1}},
   {id:'lottery',t:'彩票',e:'🎫',c:5,desc:'1% 中 500 大奖直接逆袭,5% 中 50,10% 中 10',use:function(h){ scratchLottery(); }},
   {id:'hotdog',t:'热狗',e:'🌭',c:10,desc:'🍞 饥饿 -25，⚠️ 危险 +3',use:function(h){h.hunger-=25;h.danger+=3}},
-  {id:'warmer',t:'暖宝宝',e:'🔥',c:6,desc:'⚠️ 危险 -6（立即）',use:function(h){h.danger-=6}},
-  {id:'bandage',t:'创可贴',e:'🩹',c:8,desc:'⚠️ 危险 -10（立即）',use:function(h){h.danger-=10}},
+  {id:'warmer',t:'暖宝宝',e:'🔥',c:5,desc:'⚠️ 危险 -3（立即）',use:function(h){h.danger-=3}},
+  {id:'bandage',t:'创可贴',e:'🩹',c:8,desc:'⚠️ 危险 -5（立即）',use:function(h){h.danger-=5}},
   {id:'stick',t:'防身棍',e:'🥢',c:12,desc:'🛡️ 下次被攻击自动免伤（一次性）',use:function(h){h.defend=1}},
   {id:'hotel',t:'酒店一晚',e:'🏨',c:50,desc:'⚠️ 危险 -45，🍞 饥饿 -8',use:function(h){h.danger-=45;h.hunger-=8}},
   {id:'blanket',t:'厚棉被',e:'🛏️',c:25,desc:'永久：每天自动 ⚠️ 危险 -2',passive:function(h){h.danger-=2}},
-  {id:'raincoat',t:'雨衣',e:'☂️',c:15,desc:'永久：免疫暴雨事件',passive:true},
+  {id:'raincoat',t:'一次性雨衣',e:'☂️',c:8,desc:'暴雨事件时自动消耗,危险-25（一次性）',use:function(h){h.danger-=15}},
   {id:'bag',t:'旧书包',e:'🎒',c:12,desc:'永久：每天自动 🍞 饥饿 -1',passive:function(h){h.hunger-=1}},
-  {id:'card',t:'手机卡',e:'📶',c:30,desc:'⚠️ 危险 -40（一次性）',use:function(h){h.danger-=40}}
+  
+  {id:'flu',t:'流感药',e:'💊',c:12,desc:'⚠️ 危险 -8（立即）',use:function(h){h.danger-=8}},
+  {id:'coffee',t:'浓缩咖啡',e:'☕',c:8,desc:'下次打工类事件收入 1.5 倍',use:function(h){h.coffeeBuff=1}},
+  {id:'radio',t:'旧收音机',e:'📻',c:10,desc:'随机一个礼物:天气预报/钱/白噪音',use:function(h){ useRadio(); }},
+  {id:'suit',t:'工作服',e:'💼',c:20,desc:'永久:所有打工收入 +5',passive:true},
+  {id:'jacket',t:'冲锋衣',e:'🧥',c:18,desc:'永久:暴雨事件危险减半',passive:true},
+  {id:'bike',t:'旧自行车',e:'🚲',c:35,desc:'永久:重抽时饥饿惩罚 -4',passive:true},
+  {id:'card',t:'手机卡',e:'📶',c:30,desc:'⚠️ 危险 -20（一次性）',use:function(h){h.danger-=20}},
 ];
 
 // ═══ 突发遭遇池 ═══
@@ -355,6 +371,7 @@ function tryEncounter(){
 }
 function showEncounter(enc){
   var el=document.getElementById('feedback-overlay');
+  clearLbArea();
   el.classList.remove('hidden');
   $('fb-icon').textContent=enc.icon;$('fb-title').textContent='⚡ '+enc.title;$('fb-title').style.color='var(--g-gold)';
   var msg='<div style="line-height:1.8;margin-bottom:12px">'+esc(enc.desc)+'</div><div style="display:flex;flex-direction:column;gap:6px">';
@@ -385,7 +402,7 @@ function resolveEncounter(enc,optIdx){
   $('fb-primary').classList.remove('hidden');$('fb-primary').textContent='继续';$('fb-restart').classList.add('hidden');
   var el=document.getElementById('feedback-overlay');
   $('fb-primary').onclick=function(){el.classList.add('hidden');
-    if(S.hunger>=100){die('hunger');return}if(S.danger>=100){die('danger');return}if(!S.endless&&S.money>=S.winMoney){win(null,'encounter');return}
+    if(S.hunger>=100){die('hunger');return}if(S.danger>=100){die('danger');return}if(!S.endless&&S.money>=1000){milestone1000();return}
     nextPeriod();};
   hud();
 }
@@ -399,13 +416,45 @@ function scratchLottery(){
       showFeedback('🎫 头奖!!!','你颤抖着手核对了三遍——<b>500 元!</b>全部进了口袋。','🤑',true);
     } else {
       unlockAch('lottery');
-      win('lottery','item');
+      S.money+=500;
+      showFeedback('🎫 头奖!!!','你颤抖着手核对了三遍——<b>500 元!</b>全部进了口袋。','🤑',true);
     }
     return;
   }
   if(r<0.06){ S.money+=50; showFeedback('🎫 中奖了','刮出 <b>50 元</b>!今天运气不错。','🎉',true); return; }
   if(r<0.16){ S.money+=10; showFeedback('🎫 小奖','刮出 <b>10 元</b>,回本翻倍。','🙂',true); return; }
   showFeedback('🎫 废票','"谢谢惠顾"。你把彩票揉成一团扔进了垃圾桶。','🗑️',true);
+}
+
+
+function useRadio(){
+  var r=Math.floor(Math.random()*3);
+  if(r===0){ showFeedback('📻 天气预报','"明天气温回暖,适合出门。"——希望是真的。','🔊',true); return; }
+  if(r===1){ S.money+=15; showFeedback('📻 中奖了','电台互动抽奖居然中了 <b>15 元</b>!','🎉',true); return; }
+  showFeedback('📻 白噪音','收音机只传出沙沙声。你调了一圈台,最后对着风声发了会儿呆。','📡',true);
+}
+// 1000元里程碑(替代旧的胜利弹层)
+function milestone1000(){
+  S.endless=true; unlockAch('win'); saveBest();
+  var el=document.getElementById('feedback-overlay');
+  clearLbArea();
+  el.classList.remove('hidden');
+  $('fb-icon').textContent='🎉';$('fb-title').textContent='你做到了!';$('fb-title').style.color='var(--g-gold)';
+  $('fb-message').innerHTML='<p><b>你攒够了 1000 元。</b></p>'+
+    '<p style="font-size:13px;color:var(--g-muted);margin-top:8px">你是李明。来这座城打工第三年,被中介卷走押金的那天,你兜里只剩 8 块。</p>'+
+    '<p style="font-size:13px;color:var(--g-muted)">你睡过长椅、翻过垃圾桶、挨过揍、被雨浇过——但你熬过来了。</p>'+
+    '<div style="margin-top:12px;padding:10px;background:rgba(240,192,96,.08);border-radius:10px;border:1px solid rgba(240,192,96,.2)"><div class="stats-row" style="display:grid">'+
+    '<div class="stats-item"><span>存活天数</span><b style="color:var(--g-text)">'+S.day+'</b></div>'+
+    '<div class="stats-item"><span>手中金钱</span><b style="color:var(--g-gold)">'+S.money+'</b></div>'+
+    '<div class="stats-item"><span>道具收藏</span><b>'+S.passiveItems.length+'</b></div>'+
+    '<div class="stats-item"><span>状态</span><b style="color:var(--g-green)">千元富</b></div>'+
+    '</div></div>'+
+    '<div style="margin-top:10px;font-size:10px;color:var(--g-muted);text-align:center">夷境工作室 · 出品</div>';
+  document.getElementById('fb-stats').style.display='none';
+  $('fb-primary').classList.remove('hidden');
+  $('fb-primary').textContent='🔥 无尽模式继续';
+  $('fb-primary').onclick=function(){ el.classList.add('hidden'); hud(); nextPeriod(); };
+  $('fb-restart').classList.add('hidden');
 }
 
 // ═══ 渲染 ═══
@@ -421,6 +470,7 @@ function hud(){
   $('day-count').textContent=String(S.day).padStart(2,'0');
   $('money-display').innerHTML='💵 '+S.money;
   $('hud-best').textContent=(S.endless?'🔥无尽 ':'')+'HI '+(bestDay>0?bestDay+'天':'0天');
+  if(S.flags.stallUnlocked) document.getElementById('btn-stall').classList.remove('hidden');
   var game=document.getElementById('game-container');
   if(S.danger>=60)game.classList.add('stress-pulse');else game.classList.remove('stress-pulse');
 }
@@ -431,7 +481,7 @@ var ACH_DEFS={
   day10:{e:'🗓️',t:'老城居民',d:'活过 10 天'},
   rich:{e:'💰',t:'小富翁',d:'单局峰值金钱达到 800'},
   specials:{e:'✨',t:'见多识广',d:'见过全部 10 种特殊事件'},
-  allPassive:{e:'🛡️',t:'装备齐全',d:'拥有全部 3 件永久道具'},
+  allPassive:{e:'🛡️',t:'装备齐全',d:'拥有 3 件永久道具'},
   job:{e:'🏭',t:'稳定工作',d:'通过老乡介绍脱离流浪'},
   charity:{e:'🤝',t:'被接住的人',d:'接受慈善机构救助'},
   lottery:{e:'🎫',t:'天选之人',d:'彩票中得头奖'},
@@ -500,7 +550,6 @@ function lbCfgEndless(){ return {game:'survival_endless', score:S.day, graze:S.m
 function pickEvent(pool,specials){
   if(Math.random()<0.3){
     var s=specials[Math.floor(Math.random()*specials.length)];
-    if(s.isRain&&S.passiveItems.indexOf('raincoat')>=0) return objectAssign({},pool[Math.floor(Math.random()*pool.length)],{special:false});
     S.specialsSeen[s.t]=1;   // 成就:记录见过的特殊事件
     return objectAssign({},s,{special:true});
   }
@@ -551,7 +600,7 @@ function injectChainEvents(){
     S.events[0]={t:'一个熟悉的身影',i:'👨‍👦',h:0,d:0,m:0,w:'',special:true,chainEvent:'family'};
   }
 }
-// 链式事件的特殊结算(不走标准 acceptEvent 流程)
+// 链式事件(仅 buff 与叙事,不再有结局)
 function handleChainEvent(e){
   if(e.chainEvent==='laoxiang_call'){
     showChoice('📞 老乡的电话','老乡说厂里有招工名额,问你要不要去面试。去的话要花 10 块钱坐车过去。',
@@ -560,50 +609,42 @@ function handleChainEvent(e){
           if(S.money<10){ showFeedback('😞 钱不够','你掏了掏口袋,连 10 块车费都凑不齐。','💸',true); return; }
           S.money-=10;
           if(Math.random()<0.6){
-            S.flags.jobUnlocked=1; S.winMoney=300;
-            showFeedback('🎉 面试成功!','你被录用了!<br>有了稳定工作,离开街头的目标降到 <b>300 元</b>!','🏭',true);
+            S.jobBuff+=15; S.flags.jobUnlocked=1; unlockAch('job');
+            showFeedback('🎉 面试成功!','你被录用了!老板说每天先给你预留 15 元的零活。','🏭',true);
           } else {
             showFeedback('😔 面试失败','工厂说名额满了。10 块钱车费打了水漂。','💔',true);
           }
         }},
         {label:'🚶 算了吧',fn:function(){ showFeedback('🚶 放弃机会','你谢绝了老乡。也许下次吧。','🌫️',true); }}
       ]);
-    return true;
+    return;
   }
   if(e.chainEvent==='charity'){
-    showChoice('🤝 慈善机构找上门','一位社工说,看了报道后一直在找你。他们可以为你提供过渡住房和职业培训。',
-      [
-        {label:'🏠 接受救助',fn:function(){ win('charity','chain'); }},
-        {label:'💪 我想靠自己',fn:function(){ S.flags.charityMet=1; S.money+=30; showFeedback('💪 靠自己','社工尊重你的选择,留下 30 元和一些物资后离开了。','🌟',true); }}
-      ]);
-    return true;
+    showChoice('🤝 慈善机构找上门','一位社工说,看了报道后一直在找你。他们每月会给你一点补贴。',
+      [{label:'🙏 好的,谢谢',fn:function(){ S.flags.charityMet=1; S.charityBuff+=5; unlockAch('charity'); showFeedback('🤝 慈善补贴','社工说每月会给你 <b>5 元补贴</b>。不多,但你点点头。','🌟',true); }},
+       {label:'💪 不用了',fn:function(){ S.flags.charityMet=1; S.money+=30; showFeedback('💪 靠自己','社工尊重你的选择,留下 30 元和一些物资后离开了。','🌟',true); }}]);
+    return;
   }
   if(e.chainEvent==='stall_offer'){
-    showChoice('🥞 大叔的提议','大叔揉着腰把你叫到摊后:"这腰是真不行了。摊子转给你吧,都是老主顾,押金给 150 就行。"',
-      [
-        {label:'🥞 接手煎饼摊(押金 150)',fn:function(){
-          if(S.money<150){ showFeedback('😞 钱不够','你掏不出 150 押金。大叔拍拍你肩膀:"攒够了随时来找我。"','💸',true); return; }
-          S.money-=150; S.flags.stallDone=1;
-          win('stall','chain');
-        }},
-        {label:'🚶 再想想',fn:function(){ S.flags.stallOffered=1; showFeedback('🚶 再想想','你说要再想想。大叔点点头,没再说什么。','🌫️',true); }}
-      ]);
-    return true;
+    showChoice('🥞 大叔的提议','大叔揉着腰把你叫到摊后:"手艺也差不多了。你在旁边支个小摊,我教你。"',
+      [{label:'🥞 行,我试试(解锁摊位)',fn:function(){ S.flags.stallUnlocked=1; S.flags.stallDone=1; unlockAch('stall'); showFeedback('🥞 解锁摊位','你有了自己的煎饼摊!<br>从今天起,底栏多了个摊位按钮。','🎊',true); }},
+       {label:'🚶 再想想',fn:function(){ S.flags.stallOffered=1; showFeedback('🚶 再想想','你说要再想想。大叔点点头,没再说什么。','🌫️',true); }}]);
+    return;
   }
+  // 家人线:回家=输
   if(e.chainEvent==='family'){
     S.flags.familyMet=1;
-    showChoice('👨‍👦 一个熟悉的身影','你在路口愣住了——那是你哥。他坐了六个小时的车,在网上看到关于你的消息后找了过来。"跟哥回家。"',
-      [
-        {label:'🏠 跟哥回家',fn:function(){ win('family','chain'); }},
-        {label:'🌃 我不回去',fn:function(){ S.money+=50; showFeedback('🌃 我不回去','你哥沉默了很久,把兜里所有的现金塞给了你,转身走进了人群。<br>+<b>50 元</b>','💔',true); }}
-      ]);
-    return true;
+    showChoice('👨‍👦 你哥来了','他坐了六个小时的车,站在你面前。沉默了一阵:"妈让我来看看你。"',
+      [{label:'🏠 跟他回家(结束流浪)',fn:function(){ die('family'); }},
+       {label:'🌃 我不回去',fn:function(){ S.money+=50; showFeedback('🌃 我不回去','你哥沉默了很久,把兜里的钱塞给你,转身走了。<br>+<b>50 元</b>','💔',true); }}]);
+    return;
   }
-  return false;
 }
+// 双选项弹层
 // 双选项弹层
 function showChoice(title,desc,opts){
   var el=document.getElementById('feedback-overlay');
+  clearLbArea();
   el.classList.remove('hidden');
   $('fb-icon').textContent='⚡';$('fb-title').textContent=title;$('fb-title').style.color='var(--g-gold)';
   var msg='<div style="line-height:1.8;margin-bottom:12px">'+desc+'</div><div style="display:flex;flex-direction:column;gap:6px">';
@@ -615,6 +656,7 @@ function showChoice(title,desc,opts){
 }
 
 function startDay(){
+  S._stallUsed=false;
   S.period=0; S.events=[]; S.rerolls=0;
   S.events[0]=pickEvent(POOLS.morning,SPECIALS.morning);
   S.events[1]=pickEvent(POOLS.afternoon,SPECIALS.afternoon);
@@ -625,8 +667,8 @@ function startDay(){
 }
 
 function startGame(){
-  S={hunger:40,danger:0,money:8,day:1,period:0,events:[],items:[],passiveItems:[],alive:true,won:false,defend:0,endless:false,
-      flags:{},skills:{work:0,beg:0,scav:0},winMoney:500,rerolls:0,peakMoney:8,totalEarned:0,specialsSeen:{}};
+  S={hunger:40,danger:0,money:8,day:1,period:0,events:[],items:[],passiveItems:[],alive:true,won:false,defend:0,endless:false,coffeeBuff:0,charityBuff:0,jobBuff:0,_worked:false,_begged:false,_scaved:false,_encountered:false,_lottery:false,
+      flags:{},skills:{work:0,beg:0,scav:0},winMoney:1000,rerolls:0,peakMoney:8,totalEarned:0,specialsSeen:{}};
   document.getElementById('intro-overlay').classList.add('hidden');
   document.getElementById('tut-overlay').classList.add('hidden');
   document.getElementById('game-container').classList.remove('hidden');
@@ -716,6 +758,11 @@ function acceptEvent(){
   S.hunger=Math.min(100,Math.max(0,S.hunger+e.h));
   S.danger=Math.min(100,Math.max(0,S.danger+e.d));
   if(e.dangerClr) S.danger=0;
+  // 暴雨处理:冲锋衣减半,一次性雨衣自动消耗+抵消
+  if(e.isRain){
+    if(S.passiveItems.indexOf('jacket')>=0) e.d=Math.ceil(e.d/2);
+    for(var ri=0;ri<S.items.length;ri++) if(S.items[ri].id==='raincoat'){S.items.splice(ri,1);e.d=Math.max(0,e.d-25);break}
+  }
   S.money=Math.max(0,S.money+mGain);
   if(mGain>0){ S.totalEarned+=mGain; if(S.money>S.peakMoney)S.peakMoney=S.money; }
   // 熟练度经验
@@ -731,7 +778,7 @@ function acceptEvent(){
         showFeedback('👵 大妈的包子','大妈还记得你,硬塞给你两个热包子和五块钱。',e.i,true); return;
       }
     }
-    if(e.giveItem==='phone'){S.items.push({id:'phone',t:'旧手机',e:'📱',use:function(h){h.money+=40;h.danger-=5}});showFeedback('📱 获得道具','你捡到一部<b>旧手机</b>。可以在背包里使用(换钱)或留着。',e.i,true);return}
+    if(e.giveItem==='phone'){S.items.push({id:'phone',t:'旧手机',e:'📱',use:function(h){h.money+=25;h.danger-=5}});showFeedback('📱 获得道具','你捡到一部<b>旧手机</b>。可以在背包里使用(换钱)或留着。',e.i,true);return}
   }
   // 故事链:老乡相遇立 flag
   if(e.chain){ S.flags[e.chain]=1; }
@@ -739,7 +786,7 @@ function acceptEvent(){
   if(e.uncleHelp){ S.flags.uncleHelp=(S.flags.uncleHelp||0)+1; }
   if(S.hunger>=100){ die('hunger'); return; }
   if(S.danger>=100){ die('danger'); return; }
-  if(!S.endless && S.money>=S.winMoney){ win(null,'event'); return; }
+  if(!S.endless && S.money>=1000){ milestone1000(); return; }
   var extra='';
   if(lvMsg) extra='<br><span style="color:var(--g-gold);font-size:11px">'+lvMsg+'</span>';
   if(e.skill&&mGain>e.m) extra+='<br><span style="color:var(--g-green);font-size:10px">📈 熟练度加成 +'+(mGain-e.m)+' 元</span>';
@@ -767,16 +814,31 @@ function nightSummary(){
   var dDanger=3+Math.floor(Math.random()*3);
   if(S.endless) dDanger+=1+Math.floor(S.day/10);   // 无尽模式难度爬坡
   S.danger=Math.min(100,S.danger+dDanger);
+  // 持续性 buff
+  if(S.charityBuff) S.money+=S.charityBuff;
+  if(S.jobBuff) S.money+=S.jobBuff;
+  // 每日自然消耗
   msgs.push('🌃 过夜:饥饿+6,危险+'+dDanger);
+  if(S.charityBuff||S.jobBuff) msgs.push('💰 今日补贴:'+(S.charityBuff||0)+(S.jobBuff||0)+'元');
+  // 日记一句话
+  var diary='又活了一天。';
+  if(S._lottery) diary='花了 5 块赌一个梦。明天开奖见。';
+  else if(S._encountered) diary='差点出大事。以后那条巷子得绕着走。';
+  else if(S._worked) diary='今天又干了一天活。胳膊酸,但心里踏实。';
+  else if(S._begged) diary='在街上举了一天纸牌。有个小孩把零花钱扔进了我的杯子。';
+  else if(S._scaved) diary='在垃圾桶里翻到了还能吃的。第'+S.day+'天了,早就不觉得丢脸了。';
+  msgs.push('<br><span style="color:var(--g-gold-dim);font-style:italic;font-size:11px">📝 '+diary+'</span>');
+  S._worked=S._begged=S._scaved=S._encountered=S._lottery=false;
   // 剧情里程碑
   var milestones = {'3':'三天了。你开始分得清哪些垃圾桶每周几有人扔剩饭。','7':'一周了。路口卖煎饼的大叔开始对你点头。有人说这叫"混熟了"。','10':'第十天。你注意到路过的警车比刚来那会儿多了。也许只是错觉。','15':'十五天了。你甚至有了自己偏好的长椅——朝南那排,第三张。'};
   if(milestones[S.day]) msgs.push('<br><span style="color:var(--g-gold-dim);font-style:italic;font-size:12px">'+milestones[S.day]+'</span>');
   if(S.hunger>=100){ die('hunger'); return; }
   if(S.danger>=100){ die('danger'); return; }
-  if(!S.endless && S.money>=S.winMoney){ win(null,'night'); return; }
+  if(!S.endless && S.money>=1000){ milestone1000(); return; }
   checkAchievements();
   // 夜间总结弹层
   var el=document.getElementById('feedback-overlay');
+  clearLbArea();
   el.classList.remove('hidden');
   $('fb-icon').textContent='🌙';
   $('fb-title').textContent='第 '+S.day+' 天结束';
@@ -788,8 +850,10 @@ function nightSummary(){
   $('fb-primary').onclick=function(){el.classList.add('hidden');S.day++;hud();startDay()};
 }
 
+function clearLbArea(){var o=document.querySelector('#feedback-overlay .lb-area');if(o)o.remove();}
 function showFeedback(title,msg,icon,isContinue){
   var el=document.getElementById('feedback-overlay');
+  clearLbArea();
   el.classList.remove('hidden');
   $('fb-icon').textContent=icon;$('fb-title').textContent=title;$('fb-title').style.color='var(--g-text)';
   $('fb-message').innerHTML=msg+'<div style="margin-top:8px;font-size:12px;color:var(--g-muted)">🍞 饥饿 '+S.hunger+'% &nbsp; ⚠️ 危险 '+S.danger+'% &nbsp; 💵 '+S.money+'元</div>';
@@ -803,11 +867,12 @@ function showFeedback(title,msg,icon,isContinue){
 function die(cause){
   S.alive=false;
   var el=document.getElementById('feedback-overlay');
+  clearLbArea();
   el.classList.remove('hidden');
   $('fb-title').style.color='var(--g-pink)';
-  if(cause==='hunger'){$('fb-icon').textContent='🍞';$('fb-title').textContent='饿死街头'}
-  else{$('fb-icon').textContent='☠️';$('fb-title').textContent='灾祸降临'}
-  $('fb-message').innerHTML=(cause==='hunger'?'连最后一口气也耗尽了。这座城市的角落里,又多了一具沉默的尸体。':'被命运击倒了。这座城市不会为任何人停下脚步。')+
+  if(cause==='family'){$('fb-icon').textContent='🚂';$('fb-title').textContent='选择回家'}
+  else if(cause==='hunger'){$('fb-icon').textContent='🍞';$('fb-title').textContent='饿死街头'}else{$('fb-icon').textContent='☠️';$('fb-title').textContent='灾祸降临'}
+  $('fb-message').innerHTML=(cause==='family'?'火车开动了。你看着窗外,这座吞噬过你的城市慢慢后退。你不知道什么时候还会回来。':(cause==='hunger'?'连最后一口气也耗尽了。这座城市的角落里,又多了一具沉默的尸体。':'被命运击倒了。这座城市不会为任何人停下脚步。'))+
     '<div style="margin-top:12px;padding:10px;background:rgba(239,68,68,.08);border-radius:10px;border:1px solid rgba(239,68,68,.2)"><div class="stats-row" style="display:grid">'+
     '<div class="stats-item"><span>存活天数</span><b style="color:var(--g-text)">'+S.day+'</b></div>'+
     '<div class="stats-item"><span>累计收入</span><b style="color:var(--g-gold)">'+S.money+'</b></div>'+
@@ -827,55 +892,16 @@ function die(cause){
   loadLB(lbDiv, S.endless ? lbCfgEndless() : lbCfgNormal());
 }
 
-function win(ending, from){
-  S.won=true; saveBest(); unlockAch('win');
-  if(ending==='charity') unlockAch('charity');
-  else if(ending==='stall') unlockAch('stall');
-  else if(ending==='family') unlockAch('family');
-  else if(S.flags.jobUnlocked) unlockAch('job');
-  var el=document.getElementById('feedback-overlay');
-  el.classList.remove('hidden');
-  var story='你攒够了 '+S.winMoney+' 元,找到了稳定工作和一处住房。';
-  if(ending==='charity') story='你接受了慈善机构的救助。过渡住房、职业培训、一份体面的工作——他们全都安排好了。';
-  else if(ending==='stall') story='你把押金递给大叔,接过了那杆煎饼铲。从此这条街的清晨,有了属于你的烟火气。';
-  else if(ending==='family') story='火车开动时,你看着窗外。这座吞噬过你的城市慢慢后退、变小,最终消失在地平线。';
-  else if(ending==='lottery') story='你核对了十遍彩票——真的是头奖!500 元!你攥着彩票冲出兑奖点,觉得整座城市都在朝你笑。';
-  else if(S.flags.jobUnlocked) story='你凭着老乡介绍的那份工作,终于在这座城市站稳了脚跟。';
-  $('fb-icon').textContent='🏡';$('fb-title').textContent='脱离流浪!';$('fb-title').style.color='var(--g-gold)';
-  $('fb-message').innerHTML=story+'<br><br><b style="color:var(--g-gold)">这座城没能吞掉你。</b>'+
-    '<div style="margin-top:12px;padding:10px;background:rgba(240,192,96,.08);border-radius:10px;border:1px solid rgba(240,192,96,.2)"><div class="stats-row" style="display:grid">'+
-    '<div class="stats-item"><span>存活天数</span><b style="color:var(--g-text)">'+S.day+'</b></div>'+
-    '<div class="stats-item"><span>剩余金钱</span><b style="color:var(--g-gold)">'+S.money+'</b></div>'+
-    '<div class="stats-item"><span>道具收藏</span><b>'+S.passiveItems.length+'</b></div>'+
-    '<div class="stats-item"><span>状态</span><b style="color:var(--g-green)">重新做人</b></div>'+
-    '</div></div>';
-  checkAchievements();
-  $('fb-message').innerHTML+=achBadgesHTML()+'<div style="margin-top:10px;font-size:10px;color:var(--g-muted);text-align:center">夷境工作室 · 出品</div>';
-  document.getElementById('fb-stats').style.display='none';
-  // 无尽模式按钮(链式结局除外——那些是明确的"终幕")
-  if(from!=='chain'){
-    $('fb-primary').classList.remove('hidden');
-    $('fb-primary').textContent='🔥 无尽模式继续';
-    $('fb-primary').onclick=function(){
-      S.endless=true; S.won=false;
-      el.classList.add('hidden'); hud();
-      if(from==='night'){ S.day++; startDay(); }
-      else if(from==='event'||from==='encounter'){ nextPeriod(); }
-      // 'item'(彩票) → 停在当前时段,什么都不用做
-    };
-  } else {
-    $('fb-primary').classList.add('hidden');
-  }
-  $('fb-restart').classList.remove('hidden');
-  $('fb-restart').textContent='🏡 新的人生';
-  $('fb-restart').onclick=function(){el.classList.add('hidden');startGame()};
-  saveBest();
-  // 排行榜(胜利总是普通榜)
-  var lbDiv=document.createElement('div');lbDiv.style.cssText='margin-top:12px';
-  $('fb-message').parentNode.parentNode.insertBefore(lbDiv,$('fb-message').parentNode.nextSibling);
-  loadLB(lbDiv, lbCfgNormal());
-}
+function win(){}  // 已废弃:1000元进入里程碑,不再有胜利弹层
 
+function useStall(){
+  if(!S.flags.stallUnlocked) return;
+  if(S._stallUsed) return;  // 每天限一次
+  S.hunger=Math.min(100,S.hunger+10);
+  S.money+=25;
+  S._stallUsed=true;
+  showFeedback('🥞 煎饼摊','你支了一个多小时摊,卖了几个煎饼。赚了 <b>25 元</b>,但站这么久有点饿了。','🪙',true);
+}
 // ═══ 商店 ═══
 function openShop(){
   $('shop-money').textContent='💵 '+S.money;
