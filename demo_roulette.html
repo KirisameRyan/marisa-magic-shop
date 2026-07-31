@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>轮盘赌局 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a1520;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#e0d8ec;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;padding-top:64px;overflow-x:hidden}
+body>.container{display:none}
+.glass{background:#241e2a;border:1px solid #3a3045;border-radius:24px;box-shadow:0 16px 48px rgba(0,0,0,.5);position:relative;overflow:hidden}
+.glass::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f0c060,#b89fff,#f0c060);z-index:1}
+.gold{color:#f0c060}.muted{color:#8a7e9a}
+.btn{font-family:inherit;border:none;border-radius:14px;padding:13px 24px;font-weight:700;cursor:pointer;transition:all .15s;text-align:center;font-size:14px;width:100%;letter-spacing:1px}
+.btn-gold{background:linear-gradient(135deg,#f0c060,#c89a40);color:#1a1520;box-shadow:0 4px 16px rgba(240,192,96,.25)}
+.btn-gold:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-pink{background:rgba(244,114,182,.15);color:#f472b6;border:1px solid rgba(244,114,182,.25)}
+.btn-pink:hover{background:rgba(244,114,182,.25)}
+.btn-danger{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.25)}
+.btn-danger:hover{background:rgba(239,68,68,.25)}
+.btn-ghost{background:transparent;color:#8a7e9a;border:1px solid #3a3045}
+.btn-ghost:hover{border-color:#f0c060;color:#f0c060}
+
+/* ── 左轮弹巢 ── */
+.cyl-wrap{position:relative;width:230px;height:230px;margin:14px auto}
+.cyl-hub{position:absolute;top:50%;left:50%;width:60px;height:60px;transform:translate(-50%,-50%);background:radial-gradient(circle,#3a3045,#241e2a);border:2px solid #4a4356;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;z-index:2}
+.cyl-ring{position:absolute;inset:8px;border:2px solid #3a3045;border-radius:50%;z-index:0}
+.chamber{position:absolute;width:54px;height:54px;border-radius:50%;background:#1a1520;border:3px solid #3a3045;display:flex;align-items:center;justify-content:center;font-size:22px;transition:all .35s;z-index:1}
+.chamber.c0{top:6px;left:50%;transform:translateX(-50%)}
+.chamber.c1{top:48px;right:6px}
+.chamber.c2{bottom:48px;right:6px}
+.chamber.c3{bottom:6px;left:50%;transform:translateX(-50%)}
+.chamber.c4{bottom:48px;left:6px}
+.chamber.c5{top:48px;left:6px}
+.chamber.loaded{border-color:#ef4444;box-shadow:0 0 14px rgba(239,68,68,.55);background:#2a1020}
+.chamber.hit{border-color:#ef4444;box-shadow:0 0 26px rgba(239,68,68,.9);background:#3a0a10;animation:hitShake .45s}
+.chamber.emptyfire{border-color:#6fcf97;box-shadow:0 0 20px rgba(111,207,151,.55);background:#0f2015;animation:chamberPop .4s}
+@keyframes chamberPop{50%{transform:scale(1.3)}}
+@keyframes hitShake{0%,100%{transform:translate(0,0)}20%{transform:translate(-4px,2px)}40%{transform:translate(4px,-2px)}60%{transform:translate(-3px,-2px)}80%{transform:translate(3px,2px)}}
+.cyl-spin{animation:cylSpin .55s cubic-bezier(.25,.8,.35,1)}
+@keyframes cylSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* 枪口火光 */
+.muzzle{position:fixed;inset:0;background:radial-gradient(circle at 50% 55%,rgba(240,192,96,.55),transparent 55%);z-index:30;pointer-events:none;opacity:0}
+.muzzle.go{animation:flash .5s ease-out}
+@keyframes flash{0%{opacity:1}100%{opacity:0}}
+/* 开枪震动 */
+.shake-screen{animation:scrShake .35s}
+@keyframes scrShake{0%,100%{transform:translate(0,0)}20%{transform:translate(-6px,3px)}40%{transform:translate(6px,-3px)}60%{transform:translate(-4px,-2px)}80%{transform:translate(4px,2px)}}
+
+/* 记分板 */
+.scoreboard{display:flex;justify-content:center;gap:20px;margin:10px 0 4px}
+.sb-box{text-align:center;padding:9px 18px;background:#1a1520;border:1px solid #3a3045;border-radius:14px;min-width:86px;transition:all .3s}
+.sb-box .sb-score{font-size:26px;font-weight:900;color:#f0c060;line-height:1}
+.sb-box .sb-label{font-size:11px;color:#8a7e9a;margin-top:3px}
+.sb-box.active{border-color:#f0c060;box-shadow:0 0 14px rgba(240,192,96,.3)}
+.round-dots{display:flex;justify-content:center;gap:8px;margin:6px 0 2px}
+.round-dots span{width:9px;height:9px;border-radius:50%;background:#3a3045;transition:all .3s}
+.round-dots span.cur{background:#f0c060;box-shadow:0 0 8px rgba(240,192,96,.6)}
+.round-dots span.done{background:#8a7e9a}
+
+.phase-banner{text-align:center;font-size:12px;letter-spacing:2px;padding:5px 14px;border-radius:20px;margin:6px auto;max-width:220px}
+.pb-load{background:rgba(240,192,96,.12);color:#f0c060;border:1px solid rgba(240,192,96,.25)}
+.pb-shoot{background:rgba(244,114,182,.12);color:#f472b6;border:1px solid rgba(244,114,182,.25)}
+.pb-wait{background:rgba(138,126,154,.1);color:#8a7e9a;border:1px solid #3a3045}
+
+.msg-box{background:#1a1520;border:1px dashed #a08050;border-radius:12px;padding:10px 14px;font-size:13px;color:#f0c060;text-align:center;line-height:1.6;margin:10px 0;min-height:20px;animation:msgIn .4s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.wait-text{text-align:center;padding:36px 20px;color:#8a7e9a;font-size:14px;animation:pulse 1.5s infinite alternate;line-height:2}
+@keyframes pulse{from{opacity:.35}to{opacity:1}}
+
+input[type=range]{width:100%;accent-color:#f0c060;margin:10px 0;height:28px}
+.msg-input{width:100%;background:#1a1520;border:1px solid #3a3045;border-radius:12px;padding:11px 14px;color:#e0d8ec;font-size:14px;outline:none;font-family:inherit;margin:8px 0;transition:border-color .2s}
+.msg-input:focus{border-color:#f0c060}
+.msg-input::placeholder{color:#4a4356}
+.load-num{font-size:44px;font-weight:900;color:#f0c060;text-align:center;line-height:1;transition:transform .1s}
+
+/* 规则折叠 */
+.rule-toggle{text-align:center;font-size:12px;color:#8a7e9a;cursor:pointer;padding:8px;margin-top:14px;transition:color .2s}
+.rule-toggle:hover{color:#f0c060}
+.rule-body{display:none;background:#1a1520;border:1px solid #3a3045;border-radius:14px;padding:12px 16px;font-size:12px;color:#b8acc8;line-height:1.9;margin-top:8px;text-align:left}
+.rule-body.show{display:block;animation:msgIn .3s ease}
+.rule-body b{color:#f0c060}
+
+/* 终局弹层 */
+.result-overlay{position:fixed;inset:0;z-index:20;background:rgba(26,21,32,.96);display:flex;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(8px)}
+.result-overlay.hide{display:none}
+.result-card{background:#241e2a;border:1px solid #3a3045;border-radius:24px;padding:26px 22px;max-width:360px;width:100%;text-align:center;position:relative;overflow:hidden;animation:popCard .35s cubic-bezier(.2,1.4,.4,1)}
+@keyframes popCard{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+.result-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f0c060,#b89fff,#f0c060)}
+.result-card .emoji{font-size:64px;margin-bottom:6px}
+.result-card h2{font-size:22px;margin-bottom:8px}
+.result-card p{font-size:13px;color:#b8acc8;line-height:1.9}
+.result-card .final-score{font-size:30px;font-weight:900;color:#f0c060;margin:8px 0}
+
+@media(max-width:420px){.cyl-wrap{width:190px;height:190px}.chamber{width:44px;height:44px;font-size:18px}.cyl-hub{width:48px;height:48px;font-size:20px}}
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div id="app" class="glass" style="width:100%;max-width:400px;padding:22px 20px 18px;position:relative;z-index:10;min-height:600px"></div>
+<div class="muzzle" id="muzzle"></div>
+
+<!-- 终局弹层 -->
+<div id="resultOverlay" class="result-overlay hide">
+  <div class="result-card">
+    <div class="emoji" id="resEmoji"></div>
+    <h2 id="resTitle"></h2>
+    <div class="final-score" id="resScore"></div>
+    <p id="resMsg"></p>
+    <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px" id="resActions"></div>
+  </div>
+</div>
+
+<script>
+// ═══ 状态 ═══
+var S = { mode:'menu', peer:0, rid:'', round:1, scores:[0,0], phase:'menu',
+  loader:false, shooter:false, loadAmount:0, message:'', chambers:[], pick:-1,
+  result:null, winner:null, polling:null, matchStart:0 };
+
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+
+// ═══ API ═══
+function api(act,data,cb){
+  var f=new FormData();
+  f.append('action',act);
+  if(S.rid){f.append('rid',S.rid);f.append('peer',String(S.peer))}
+  for(var k in data||{}) f.append(k,data[k]);
+  fetch('api/roulette.php',{method:'POST',body:f})
+    .then(function(r){return r.json()})
+    .then(function(res){ if(cb) cb(res); })
+    .catch(function(){ if(cb) cb(null); });
+}
+
+// ═══ 菜单 ═══
+function renderMenu(){
+  clearInterval(S.polling);
+  var h='<h2 style="text-align:center;font-size:24px;margin:4px 0 2px" class="gold">🔫 轮盘赌局</h2>';
+  h+='<p style="text-align:center;font-size:12px;color:#8a7e9a;margin-bottom:14px">一把左轮 · 三局两胜 · 装弹 · 留话 · 扣扳机</p>';
+  h+='<div class="cyl-wrap"><div class="cyl-ring"></div><div class="cyl-hub">🔫</div>'+
+     '<div class="chamber c0 loaded">💀</div><div class="chamber c1"></div><div class="chamber c2 loaded">💀</div>'+
+     '<div class="chamber c3"></div><div class="chamber c4"></div><div class="chamber c5 loaded">💀</div></div>';
+  h+='<div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">';
+  h+='<button class="btn btn-gold" onclick="startAI()">🤖 挑战 AI</button>';
+  h+='<button class="btn btn-pink" onclick="startMatch()">🔥 匹配真人</button>';
+  h+='</div>';
+  h+='<div class="rule-toggle" onclick="var b=document.getElementById(\'ruleBody\');b.classList.toggle(\'show\');this.textContent=b.classList.contains(\'show\')?\'📖 规则说明 ▾\':\'📖 规则说明 ▸\'">📖 规则说明 ▸</div>';
+  h+='<div class="rule-body" id="ruleBody">'+
+     '<b>玩法</b><br>每局一人装弹(0~6 颗),另一人决定朝谁开枪。<br>'+
+     '<b>开枪判定</b><br>· 朝对方开枪:<b>中弹</b>→对方死,你得分;<b>空膛</b>→你被反杀,对方得分。<br>'+
+     '· 朝自己开枪:<b>中弹</b>→你死,对方得分;<b>空膛</b>→你得分。<br>'+
+     '<b>轮流</b><br>三局两胜。第 1 局 A 装弹,第 2 局 B 装弹,1:1 时第 3 局随机。<br>'+
+     '<b>留话</b><br>装弹人可给对手留一句话——真真假假,信与不信全在对面。</div>';
+  document.getElementById('app').innerHTML=h;
+}
+
+// ═══ AI 模式 ═══
+function startAI(){
+  S.mode='ai'; S.peer=0; S.scores=[0,0]; S.round=1; S.winner=null;
+  S.loader=(Math.random()<0.5); S.shooter=!S.loader;
+  resetRound();
+  S.phase='load';
+  renderGame();
+}
+function resetRound(){
+  S.loadAmount=0; S.message=''; S.result=null; S.pick=-1; S.chambers=[];
+}
+function aiLoad(){
+  S.loadAmount=Math.floor(Math.random()*7);  // AI 装 0~6
+  S.phase='shoot';
+  renderGame();
+}
+function aiAct(){
+  if(!S||S.mode!=='ai'||S.result||S.phase==='result'||S.phase==='game_over'||S._aiPending) return;
+  if(S.phase==='load' && !S.loader){ S._aiPending=true; setTimeout(function(){ S._aiPending=false; aiLoad(); }, 700); return; }
+  if(S.phase==='shoot' && S.loader){ S._aiPending=true; setTimeout(function(){ S._aiPending=false; aiShoot(Math.random()<0.5?'self':'opponent'); }, 800); return; }
+}
+function aiShoot(target){
+  var n=S.loadAmount;
+  var chambers=[false,false,false,false,false,false];
+  if(n>0){var placed=0;while(placed<n){var p=Math.floor(Math.random()*6);if(!chambers[p]){chambers[p]=true;placed++}}}
+  var pick=Math.floor(Math.random()*6);
+  var hit=chambers[pick];
+  var me=0, ai=1;
+  var whoShoots = S.shooter ? '你' : 'AI';    // 谁开枪
+  var whoDies   = S.shooter ? 'AI' : '你';     // 默认开枪对向是谁(打对方=对方是靶)
+  var shooterId = S.shooter ? me : ai;          // 开枪人ID
+  var loaderId  = 1 - shooterId;                // 装弹人ID
+  if(target==='self'){
+    whoDies = whoShoots;  // 自己打自己,倒下的就是开枪人自己
+    if(hit){
+      S.result={winner:loaderId,hit:true,target:'self',
+        msg:whoShoots+'朝自己开枪——中了。'+whoShoots+'倒下,对方得分。'};
+      S.scores[loaderId]++;
+    }else{
+      S.result={winner:shooterId,hit:false,target:'self',
+        msg:whoShoots+'朝自己开枪——空膛！'+whoShoots+'活下来了,得一分。'};
+      S.scores[shooterId]++;
+    }
+  } else {
+    // 打对方
+    var whoTarget = S.shooter ? 'AI' : '你';    // 被瞄准的人
+    if(hit){
+      S.result={winner:shooterId,hit:true,target:'opponent',
+        msg:whoShoots+'朝'+whoTarget+'开枪——中了。'+whoTarget+'倒下,'+whoShoots+'得分。'};
+      S.scores[shooterId]++;
+    }else{
+      S.result={winner:loaderId,hit:false,target:'opponent',
+        msg:whoShoots+'朝'+whoTarget+'开枪——空膛！没能命中,'+whoTarget+'得分。'};
+      S.scores[loaderId]++;
+    }
+  }
+  S.chambers=chambers; S.pick=pick; S.phase='result';
+  muzzleFlash();
+  renderGame();
+}
+function muzzleFlash(){
+  var m=document.getElementById('muzzle');
+  m.classList.remove('go'); void m.offsetWidth; m.classList.add('go');
+  var app=document.getElementById('app');
+  app.classList.remove('shake-screen'); void app.offsetWidth; app.classList.add('shake-screen');
+}
+
+// ═══ PvP 模式 ═══
+function startMatch(){
+  S.mode='pvp'; S.scores=[0,0]; S.round=1; S.phase='matching'; S.rid=''; S.result=null; S.winner=null;
+  S.matchStart=Date.now();
+  renderGame();
+  api('match',{},function(res){
+    if(!res||!res.ok){alert('匹配失败,请检查网络');renderMenu();return}
+    S.rid=res.rid; S.peer=parseInt(res.peer);
+    if(res.state==='matched'){
+      // 直接配上了(我是加入者 B)
+      S.peer=1; S.loader=false; S.shooter=true; S.phase='load';
+      startPolling();
+    } else {
+      // 我在等待(我是 A,轮询 match_status)
+      S.peer=0; S.loader=true; S.shooter=false;
+      startPolling();
+    }
+  });
+}
+function cancelMatch(){
+  clearInterval(S.polling);
+  api('cancel_match',{},function(){ renderMenu(); });
+}
+function startPolling(){
+  clearInterval(S.polling);
+  S.polling=setInterval(function(){
+    if(S.phase==='matching') pollMatchStatus();
+    else pollGame();
+  },1200);
+}
+function pollMatchStatus(){
+  api('match_status',{},function(res){
+    if(!res||!res.ok) return;
+    if(res.state==='matched'){
+      S.peer=0; S.loader=true; S.shooter=false; S.phase='load';
+      renderGame();   // phase 变成 load 后,下一轮轮询自动走 pollGame
+      return;
+    }
+    if(res.state==='expired'){
+      clearInterval(S.polling);
+      S.phase='match_timeout';
+      renderGame();
+      return;
+    }
+    // 仍在等待 — 检查是否超过 30s
+    if(Date.now()-S.matchStart>30000){
+      api('cancel_match',{});
+      clearInterval(S.polling);
+      S.phase='match_timeout';
+      renderGame();
+    }
+  });
+}
+function pollGame(){
+  api('poll',{},function(res){
+    if(!res) return;
+    if(res.error){ clearInterval(S.polling); alert('房间已失效,请重新匹配'); renderMenu(); return; }
+    if(res.state==='expired'){ clearInterval(S.polling); alert('对手已离开'); renderMenu(); return; }
+    var oldPhase=S.phase;
+    S.round=res.round; S.scores=res.scores||S.scores;
+    S.phase=res.phase; S.loader=res.loader; S.shooter=res.shooter;
+    if(res.loadAmount!==null&&res.loadAmount!==undefined) S.loadAmount=res.loadAmount;
+    if(res.message!==undefined&&res.message!==null) S.message=res.message;
+    if(res.phase==='load'&&oldPhase!=='load'){ S.message=''; S.result=null; S.pick=-1; S.chambers=[]; }
+    if(res.chambers&&res.chambers.length===6) S.chambers=res.chambers;
+    if(res.chamberPicked!==undefined&&res.chamberPicked!==null) S.pick=res.chamberPicked;
+    if(res.result) S.result=res.result;
+    if(res.state==='game_over'){
+      clearInterval(S.polling);
+      S.winner=res.winner; S.phase='game_over';
+      renderGame();
+      return;
+    }
+    if(oldPhase!==S.phase || S.phase==='result') renderGame();
+  });
+}
+function sendLoad(){
+  var n=parseInt(S.loadAmount);
+  var msg=document.getElementById('msgInput');
+  if(msg&&msg.value.trim()){ api('message',{msg:msg.value.trim()}); }
+  api('load',{n:n},function(res){
+    if(!res||!res.ok){alert('操作失败');return}
+    S.phase='shoot';
+    renderGame();
+  });
+}
+function sendShoot(target){
+  api('shoot',{target:target},function(res){
+    if(!res||!res.ok){alert('操作失败');return}
+    S.chambers=res.chambers||[]; S.pick=res.pick;
+    S.result=res.result; S.scores=res.scores||S.scores;
+    S.winner=res.winner!==undefined?res.winner:null;
+    S.phase=res.phase||'result';
+    muzzleFlash();
+    renderGame();
+  });
+}
+function nextRound(){
+  if(S.mode==='ai'){
+    if(S.scores[0]>=2||S.scores[1]>=2){ showResult(); return; }
+    S.round++; resetRound();
+    if(S.round===3&&S.scores[0]===S.scores[1]){ S.loader=Math.random()<0.5; }
+    else { S.loader=!S.loader; }
+    S.shooter=!S.loader; S.phase='load';
+    renderGame();
+    return;
+  }
+  api('next_round',{},function(res){
+    if(!res||!res.ok){alert('操作失败');return}
+    if(res.state==='game_over'){ S.phase='game_over'; S.winner=res.winner; renderGame(); return; }
+    S.round=res.round||S.round; S.scores=res.scores||S.scores;
+    S.phase=res.phase||'load';
+    S.loader=(res.loader===S.peer); S.shooter=!S.loader;
+    resetRound();
+    renderGame();
+  });
+}
+
+// ═══ 终局 ═══
+function showResult(){
+  var won;
+  if(S.mode==='ai') won=S.scores[0]>=2;
+  else won=(S.winner===S.peer);
+  var el=document.getElementById('resultOverlay');
+  el.classList.remove('hide');
+  document.getElementById('resEmoji').textContent=won?'🎉':'😵';
+  var t=document.getElementById('resTitle');
+  t.textContent=won?'🏆 你赢了！':'💀 你输了……';
+  t.style.color=won?'#f0c060':'#ef4444';
+  document.getElementById('resScore').textContent=S.scores[0]+' : '+S.scores[1];
+  var msg=S.result&&S.result.msg?esc(S.result.msg):'';
+  if(S.mode==='pvp'&&S.winner!==null&&S.winner!==S.peer&&S.result&&S.result.msg&&S.result.msg.indexOf('未响应')>=0) msg=esc(S.result.msg);
+  document.getElementById('resMsg').innerHTML=msg+(S.mode==='pvp'?'<br><span style="font-size:11px;color:#8a7e9a">'+(won?'对手已被你送下赌桌。':'这局运气不在你这边。')+'</span>':'<br><span style="font-size:11px;color:#8a7e9a">AI 模式 · 娱乐局</span>');
+  var acts='<button class="btn btn-gold" onclick="rematch()">🔄 再来一局</button>';
+  acts+='<button class="btn btn-ghost" onclick="renderMenu()">返回菜单</button>';
+  document.getElementById('resActions').innerHTML=acts;
+}
+function rematch(){
+  document.getElementById('resultOverlay').classList.add('hide');
+  clearInterval(S.polling);
+  if(S.mode==='ai') startAI(); else startMatch();
+}
+function renderMenu2(){ document.getElementById('resultOverlay').classList.add('hide'); renderMenu(); }
+
+// ═══ 主渲染 ═══
+function renderGame(){
+  var h='';
+  // 记分板
+  h+='<div class="scoreboard">';
+  h+='<div class="sb-box'+((S.phase==='load'&&S.loader)||(S.phase==='shoot'&&S.shooter)?' active':'')+'"><div class="sb-score">'+S.scores[0]+'</div><div class="sb-label">我</div></div>';
+  h+='<div class="sb-box'+((S.phase==='load'&&!S.loader)||(S.phase==='shoot'&&!S.shooter)?' active':'')+'"><div class="sb-score">'+S.scores[1]+'</div><div class="sb-label">'+(S.mode==='ai'?'AI':'对手')+'</div></div>';
+  h+='</div>';
+  // 局点
+  h+='<div class="round-dots">';
+  for(var i=1;i<=3;i++) h+='<span class="'+(i<S.round?'done':(i===S.round?'cur':''))+'"></span>';
+  h+='</div>';
+
+  // 阶段横幅
+  if(S.phase==='matching'){ h+='<div class="phase-banner pb-wait">匹配中</div>'; }
+  else if(S.phase==='match_timeout'){ h+='<div class="phase-banner pb-wait">匹配超时</div>'; }
+  else if(S.phase==='load'){ h+='<div class="phase-banner pb-load">第 '+S.round+' 局 · '+(S.loader?'你装弹':'对手装弹')+'</div>'; }
+  else if(S.phase==='shoot'){ h+='<div class="phase-banner pb-shoot">第 '+S.round+' 局 · '+(S.shooter?'你开枪':'对手开枪')+'</div>'; }
+  else if(S.phase==='result'){ h+='<div class="phase-banner pb-wait">第 '+S.round+' 局 · 结果</div>'; }
+
+  // 轮盘
+  if(S.phase==='result'&&S.chambers.length===6){
+    h+=renderCylinder(S.chambers,S.pick,S.result?S.result.hit:false);
+  } else {
+    h+='<div class="cyl-wrap"><div class="cyl-ring"></div><div class="cyl-hub">🔫</div>'+
+       '<div class="chamber c0"></div><div class="chamber c1"></div><div class="chamber c2"></div>'+
+       '<div class="chamber c3"></div><div class="chamber c4"></div><div class="chamber c5"></div></div>';
+  }
+
+  // 阶段 UI
+  if(S.phase==='matching'){
+    var sec=Math.floor((Date.now()-S.matchStart)/1000);
+    h+='<div class="wait-text">🔥 正在寻找对手……<br><span style="font-size:11px">已等待 '+sec+'s</span></div>';
+    h+='<button class="btn btn-ghost" onclick="cancelMatch()">取消匹配</button>';
+  } else if(S.phase==='match_timeout'){
+    h+='<div class="wait-text">😔 暂时没有对手在线<br><span style="font-size:11px">可以挑战 AI 解解闷</span></div>';
+    h+='<div style="display:flex;flex-direction:column;gap:8px">';
+    h+='<button class="btn btn-gold" onclick="startAI()">🤖 挑战 AI</button>';
+    h+='<button class="btn btn-pink" onclick="startMatch()">🔥 再试一次</button>';
+    h+='<button class="btn btn-ghost" onclick="renderMenu()">返回菜单</button></div>';
+  } else if(S.phase==='load'&&S.loader){
+    h+='<div style="text-align:center;font-size:13px;color:#f0c060;margin:6px 0">选择装弹数量</div>';
+    h+='<div class="load-num" id="bulletCount">'+S.loadAmount+'</div>';
+    h+='<input type="range" min="0" max="6" value="'+S.loadAmount+'" oninput="S.loadAmount=parseInt(this.value);var b=document.getElementById(\'bulletCount\');b.textContent=S.loadAmount;b.style.transform=\'scale(1.25)\';setTimeout(function(){b.style.transform=\'\'},120)">';
+    h+='<div style="display:flex;justify-content:space-between;font-size:11px;color:#8a7e9a"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span></div>';
+    if(S.mode==='pvp') h+='<input class="msg-input" id="msgInput" placeholder="给对手留句话（选填,最多15字）" maxlength="15">';
+    h+='<button class="btn btn-gold" style="margin-top:14px" onclick="if(S.mode===\'ai\'){S.phase=\'shoot\';renderGame()}else{sendLoad()}">确认装弹</button>';
+  } else if(S.phase==='load'&&!S.loader){
+    h+='<div class="wait-text">🎲 对手装弹中……</div>';
+  } else if(S.phase==='shoot'&&S.shooter){
+    if(S.message) h+='<div class="msg-box">💬 <i>「'+esc(S.message)+'」</i></div>';
+    h+='<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">';
+    h+='<button class="btn btn-danger" onclick="if(S.mode===\'ai\'){aiShoot(\'opponent\')}else{sendShoot(\'opponent\')}">🔫 朝对方开枪</button>';
+    h+='<button class="btn btn-ghost" onclick="if(S.mode===\'ai\'){aiShoot(\'self\')}else{sendShoot(\'self\')}">🫠 朝自己开枪</button>';
+    h+='</div>';
+  } else if(S.phase==='shoot'&&!S.shooter){
+    h+='<div class="wait-text">😰 对手正在瞄准……</div>';
+  } else if(S.phase==='result'&&S.result){
+    var r=S.result;
+    var myWin=(S.mode==='ai')?(r.winner===0):(r.winner===S.peer);
+    h+='<div class="msg-box" style="border-color:'+(r.hit?'#ef4444':'#6fcf97')+';color:'+(r.hit?'#ef4444':'#6fcf97')+'">'+esc(r.msg)+'</div>';
+    h+='<div style="text-align:center;font-size:13px;color:'+(myWin?'#6fcf97':'#ef4444')+';font-weight:800;margin:4px 0">'+(myWin?'✅ 本局得分！':'❌ 本局失分')+'</div>';
+    if(S.scores[0]>=2||S.scores[1]>=2||S.phase==='game_over'){
+      h+='<button class="btn btn-gold" style="margin-top:10px" onclick="showResult()">查看最终结果</button>';
+    } else {
+      h+='<button class="btn btn-gold" style="margin-top:10px" onclick="nextRound()">第 '+(S.round+1)+' 局 →</button>';
+    }
+  } else if(S.phase==='game_over'){
+    h+='<button class="btn btn-gold" style="margin-top:10px" onclick="showResult()">查看最终结果</button>';
+  }
+
+  document.getElementById('app').innerHTML=h;
+  if(S.mode==='ai'){ setTimeout(aiAct, 400); }
+}
+
+function renderCylinder(chambers,pick,hit){
+  var h='<div class="cyl-wrap"><div class="cyl-ring"></div><div class="cyl-hub">🔫</div>';
+  for(var i=0;i<6;i++){
+    var cls='chamber c'+i;
+    var txt='';
+    if(i===pick){ cls+=hit?' hit':' emptyfire'; txt=hit?'💥':'🕳️'; }
+    else if(chambers[i]){ cls+=' loaded'; txt='💀'; }
+    h+='<div class="'+cls+'">'+txt+'</div>';
+  }
+  h+='</div>'; return h;
+}
+
+renderMenu();
+</script>
+</body>
+</html>
