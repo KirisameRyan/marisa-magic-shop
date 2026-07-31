@@ -48,6 +48,22 @@ body>.container{display:none}
 .shop-item:hover{border-color:var(--g-gold)}
 .shop-item.bought{opacity:.3;cursor:default;pointer-events:none}
 .shop-item .price{position:absolute;top:6px;right:8px;font-size:10px;color:var(--g-gold);font-weight:800}
+/* 排行榜(和幸存者/赛钱危机同款) */
+.lb-wrap{text-align:center;font-size:12px}
+.lb-submit{display:flex;gap:8px;justify-content:center;margin-bottom:10px;flex-wrap:wrap}
+.lb-input{background:var(--g-card-hover);border:1px solid var(--g-border);border-radius:10px;padding:8px 14px;color:var(--g-text);font-size:13px;width:140px;outline:none;font-family:inherit}
+.lb-input:focus{border-color:var(--g-gold)}
+.lb-btn{background:linear-gradient(135deg,var(--g-gold),#c89a40);border:none;border-radius:10px;padding:8px 20px;color:#1a1520;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
+.lb-btn:disabled{opacity:.5;cursor:default}
+.lb-btn-ghost{background:transparent;border:1px solid var(--g-border);border-radius:10px;padding:8px 16px;color:var(--g-muted);font-size:12px;cursor:pointer;font-family:inherit}
+.lb-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px}
+.lb-table th{color:var(--g-muted);font-weight:400;padding:5px 4px;border-bottom:1px solid var(--g-border)}
+.lb-table td{padding:5px 4px;color:var(--g-text);border-bottom:1px solid rgba(58,48,69,.3)}
+.lb-table .lb-my td{color:var(--g-gold);font-weight:700;background:rgba(240,192,96,.06)}
+.lb-note,.lb-ok{font-size:12px;margin:6px 0}.lb-ok{color:var(--g-green)}
+.lb-toggle{text-align:center;font-size:12px;color:var(--g-muted);cursor:pointer;padding:6px 0;transition:color .2s}
+.lb-toggle:hover{color:var(--g-gold)}
+.lb-table-wrap{overflow-x:auto}
 </style>
 </head>
 <body>
@@ -66,6 +82,7 @@ body>.container{display:none}
     <div class="text-right">
       <div class="text-[10px] uppercase text-[var(--g-muted)] font-bold">Day</div>
       <div id="day-count" class="text-2xl font-mono font-bold text-[var(--g-text)] leading-none">01</div>
+      <div id="hud-best" class="text-[9px] text-[var(--g-muted)] mt-0.5">HI 0天</div>
     </div>
   </div>
 
@@ -373,13 +390,56 @@ function resolveEncounter(enc,optIdx){
 function $(id){return document.getElementById(id)}
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 
+// ═══ 排行榜 ═══
+var bestDay=0;
+(function(){try{var b=JSON.parse(localStorage.getItem('sv_best')||'0');bestDay=b||0}catch(e){}})();
 function hud(){
   $('hunger-val').textContent=S.hunger+'%';$('hunger-bar').style.width=S.hunger+'%';
   $('danger-val').textContent=S.danger+'%';$('danger-bar').style.width=S.danger+'%';
   $('day-count').textContent=String(S.day).padStart(2,'0');
   $('money-display').innerHTML='💵 '+S.money;
+  $('hud-best').textContent='HI '+(bestDay>0?bestDay+'天':'0天');
   var game=document.getElementById('game-container');
   if(S.danger>=60)game.classList.add('stress-pulse');else game.classList.remove('stress-pulse');
+}
+function saveBest(){if(S.day>bestDay){bestDay=S.day;try{localStorage.setItem('sv_best',JSON.stringify(bestDay))}catch(e){}}}
+function loadLB(areaEl,sc){
+  areaEl.innerHTML='<p style="color:var(--g-muted);font-size:12px;text-align:center">⏳ 加载排行榜...</p>';
+  fetch('api/leaderboard.php?game=survival').then(function(r){return r.json()}).then(function(data){
+    var rank=-1;for(var i=0;i<data.length;i++)if(sc>data[i].score){rank=i+1;break}if(rank<0)rank=data.length<20?data.length+1:0;
+    renderLB(areaEl,data,rank,sc);
+  }).catch(function(){areaEl.innerHTML='<p class="lb-note">排行榜暂不可用(本地纪录已保存)</p>'});
+}
+function renderLB(area,data,rank,sc){
+  var html='<div class="lb-wrap" style="margin-top:12px">';
+  if(rank>0){
+    html+='<div class="lb-submit"><input class="lb-input" id="lbName" maxlength="12" placeholder="输入昵称(最多12字)">'+
+      '<button class="lb-btn" id="lbSubmit">提交</button><button class="lb-btn-ghost" id="lbSkip">跳过</button></div>';
+  }else if(data.length>=20){html+='<p class="lb-note">你的成绩未进入前 20</p>'}
+  html+='<div class="lb-toggle" id="lbToggle">📊 排行榜 ▸</div>'+
+    '<div class="lb-table-wrap" id="lbWrap" style="display:none">'+
+    '<table class="lb-table"><thead><tr><th>#</th><th>名字</th><th>存活</th><th>金钱</th><th>日期</th></tr></thead><tbody>';
+  for(var i=0;i<data.length;i++){
+    var d=data[i];var cls=(rank>0&&i+1===rank&&d.score===sc)?' class="lb-my"':'';
+    html+='<tr'+cls+'><td>'+(i+1)+'</td><td>'+esc(d.name)+'</td><td>'+d.score+'天</td><td>¥'+(d.graze||0)+'</td><td>'+(d.time||'')+'</td></tr>';
+  }
+  html+='</tbody></table></div></div>';area.innerHTML=html;
+  document.getElementById('lbToggle').addEventListener('click',function(){
+    var w=document.getElementById('lbWrap');var o=w.style.display!=='none';w.style.display=o?'none':'block';
+    this.textContent=o?'📊 排行榜 ▸':'📊 排行榜 ▾'});
+  if(rank>0){
+    document.getElementById('lbSubmit').addEventListener('click',function(){submitLB(area)});
+    document.getElementById('lbSkip').addEventListener('click',function(){area.innerHTML=''});
+  }
+}
+function submitLB(area){
+  var n=(document.getElementById('lbName').value||'').trim();if(!n||n.length>12)n='流浪者';
+  var b=document.getElementById('lbSubmit');b.disabled=true;b.textContent='提交中...';
+  var f=new FormData();f.append('name',n);f.append('score',String(S.day));f.append('graze',String(S.money));f.append('game','survival');
+  fetch('api/leaderboard.php',{method:'POST',body:f}).then(function(r){return r.json()}).then(function(res){
+    if(res.ok){area.innerHTML='<p class="lb-ok">✅ 提交成功!排名第 <b>'+res.rank+'</b></p>'}
+    else{area.innerHTML='<p class="lb-note">提交失败</p>'}
+  }).catch(function(){area.innerHTML='<p class="lb-note">网络错误</p>'});
 }
 
 function pickEvent(pool,specials){
@@ -555,7 +615,12 @@ function die(cause){
   document.getElementById('fb-stats').style.display='none';
   $('fb-primary').classList.add('hidden');
   $('fb-restart').classList.remove('hidden');
-  $('fb-restart').onclick=function(){el.classList.add('hidden');startGame()}
+  $('fb-restart').onclick=function(){el.classList.add('hidden');startGame()};
+  saveBest();
+  // 排行榜
+  var lbDiv=document.createElement('div');lbDiv.style.cssText='margin-top:12px';
+  $('fb-message').parentNode.insertBefore(lbDiv,document.getElementById('fb-stats'));
+  loadLB(lbDiv,S.day);
 }
 
 function win(){
@@ -573,7 +638,12 @@ function win(){
   document.getElementById('fb-stats').style.display='none';
   $('fb-primary').classList.add('hidden');
   $('fb-restart').classList.remove('hidden');
-  $('fb-restart').onclick=function(){el.classList.add('hidden');startGame()}
+  $('fb-restart').onclick=function(){el.classList.add('hidden');startGame()};
+  saveBest();
+  // 排行榜
+  var lbDiv=document.createElement('div');lbDiv.style.cssText='margin-top:12px';
+  $('fb-message').parentNode.insertBefore(lbDiv,document.getElementById('fb-stats'));
+  loadLB(lbDiv,S.day);
 }
 
 // ═══ 商店 ═══
