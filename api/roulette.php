@@ -1,63 +1,36 @@
 <?php
 // ═════════════════════════════════════════════
-//  轮盘赌局 · 后端 v2
-//  匹配队列 + 游戏状态机 + 房间管理
-//  v2 修复: 匹配断裂 / 匹配竞态 / next_round 幂等 / 逃跑判负
+//  轮盘赌局 · 后端 v3
+//  匹配(文件创建/删除,零锁) + 游戏状态机 + 房间管理
 // ═════════════════════════════════════════════
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 
 define('DATA_DIR', __DIR__ . '/../data/');
-define('MATCH_FILE', DATA_DIR . 'roulette_match.json');
-define('ROOM_TTL', 180);     // 房间闲置 3 分钟过期
-define('MATCH_TTL', 60);     // 匹配等待 60 秒
-define('IDLE_MAX', 30);      // 对手 30 秒无响应判负
+define('WAIT_PREFIX', 'roulette_wait_');     // 排队票前缀
+define('ROOM_TTL', 180);
+define('MATCH_TTL', 60);                      // 排队票 60 秒过期
+define('IDLE_MAX', 30);
 
-// ── 基础读写 ──
 function safeRead($file) {
     $h = @fopen($file, 'r');
     if (!$h) return null;
     if (!flock($h, LOCK_SH)) { fclose($h); return null; }
     $data = stream_get_contents($h);
-    flock($h, LOCK_UN);
-    fclose($h);
+    flock($h, LOCK_UN); fclose($h);
     return $data ? json_decode($data, true) : null;
 }
 function safeWrite($file, $data) {
     $dir = dirname($file);
-    if (!is_dir($dir)) mkdir($dir, 0777, true);
+    if (!is_dir($dir)) { if (!mkdir($dir, 0777, true)) return false; }
     $tmp = $file . '.tmp';
     $h = @fopen($tmp, 'w');
     if (!$h) return false;
     if (!flock($h, LOCK_EX)) { fclose($h); return false; }
     fwrite($h, json_encode($data, JSON_UNESCAPED_UNICODE));
     fflush($h);
-    flock($h, LOCK_UN);
-    fclose($h);
+    flock($h, LOCK_UN); fclose($h);
     return rename($tmp, $file);
-}
-// ── 加锁读改写事务(防匹配竞态) ──
-function lockedUpdate($file, $fn) {
-    $dir = dirname($file);
-    if (!is_dir($dir)) {
-        if (!mkdir($dir, 0777, true)) return [null, 'mkdir_fail'];
-        chmod($dir, 0777);
-    }
-    if (!is_writable($dir) && !chmod($dir, 0777)) return [null, 'dir_not_writable'];
-    $h = @fopen($file, 'c+');
-    if (!$h) return [null, 'fopen_fail:' . error_get_last()['message']];
-    if (!flock($h, LOCK_EX)) { fclose($h); return [null, 'flock_fail']; }
-    $raw = stream_get_contents($h);
-    $data = $raw ? json_decode($raw, true) : null;
-    $out = $fn($data);
-    ftruncate($h, 0);
-    rewind($h);
-    $bytes = fwrite($h, json_encode($out[0], JSON_UNESCAPED_UNICODE));
-    fflush($h);
-    flock($h, LOCK_UN);
-    fclose($h);
-    if ($bytes === false || $bytes === 0) return [null, 'fwrite_fail'];
-    return $out[1];
 }
 function genId($len = 8) {
     $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -65,12 +38,21 @@ function genId($len = 8) {
     for ($i = 0; $i < $len; $i++) $s .= $chars[rand(0, strlen($chars) - 1)];
     return $s;
 }
-function cleanRooms() {
-    $files = glob(DATA_DIR . 'roulette_*.json');
-    $cutoff = time() - ROOM_TTL;
-    foreach ($files as $f) {
+
+// ── 清理过期 ──
+function cleanStale() {
+    $cutoff = time() - max(ROOM_TTL, MATCH_TTL);
+    // 房间文件
+    foreach (glob(DATA_DIR . 'roulette_*.json') as $f) {
+        // 跳过排队票
+        if (strpos(basename($f), WAIT_PREFIX) === 0) continue;
         $r = safeRead($f);
         if (!$r || ($r['updated'] ?? 0) < $cutoff) @unlink($f);
+    }
+    // 排队票(超时直接删)
+    foreach (glob(DATA_DIR . WAIT_PREFIX . '*.json') as $f) {
+        $stat = @stat($f);
+        if (!$stat || $stat['mtime'] < time() - MATCH_TTL) @unlink($f);
     }
 }
 
@@ -80,28 +62,24 @@ $peer   = intval($_REQUEST['peer'] ?? 0);
 
 switch ($action) {
 
-// ══════ 匹配(加锁事务) ══════
+// ══════ 匹配(文件创建,纯原子,零锁) ══════
 case 'match':
-    cleanRooms();
-    $result = lockedUpdate(MATCH_FILE, function($match) {
-        if (!is_array($match)) $match = [];
-        $match = array_values(array_filter($match, function($m) {
-            return ($m['time'] ?? 0) > time() - MATCH_TTL;
-        }));
-        if (!empty($match)) {
-            $waiter = array_shift($match);
-            return [$match, ['matched', $waiter['rid']]];
+    cleanStale();
+    // 扫描是否有等待中的票
+    $waitFiles = glob(DATA_DIR . WAIT_PREFIX . '*.json');
+    $waiter = null;
+    foreach ($waitFiles as $wf) {
+        $wt = safeRead($wf);
+        if ($wt && isset($wt['rid']) && ($wt['time'] ?? 0) > time() - MATCH_TTL) {
+            $waiter = $wt['rid'];
+            @unlink($wf);          // 销毁排队票
+            break;
         }
-        $rid = genId();
-        $match[] = ['rid' => $rid, 'time' => time()];
-        return [$match, ['waiting', $rid]];
-    });
-    if (!is_array($result)) {
-        echo json_encode(['error' => 'match_file_error: ' . $result]);
-        exit;
+        @unlink($wf);              // 过期票删掉
     }
-    if ($result[0] === 'matched') {
-        $rid = $result[1];
+    if ($waiter) {
+        // 有等待者 → 创建房间
+        $rid = $waiter;
         $room = [
             'rid' => $rid, 'state' => 'playing', 'round' => 1, 'phase' => 'load',
             'loader' => 0, 'shooter' => 1, 'scores' => [0, 0],
@@ -110,27 +88,32 @@ case 'match':
             'shootTarget' => null, 'result' => null, 'winner' => null,
             'updated' => time(), 'lastActive' => [time(), time()]
         ];
-        if (!safeWrite(DATA_DIR . "roulette_{$rid}.json", $room)) {
-            echo json_encode(['error' => 'room_create_fail']);
-            exit;
-        }
+        safeWrite(DATA_DIR . "roulette_{$rid}.json", $room);
         echo json_encode(['ok' => true, 'state' => 'matched', 'rid' => $rid, 'peer' => 1]);
     } else {
-        echo json_encode(['ok' => true, 'state' => 'waiting', 'rid' => $result[1], 'peer' => 0]);
+        // 没人等 → 建自己的排队票
+        $rid = genId();
+        safeWrite(DATA_DIR . WAIT_PREFIX . "{$rid}.json", ['rid' => $rid, 'time' => time()]);
+        echo json_encode(['ok' => true, 'state' => 'waiting', 'rid' => $rid, 'peer' => 0]);
     }
     exit;
 
 // ══════ 匹配状态查询(等待方轮询) ══════
 case 'match_status':
     if (!$rid) { echo json_encode(['error' => 'no rid']); exit; }
-    $roomFile = DATA_DIR . "roulette_{$rid}.json";
-    if (file_exists($roomFile)) {
+    // 房间已建?
+    if (file_exists(DATA_DIR . "roulette_{$rid}.json")) {
         echo json_encode(['ok' => true, 'state' => 'matched', 'peer' => 0]);
         exit;
     }
-    $match = safeRead(MATCH_FILE) ?: [];
-    foreach ($match as $m) {
-        if (($m['rid'] ?? '') === $rid) { echo json_encode(['ok' => true, 'state' => 'waiting']); exit; }
+    // 排队票还在?
+    if (file_exists(DATA_DIR . WAIT_PREFIX . "{$rid}.json")) {
+        $wt = safeRead(DATA_DIR . WAIT_PREFIX . "{$rid}.json");
+        if ($wt && ($wt['time'] ?? 0) > time() - MATCH_TTL) {
+            echo json_encode(['ok' => true, 'state' => 'waiting']);
+            exit;
+        }
+        @unlink(DATA_DIR . WAIT_PREFIX . "{$rid}.json");
     }
     echo json_encode(['ok' => true, 'state' => 'expired']);
     exit;
@@ -138,13 +121,7 @@ case 'match_status':
 // ══════ 取消匹配 ══════
 case 'cancel_match':
     if (!$rid) { echo json_encode(['error' => 'no rid']); exit; }
-    lockedUpdate(MATCH_FILE, function($match) use ($rid) {
-        if (!is_array($match)) $match = [];
-        $match = array_values(array_filter($match, function($m) use ($rid) {
-            return ($m['rid'] ?? '') !== $rid;
-        }));
-        return [$match, true];
-    });
+    @unlink(DATA_DIR . WAIT_PREFIX . "{$rid}.json");
     echo json_encode(['ok' => true]);
     exit;
 
