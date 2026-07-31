@@ -22,7 +22,8 @@
           { href: 'marisa_dash.html',     emoji: '🧹', text: '魔理沙快跑',   topNav: true },
           { href: 'marisa_survivor.html', emoji: '⭐', text: '魔理沙幸存者', topNav: true },
           { href: 'marisa_landlord.html', emoji: '⛩️', text: '赛钱危机',     topNav: true },
-          { href: 'street_survival.html', emoji: '🌃', text: '流浪模拟器',   topNav: true }
+          { href: 'street_survival.html', emoji: '🌃', text: '流浪模拟器',   topNav: true },
+          { href: 'demo_roulette.html',   emoji: '🔫', text: '轮盘赌局',     topNav: true }
         ]
       },
       {
