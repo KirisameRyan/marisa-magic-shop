@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<link rel="stylesheet" href="css/common.css">
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>流浪模拟器 · 霧雨魔法店</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root {
+  --g-bg: #1a1520; --g-card: #241e2a; --g-card-hover: #2d2535;
+  --g-gold: #f0c060; --g-gold-dim: #a08050;
+  --g-purple: #b89fff;
+  --g-text: #e0d8ec; --g-muted: #8a7e9a; --g-border: #3a3045;
+  --g-pink: #f472b6; --g-red: #ef4444; --g-green: #6fcf97;
+}
+body{background:var(--g-bg);background-image:radial-gradient(ellipse at 30% 0%,rgba(176,159,255,.05) 0%,transparent 50%),radial-gradient(ellipse at 70% 100%,rgba(240,192,96,.04) 0%,transparent 50%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;padding-top:64px;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--g-text);user-select:none;}
+body>.container{display:none}
+.glass-panel{background:var(--g-card);border:1px solid var(--g-border);box-shadow:0 25px 50px -12px rgba(0,0,0,.8);position:relative;overflow:hidden}
+.glass-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--g-gold),var(--g-purple),var(--g-gold));z-index:1}
+.gold-text{background:linear-gradient(135deg,var(--g-gold),#ffe8b0,var(--g-gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.progress-bar{height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;transition:width .5s}
+.hunger-fill{background:linear-gradient(90deg,#f0c060,#e8a830)}
+.danger-fill{background:linear-gradient(90deg,#ef4444,#f472b6)}
+.btn-game{font-family:inherit;border:none;border-radius:12px;padding:10px;font-weight:700;cursor:pointer;transition:all .15s;text-align:center;font-size:13px}
+.btn-gold{background:linear-gradient(135deg,var(--g-gold),#c89a40);color:#1a1520}
+.btn-gold:hover{filter:brightness(1.1)}
+.btn-ghost{background:transparent;color:var(--g-muted);border:1px solid var(--g-border)}
+.btn-ghost:hover{color:var(--g-gold);border-color:var(--g-gold-dim)}
+.btn-outline{background:transparent;color:var(--g-muted);border:1px solid var(--g-border);border-radius:12px;padding:6px 12px;font-size:11px;font-family:inherit;cursor:pointer;transition:all .15s}
+.btn-outline:hover{border-color:var(--g-gold);color:var(--g-gold)}
+.btn-danger{background:rgba(244,114,182,.12);color:var(--g-pink);border:1px solid rgba(244,114,182,.2);border-radius:12px;padding:10px;font-size:12px;cursor:pointer}
+@keyframes pulse-stress{0%,100%{box-shadow:0 0 0 0 rgba(244,114,182,0)}50%{box-shadow:0 0 18px 2px rgba(244,114,182,.3)}}
+.stress-pulse{animation:pulse-stress 3s infinite}
+.event-card{border:2px solid var(--g-border);border-radius:18px;padding:18px;text-align:center;transition:all .3s}
+.event-card.special{border-color:var(--g-gold);box-shadow:0 0 16px rgba(240,192,96,.2)}
+.event-period{display:inline-block;font-size:11px;letter-spacing:2px;padding:2px 10px;border-radius:8px;margin-bottom:8px}
+.modal-overlay{position:fixed;inset:0;z-index:50;background:rgba(26,21,32,.96);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-card{background:var(--g-card);border:1px solid var(--g-border);border-radius:24px;width:100%;max-width:28rem;box-shadow:0 16px 48px rgba(0,0,0,.5);position:relative;overflow:hidden;max-height:90vh;display:flex;flex-direction:column}
+.modal-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--g-gold),var(--g-purple),var(--g-gold))}
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;margin:8px 0}
+.stats-item{background:rgba(255,255,255,.03);padding:6px 10px;border-radius:8px;border:1px solid var(--g-border);display:flex;justify-content:space-between}
+.shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.shop-item{background:var(--g-card-hover);border:1px solid var(--g-border);border-radius:12px;padding:10px;cursor:pointer;transition:all .15s;position:relative}
+.shop-item:hover{border-color:var(--g-gold)}
+.shop-item.bought{opacity:.3;cursor:default;pointer-events:none}
+.shop-item .price{position:absolute;top:6px;right:8px;font-size:10px;color:var(--g-gold);font-weight:800}
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div id="game-container" class="hidden relative z-10 w-full max-w-md glass-panel rounded-3xl flex flex-col min-h-[700px] transition-opacity duration-500">
+
+  <!-- 顶部栏 -->
+  <div class="px-5 py-4 border-b border-[var(--g-border)] flex justify-between items-center bg-[var(--g-bg)]/50 relative z-10">
+    <div>
+      <h1 class="text-xl font-black italic tracking-tighter gold-text">流浪模拟器</h1>
+      <div class="text-[10px] font-bold text-[var(--g-muted)] tracking-widest uppercase">Street Survival</div>
+    </div>
+    <div class="text-right">
+      <div class="text-[10px] uppercase text-[var(--g-muted)] font-bold">Day</div>
+      <div id="day-count" class="text-2xl font-mono font-bold text-[var(--g-text)] leading-none">01</div>
+    </div>
+  </div>
+
+  <!-- 双进度条 -->
+  <div class="px-5 py-3 bg-[rgba(255,255,255,.03)] space-y-2 relative z-10">
+    <div>
+      <div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-wider">
+        <span class="text-[var(--g-gold)] flex items-center gap-1">🍞 饥饿度</span>
+        <span id="hunger-val" class="text-[var(--g-text)]">40%</span>
+      </div>
+      <div class="progress-bar"><div id="hunger-bar" class="progress-fill hunger-fill" style="width:40%"></div></div>
+    </div>
+    <div>
+      <div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-wider">
+        <span class="text-[var(--g-red)] flex items-center gap-1">⚠️ 危险度</span>
+        <span id="danger-val" class="text-[var(--g-text)]">0%</span>
+      </div>
+      <div class="progress-bar"><div id="danger-bar" class="progress-fill danger-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- 事件区 -->
+  <div id="event-area" class="flex-1 p-5 flex flex-col relative z-10">
+    <div id="period-indicator" class="text-center mb-3"></div>
+    <div id="event-card" class="event-card flex-1 flex flex-col items-center justify-center gap-3"></div>
+    <div id="event-actions" class="flex gap-3 mt-4"></div>
+  </div>
+
+  <!-- 底栏 -->
+  <div class="px-5 py-3 border-t border-[var(--g-border)] flex gap-2 relative z-10 bg-[var(--g-bg)]/50">
+    <button onclick="openShop()" class="btn-outline flex-1 flex items-center justify-center gap-1">🏪 商店</button>
+    <button onclick="openInventory()" class="btn-outline flex-1 flex items-center justify-center gap-1">🎒 背包</button>
+    <div class="flex-1 text-center flex items-center justify-center font-mono font-bold text-[var(--g-gold)] text-lg" id="money-display">💵 15</div>
+  </div>
+</div>
+
+<!-- 开场弹层 -->
+<div id="intro-overlay" class="fixed inset-0 z-[110] flex items-center justify-center p-4" style="background:rgba(26,21,32,.95);backdrop-filter:blur(12px)">
+  <div class="bg-[var(--g-card)] p-8 rounded-3xl max-w-sm w-full border border-[var(--g-border)] shadow-2xl text-center relative" style="overflow:hidden">
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--g-gold),var(--g-purple),var(--g-gold))"></div>
+    <div class="text-7xl mb-4" style="filter:drop-shadow(0 0 15px rgba(240,192,96,.5))">🌃</div>
+    <h1 class="text-3xl font-black text-[var(--g-text)] mb-2 tracking-tight">流浪模拟器</h1>
+    <p class="text-xs font-bold text-[var(--g-muted)] tracking-widest uppercase mb-4">Street Survival</p>
+    <div class="text-left text-xs text-[var(--g-text)] space-y-2 mb-6 bg-[rgba(255,255,255,.03)] p-4 rounded-xl border border-[var(--g-border)]">
+      <p>你是 <b>李明</b>。来这座城市打工第三年,中介卷走押金跑路,房东换了锁。</p>
+      <p>今天早上,你坐在公园长椅上,兜里还剩 <b>15 块钱</b>。</p>
+    </div>
+    <button onclick="startTutorial()" class="w-full py-4 font-black rounded-xl shadow-lg hover:scale-[1.02] transition-transform" style="background:linear-gradient(135deg,var(--g-gold),#c89a40);color:#1a1520">🌃 开始流浪</button>
+    <p class="text-[10px] text-[var(--g-muted)] mt-3">本故事纯属虚构,请珍惜现下的温暖。</p>
+  </div>
+</div>
+
+<!-- 教程弹层 -->
+<div id="tut-overlay" class="hidden fixed inset-0 z-[120] flex items-center justify-center p-4" style="background:rgba(26,21,32,.95);backdrop-filter:blur(12px)">
+  <div class="bg-[var(--g-card)] p-6 rounded-3xl max-w-sm w-full border border-[var(--g-border)] shadow-2xl text-center relative" style="overflow:hidden">
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--g-gold),var(--g-purple),var(--g-gold))"></div>
+    <div id="tut-icon" class="text-5xl mb-3">🕐</div>
+    <h2 id="tut-title" class="text-lg font-black text-[var(--g-text)] mb-2"></h2>
+    <p id="tut-desc" class="text-xs text-[var(--g-muted)] mb-6 leading-relaxed"></p>
+    <div class="flex gap-2">
+      <button id="tut-prev" class="btn-game btn-ghost flex-1" onclick="prevTut()">← 上一步</button>
+      <button id="tut-next" class="btn-game btn-gold flex-1" onclick="nextTut()">下一步 →</button>
+      <button id="tut-skip" class="btn-game btn-ghost" onclick="startGame()" style="color:var(--g-muted);border-color:var(--g-border)">跳过</button>
+    </div>
+    <label id="tut-skip-label" class="hidden mt-3 flex items-center justify-center gap-2 text-[10px] text-[var(--g-muted)] cursor-pointer">
+      <input type="checkbox" id="tut-noshow" onchange="toggleTutSkip()"> 下次不再显示教程
+    </label>
+  </div>
+</div>
+
+<!-- 反馈弹层 -->
+<div id="feedback-overlay" class="hidden modal-overlay">
+  <div class="modal-card">
+    <div class="p-6 text-center flex-shrink-0 relative z-10">
+      <div id="fb-icon" class="text-6xl mb-2" style="filter:drop-shadow(0 0 12px rgba(240,192,96,.4))"></div>
+      <h2 id="fb-title" class="text-2xl font-black text-[var(--g-text)] uppercase tracking-tight"></h2>
+    </div>
+    <div class="px-6 pb-2 flex-shrink-0 overflow-y-auto relative z-10">
+      <div class="bg-[rgba(255,255,255,.03)] rounded-xl p-4 text-sm text-[var(--g-text)] leading-relaxed border border-[var(--g-border)]">
+        <p id="fb-message"></p>
+      </div>
+      <div id="fb-stats" class="stats-row" style="display:none"></div>
+    </div>
+    <div class="p-6 pt-3 flex flex-col gap-3 flex-shrink-0 mt-auto relative z-10">
+      <div class="flex gap-3">
+        <button id="fb-primary" class="flex-1 py-3 rounded-xl font-bold transition-colors btn-gold">继续</button>
+        <button id="fb-restart" class="hidden flex-1 py-3 rounded-xl font-bold transition-colors btn-danger">重新流浪</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 商店弹层 -->
+<div id="shop-overlay" class="hidden modal-overlay">
+  <div class="modal-card">
+    <div class="p-5 border-b border-[var(--g-border)] flex justify-between items-center relative z-10 bg-[var(--g-card)]">
+      <h2 class="text-lg font-bold text-[var(--g-text)]">🏪 街头商店</h2>
+      <span class="font-mono font-bold text-[var(--g-gold)]" id="shop-money">💵 15</span>
+    </div>
+    <div class="p-5 overflow-y-auto relative z-10" style="max-height:55vh"><div class="shop-grid" id="shop-grid"></div></div>
+    <div class="p-4 border-t border-[var(--g-border)] flex justify-center relative z-10"><button onclick="closeShop()" class="btn-outline w-40">关 闭</button></div>
+  </div>
+</div>
+
+<!-- 背包弹层 -->
+<div id="inv-overlay" class="hidden modal-overlay">
+  <div class="modal-card">
+    <div class="p-5 border-b border-[var(--g-border)] relative z-10"><h2 class="text-lg font-bold text-[var(--g-text)]">🎒 我的背包</h2></div>
+    <div class="p-5 overflow-y-auto relative z-10" style="max-height:50vh"><div id="inv-list" class="space-y-2 text-sm"></div></div>
+    <div class="p-4 border-t border-[var(--g-border)] flex justify-center relative z-10"><button onclick="closeInv()" class="btn-outline w-40">关 闭</button></div>
+  </div>
+</div>
+
+<script>
+// ═══ 状态 ═══
+var S = { hunger:40, danger:0, money:15, day:1, period:0, events:[], items:[], passiveItems:[], alive:true, won:false };
+
+// ═══ 三个时段的事件池 ═══
+var POOLS = {
+  morning: [
+    {t:'打零工',i:'🔨',h:-6,d:3,m:20,w:'去工地搬了半天砖。'},
+    {t:'捡废品卖',i:'♻️',h:-2,d:1,m:8,w:'捡了些瓶子卖了点零钱。'},
+    {t:'救济站领粥',i:'🍲',h:-14,d:2,m:0,w:'排了半小时队领到一碗粥。'},
+    {t:'路口乞讨',i:'🤲',h:-2,d:2,m:6,w:'站了一上午,好心人扔了几块钱。'},
+    {t:'翻菜市场',i:'🥬',h:-3,d:3,m:0,w:'拣了些摊贩丢掉的剩菜叶子。'},
+    {t:'帮人搬货',i:'💪',h:-7,d:6,m:18,w:'家具店卸了半天货,腰快断了。'},
+    {t:'扫公厕',i:'🧹',h:-4,d:1,m:12,w:'忍着味道干完了。'},
+    {t:'补个觉',i:'🛌',h:5,d:-8,m:0,w:'多睡了一会儿,精神好了不少。'}
+  ],
+  afternoon: [
+    {t:'翻垃圾桶',i:'🗑️',h:-3,d:4,m:0,w:'翻到几个空瓶和一些剩饭。'},
+    {t:'地铁站蹭空调',i:'🚇',h:1,d:-4,m:0,w:'在站里待了一下午,凉快又安全。'},
+    {t:'帮餐馆洗碗',i:'🍽️',h:-5,d:5,m:18,w:'洗了三小时的碗,老板给了饭。'},
+    {t:'派传单',i:'📄',h:-4,d:2,m:10,w:'在街口站了一下午发传单。'},
+    {t:'超市试吃',i:'🛒',h:-6,d:3,m:0,w:'挨个试吃摊蹭了一圈。'},
+    {t:'街头卖艺',i:'🎤',h:-3,d:8,m:15,w:'唱了几首歌,路人扔了些零钱。'},
+    {t:'排队领救济金',i:'💼',h:-2,d:2,m:25,w:'排了两小时的队。'},
+    {t:'阴凉处乘凉',i:'🧊',h:2,d:-3,m:0,w:'找了个树荫躺了一下午。'}
+  ],
+  evening: [
+    {t:'公园长椅过夜',i:'🪑',h:3,d:8,m:0,w:'硬邦邦的木板,天亮还来了一群晨跑的人。'},
+    {t:'ATM机房过夜',i:'🏧',h:2,d:-5,m:0,w:'玻璃门挡风,但保安凌晨来赶人了。'},
+    {t:'废弃工地下榻',i:'🏚️',h:2,d:3,m:0,w:'破旧但勉强能挡风。'},
+    {t:'蹭夜宵摊剩饭',i:'🍕',h:-6,d:5,m:0,w:'老板快收摊时把剩下的给了你。'},
+    {t:'接临时夜班',i:'🌙',h:-10,d:15,m:30,w:'深夜工厂卸货,累但钱多。'},
+    {t:'网吧包夜',i:'💻',h:1,d:-3,m:-5,w:'十块钱待到天亮,还有热水。'},
+    {t:'生火取暖',i:'🔥',h:1,d:-6,m:0,w:'捡了些干柴,火光让人安心。'},
+    {t:'彻夜赶路',i:'🚶',h:8,d:4,m:0,w:'走了一整夜,想找到更好的落脚点。'}
+  ]
+};
+
+var SPECIALS = {
+  morning: [
+    {t:'捡到钱包!',i:'🍀',h:0,d:1,m:45,w:'在地上发现一个钱包,里面有几十块钱。'},
+    {t:'好心人请吃饭',i:'🙏',h:-22,d:1,m:8,w:'一位老人看你可怜,请你吃了一顿热饭,还给了车费。'},
+    {t:'找到日结工',i:'📰',h:-5,d:3,m:30,w:'工头来招人,去工地搬了一天,现金当场结账。'}
+  ],
+  afternoon: [
+    {t:'遇到老乡!',i:'🤝',h:-5,d:2,m:30,w:'在街上碰到一个老乡,他请你吃了顿饭还塞了些钱。'},
+    {t:'捡到旧手机',i:'📱',h:0,d:1,m:0,w:'地上捡到一部还能用的旧手机。',giveItem:'phone'},
+    {t:'警察查身份证',i:'🚔',h:0,d:28,m:-10,w:'警察查到你在此处逗留,以扰乱秩序为由罚了款。'}
+  ],
+  evening: [
+    {t:'暴雨无处躲!',i:'⛈️',h:0,d:32,m:0,w:'突然下起暴雨,浑身湿透,冷得发抖。',isRain:true},
+    {t:'发现空置房!',i:'🏠',h:2,d:-100,m:0,w:'在旧城区发现一间废弃但完整的空屋,今晚安全了。',dangerClr:true},
+    {t:'好心大妈给棉被',i:'👵',h:-3,d:-5,m:5,w:'一位大妈从家里拿了一床旧棉被给你。',giveItem:'blanket'},
+    {t:'卷入街头纠纷',i:'🚨',h:0,d:22,m:-5,w:'两个混混在你旁边打架,钱被顺走了。'}
+  ]
+};
+
+// ═══ 商店 ═══
+var SHOP = [
+  {id:'baozi',t:'馒头',e:'🥟',c:3,desc:'🍞 饥饿 -8（立即）',use:function(h){h.hunger-=8}},
+  {id:'noodle',t:'方便面',e:'🍜',c:5,desc:'🍞 饥饿 -15（立即）',use:function(h){h.hunger-=15}},
+  {id:'water',t:'矿泉水',e:'💧',c:2,desc:'⚠️ 危险 -3（立即）',use:function(h){h.danger-=3}},
+  {id:'hotdog',t:'热狗',e:'🌭',c:10,desc:'🍞 饥饿 -25，⚠️ 危险 +3',use:function(h){h.hunger-=25;h.danger+=3}},
+  {id:'warmer',t:'暖宝宝',e:'🔥',c:6,desc:'⚠️ 危险 -6（立即）',use:function(h){h.danger-=6}},
+  {id:'bandage',t:'创可贴',e:'🩹',c:8,desc:'⚠️ 危险 -10（立即）',use:function(h){h.danger-=10}},
+  {id:'stick',t:'防身棍',e:'🥢',c:12,desc:'🛡️ 下次被攻击自动免伤（一次性）',use:function(h){h.defend=1}},
+  {id:'hotel',t:'酒店一晚',e:'🏨',c:40,desc:'⚠️ 危险 -50，🍞 饥饿 -8',use:function(h){h.danger-=50;h.hunger-=8}},
+  {id:'blanket',t:'厚棉被',e:'🛏️',c:25,desc:'永久：每天自动 ⚠️ 危险 -2',passive:function(h){h.danger-=2}},
+  {id:'raincoat',t:'雨衣',e:'☂️',c:15,desc:'永久：免疫暴雨事件',passive:true},
+  {id:'bag',t:'旧书包',e:'🎒',c:12,desc:'永久：每天自动 🍞 饥饿 -1',passive:function(h){h.hunger-=1}},
+  {id:'card',t:'手机卡',e:'📶',c:30,desc:'⚠️ 危险 -40（一次性）',use:function(h){h.danger-=40}}
+];
+
+// ═══ 突发遭遇池 ═══
+var ENCOUNTERS = [
+  {title:'野狗拦路',icon:'🐕',desc:'一条流浪狗挡在路中间,露出獠牙盯着你。',options:[
+    {label:'🚶 绕路走',outcomes:[{p:100,h:0,d:6,m:0,msg:'你绕了一条街,多走了二十分钟,但安全。'}]},
+    {label:'😤 吓唬它,冲过去',outcomes:[
+      {p:60,h:0,d:10,m:0,msg:'狗没跑,你摔了一跤,膝盖擦破了。'},
+      {p:40,h:-5,d:3,m:5,msg:'狗吓跑了!旁边早点摊的大叔笑着说"有胆",还给了你两个包子。'}]},
+    {label:'🍖 蹲下伸出手示意',outcomes:[
+      {p:50,h:0,d:10,m:0,msg:'它扑上来咬了一口!你疼得蹲在路边。'},
+      {p:50,h:-5,d:0,m:0,msg:'狗犹豫了一下,居然摇起尾巴。旁边摊主丢了半袋狗粮,你今天不用饿着了。'}]}]},
+  {title:'酒鬼打架',icon:'🥊',desc:'两个酒鬼在你旁边扭打起来,桌上的东西飞了一地。',options:[
+    {label:'🙏 上前劝架',outcomes:[
+      {p:70,h:0,d:12,m:-5,msg:'你被误伤了一拳,还被顺走了口袋里的零钱。'},
+      {p:30,h:0,d:3,m:15,msg:'你把他们拉开了!其中一个人清醒后连连道谢,塞了钱给你。'}]},
+    {label:'🚶 悄悄绕开',outcomes:[{p:100,h:0,d:3,m:0,msg:'你绕了过去,只是被溅了些酒在身上。'}]},
+    {label:'📱 站远一点看热闹',outcomes:[
+      {p:60,h:0,d:8,m:0,msg:'你被卷了进去,推搡中摔了一跤。'},
+      {p:40,h:0,d:1,m:8,msg:'地上飞出一张皱巴巴的钱,你捡起来就走了。'}]}]},
+  {title:'保安赶人',icon:'👮',desc:'一个保安走过来,指着你:"喂,这里不让待,赶紧走。"',options:[
+    {label:'🎒 赔礼离开',outcomes:[{p:100,h:0,d:4,m:0,msg:'你赔了个笑脸,换了个地方。'}]},
+    {label:'😐 假装去找人',outcomes:[
+      {p:50,h:0,d:2,m:0,msg:'他信了,转身走开,没再为难你。'},
+      {p:50,h:0,d:10,m:-5,msg:'他不吃这套,叫了同事来赶人,还说要报警,你赶紧跑了。'}]},
+    {label:'💰 塞五块钱赔笑脸',outcomes:[{p:100,h:0,d:-3,m:-5,msg:'他拿了钱挥挥手让你走。花钱买个清净。'}]}]},
+  {title:'鼓鼓的钱包',icon:'👛',desc:'你看到地上有个钱包,鼓鼓囊囊的,周围没别人。',options:[
+    {label:'💸 拿走看看',outcomes:[
+      {p:70,h:0,d:3,m:40,msg:'里面果然有钱!不过拿了之后总觉得有人在看。'},
+      {p:30,h:0,d:15,m:-10,msg:'刚拿起来,一个男人冲过来揪住你:"那是我的!"挨了一顿骂,还被讹了十块。'}]},
+    {label:'🚔 交到不远处的警务室',outcomes:[{p:100,h:3,d:3,m:0,msg:'你走了很远的路交到警务室。值班的人只说了句"知道了"。'}]},
+    {label:'⏳ 在附近等失主',outcomes:[
+      {p:60,h:-3,d:3,m:20,msg:'等了大半小时,一个大婶跑回来拿走了钱包,塞给你二十块。'},
+      {p:40,h:5,d:0,m:0,msg:'等了一个小时,没人来。饿着肚子白等了。'}]}]},
+  {title:'路人晕倒',icon:'🧑‍🦰',desc:'路边一个大叔突然捂着头靠在墙上,然后滑坐下去,看起来不太对劲。',options:[
+    {label:'📞 帮忙打120',outcomes:[{p:100,h:3,d:5,m:0,msg:'你打了电话,等救护车到了才走。耽误了不少时间。'}]},
+    {label:'💧 守到他醒过来',outcomes:[
+      {p:80,h:-3,d:1,m:15,msg:'他慢慢醒了,原来是低血糖。他的家人赶来后,硬塞给你一些钱和吃的。'},
+      {p:20,h:8,d:3,m:0,msg:'他躺了很久才醒,你错过了下午的事件。又饿又累。'}]},
+    {label:'🚶 不管,继续走',outcomes:[{p:100,h:0,d:2,m:0,msg:'你低着头走开了。心里有点不是滋味。'}]}]},
+  {title:'未上锁的自行车',icon:'🚲',desc:'路边靠着一辆没上锁的自行车,看起来刚停不久。',options:[
+    {label:'🏃 骑走卖掉',outcomes:[
+      {p:60,h:0,d:8,m:30,msg:'你骑到旧货市场卖了。今晚有肉吃了。'},
+      {p:40,h:0,d:18,m:-10,msg:'刚骑出不远,车主追了上来,你被狠揍了一顿。'}]},
+    {label:'🔒 帮忙把锁扣缠了一圈',outcomes:[{p:100,h:2,d:1,m:0,msg:'你缠好锁走了。经过的人看了你一眼,眼神奇怪。'}]},
+    {label:'🤷 算了,不碰',outcomes:[{p:100,h:0,d:1,m:0,msg:'你走开了。有些东西碰不得。'}]}]},
+  {title:'饭店老板拎出大桶剩菜',icon:'🍳',desc:'巷口的小饭馆,老板拎出一大桶剩菜正往垃圾桶倒。',options:[
+    {label:'🪣 等他走了悄悄去捡',outcomes:[
+      {p:80,h:-8,d:2,m:0,msg:'捞到不少还能吃的。虽说是剩的,但今天不用饿了。'},
+      {p:20,h:0,d:6,m:0,msg:'他其实没走远,回头看到你了。"给我滚!"你被骂了一顿。'}]},
+    {label:'🙏 直接问能不能给',outcomes:[
+      {p:60,h:-12,d:2,m:0,msg:'"等一等,把这盒没卖完的给你。"他给了你一盒热饭。人还挺好。'},
+      {p:40,h:0,d:5,m:0,msg:'"走走走,我们这是做生意不是开慈善。"你被轰开了。'}]},
+    {label:'😞 咽了口唾沫算了',outcomes:[{p:100,h:0,d:1,m:0,msg:'你看着菜倒进垃圾桶。转身离开。'}]}]},
+  {title:'乞讨时被记者拍到',icon:'📸',desc:'你坐在路边举着纸牌,突然闪光灯一亮——有人拿相机对着你。一个脖子上挂记者证的女孩。',options:[
+    {label:'🖐️ 遮住脸转身离开',outcomes:[{p:100,h:0,d:5,m:0,msg:'你快步离开了那个路口。被拍到上新闻想想就可怕。'}]},
+    {label:'👀 坦然看着她',outcomes:[
+      {p:60,h:0,d:2,m:25,msg:'她写了篇报道帮你筹款,几天后有不少人往线上捐钱。她在街角给了你现金。'},
+      {p:40,h:0,d:10,m:0,msg:'她写了篇报道说"职业乞丐扰乱市容",你被辖区重点关注了。'}]},
+    {label:'🙏 求她别拍',outcomes:[
+      {p:80,h:0,d:12,m:0,msg:'她说这是她的工作,拍完走了。你觉得接下来几天会不太平。'},
+      {p:20,h:0,d:2,m:10,msg:'她收起相机,塞给你十块钱:"拿去吃饭,但是别在这儿蹲了。"'}]}]},
+  {title:'巷子里有人喊救命',icon:'🔪',desc:'身后的巷子传来急促的喊声:"救命!有人抢东西!"',options:[
+    {label:'🏃 冲进去看看',outcomes:[
+      {p:60,h:0,d:18,m:-10,msg:'是个圈套!两个人把你按在地上,抢走了你口袋里的钱。'},
+      {p:40,h:0,d:3,m:20,msg:'你吓跑了抢东西的人,失主——一个大妈——拉着你的手千恩万谢,给了你钱。'}]},
+    {label:'📞 打个电话报警再离开',outcomes:[{p:100,h:2,d:3,m:0,msg:'你报警后离开了。后来听说那边确实抓了一个惯犯。'}]},
+    {label:'🚶 赶紧离开',outcomes:[{p:100,h:0,d:2,m:0,msg:'你快步离开。有些事,不是现在的你能管的。'}]}]},
+  {title:'踩到碎玻璃',icon:'🪨',desc:'你突然觉得脚底一阵刺痛——满地的啤酒瓶碎片,你踩了进去。',options:[
+    {label:'💧 找到公厕用水冲一下',outcomes:[{p:100,h:0,d:6,m:0,msg:'你勉强处理了伤口。但光着脚走到晚上,越来越疼。'}]},
+    {label:'💊 去药店买创可贴',outcomes:[{p:100,h:0,d:-5,m:-5,msg:'你花了最后几块钱包扎。虽然心疼,但伤口没感染。'}]},
+    {label:'😖 忍着,不处理',outcomes:[
+      {p:70,h:0,d:15,m:0,msg:'伤口到了晚上开始发炎,整个人都废了一半。'},
+      {p:30,h:0,d:8,m:0,msg:'居然没什么大碍,可能是穿得厚。'}]}]}
+];
+
+function tryEncounter(){
+  if(Math.random()<0.25){
+    var e=ENCOUNTERS[Math.floor(Math.random()*ENCOUNTERS.length)];
+    showEncounter(e); return true;
+  }
+  return false;
+}
+function showEncounter(enc){
+  var el=document.getElementById('feedback-overlay');
+  el.classList.remove('hidden');
+  $('fb-icon').textContent=enc.icon;$('fb-title').textContent='⚡ '+enc.title;$('fb-title').style.color='var(--g-gold)';
+  var msg='<div style="line-height:1.8;margin-bottom:12px">'+esc(enc.desc)+'</div><div style="display:flex;flex-direction:column;gap:6px">';
+  for(var i=0;i<enc.options.length;i++){msg+='<button id="enc-opt-'+i+'" class="btn-game btn-ghost" style="text-align:left;font-size:13px">'+enc.options[i].label+'</button>'}
+  msg+='</div>';
+  $('fb-message').innerHTML=msg;document.getElementById('fb-stats').style.display='none';
+  $('fb-primary').classList.add('hidden');$('fb-restart').classList.add('hidden');
+  for(var i=0;i<enc.options.length;i++){document.getElementById('enc-opt-'+i).onclick=(function(idx){return function(){resolveEncounter(enc,idx)}})(i)}
+}
+function resolveEncounter(enc,optIdx){
+  var outcomes=enc.options[optIdx].outcomes;
+  var totalP=0;for(var i=0;i<outcomes.length;i++)totalP+=outcomes[i].p;
+  var roll=Math.random()*totalP,acc=0,chosen=outcomes[0];
+  for(var i=0;i<outcomes.length;i++){acc+=outcomes[i].p;if(roll<acc){chosen=outcomes[i];break}}
+  S.hunger=Math.min(100,Math.max(0,S.hunger+chosen.h));
+  S.danger=Math.min(100,Math.max(0,S.danger+chosen.d));
+  if(S.defend&&chosen.d>8){S.danger=Math.max(0,S.danger-chosen.d+2);S.defend=0;chosen.msg+=' (🛡️ 防身棍挡了一击)'}
+  S.money+=chosen.m;
+  var deltas=[];
+  if(chosen.h!==0)deltas.push('🍞 '+(chosen.h>0?'+'+chosen.h:chosen.h));
+  if(chosen.d!==0)deltas.push('⚠️ '+(chosen.d>0?'+'+chosen.d:chosen.d));
+  if(chosen.m!==0)deltas.push('💰 '+(chosen.m>0?'+'+chosen.m:chosen.m));
+  $('fb-icon').textContent='⚡';$('fb-title').textContent='遭遇结果';$('fb-title').style.color='var(--g-text)';
+  $('fb-message').innerHTML='<div style="line-height:1.8;margin-bottom:6px">'+chosen.msg+'</div>'+
+    (deltas.length?'<div style="font-size:12px;color:var(--g-muted)">'+deltas.join(' &nbsp; ')+'</div>':'')+
+    '<div style="margin-top:8px;font-size:12px;color:var(--g-muted)">🍞 '+S.hunger+'% &nbsp; ⚠️ '+S.danger+'% &nbsp; 💵 '+S.money+'元</div>';
+  $('fb-primary').classList.remove('hidden');$('fb-primary').textContent='继续';$('fb-restart').classList.add('hidden');
+  var el=document.getElementById('feedback-overlay');
+  $('fb-primary').onclick=function(){el.classList.add('hidden');
+    if(S.hunger>=100){die('hunger');return}if(S.danger>=100){die('danger');return}if(S.money>=500){win();return}
+    nextPeriod();};
+  hud();
+}
+
+// ═══ 渲染 ═══
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+
+function hud(){
+  $('hunger-val').textContent=S.hunger+'%';$('hunger-bar').style.width=S.hunger+'%';
+  $('danger-val').textContent=S.danger+'%';$('danger-bar').style.width=S.danger+'%';
+  $('day-count').textContent=String(S.day).padStart(2,'0');
+  $('money-display').innerHTML='💵 '+S.money;
+  var game=document.getElementById('game-container');
+  if(S.danger>=60)game.classList.add('stress-pulse');else game.classList.remove('stress-pulse');
+}
+
+function pickEvent(pool,specials){
+  if(Math.random()<0.3){
+    var s=specials[Math.floor(Math.random()*specials.length)];
+    if(s.isRain&&S.passiveItems.indexOf('raincoat')>=0) return pool[Math.floor(Math.random()*pool.length)];
+    return objectAssign({},s,{special:true});
+  }
+  return objectAssign({},pool[Math.floor(Math.random()*pool.length)],{special:false});
+}
+function objectAssign(target){for(var i=1;i<arguments.length;i++){var s=arguments[i];for(var k in s)target[k]=s[k]}return target}
+
+function startDay(){
+  S.period=0; S.events=[];
+  S.events[0]=pickEvent(POOLS.morning,SPECIALS.morning);
+  S.events[1]=pickEvent(POOLS.afternoon,SPECIALS.afternoon);
+  S.events[2]=pickEvent(POOLS.evening,SPECIALS.evening);
+  renderCurrentPeriod();
+}
+
+function startGame(){
+  S={hunger:40,danger:0,money:15,day:1,period:0,events:[],items:[],passiveItems:[],alive:true,won:false,defend:0};
+  document.getElementById('intro-overlay').classList.add('hidden');
+  document.getElementById('tut-overlay').classList.add('hidden');
+  document.getElementById('game-container').classList.remove('hidden');
+  hud(); startDay();
+}
+
+// ═══ 教程 ═══
+var TUT_PAGES = [
+  {icon:'🕐',title:'每天三个阶段',desc:'早、午、晚。每个阶段必须完成一件事,然后进入下一时段。有时连续做完三个,有时被突发事件打断。'},
+  {icon:'🍞',title:'饥饿与危险',desc:'饥饿到 100% 就会饿死。危险到 100% 会被冻伤、被抓、或横死街头。赚钱、找食物、规避危险——三者平衡。'},
+  {icon:'🏪',title:'商店与背包',desc:'商店随时可以逛,买消耗品救急,或买永久道具保平安。背包里放着你的所有家当。'},
+  {icon:'⚡',title:'突发遭遇',desc:'时段之间可能触发随机遭遇。面对选择,没有标准答案——同样的选择,结果或许不一样。'},
+  {icon:'🏡',title:'活着离开',desc:'攒够 500 元,你就能脱离这座街头。活了多少天不重要——重要的是,活到那一天。'}
+];
+var tutIdx = 0;
+function startTutorial(){
+  var noshow=localStorage.getItem('sv_tut_skip')==='1';
+  if(noshow){startGame();return}
+  tutIdx=0;renderTut();document.getElementById('intro-overlay').classList.add('hidden');
+  document.getElementById('tut-overlay').classList.remove('hidden');
+}
+function renderTut(){
+  var p=TUT_PAGES[tutIdx];
+  $('tut-icon').textContent=p.icon;$('tut-title').textContent=p.title;$('tut-desc').textContent=p.desc;
+  $('tut-prev').style.display=tutIdx===0?'none':'';$('tut-next').textContent=tutIdx===TUT_PAGES.length-1?'开始游戏':'下一步 →';
+  if(tutIdx===TUT_PAGES.length-1){$('tut-skip-label').classList.remove('hidden')}else{$('tut-skip-label').classList.add('hidden')}
+}
+function nextTut(){
+  if(tutIdx>=TUT_PAGES.length-1){if($('tut-noshow').checked)localStorage.setItem('sv_tut_skip','1');startGame();return}
+  tutIdx++;renderTut();
+}
+function prevTut(){if(tutIdx>0){tutIdx--;renderTut()}}
+function toggleTutSkip(){if($('tut-noshow').checked)localStorage.setItem('sv_tut_skip','1')}
+
+var periods=['早上','下午','晚上'],pIcons=['🌅','☀️','🌙'];
+
+function renderCurrentPeriod(){
+  var p=S.period, e=S.events[p];
+  $('period-indicator').innerHTML='<span class="event-period" style="background:rgba(176,159,255,.12);color:var(--g-purple)">'+pIcons[p]+' '+periods[p]+'</span>';
+  var card=$('event-card');
+  card.className='event-card'+(e.special?' special':'');
+  var star=e.special?'<span style="color:var(--g-gold);font-size:11px">&starf; 特殊事件</span><br>':'';
+  var effects='';
+  if(e.h<0)effects+='🍞 <b style="color:var(--g-green)">'+e.h+'</b> ';
+  if(e.h>0)effects+='🍞 <b style="color:var(--g-red)">+'+e.h+'</b> ';
+  if(e.d<0)effects+='⚠️ <b style="color:var(--g-green)">'+e.d+'</b> ';
+  if(e.d>0)effects+='⚠️ <b style="color:var(--g-pink)">+'+e.d+'</b> ';
+  if(e.m>0)effects+='💰 <b style="color:var(--g-gold)">+'+e.m+'</b> ';
+  if(e.m<0)effects+='💰 <b style="color:var(--g-red)">'+e.m+'</b> ';
+  card.innerHTML=star+'<div class="text-4xl">'+e.i+'</div><div class="text-lg font-black">'+esc(e.t)+'</div><div class="text-xs text-[var(--g-muted)]">'+effects+'</div>';
+  var acts=$('event-actions');
+  acts.innerHTML='';
+  acts.innerHTML+='<button onclick="acceptEvent()" class="btn-game btn-gold flex-1">接受</button>';
+  acts.innerHTML+='<button onclick="rerollEvent()" class="btn-game btn-ghost flex-1">🔄 上别处看看<br><span style="font-size:10px;opacity:.6">饥饿+8</span></button>';
+  hud();
+}
+
+function rerollEvent(){
+  S.hunger=Math.min(100,S.hunger+8);
+  var p=S.period;
+  var pool=p===0?POOLS.morning:p===1?POOLS.afternoon:POOLS.evening;
+  var spec=p===0?SPECIALS.morning:p===1?SPECIALS.afternoon:SPECIALS.evening;
+  S.events[p]=pickEvent(pool,spec);
+  if(S.hunger>=100){ die('hunger'); return; }
+  hud(); renderCurrentPeriod();
+}
+
+function acceptEvent(){
+  var e=S.events[S.period];
+  S.hunger=Math.min(100,Math.max(0,S.hunger+e.h));
+  S.danger=Math.min(100,Math.max(0,S.danger+e.d));
+  if(e.dangerClr) S.danger=0;
+  S.money+=e.m;
+  // 特殊事件给道具
+  if(e.giveItem){
+    if(e.giveItem==='blanket'){S.passiveItems.push('blanket');showFeedback('🧣 获得道具','你得到了一床<b>厚棉被</b>！',e.i,true);return}
+    if(e.giveItem==='phone'){S.items.push({id:'phone',t:'旧手机',e:'📱',use:function(h){h.money+=40;h.danger-=5}});showFeedback('📱 获得道具','你捡到一部<b>旧手机</b>。可以在背包里使用(换钱)或留着。',e.i,true);return}
+  }
+  if(S.hunger>=100){ die('hunger'); return; }
+  if(S.danger>=100){ die('danger'); return; }
+  if(S.money>=500){ win(); return; }
+  showFeedback('✅ 事件完成',e.w+(e.special?'<br><span style="color:var(--g-gold);font-size:10px">✨ 稀有遭遇</span>':''),e.i,true);
+}
+
+function nextPeriod(){
+  S.period++;
+  if(S.period>=3){ nightSummary(); return; }
+  if(!tryEncounter()) renderCurrentPeriod();
+}
+
+function nightSummary(){
+  // 被动道具
+  var msgs=[];
+  for(var i=0;i<S.passiveItems.length;i++){
+    var pi=S.passiveItems[i];
+    if(pi==='blanket'){S.danger=Math.max(0,S.danger-2);msgs.push('🛏️ 棉被:危险-2')}
+    if(pi==='bag'){S.hunger=Math.max(0,S.hunger-1);msgs.push('🎒 旧书包:省力,饥饿-1')}
+  }
+  // 手机卡被动(检查 shop item)
+  if(S.passiveItems.indexOf('phone')>=0){S.money+=8;msgs.push('📱 旧手机自动接单: +8元')}
+  // 每日自然消耗
+  S.hunger=Math.min(100,S.hunger+5);
+  var dDanger=2+Math.floor(Math.random()*4);
+  S.danger=Math.min(100,S.danger+dDanger);
+  msgs.push('🌃 过夜:饥饿+5,危险+'+dDanger);
+  // 剧情里程碑
+  var milestones = {'3':'三天了。你开始分得清哪些垃圾桶每周几有人扔剩饭。','7':'一周了。路口卖煎饼的大叔开始对你点头。有人说这叫"混熟了"。','10':'第十天。你注意到路过的警车比刚来那会儿多了。也许只是错觉。','15':'十五天了。你甚至有了自己偏好的长椅——朝南那排,第三张。'};
+  if(milestones[S.day]) msgs.push('<br><span style="color:var(--g-gold-dim);font-style:italic;font-size:12px">'+milestones[S.day]+'</span>');
+  if(S.hunger>=100){ die('hunger'); return; }
+  if(S.danger>=100){ die('danger'); return; }
+  if(S.money>=500){ win(); return; }
+  // 夜间总结弹层
+  var el=document.getElementById('feedback-overlay');
+  el.classList.remove('hidden');
+  $('fb-icon').textContent='🌙';
+  $('fb-title').textContent='第 '+S.day+' 天结束';
+  $('fb-title').style.color='var(--g-text)';
+  $('fb-message').innerHTML='<div style="line-height:2">'+msgs.map(function(m){return '<div>'+m+'</div>'}).join('')+'</div><div style="margin-top:10px;font-size:12px;color:var(--g-muted)">🍞 饥饿 '+S.hunger+'% &nbsp; ⚠️ 危险 '+S.danger+'% &nbsp; 💵 '+S.money+'元</div>';
+  document.getElementById('fb-stats').style.display='none';
+  $('fb-primary').classList.remove('hidden');$('fb-primary').textContent='进入下一天';
+  $('fb-restart').classList.add('hidden');
+  $('fb-primary').onclick=function(){el.classList.add('hidden');S.day++;hud();startDay()};
+}
+
+function showFeedback(title,msg,icon,isContinue){
+  var el=document.getElementById('feedback-overlay');
+  el.classList.remove('hidden');
+  $('fb-icon').textContent=icon;$('fb-title').textContent=title;$('fb-title').style.color='var(--g-text)';
+  $('fb-message').innerHTML=msg+'<div style="margin-top:8px;font-size:12px;color:var(--g-muted)">🍞 饥饿 '+S.hunger+'% &nbsp; ⚠️ 危险 '+S.danger+'% &nbsp; 💵 '+S.money+'元</div>';
+  document.getElementById('fb-stats').style.display='none';
+  $('fb-primary').classList.remove('hidden');$('fb-primary').textContent='继续';
+  $('fb-restart').classList.add('hidden');
+  if(isContinue){$('fb-primary').onclick=function(){el.classList.add('hidden');nextPeriod()}}
+  else{$('fb-primary').onclick=function(){el.classList.add('hidden')}}
+}
+
+function die(cause){
+  S.alive=false;
+  var el=document.getElementById('feedback-overlay');
+  el.classList.remove('hidden');
+  $('fb-title').style.color='var(--g-pink)';
+  if(cause==='hunger'){$('fb-icon').textContent='🍞';$('fb-title').textContent='饿死街头'}
+  else{$('fb-icon').textContent='☠️';$('fb-title').textContent='灾祸降临'}
+  $('fb-message').innerHTML=(cause==='hunger'?'连最后一口气也耗尽了。这座城市的角落里,又多了一具沉默的尸体。':'被命运击倒了。这座城市不会为任何人停下脚步。')+
+    '<div style="margin-top:12px;padding:10px;background:rgba(239,68,68,.08);border-radius:10px;border:1px solid rgba(239,68,68,.2)"><div class="stats-row" style="display:grid">'+
+    '<div class="stats-item"><span>存活天数</span><b style="color:var(--g-text)">'+S.day+'</b></div>'+
+    '<div class="stats-item"><span>累计收入</span><b style="color:var(--g-gold)">'+S.money+'</b></div>'+
+    '<div class="stats-item"><span>道具数量</span><b>'+S.passiveItems.length+'</b></div>'+
+    '<div class="stats-item"><span>饥饿/危险</span><b>'+S.hunger+'%/'+S.danger+'%</b></div>'+
+    '</div></div>';
+  document.getElementById('fb-stats').style.display='none';
+  $('fb-primary').classList.add('hidden');
+  $('fb-restart').classList.remove('hidden');
+  $('fb-restart').onclick=function(){el.classList.add('hidden');startGame()}
+}
+
+function win(){
+  S.won=true;
+  var el=document.getElementById('feedback-overlay');
+  el.classList.remove('hidden');
+  $('fb-icon').textContent='🏡';$('fb-title').textContent='脱离流浪!';$('fb-title').style.color='var(--g-gold)';
+  $('fb-message').innerHTML='你攒够了 500 元,找到了稳定工作和一处住房。<br><br><b style="color:var(--g-gold)">这座城没能吞掉你。</b>'+
+    '<div style="margin-top:12px;padding:10px;background:rgba(240,192,96,.08);border-radius:10px;border:1px solid rgba(240,192,96,.2)"><div class="stats-row" style="display:grid">'+
+    '<div class="stats-item"><span>存活天数</span><b style="color:var(--g-text)">'+S.day+'</b></div>'+
+    '<div class="stats-item"><span>剩余金钱</span><b style="color:var(--g-gold)">'+S.money+'</b></div>'+
+    '<div class="stats-item"><span>道具收藏</span><b>'+S.passiveItems.length+'</b></div>'+
+    '<div class="stats-item"><span>状态</span><b style="color:var(--g-green)">重新做人</b></div>'+
+    '</div></div>';
+  document.getElementById('fb-stats').style.display='none';
+  $('fb-primary').classList.add('hidden');
+  $('fb-restart').classList.remove('hidden');
+  $('fb-restart').onclick=function(){el.classList.add('hidden');startGame()}
+}
+
+// ═══ 商店 ═══
+function openShop(){
+  $('shop-money').textContent='💵 '+S.money;
+  var g=$('shop-grid');g.innerHTML='';
+  for(var i=0;i<SHOP.length;i++){
+    var it=SHOP[i];
+    var canBuy=S.money>=it.c;
+    var cls='shop-item'+(canBuy?'':' bought');
+    g.innerHTML+='<div class="'+cls+'" onclick="buyItem(\''+it.id+'\')"><div class="text-2xl">'+it.e+'</div><div class="text-xs font-bold mt-1">'+it.t+'</div><div class="text-[10px] text-[var(--g-muted)]">'+it.desc+'</div><div class="price">¥'+it.c+'</div></div>';
+  }
+  $('shop-overlay').classList.remove('hidden');
+}
+function closeShop(){$('shop-overlay').classList.add('hidden')}
+function buyItem(id){
+  var it=null;for(var i=0;i<SHOP.length;i++)if(SHOP[i].id===id){it=SHOP[i];break}
+  if(!it||S.money<it.c)return;
+  S.money-=it.c;
+  if(it.passive!==undefined){ S.passiveItems.push(id); }
+  else{ S.items.push({id:it.id,t:it.t,e:it.e,use:it.use}); }
+  hud(); openShop();
+}
+
+// ═══ 背包 ═══
+function openInventory(){
+  var l=$('inv-list');l.innerHTML='';
+  // 永久道具
+  if(S.passiveItems.length>0){
+    l.innerHTML+='<div style="font-size:11px;color:var(--g-gold);margin-bottom:4px">🛡️ 生效中的永久道具</div>';
+    for(var i=0;i<S.passiveItems.length;i++){
+      var pid=S.passiveItems[i];var shop=null;
+      for(var j=0;j<SHOP.length;j++)if(SHOP[j].id===pid){shop=SHOP[j];break}
+      l.innerHTML+='<div style="padding:6px 10px;background:rgba(240,192,96,.06);border:1px solid rgba(240,192,96,.15);border-radius:10px;font-size:12px">'+shop.e+' <b>'+shop.t+'</b> <span style="color:var(--g-green)">生效中</span></div>';
+    }
+  }
+  // 一次性道具
+  if(S.items.length>0){
+    l.innerHTML+='<div style="font-size:11px;color:var(--g-muted);margin:8px 0 4px">📦 可使用的道具</div>';
+    for(var i=0;i<S.items.length;i++){
+      var it=S.items[i]; (function(idx){
+        l.innerHTML+='<div style="padding:8px 12px;background:var(--g-card-hover);border:1px solid var(--g-border);border-radius:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="useItem('+idx+')"><span>'+it.e+' <b>'+it.t+'</b></span><span style="font-size:10px;color:var(--g-gold)">使用 →</span></div>';
+      })(i);
+    }
+  }
+  if(!S.passiveItems.length&&!S.items.length) l.innerHTML='<div style="color:var(--g-muted);text-align:center;padding:20px">空空如也……</div>';
+  $('inv-overlay').classList.remove('hidden');
+}
+function closeInv(){$('inv-overlay').classList.add('hidden')}
+function useItem(idx){
+  var it=S.items[idx];if(!it)return;
+  it.use(S); S.items.splice(idx,1); hud(); openInventory();
+}
+</script>
+</body>
+</html>
