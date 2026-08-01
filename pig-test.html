@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<title>测测你是什么种类的猪猪 · 霧雨魔法店</title>
+<link rel="stylesheet" href="css/common.css">
+<style>
+ body { touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+ .pig-holder { display:flex; justify-content:center; margin: 26px 0 10px; }
+ .progress-container { position: relative; width: 200px; height: 200px; cursor: pointer; }
+ .progress-ring { transform: rotate(-90deg); }
+ .progress-ring-bg { fill:none; stroke: var(--border); stroke-width: 10; }
+ .progress-ring-fg { fill:none; stroke: var(--gold); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset .05s linear; }
+ .press-hint { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; pointer-events:none; }
+ .pig-btn { width:118px; height:118px; border-radius:50%; object-fit:cover; margin-bottom:10px; border:3px solid var(--gold); box-shadow: 0 0 18px rgba(240,192,96,.45), 0 0 42px rgba(240,192,96,.18), 0 8px 20px rgba(0,0,0,.35); background: linear-gradient(135deg, rgba(240,192,96,.18), rgba(176,159,255,.12)); animation: pigFloat 2.6s ease-in-out infinite; transition: transform .15s ease, box-shadow .15s ease; }
+ .pig-btn.pressing { transform: scale(.86); box-shadow: 0 0 26px rgba(240,192,96,.6), 0 0 60px rgba(240,192,96,.25), 0 2px 8px rgba(0,0,0,.4); }
+ @keyframes pigFloat { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-9px) rotate(3deg); } }
+ .press-hint p { font-size:13px; color: var(--muted); margin-top:0; }
+ .press-hint .zap { font-size:11px; color: var(--gold-dim); letter-spacing:2px; }
+ .progress-text { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:34px; font-weight:800; color: var(--gold); text-shadow: 0 2px 12px rgba(0,0,0,.5); }
+ .hidden { display:none !important; }
+ .pig-result-img { width:150px; height:150px; object-fit:contain; margin:0 auto 6px; border-radius:18px; animation: popIn .5s ease; }
+ @keyframes popIn { 0% { transform: scale(.3) rotate(-10deg); opacity:0; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity:1; } }
+ .result-quote { display:inline-block; background:rgba(255,255,255,.05); font-size:12px; padding:6px 14px; border-radius:12px; color:var(--gold); margin:10px 0 0; font-style:italic; }
+ .press-tip { font-size:11px; color:var(--muted); text-align:center; margin-top:8px; }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container" id="app">
+
+  <!-- ══════ 测试区 ══════ -->
+  <div id="test-area">
+    <div class="intro">
+      <div class="intro-badge">霧雨魔法店 · 猪猪鉴定科</div>
+      <h1>测测你是什么<br>种类的猪猪</h1>
+      <p class="sub">长按汲取猪元素 · 1秒鉴定你的猪格</p>
+      <div class="pig-holder">
+        <div class="progress-container" id="holdZone">
+          <svg class="progress-ring" width="200" height="200" viewBox="0 0 200 200">
+            <circle class="progress-ring-bg" cx="100" cy="100" r="88"></circle>
+            <circle class="progress-ring-fg" id="progress-circle" cx="100" cy="100" r="88"></circle>
+          </svg>
+          <div class="press-hint" id="press-hint">
+            <img class="pig-btn" id="pig-btn" src="images/pigs/pig.png" alt="普通小猪" draggable="false">
+            <p>长按这里测试</p>
+            <span class="zap">汲取猪元素中…</span>
+          </div>
+          <div class="progress-text hidden" id="progress-text"><span id="progress-percentage">0%</span></div>
+        </div>
+      </div>
+      <p id="instruction" class="press-tip">将手指放到屏幕上长按，看看你是什么猪！</p>
+      <a href="index.html" class="home-link">← 返回魔法店</a>
+      <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;" id="takeCount"></p>
+    </div>
+  </div>
+
+  <!-- ══════ 结果区 ══════ -->
+  <div id="result-area" class="hidden">
+    <div class="result">
+      <div class="result-emoji" style="padding:0;">
+        <img id="result-img" class="pig-result-img" src="" alt="猪">
+      </div>
+      <div class="result-label">霧雨魔法店 猪格鉴定结果</div>
+      <div class="result-name" id="result-title" style="color:var(--gold);"></div>
+      <div class="result-desc" id="result-description"></div>
+      <div class="result-quote" id="result-quote"></div>
+      <button class="btn btn-main" onclick="shareIt()">📋 复制结果发给朋友</button>
+      <button class="btn btn-ghost" id="retest-button">🔄 重新测试</button>
+      <a href="index.html" class="home-link">← 返回魔法店</a>
+      <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;" id="takeCount2"></p>
+      <div id="resultFooter"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/result-footer.js"></script>
+<script>
+/* =============================================
+   霧雨魔法店 · 猪猪鉴定科
+   长按汲取猪元素 1 秒 → 随机鉴定猪格(34 种)
+   ============================================= */
+
+var STORAGE_KEY = 'pig_test_v1';
+var TRACK_KEY = 'pig_take';
+
+var PIGS = [
+  /* ── 原版 22 种 ── */
+  { img:'pig.png',            name:'猪',          desc:'普通小猪。没什么好说的，就是猪。', quote:'哼哼。' },
+  { img:'human.png',          name:'人类',        desc:'检测不出任何猪元素。你是人类吗？还是说……你藏得太深了？', quote:'我不是猪。……吧？' },
+  { img:'black-pig.png',      name:'小黑猪',      desc:'小黑猪，卤出猪脚了。', quote:'黑皮猪脚饭，香！' },
+  { img:'wild-boar.png',      name:'野猪',        desc:'你是一只勇猛的野猪！横冲直撞，人挡撞人。', quote:'拱！' },
+  { img:'zhuge-liang.png',    name:'猪葛亮',      desc:'猪里最聪明的一个。羽扇纶巾，运筹帷幄——虽然还是猪。', quote:'我观天象，今日宜吃饭。' },
+  { img:'pig-stamp.png',      name:'猪圆章',      desc:'《猪圈那些事》专栏作者。盖章认证：此猪正规。', quote:'已盖章，批准入圈。' },
+  { img:'zombie-pig.png',     name:'僵尸猪',      desc:'喜欢的食物是猪脑。如果你也是猪，建议离它远点。', quote:'猪脑……好吃……' },
+  { img:'skeleton-pig.png',   name:'骷髅猪',      desc:'资深不死族。骨头都露出来了还能拱食，生命力顽强。', quote:'我还能再拱一千年。' },
+  { img:'pig-human.png',      name:'猪人',        desc:'你是猪还是人？这个问题连你自己都回答不上来。', quote:'半猪半人，如猪如人。' },
+  { img:'demon-pig.png',      name:'恶魔猪',      desc:'满肚子坏心眼。笑里藏刀，哼哼里都是阴谋。', quote:'来嘛来嘛，不会吃了你的～' },
+  { img:'heaven-pig.png',     name:'天堂猪',      desc:'似了喵～在天堂吃云朵。', quote:'天上好凉快……' },
+  { img:'explosive-pig.png',  name:'爆破小猪',    desc:'我跟你爆了！情绪管理有待加强。', quote:'我跟你爆了！！' },
+  { img:'black-white-pig.png',name:'黑白猪',      desc:'串子。黑白两道通吃，配色像熊猫失业版。', quote:'我不属于任何一边。' },
+  { img:'pork-skewer.png',    name:'猪肉串',      desc:'真正的串子。已经被串起来了，撒上孜然就能烤。', quote:'还差一把孜然。' },
+  { img:'magic-pig.png',      name:'魔法少猪',    desc:'马猪烧酒！代表月亮拱你！', quote:'我代表月亮拱你！' },
+  { img:'mechanical-pig.png', name:'机械猪',      desc:'人机。由机器改造的猪，也可能是由猪改造的机器。', quote:'哔——拱——哔——' },
+  { img:'pig-ball.png',       name:'猪猪球',      desc:'滚了。物理意义上滚了。', quote:'咕噜咕噜咕噜——' },
+  { img:'doll-pig.png',       name:'玩偶猪',      desc:'fufu小猪。毛茸茸，软乎乎，可抱着睡觉。', quote:'fufufu～' },
+  { img:'soul-pig.png',       name:'灵魂猪',      desc:'从冥界归来的猪。有灵魂，没有实体，摸不到。', quote:'你看得见我？' },
+  { img:'crystal-pig.png',    name:'水晶猪',      desc:'珍贵又脆弱的小猪。小心轻放，摔了会碎。', quote:'我很贵的。' },
+  { img:'snow-pig.png',       name:'雪猪',        desc:'洁白的雪猪。冬天限定，夏天会化。', quote:'好冷……但是好白。' },
+  { img:'pig-cat.png',        name:'猪咪',        desc:'你是一只可爱的猪咪！猪和猫的完美结合。', quote:'喵……哼哼！' },
+
+  /* ── 新加入 12 种 ── */
+  { img:'404猪.jpg',          name:'404猪',       desc:'404 Not Found。这只猪加载失败了，页面不存在。', quote:'找不到这个猪。' },
+  { img:'佛猪.jpg',           name:'佛猪',        desc:'大慈大悲，普度众生。已看破红尘，吃饭便是修行。', quote:'阿弥陀佛，戒了戒了（指猪瘾）。' },
+  { img:'大懒猪.jpg',         name:'大懒猪',      desc:'能躺着绝不坐着，能睡着绝不醒着。猪生赢家。', quote:'zzz……嗯？开饭了？' },
+  { img:'安卓猪.png',         name:'安卓猪',      desc:'机器人警告。系统卡成猪，一拱一卡的。', quote:'系统正在更新……请稍候。' },
+  { img:'抽搐猪.jpg',         name:'抽搐猪',      desc:'抖个不停。帕金森晚期，建议去挂个号。', quote:'抖抖抖抖抖——' },
+  { img:'滴泪猪.jpg',         name:'滴泪猪',      desc:'眼睛里进猪了。哭得稀里哗啦的，不知道谁欺负它了。', quote:'好想割手……' },
+  { img:'烤猪.png',           name:'烤猪',        desc:'外焦里嫩，滋滋冒油。香迷糊了，自带孜然味。', quote:'快吃了我吧（咽口水）。' },
+  { img:'电锯猪，啵奇猪.png', name:'电锯猪·啵奇猪', desc:'电锯狂魔，啵奇塔传人。别惹它，它手里有锯子。', quote:'RATATATA——' },
+  { img:'苯猪_1.png',         name:'苯猪',        desc:'苯环结构，化学性质稳定。遇强酸强碱也不变色，稳定得一批。', quote:'我是苯猪，我稳定。' },
+  { img:'🐖！(OSU猪).jpg',   name:'OSU猪',       desc:'音游高手。全连金标，手速拉满，就是手有点抖。', quote:'300！300！300！' },
+  { img:'等我启动.jpg',       name:'猪煲',  desc:'孩子们，等我启动。孩子们，等我启', quote:'诶猪煲怎么似了' },
+  { img:'爱丽丝·玛格特罗一头.jpg', name:'爱丽丝猪', desc:'东方project受害者。一头雾水，不知道为什么会在这里。', quote:'这头猪……有点熟悉？' }
+];
+
+/* 权重: 普通猪和猪咪常见, 人类/天堂猪稀有 */
+var RARITY = { pig: 4, 'pig-cat': 3, '大懒猪.jpg': 3, human: 0.3, 'heaven-pig.png': 0.4, 'doll-pig.png': 0.5 };
+
+function pickPig() {
+  var pool = [];
+  for (var i = 0; i < PIGS.length; i++) {
+    var w = RARITY[PIGS[i].img] || 1;
+    for (var j = 0; j < w * 10; j++) pool.push(PIGS[i]);
+  }
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+/* ── DOM ── */
+var testArea = document.getElementById('test-area');
+var resultArea = document.getElementById('result-area');
+var holdZone = document.getElementById('holdZone');
+var progressCircle = document.getElementById('progress-circle');
+var pressHint = document.getElementById('press-hint');
+var progressText = document.getElementById('progress-text');
+var progressPercentage = document.getElementById('progress-percentage');
+var instruction = document.getElementById('instruction');
+var retestButton = document.getElementById('retest-button');
+
+var circumference = 2 * Math.PI * 88;
+var requiredHoldTime = 1000;
+var startTime = 0, isHolding = false, progressInterval = null;
+var lastResult = null;
+
+progressCircle.style.strokeDasharray = circumference + ' ' + circumference;
+progressCircle.style.strokeDashoffset = circumference;
+
+/* 绑定人数统计 */
+bindCount('takeCount', TRACK_KEY, { template: '已有 {n} 头猪完成鉴定' });
+bindCount('takeCount2', TRACK_KEY, { template: '已有 {n} 头猪完成鉴定' });
+
+/* ── 长按 ── */
+function handleHoldStart(e) {
+  e.preventDefault();
+  if (localStorage.getItem(STORAGE_KEY)) return;
+  isHolding = true;
+  startTime = Date.now();
+  var btn = document.getElementById('pig-btn');
+  if (btn) btn.classList.add('pressing');
+  progressText.classList.remove('hidden');
+  pressHint.classList.add('hidden');
+  instruction.textContent = '正在汲取猪元素…';
+  progressInterval = setInterval(updateProgress, 30);
+}
+
+function handleHoldEnd() {
+  if (localStorage.getItem(STORAGE_KEY)) return;
+  isHolding = false;
+  clearInterval(progressInterval);
+  var btn = document.getElementById('pig-btn');
+  if (btn) btn.classList.remove('pressing');
+  resetProgress();
+  instruction.textContent = '将手指放到屏幕上长按，看看你是什么猪！';
+}
+
+function updateProgress() {
+  if (!isHolding) return;
+  var elapsed = Date.now() - startTime;
+  var progress = Math.min(elapsed / requiredHoldTime, 1);
+  progressCircle.style.strokeDashoffset = circumference - (progress * circumference);
+  progressPercentage.textContent = Math.round(progress * 100) + '%';
+  if (progress >= 1) {
+    clearInterval(progressInterval);
+    generateResult();
+  }
+}
+
+function resetProgress() {
+  clearInterval(progressInterval);
+  progressCircle.style.strokeDashoffset = circumference;
+  progressText.classList.add('hidden');
+  pressHint.classList.remove('hidden');
+  progressPercentage.textContent = '0%';
+}
+
+/* ── 结果 ── */
+function generateResult() {
+  try {
+    playSound();
+    var pig = pickPig();
+    var imgSrc = 'images/pigs/' + encodeURIComponent(pig.img);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ img: imgSrc, name: pig.name, desc: pig.desc, quote: pig.quote }));
+    showResult(pig, imgSrc);
+    trackStart(TRACK_KEY);
+  } catch (err) {
+    console.error('生成结果失败:', err);
+    resetProgress();
+    instruction.textContent = '长按屏幕中间区域，看看你是什么猪！';
+  }
+}
+
+function showResult(pig, imgSrc) {
+  testArea.classList.add('hidden');
+  resultArea.classList.remove('hidden');
+  var img = document.getElementById('result-img');
+  img.src = imgSrc;
+  img.alt = pig.name;
+  img.onerror = function() { img.src = 'images/pigs/pig.png'; };
+  document.getElementById('result-title').textContent = pig.name;
+  document.getElementById('result-description').textContent = pig.desc;
+  document.getElementById('result-quote').textContent = '「' + pig.quote + '」';
+  document.getElementById('resultFooter').innerHTML = resultFooterHTML({ notice: '霧雨魔法店 · 猪猪鉴定科 · 结果仅供参考，猪是真的' });
+  lastResult = pig;
+}
+
+function handleRetest() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    resetProgress();
+    testArea.classList.remove('hidden');
+    resultArea.classList.add('hidden');
+    instruction.textContent = '将手指放到屏幕上长按，看看你是什么猪！';
+  } catch (err) { console.error('重新测试失败:', err); }
+}
+
+/* 已保存结果恢复 */
+try {
+  var saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    var data = JSON.parse(saved);
+    var pig = null;
+    for (var i = 0; i < PIGS.length; i++) {
+      if (PIGS[i].name === data.name) { pig = PIGS[i]; break; }
+    }
+    if (pig) showResult(pig, data.img);
+  }
+} catch (err) {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
+/* ── 音效: C5-E5-G5 琶音 ── */
+function playSound() {
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+    osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.35);
+  } catch (err) { /* 音效失败不影响功能 */ }
+}
+
+/* ── 分享 ── */
+function shareIt() {
+  var text = lastResult
+    ? '我在霧雨魔法店测出来是【' + lastResult.name + '】！' + lastResult.quote + ' 你也来测测你是什么猪：' + window.location.href
+    : '我在霧雨魔法店测完猪格啦！你也来测测：' + window.location.href;
+  copyToClipboard(text, '已复制！发给朋友一起当猪 🐷');
+}
+
+/* ── 事件 ── */
+if (holdZone) {
+  holdZone.addEventListener('mousedown', handleHoldStart);
+  holdZone.addEventListener('touchstart', handleHoldStart, { passive: false });
+}
+document.addEventListener('mouseup', handleHoldEnd);
+document.addEventListener('touchend', handleHoldEnd);
+document.addEventListener('touchcancel', handleHoldEnd);
+retestButton.addEventListener('click', handleRetest);
+</script>
+
+</body>
+</html>

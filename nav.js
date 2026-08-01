@@ -33,7 +33,8 @@
           { href: 'quiz-major.html',     emoji: '🏗️', text: '张雪峰选专业' },
           { href: 'quiz-waifu-2.html',   emoji: '💀', text: '二次元老婆2' },
           { href: 'quiz-waifu-3.html',   emoji: '🔮', text: '二次元老婆3' },
-          { href: 'quiz-nolove.html',    emoji: '💔', text: '对象在哪' }
+          { href: 'quiz-nolove.html',    emoji: '💔', text: '对象在哪' },
+          { href: 'pig-test.html',       emoji: '🐷', text: '猪猪鉴定' }
         ]
       },
       {
