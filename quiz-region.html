@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<title>测测你是哪里人 · 霧雨魔法店</title>
+<link rel="stylesheet" href="css/common.css">
+<style>
+ .region-wrap { min-height: 60vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+ .btn-detect { max-width: 300px; margin: 22px auto 0; animation: pulse 2s infinite; }
+ @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+ .locating { display:none; font-size:13px; color:var(--gold); letter-spacing:2px; margin-top:18px; }
+ .locating .dot { animation: blink 1s infinite; }
+ @keyframes blink { 0%,100% { opacity:.2; } 50% { opacity:1; } }
+ .cn-result, .no-result { display:none; width:100%; }
+ .cn-avatar { width:150px; height:150px; border-radius:50%; object-fit:cover; margin:0 auto 14px; border:3px solid var(--gold); box-shadow: 0 0 30px rgba(240,192,96,.5), 0 0 70px rgba(240,192,96,.2); animation: popIn .5s ease; }
+ @keyframes popIn { 0% { transform: scale(.3) rotate(-8deg); opacity:0; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity:1; } }
+ .cn-title { font-size:20px; font-weight:800; color:var(--gold); margin-bottom:6px; }
+ .cn-sub { font-size:12px; color:var(--muted); margin-bottom:16px; }
+ .no-x { font-size:110px; line-height:1; color:#ef4444; text-shadow: 0 0 40px rgba(239,68,68,.6); animation: shake .6s ease; margin-bottom:10px; }
+ @keyframes shake { 0%,100% { transform: rotate(0); } 20% { transform: rotate(-12deg); } 40% { transform: rotate(12deg); } 60% { transform: rotate(-8deg); } 80% { transform: rotate(8deg); } }
+ .no-title { font-size:20px; font-weight:800; color:#ef4444; margin-bottom:6px; }
+ .no-sub { font-size:13px; color:var(--muted); }
+ .mv-box { width:100%; max-width:420px; margin:16px auto 0; border-radius:14px; overflow:hidden; border:1px solid var(--border); background:#000; display:none; }
+ .mv-box video { width:100%; display:block; aspect-ratio:16/9; }
+ .btn-mv { margin: 8px auto 0; max-width:300px; }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container" id="app">
+  <div class="intro">
+    <div class="intro-badge">霧雨魔法店 · 地域鉴定科</div>
+    <h1>测测你是哪里人</h1>
+    <p class="sub">按下按钮就能知道你是哪里人</p>
+
+    <button class="btn btn-main btn-detect" id="btnDetect" onclick="detect()">🔘 按下按钮就能知道你是哪里人</button>
+    <p class="locating" id="locating">正在定位中<span class="dot">…</span></p>
+
+    <!-- 中国结果 -->
+    <div class="cn-result" id="cnResult">
+      <img class="cn-avatar" src="images/lamlao.png" alt="揽佬" onerror="this.style.display='none'">
+      <div class="cn-title">🇨🇳 检测完成：你是中国人</div>
+      <div class="cn-sub">中国人 能飞！✈️</div>
+      <button class="btn btn-main btn-mv" id="btnMv" onclick="playMV()">🎬 播放完整MV</button>
+      <div class="mv-box" id="mvBox">
+        <video id="mvVideo" controls playsinline preload="none" src="audio/zgrnf-mv.mp4"></video>
+      </div>
+      <a href="index.html" class="home-link">← 返回魔法店</a>
+    </div>
+
+    <!-- 非中国结果 -->
+    <div class="no-result" id="noResult">
+      <div class="no-x">❌</div>
+      <div class="no-title">检测完成：你不是中国人</div>
+      <div class="no-sub">不是中国人 你不能飞</div>
+      <a href="index.html" class="home-link">← 返回魔法店</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/utils.js"></script>
+<script>
+var detected = false;
+var audio = null;
+var isCN = false;
+
+function detect() {
+  if (detected) return;
+  detected = true;
+  var btn = document.getElementById('btnDetect');
+  btn.style.display = 'none';
+  document.getElementById('locating').style.display = 'block';
+
+  // 主: ipinfo.io
+  fetch('https://ipinfo.io/json')
+    .then(function(r) { return r.json(); })
+    .then(function(d) { finish(d && d.country ? d.country === 'CN' : guessByTZ()); })
+    .catch(function() { finish(guessByTZ()); });
+}
+
+// 兜底: 浏览器时区判断
+function guessByTZ() {
+  try {
+    var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    return tz === 'Asia/Shanghai' || tz === 'Asia/Urumqi' || tz === 'Asia/Chongqing' || tz === 'Asia/Harbin';
+  } catch (e) { return false; }
+}
+
+function finish(cn) {
+  isCN = cn;
+  document.getElementById('locating').style.display = 'none';
+  document.getElementById('cnResult').style.display = cn ? 'block' : 'none';
+  document.getElementById('noResult').style.display = cn ? 'none' : 'block';
+  if (cn) playAudio();
+}
+
+function playAudio() {
+  try {
+    if (!audio) audio = new Audio('audio/zgrnf.mp3');
+    audio.currentTime = 0;
+    audio.play();
+  } catch (e) {}
+}
+
+function playMV() {
+  var box = document.getElementById('mvBox');
+  var v = document.getElementById('mvVideo');
+  box.style.display = 'block';
+  v.play().catch(function(){});
+  var mvBtn = document.getElementById('btnMv');
+  if (mvBtn) mvBtn.textContent = '⏯ 正在播放MV…';
+}
+</script>
+
+</body>
+</html>
