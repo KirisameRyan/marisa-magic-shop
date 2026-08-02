@@ -61,10 +61,13 @@
       <div class="no-sub">不是中国人 你不能飞</div>
       <a href="index.html" class="home-link">← 返回魔法店</a>
     </div>
+
+    <div id="regionFooter"></div>
   </div>
 </div>
 
 <script src="js/utils.js"></script>
+<script src="js/result-footer.js"></script>
 <script>
 var detected = false;
 var audio = null;
@@ -97,6 +100,7 @@ function finish(cn) {
   document.getElementById('locating').style.display = 'none';
   document.getElementById('cnResult').style.display = cn ? 'block' : 'none';
   document.getElementById('noResult').style.display = cn ? 'none' : 'block';
+  document.getElementById('regionFooter').innerHTML = resultFooterHTML({ notice: '霧雨魔法店 · 地域鉴定科 · 中国人能飞，你是哪种人？' });
   if (cn) playAudio();
 }
 
