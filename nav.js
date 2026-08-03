@@ -35,7 +35,8 @@
           { href: 'quiz-waifu-3.html',   emoji: '🔮', text: '二次元老婆3' },
           { href: 'quiz-nolove.html',    emoji: '💔', text: '对象在哪' },
           { href: 'pig-test.html',       emoji: '🐷', text: '猪猪鉴定' },
-          { href: 'quiz-region.html',    emoji: '🗺️', text: '你是哪里人' }
+          { href: 'quiz-region.html',    emoji: '🗺️', text: '你是哪里人' },
+          { href: 'quiz-drowning.html',  emoji: '🌊', text: '防溺水问卷' }
         ]
       },
       {

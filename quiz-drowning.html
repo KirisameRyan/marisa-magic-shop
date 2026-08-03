@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="js/analytics.js"></script>
+<title>暑期防溺水安全知识调查问卷</title>
+<style>
+ * { margin:0; padding:0; box-sizing:border-box; }
+ body { font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif; background:#f5f5f4; color:#333; -webkit-tap-highlight-color:transparent; }
+ body.dark-shift { background:#141414; transition:background .4s; }
+
+ /* ═══ 官方横幅 ═══ */
+ .gov-banner { background:linear-gradient(180deg,#b71c1c,#c62828); color:#fff; text-align:center; padding:12px 10px; font-size:13px; letter-spacing:2px; }
+ .gov-banner .b1 { font-size:12px; opacity:.9; margin-bottom:3px; }
+ .gov-banner .b2 { font-size:15px; font-weight:800; }
+
+ /* ═══ 红头标题 ═══ */
+ .doc-head { text-align:center; padding:30px 16px 6px; }
+ .doc-head h1 { font-size:24px; color:#b71c1c; font-weight:800; letter-spacing:2px; }
+ .doc-head .doc-sub { font-size:12px; color:#777; margin-top:8px; }
+ .doc-head .red-line { width:64px; height:3px; background:#b71c1c; margin:14px auto 0; border-radius:2px; }
+ .doc-head .doc-no { font-size:10px; color:#aaa; margin-top:10px; letter-spacing:1px; }
+
+ /* ═══ 问卷主体 ═══ */
+ .survey { max-width:600px; margin:0 auto; padding:10px 14px 60px; }
+ .start-card { background:#fff; border:1px solid #e0dedb; border-radius:10px; padding:30px 22px; margin-top:22px; text-align:center; }
+ .start-card p { font-size:14px; line-height:2; color:#555; }
+ .start-card .notice-line { margin-top:18px; font-size:11px; color:#b71c1c; border:1px dashed #e0a5a5; background:#fdf5f5; border-radius:8px; padding:10px 14px; line-height:1.8; }
+ .btn-go { display:block; width:100%; max-width:280px; margin:22px auto 0; background:#0b57d0; color:#fff; border:none; border-radius:6px; padding:14px; font-size:16px; font-weight:700; letter-spacing:3px; cursor:pointer; font-family:inherit; }
+ .btn-go:hover { background:#0842a0; }
+ .btn-go:active { transform:scale(.98); }
+ .btn-submit { display:block; width:100%; max-width:280px; margin:22px auto 0; background:#0b57d0; color:#fff; border:none; border-radius:6px; padding:14px; font-size:15px; font-weight:700; letter-spacing:2px; cursor:pointer; font-family:inherit; }
+
+ .q-card { background:#fff; border:1px solid #e0dedb; border-radius:10px; padding:22px 20px; margin-top:16px; box-shadow:0 1px 4px rgba(0,0,0,.04); }
+ .q-card .q-meta { font-size:11px; color:#999; display:flex; justify-content:space-between; margin-bottom:10px; }
+ .q-card .q-meta .q-type { color:#0b57d0; }
+ .q-text { font-size:16px; font-weight:700; color:#222; line-height:1.7; margin-bottom:16px; }
+ .q-opt { display:block; width:100%; text-align:left; background:#fafafa; border:1px solid #e3e1de; border-radius:6px; padding:12px 14px; margin-bottom:9px; font-size:14px; color:#333; cursor:pointer; transition:all .12s; font-family:inherit; }
+ .q-opt:hover { border-color:#0b57d0; background:#f3f7ff; }
+ .q-opt:active { transform:scale(.98); }
+ .q-opt .k { display:inline-block; width:20px; height:20px; line-height:20px; text-align:center; border-radius:4px; background:#eef1f5; color:#555; font-size:11px; margin-right:10px; font-weight:700; }
+ .q-opt .t { font-family:inherit; }
+ .q-opt .t.glitchy { color:#111; background:#0f0; font-family:monospace !important; }
+ .q-opt .t.blood-red { color:#fecaca; }
+ .q-opt.picked-red { background:#7f1d1d !important; border-color:#b91c1c !important; box-shadow:0 0 18px rgba(185,28,28,.55); animation:redJitter .3s ease; }
+ @keyframes redJitter { 0%,100% { transform:translateX(0); } 25% { transform:translateX(-3px); } 75% { transform:translateX(3px); } }
+ .q-opt.ghost-others { border-color:#5c2a2a; opacity:.75; animation:ghostTremble .25s ease; }
+ @keyframes ghostTremble { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-2px); } }
+
+ .progress { height:3px; background:#e6e4e1; margin-top:16px; overflow:hidden; border-radius:2px; }
+ .progress .fill { height:100%; background:#0b57d0; width:0; transition:width .35s ease; border-radius:2px; }
+
+ .gov-foot { text-align:center; font-size:10px; color:#aaa; padding:18px 10px 10px; letter-spacing:1px; line-height:1.9; }
+ .gov-foot .warn-tiny { color:#b71c1c; font-size:10px; margin-top:6px; }
+
+ /* ═══ 干扰层 ═══ */
+ .glitch-line { position:fixed; left:8%; right:8%; bottom:22%; color:#00ff41; font-size:13px; font-family:monospace; display:none; z-index:9990; text-shadow:0 0 8px #00ff41; pointer-events:none; }
+ .corner-msg { position:fixed; right:10px; bottom:10px; color:#b71c1c; font-size:11px; letter-spacing:2px; display:none; z-index:9990; font-style:italic; pointer-events:none; }
+ .scanline { position:fixed; inset:0; display:none; z-index:9988; pointer-events:none; background:repeating-linear-gradient(0deg, rgba(0,0,0,.12) 0px, rgba(0,0,0,.12) 2px, transparent 2px, transparent 5px); animation:scanMove .3s linear infinite; }
+ @keyframes scanMove { 0% { background-position:0 0; } 100% { background-position:0 8px; } }
+ .noise { position:fixed; inset:0; display:none; z-index:9987; pointer-events:none; background:repeating-conic-gradient(#000 0% 25%, transparent 0% 50%) 0 0/3px 3px; opacity:.18; animation:noiseJ .15s steps(2) infinite; }
+ @keyframes noiseJ { 0% { transform:translate(0,0); } 50% { transform:translate(1px,-1px); } 100% { transform:translate(-1px,1px); } }
+ .flash-white { animation:whiteF .12s steps(1); }
+ @keyframes whiteF { 0% { background:#fff !important; } 100% { background:#f5f5f4; } }
+ .flash-black { animation:blackF .3s steps(1); }
+ @keyframes blackF { 0% { background:#000; } 100% { background:#f5f5f4; } }
+ .shake { animation:pgShake .4s ease; }
+ @keyframes pgShake { 0%,100% { transform:translate(0,0); } 15% { transform:translate(-7px,3px); } 30% { transform:translate(6px,-4px); } 45% { transform:translate(-5px,-3px); } 60% { transform:translate(5px,4px); } 75% { transform:translate(-4px,2px); } 90% { transform:translate(3px,-3px); } }
+ @keyframes rescueFlick { 0%,100% { opacity:1; } 50% { opacity:.15; } }
+ .connect-bar { position:fixed; top:0; left:0; right:0; background:#d32f2f; color:#fff; font-size:12px; text-align:center; padding:7px; display:none; z-index:9991; letter-spacing:1px; }
+ .red-flash { position:fixed; inset:0; display:none; z-index:9993; background:#000; align-items:center; justify-content:center; }
+ .red-flash .rf-txt { font-size:56px; font-weight:900; color:#d32f2f; letter-spacing:8px; text-shadow:0 0 30px rgba(211,47,47,.8); }
+ .red-flash .rf-txt2 { font-size:20px; color:#ff8a80; letter-spacing:4px; margin-top:14px; }
+
+ /* ═══ 突脸层 ═══ */
+ .scare-layer { position:fixed; inset:0; z-index:99999; display:none; background:#000; align-items:center; justify-content:center; overflow:hidden; }
+ .scare-layer .scare-img { height:100%; width:auto; object-fit:contain; display:block; margin:auto; filter:blur(8px) contrast(1.5) saturate(1.3); animation:scareWarp .4s ease-out forwards; }
+ @keyframes scareWarp {
+   0% { transform:scale(.4); filter:blur(12px) contrast(1.7) saturate(1.6); }
+   50% { transform:scale(1.3); filter:blur(3px) contrast(1.4) saturate(1.2); }
+   100% { transform:scale(1.12); filter:blur(0) contrast(1) saturate(1); }
+ }
+ .scare-layer .scare-tint { position:absolute; inset:0; background:radial-gradient(ellipse at center, rgba(180,0,0,.32), transparent 70%); pointer-events:none; }
+ body.scare-shake { animation:scareShake .28s linear infinite; }
+ @keyframes scareShake { 0% { transform:translate(0,0); } 25% { transform:translate(-9px,6px); } 50% { transform:translate(8px,-7px); } 75% { transform:translate(-6px,-5px); } 100% { transform:translate(6px,7px); } }
+
+ /* ═══ 收尾页 ═══ */
+ .ending { max-width:600px; margin:0 auto; padding:60px 20px; text-align:center; color:#444; }
+ .ending h2 { color:#b71c1c; font-size:21px; letter-spacing:2px; margin-bottom:16px; }
+ .ending p { font-size:14px; line-height:2.2; color:#666; }
+ .ending .tiny { font-size:11px; color:#999; margin-top:34px; font-style:italic; }
+ .ending .btn-go { margin-top:30px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ 官方横幅 ═══ -->
+<div class="gov-banner">
+  <div class="b1">中国 · 中小学生安全教育平台</div>
+  <div class="b2">防 溺 水 安 全 专 项 调 查</div>
+</div>
+
+<div class="doc-head">
+  <h1>暑期防溺水安全知识调查问卷</h1>
+  <div class="doc-sub">每年夏季为溺水事故高发期 · 为保障中小学生生命安全 · 特开展本次专项调查</div>
+  <div class="red-line"></div>
+  <div class="doc-no">备案编号：AQ-JY-2026-0712 · 全国统一调查问卷 · 请如实作答</div>
+</div>
+
+<div class="survey" id="survey">
+  <!-- 由 JS 渲染 -->
+</div>
+
+<div class="gov-foot">
+  本问卷由安全宣传办公室发布 · 数据仅用于安全教育统计 · 请勿中途退出
+  <div class="warn-tiny">⚠ 提示：本问卷包含模拟恐怖元素，答题过程中如有不适请及时停止</div>
+</div>
+
+<!-- ═══ 干扰层 ═══ -->
+<div class="connect-bar" id="connectBar">⚠ 连接中断 · 正在重新建立连接…</div>
+<div class="glitch-line" id="glitchLine">‮ SYS.ERROE: ＿is not responding · connection lost</div>
+<div class="corner-msg" id="cornerMsg">你还在水里吗……</div>
+<div class="scanline" id="scanline"></div>
+<div class="noise" id="noise"></div>
+<div class="red-flash" id="redFlash"><div style="text-align:center;"><div class="rf-txt">它来了</div><div class="rf-txt2">不要回头</div></div></div>
+
+<!-- ═══ 突脸层 ═══ -->
+<div class="scare-layer" id="scareLayer">
+  <img class="scare-img" id="scareImg" src="" alt="">
+  <div class="scare-tint"></div>
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script>
+/* =============================================
+   暑期防溺水安全知识调查问卷(伪装恐怖版 V2)
+   15 题 · 四阶段渐进惊吓 · 独立官方UI
+   剧本: 正常→小异常→明显异常→强刺激→突脸→收尾
+   ============================================= */
+
+var STORAGE_KEY = 'quiz_drowning_v3';
+var TRACK_KEY = 'drowning_take';
+var SCARE_IMG = 'images/yaoyao.jpg'; // 幺幺突脸图
+
+var QUESTIONS = [
+  /* ═══ 正常期 Q1-6 ═══ */
+  { q: '发现有人落水，你应该？', opts: ['立即跳入水中救人', '大声呼救并拨打120', '站在岸边观望', '拍照发朋友圈'] },
+  { q: '溺水者的黄金救援时间是？', opts: ['10分钟', '4-6分钟', '30分钟', '看情况'] },
+  { q: '溺水者通常会大声呼救吗？', opts: ['会，声音很大', '不一定，可能无声下沉', '会喊"救命"', '会挥手示意'] },
+  { q: '看到"水深危险"警示牌，你会？', opts: ['无视，继续下水', '拍照打卡发网上', '远离该区域', '先试试水有多深'] },
+  { q: '同伴溺水了，你应该？', opts: ['跳下去救他', '大声呼叫大人帮忙', '丢给他一个游泳圈', '离开现场当没看见'] },
+  { q: '你会游泳，所以可以下水救人吗？', opts: ['可以，我游得很好', '不行，救人需要专业训练', '看情况，近的话可以', '我很厉害，肯定能行'] },
+
+  /* ═══ 过渡期 Q7-11 ═══ */
+  { q: '游泳圈应该怎么佩戴？', opts: ['套在腰上', '抱在胸前', '系在脚上', '怎么戴都行'] },
+  { q: '溺水者被救上岸后，第一步应？', opts: ['立即做心肺复苏', '先倒挂控水', '喂热水取暖', '大声喊醒他'] },
+  { q: '周围无人，发现有人溺水，你？', opts: ['立即下水施救', '大声呼救并寻找救生器材', '等他自己浮上来', '回家叫人来'] },
+  { q: '儿童溺水有什么特点？', opts: ['会大声喊叫挣扎', '往往无声，下沉很快', '会扑腾很久', '至少有5分钟挣扎时间'] },
+  { q: '野外的河流可以游泳吗？', opts: ['可以，水浅就行', '不可以，水下情况不明', '有伴就可以', '白天可以，晚上不行'] },
+
+  /* ═══ 诡异期 Q12-18 ═══ */
+  { q: '刚才游过的那片水域……好像有什么东西在看你？', opts: ['继续游，没事的', '先上岸再说', '回头看了一眼', '假装没看见'] },
+  { q: '你在水里待了多久了？', opts: ['几分钟', '感觉很久了', '我怎么知道', '我没有下水'] },
+  { q: '刚才那些题……是谁答的？', opts: ['我自己', '应该是我', '也可能是它', '别问了'] },
+  { q: '它说你是它的同类，你觉得？', opts: ['怎么可能', '有点害怕', '它看错了', '我确实很熟悉水'] },
+  { q: '你确定自己已经上岸了吗？', opts: ['确定', '不确定', '我在哪', '它说还没到时间'] },
+  { q: '要不要留在水里陪它？', opts: ['不，我要走', '别问我', '它来了', '……好'] },
+  { q: '它在等你……你准备好了吗？', opts: ['准备好了', '没有', '它就在我身后', '水好凉'] }
+];
+
+var idx = 0;
+var finished = false;
+var audioTick = null, audioFail = null, audioCtx = null, humOsc = null;
+
+function getTick() { if (!audioTick) audioTick = new Audio('audio/sfx/tick.mp3'); return audioTick; }
+function getFail() { if (!audioFail) audioFail = new Audio('audio/guijiao.mp3'); return audioFail; }
+
+/* ── 手势内解锁 AudioContext(浏览器自动播放策略) ── */
+function unlockAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch(e) {}
+}
+
+/* ── 低频嗡鸣(三振荡器 110+165+220Hz, 异步启动保证可听) ── */
+function humStart() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var doStart = function() {
+      if (humOsc) return;
+      var g = audioCtx.createGain();
+      g.gain.value = 0.0001;
+      g.gain.exponentialRampToValueAtTime(0.16, audioCtx.currentTime + 0.25);
+      humOsc = audioCtx.createOscillator();
+      humOsc.type = 'sine';
+      humOsc.frequency.value = 110;
+      var g2 = audioCtx.createGain();
+      g2.gain.value = 0.08;
+      var osc2 = audioCtx.createOscillator();
+      osc2.type = 'sine';
+      osc2.frequency.value = 165;
+      var g3 = audioCtx.createGain();
+      g3.gain.value = 0.08;
+      var osc3 = audioCtx.createOscillator();
+      osc3.type = 'sine';
+      osc3.frequency.value = 220;
+      humOsc.connect(g);
+      osc2.connect(g2);
+      osc3.connect(g3);
+      g.connect(audioCtx.destination);
+      g2.connect(audioCtx.destination);
+      g3.connect(audioCtx.destination);
+      humOsc.start();
+      osc2.start();
+      osc3.start();
+      humOsc._second = osc2;
+      humOsc._third = osc3;
+    };
+    if (audioCtx.state === 'running') { doStart(); return; }
+    audioCtx.resume().then(doStart).catch(function(){});
+  } catch(e) {}
+}
+function humStop() {
+  try {
+    if (humOsc) {
+      humOsc.stop();
+      if (humOsc._second) humOsc._second.stop();
+      if (humOsc._third) humOsc._third.stop();
+      humOsc = null;
+    }
+  } catch(e) {}
+}
+
+/* ── 渲染 ── */
+function render() {
+  var s = document.getElementById('survey');
+
+  /* 提交页 */
+  if (idx >= QUESTIONS.length) {
+    s.innerHTML =
+      '<div class="q-card">'+
+        '<div class="q-meta"><span>第 '+(QUESTIONS.length+1)+' / '+(QUESTIONS.length+1)+' 题</span><span class="q-type">提交确认</span></div>'+
+        '<div class="q-text">以上便是全部题目。<br>确认无误后，请提交答卷。</div>'+
+        '<button class="btn-submit" onclick="doSubmit()">📤 提交答卷</button>'+
+      '</div>';
+    return;
+  }
+
+  var q = QUESTIONS[idx];
+  var pct = Math.round(idx / QUESTIONS.length * 100);
+  var html =
+    '<div class="progress"><div class="fill" id="progFill" style="width:'+pct+'%"></div></div>'+
+    '<div class="q-card">'+
+      '<div class="q-meta"><span>第 '+(idx+1)+' / '+(QUESTIONS.length+1)+' 题</span><span class="q-type">单选题 · 共4项</span></div>'+
+      '<div class="q-text" id="qText">'+q.q+'</div>'+
+      '<div id="optList">';
+  for (var i = 0; i < q.opts.length; i++) {
+    html += '<button class="q-opt" onclick="answer('+i+',this)"><span class="k">'+'ABCD'[i]+'</span><span class="t">'+q.opts[i]+'</span></button>';
+  }
+  html += '</div></div>';
+  s.innerHTML = html;
+  runStageEvent(idx);
+}
+
+/* ── 答题 ── */
+function answer(i, btn) {
+  if (finished) return;
+  unlockAudio();   // 手势内解锁 AudioContext
+
+  /* 选后变红(仅选中项) + 闪烁 */
+  var holdMs = [350, 500, 650, 800][Math.min(Math.floor(idx / 5), 3)];  // Q1-5:350 Q6-10:500 Q11-14:650 Q15-18:800
+  pickedRed(btn, i);
+
+  /* Q12起(idx>=11): 被操控 — 玩家选的被夺舍, 系统强制选中随机选项 */
+  if (idx >= 11) {
+    holdMs = 500;
+    setTimeout(function() {
+      var opts = document.querySelectorAll('.q-opt');
+      if (opts.length) {
+        /* 玩家选的恢复 */
+        if (btn) {
+          btn.classList.remove('picked-red');
+          var t0 = btn.querySelector('.t');
+          if (t0) t0.classList.remove('blood-red');
+        }
+        /* 系统强制随机选中一个 */
+        var sys = opts[Math.floor(Math.random() * opts.length)];
+        sys.classList.add('picked-red');
+        var t1 = sys.querySelector('.t');
+        if (t1) t1.classList.add('blood-red');
+      }
+    }, 120);
+  }
+
+  setTimeout(function() {
+    idx++;
+    localStorage.setItem(STORAGE_KEY, 'q' + idx);
+    if (idx === QUESTIONS.length) { renderYao(); return; }   // 答完最后一题 → 幺之页
+    if (idx >= QUESTIONS.length + 1) { doSubmit(); return; }
+    var delay = 250;
+    if (idx === 1) delay = 800;   // Q2答完: 轻微延迟
+    setTimeout(render, delay);
+  }, holdMs);
+}
+
+/* ── 选中项变血红 + 闪烁(其他选项不动) ── */
+function pickedRed(btn, pickedIdx) {
+  var opts = document.querySelectorAll('.q-opt');
+  for (var i = 0; i < opts.length; i++) {
+    if (opts[i] === btn) {
+      opts[i].classList.add('picked-red');
+      var t = opts[i].querySelector('.t');
+      if (t) t.classList.add('blood-red');
+    } else {
+      opts[i].setAttribute('onclick', 'return false;');
+    }
+  }
+}
+
+/* ── 幺之页: 全部文字变成整行整行的"幺" ── */
+function renderYao() {
+  humStart();
+  var saved = [];
+  var nodes = [];
+  var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode: function(n) {
+      var tag = n.parentNode ? n.parentNode.tagName : '';
+      if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT') return NodeFilter.FILTER_REJECT;
+      if (n.textContent.trim()) return NodeFilter.FILTER_ACCEPT;
+      return NodeFilter.FILTER_REJECT;
+    }
+  });
+  while (walker.nextNode()) {
+    nodes.push(walker.currentNode);
+    saved.push(walker.currentNode.textContent);
+  }
+  /* 每个文本节点 → 一整行"幺"(数量按原文字长度缩放, 最少10个) */
+  for (var i = 0; i < nodes.length; i++) {
+    var count = Math.max(10, Math.round(saved[i].length * 3));
+    nodes[i].textContent = Array(count + 1).join('幺');
+  }
+
+  setTimeout(function() {
+    /* 黑屏闪断 80ms */
+    var bk = document.createElement('div');
+    bk.style.cssText = 'position:fixed;inset:0;background:#000;z-index:9999;';
+    document.body.appendChild(bk);
+    setTimeout(function() {
+      if (bk.parentNode) bk.parentNode.removeChild(bk);
+      for (var j = 0; j < nodes.length; j++) nodes[j].textContent = saved[j];
+      humStop();
+      render();
+    }, 80);
+  }, 1200);
+}
+
+/* ── 阶段事件(18题版, 渐进崩坏) ── */
+function runStageEvent(n) {
+  switch (n) {
+    case 2: glitchFlash(); break;                    // Q3 轻乱码
+    case 4: whiteFlashShadow(); break;               // Q6 白屏+幺幺阴影一闪
+    case 5: titleWarp(); break;                      // Q7 标题"水"→"氷"(永久)
+    case 6: blackWhyBox(); break;                    // Q8 纯黑框"为什么?"
+    case 7: scanlineYaoyao(); break;                 // Q9 扫描线+幺幺轮廓
+    case 8: darkShiftAndBar(); break;                // Q10 变暗+断连条
+    case 9: whiteRescue(); break;                    // Q11 全白+倒写红字"救救我"
+    case 10: progressWarp(); break;                  // Q12 进度倒退
+    case 11: titleLostWen(); break;                  // Q13 标题"问"字消失(永久)
+    case 12: titleGlitchAll(); break;                // Q14 标题整行乱码+黑屏红字
+    case 13: break;                                  // Q15 (无专属事件)
+    case 14: optChaos(); break;                      // Q16 选项错乱+强震
+    case 15: titleComeInWater(); break;              // Q17 标题变"来水里吧"(永久)+嗡鸣
+  }
+  /* Q10 起 汉字重复崩坏(随机触发) */
+  if (n >= 9 && n <= 15) {
+    var p = 0.4;
+    if (n >= 11) p = 0.6;
+    if (n >= 13) p = 0.8;
+    if (Math.random() < p) repeatGlitch();
+  }
+}
+
+/* ── 汉字重复崩坏: 标题或随机选项文字中抽1个汉字重复 ── */
+function repeatGlitch() {
+  var targets = [];
+  var h1 = document.querySelector('.doc-head h1');
+  if (h1) targets.push({ el: h1, restore: h1.textContent });
+  var opts = document.querySelectorAll('.q-opt .t');
+  for (var i = 0; i < opts.length; i++) {
+    targets.push({ el: opts[i], restore: opts[i].textContent });
+  }
+  if (!targets.length) return;
+
+  var pick = targets[Math.floor(Math.random() * targets.length)];
+  var txt = pick.restore;
+  /* 抽取一个汉字(跳过标点/数字/字母) */
+  var chars = txt.match(/[\u4e00-\u9fa5]/g);
+  if (!chars || !chars.length) return;
+  var rep = chars[Math.floor(Math.random() * chars.length)];
+  var count = 8 + Math.floor(Math.random() * 8);  // 8-15
+  pick.el.textContent = txt.replace(rep, new Array(count + 1).join(rep));
+  setTimeout(function() {
+    pick.el.textContent = pick.restore;
+  }, 500);
+}
+
+/* Q3: 底部乱码一闪 */
+function glitchFlash() {
+  var g = document.getElementById('glitchLine');
+  g.style.display = 'block';
+  setTimeout(function(){ g.style.display = 'none'; }, 90);
+}
+
+/* Q6: 白屏闪烁 + 极暗幺幺阴影图一闪 */
+function whiteFlashShadow() {
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:9994;';
+  ov.innerHTML = '<img src="'+SCARE_IMG+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.06;filter:grayscale(1) contrast(1.4);">';
+  document.body.appendChild(ov);
+  setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 140);
+}
+
+/* Q7: 标题"水"→"氷"(永久异变) */
+function titleWarp() {
+  var h1 = document.querySelector('.doc-head h1');
+  if (h1) h1.textContent = h1.textContent.replace('水', '氷');
+}
+
+/* Q8: 纯黑提示框, 小字"为什么?"铺满全屏 */
+function blackWhyBox() {
+  var fe = document.createElement('div');
+  fe.style.cssText = 'position:fixed;inset:0;background:#000;z-index:9994;overflow:hidden;';
+  var rows = '';
+  for (var i = 0; i < 30; i++) {
+    var size = 18 + Math.floor(Math.random() * 14);
+    var rot = Math.floor(Math.random() * 40) - 20;
+    var top = Math.floor(Math.random() * 96);
+    var left = Math.floor(Math.random() * 92);
+    var fade = 0.4 + Math.random() * 0.6;
+    rows += '<div style="position:absolute;top:'+top+'%;left:'+left+'%;color:#d32f2f;font-size:'+size+'px;font-weight:900;transform:rotate('+rot+'deg);opacity:'+fade+';text-shadow:0 0 18px rgba(211,47,47,.8);white-space:nowrap;">为什么？</div>';
+  }
+  fe.innerHTML = rows;
+  document.body.appendChild(fe);
+  setTimeout(function(){
+    fe.style.transition = 'opacity .3s';
+    fe.style.opacity = '0';
+  }, 500);
+  setTimeout(function(){ if (fe.parentNode) fe.parentNode.removeChild(fe); }, 850);
+}
+
+/* Q9: 扫描线 + 下方隐约幺幺轮廓 */
+function scanlineYaoyao() {
+  var sl = document.getElementById('scanline');
+  sl.style.display = 'block';
+  humStart();
+  var ghost = document.createElement('div');
+  ghost.style.cssText = 'position:fixed;left:50%;bottom:0;transform:translateX(-50%);z-index:9988;pointer-events:none;';
+  ghost.innerHTML = '<img src="'+SCARE_IMG+'" style="width:260px;opacity:.07;filter:grayscale(1) blur(2px);">';
+  document.body.appendChild(ghost);
+  setTimeout(function(){
+    sl.style.display = 'none';
+    humStop();
+    if (ghost.parentNode) ghost.parentNode.removeChild(ghost);
+  }, 800);
+}
+
+/* Q10: 背景变暗 */
+function darkShiftAndBar() {
+  document.body.classList.add('dark-shift');
+}
+
+/* Q11: 全白 + 倒写红字"救救我"逐行铺满全屏 */
+function whiteRescue() {
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:9995;overflow:hidden;';
+  var html = '';
+  var ROWS = 14;
+  for (var r = 0; r < ROWS; r++) {
+    var line = '';
+    var n = 4 + Math.floor(Math.random() * 5);  // 每行4-8个
+    for (var i = 0; i < n; i++) line += '救救我';
+    var rot = (Math.random() * 6) - 3;          // -3°~3°
+    var size = 20 + Math.floor(Math.random() * 6);
+    var color = Math.random() < 0.3 ? '#8a1f1f' : '#d32f2f';
+    var delay = Math.random() * 0.1;
+    var left = Math.random() * 10;              // 左右留点随机偏移, 但整行可见
+    html += '<div style="position:absolute;top:'+(r/ROWS*100)+'%;left:'+left+'%;right:0;white-space:nowrap;transform:rotate('+rot+'deg);color:'+color+';font-size:'+size+'px;font-weight:900;letter-spacing:3px;line-height:1.15;text-shadow:0 0 18px rgba(211,47,47,.7);animation:rescueFlick .15s steps(2) infinite;animation-delay:'+delay+'s;">'+line+'</div>';
+  }
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  setTimeout(function(){
+    ov.style.transition = 'opacity .3s';
+    ov.style.opacity = '0';
+  }, 700);
+  setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 1050);
+  var cm = document.getElementById('cornerMsg');
+  cm.style.display = 'block';
+  setTimeout(function(){ cm.style.display = 'none'; }, 3000);
+}
+
+/* Q12: 进度倒退 */
+function progressWarp() {
+  var fill = document.getElementById('progFill');
+  if (fill) {
+    var cur = fill.style.width;
+    fill.style.transition = 'none';
+    fill.style.width = Math.round(parseFloat(cur) * 0.55) + '%';
+    setTimeout(function(){
+      fill.style.transition = 'width .4s ease';
+      fill.style.width = cur;
+    }, 150);
+  }
+}
+
+/* Q13: 标题"问"字消失(永久) */
+function titleLostWen() {
+  var h1 = document.querySelector('.doc-head h1');
+  if (h1) h1.textContent = h1.textContent.replace(/问/g, '');
+}
+
+/* Q14: 标题真乱码, 闪烁3次 */
+function titleGlitchAll() {
+  var h1 = document.querySelector('.doc-head h1');
+  if (h1) {
+    var cur = h1.textContent;
+    var glitchChars = '̸̸ΞΣΔΨΞΞΔΨ▓▒░ϝϞϟϢЖΦΨΞΞΣΞ̸̸̸̸';
+    var blink = 0;
+    var timer = setInterval(function() {
+      blink++;
+      if (blink % 2 === 1) {
+        h1.textContent = glitchChars;
+        h1.style.color = '#d32f2f';
+        h1.style.textShadow = '0 0 14px rgba(211,47,47,.7)';
+      } else {
+        h1.textContent = cur;
+        h1.style.color = '';
+        h1.style.textShadow = '';
+      }
+      if (blink >= 6) {
+        clearInterval(timer);
+        h1.textContent = cur;
+        h1.style.color = '';
+        h1.style.textShadow = '';
+      }
+    }, 60);
+  }
+}
+
+/* Q16: 所有选项文字错乱交换 + 强震 */
+function optChaos() {
+  var texts = document.querySelectorAll('.q-opt .t');
+  if (texts.length >= 2) {
+    var arr = Array.prototype.slice.call(texts).map(function(t){ return t.textContent; });
+    var orig = arr.slice();
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    for (var k = 0; k < texts.length; k++) texts[k].textContent = arr[k];
+    setTimeout(function(){
+      for (var m = 0; m < texts.length; m++) texts[m].textContent = orig[m];
+    }, 900);
+  }
+  shakePage();
+  humStart();
+  setTimeout(humStop, 600);
+}
+
+/* Q17: 标题变"来水里吧"(永久) + 嗡鸣持续 */
+function titleComeInWater() {
+  var h1 = document.querySelector('.doc-head h1');
+  if (h1) h1.textContent = '来水里吧';
+  humStart();
+  setTimeout(humStop, 3000);
+}
+
+function shakePage() {
+  var s = document.getElementById('survey');
+  s.classList.remove('shake');
+  void s.offsetWidth;
+  s.classList.add('shake');
+  setTimeout(function(){ s.classList.remove('shake'); }, 500);
+}
+
+/* ── 提交 → 突脸序列 ── */
+function doSubmit() {
+  if (finished) return;
+  finished = true;
+  localStorage.setItem(STORAGE_KEY, 'done');
+  humStop();
+
+  var s = document.getElementById('survey');
+  s.innerHTML =
+    '<div class="q-card" style="text-align:center;">'+
+      '<div class="q-text">正在提交答卷…</div>'+
+      '<p id="submitState" style="font-size:13px;color:#777;margin-top:10px;">正在加密上传答题数据…</p>'+
+    '</div>';
+
+  var states = ['正在校验答案…', '正在核对答题记录…', '正在检查你是否真的在答题…', '正在验证身份…'];
+  var si = 0;
+  var st = setInterval(function(){
+    var el = document.getElementById('submitState');
+    if (el && si < states.length) el.textContent = states[si++];
+  }, 650);
+
+  /* 时序: 雪花屏 → 全黑 → 幺幺扭曲突脸 → 收尾 */
+  setTimeout(function(){
+    /* 雪花屏开始 + 低频嗡鸣 */
+    humStart();
+    var noise = document.getElementById('noise');
+    noise.style.opacity = '0.6';
+    noise.style.display = 'block';
+    noise.style.animationDuration = '0.07s';
+  }, 1400);
+  /* 雪花 → 纯黑 */
+  setTimeout(function(){
+    var noise = document.getElementById('noise');
+    noise.style.display = 'none';
+    var bk = document.createElement('div');
+    bk.id = 'preBlack';
+    bk.style.cssText = 'position:fixed;inset:0;background:#000;z-index:99998;';
+    document.body.appendChild(bk);
+  }, 1750);
+  /* 全黑 → 幺幺突脸 */
+  setTimeout(function(){
+    var pb = document.getElementById('preBlack');
+    if (pb && pb.parentNode) pb.parentNode.removeChild(pb);
+    var scare = document.getElementById('scareLayer');
+    document.getElementById('scareImg').src = SCARE_IMG;
+    scare.style.display = 'flex';
+    document.body.classList.add('scare-shake');
+    try{ getFail().currentTime=0; getFail().play(); }catch(e){}
+  }, 1950);
+
+  /* 突脸定格 1.5s 后收尾(只闪一次) */
+  setTimeout(function(){
+    clearInterval(st);
+    humStop();
+    document.getElementById('scareLayer').style.display = 'none';
+    document.body.classList.remove('scare-shake');
+    document.body.classList.remove('dark-shift');
+    renderEnding();
+  }, 3450);
+}
+
+/* ── 收尾页 ── */
+function renderEnding() {
+  var s = document.getElementById('survey');
+  s.innerHTML =
+    '<div class="ending">'+
+      '<h2>✅ 问卷提交成功</h2>'+
+      '<p>恭喜你完成了防溺水安全调查。<br>刚才出现的所有异常画面、乱码与声音<br>均为<b>模拟效果</b>，请不必惊慌。</p>'+
+      '<p>真实的溺水危险远比刚才的惊吓严重：<br>溺水往往<b>无声且迅速</b>，4-6 分钟内就可能失去意识。<br>请远离危险水域，儿童下水必须有成人陪同。</p>'+
+      '<p>珍爱生命，远离溺水。</p>'+
+      '<button class="btn-go" onclick="restartSurvey()">🔄 重新测试</button>'+
+      '<button class="btn-go" style="background:#555;max-width:240px;" onclick="location.href=\'index.html\'">返回魔法店</button>'+
+      '<div class="tiny">溺水者的怨念从未消散……<br>幺幺，只是其中一位。<br>你确定……刚才的一切，真的只是模拟吗？</div>'+
+    '</div>';
+  document.getElementById('scareLayer').style.display = 'none';
+  document.body.classList.remove('scare-shake');
+  document.body.classList.remove('dark-shift');
+}
+
+/* ── 重新测试: 清除存档回起始页 ── */
+function restartSurvey() {
+  localStorage.removeItem(STORAGE_KEY);
+  document.getElementById('connectBar').style.display = 'none';
+  document.getElementById('scanline').style.display = 'none';
+  document.getElementById('glitchLine').style.display = 'none';
+  document.getElementById('cornerMsg').style.display = 'none';
+  document.getElementById('noise').style.display = 'none';
+  document.getElementById('noise').style.opacity = '0.18';
+  var pb = document.getElementById('preBlack');
+  if (pb && pb.parentNode) pb.parentNode.removeChild(pb);
+  document.body.classList.remove('dark-shift');
+  document.body.classList.remove('scare-shake');
+  document.body.classList.remove('flash-white');
+  humStop();
+  idx = 0;
+  renderStart();
+}
+
+/* ── 起始页渲染 ── */
+function renderStart() {
+  var s = document.getElementById('survey');
+  s.innerHTML =
+    '<div class="start-card">'+
+      '<p style="font-size:15px;font-weight:700;color:#222;">尊敬的答题人：</p>'+
+      '<p>夏季是溺水事故高发期，为提高安全意识，<br>请您在<b>30 秒</b>内完成本问卷全部题目。</p>'+
+      '<p style="font-size:12px;color:#888;margin-top:8px;">本问卷共 '+(QUESTIONS.length+1)+' 题 · 单选 · 全部必答</p>'+
+      '<div class="notice-line">⚠ 温馨提示：本问卷包含<b>模拟恐怖元素</b>（惊吓画面、突发音效），<br>答题过程中如感不适，请立即停止作答。</div>'+
+      '<button class="btn-go" onclick="beginSurvey()">开始调查 →</button>'+
+    '</div>';
+}
+
+function beginSurvey() {
+  unlockAudio();
+  idx = 0;
+  localStorage.setItem(STORAGE_KEY, 'q0');
+  render();
+  trackStart(TRACK_KEY);
+}
+
+/* ── 恢复进度 ── */
+(function() {
+  var saved = localStorage.getItem(STORAGE_KEY);
+  if (saved === 'done') { renderEnding(); return; }
+  renderStart();
+})();
+</script>
+
+</body>
+</html>
