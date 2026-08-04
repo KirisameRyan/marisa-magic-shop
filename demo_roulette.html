@@ -134,7 +134,7 @@ function api(act,data,cb){
   f.append('action',act);
   if(S.rid){f.append('rid',S.rid);f.append('peer',String(S.peer))}
   for(var k in data||{}) f.append(k,data[k]);
-  fetch('api/roulette.php',{method:'POST',body:f})
+  fetch(API_BASE + 'api/roulette.php',{method:'POST',body:f})
     .then(function(r){return r.json()})
     .then(function(res){ if(cb) cb(res); })
     .catch(function(){ if(cb) cb(null); });

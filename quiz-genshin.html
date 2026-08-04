@@ -185,14 +185,14 @@ function renderIntro(app) {
       '<a href="index.html" class="home-link">← 返回魔法店</a>'+
     '</div>';
 
-  fetch('api/readcount.php?egg=genshin_take')
+  fetch(API_BASE + 'api/readcount.php?egg=genshin_take')
     .then(function(r){return r.json()})
     .then(function(d){document.getElementById('takeCount').textContent='已有 '+d.count+' 人测过！';})
     .catch(function(){});
 }
 
 function startQuiz() {
-  fetch('api/counter.php',{
+  fetch(API_BASE + 'api/counter.php',{
     method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
     body:'egg=genshin_take'
   }).catch(function(){});
@@ -266,14 +266,14 @@ function renderReveal(app) {
 function renderResult(app) {
   var c = CHARS[lastChar] || CHARS['ames'];
 
-  fetch('api/readcount.php?egg=genshin_fooled')
+  fetch(API_BASE + 'api/readcount.php?egg=genshin_fooled')
     .then(function(res){return res.json()})
     .then(function(d){
       foolCount = d.count;
       var el = document.getElementById('foolCountEl');
       if (el) el.textContent = '已有 '+foolCount+' 人跑来测原神，出了鸣潮';
     }).catch(function(){});
-  fetch('api/counter.php',{
+  fetch(API_BASE + 'api/counter.php',{
     method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
     body:'egg=genshin_fooled'
   }).catch(function(){});

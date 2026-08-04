@@ -313,7 +313,7 @@ function renderFake(app) {
 
 function reveal() {
   trackFooled('sexquiz_fooled');
-  fetch('api/counter.php',{
+  fetch(API_BASE + 'api/counter.php',{
     method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
     body:'egg=sexquiz_fooled'
   }).then(function(r){return r.json()}).then(function(d){

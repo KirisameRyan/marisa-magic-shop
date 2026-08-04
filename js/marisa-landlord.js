@@ -1286,7 +1286,7 @@ function loadLB(areaId, sc) {
     return;
   }
   area.innerHTML = '<p style="color:#8a7e9a;font-size:13px;">⏳ 加载排行榜...</p>';
-  fetch('api/leaderboard.php?game=' + CONFIG.LB_GAME, { headers: { 'Authorization': 'Bearer ' + Auth.token() } })
+  fetch(API_BASE + 'api/leaderboard.php?game=' + CONFIG.LB_GAME, { headers: { 'Authorization': 'Bearer ' + Auth.token() } })
     .then(function(r) {
       if (r.status === 401) {
         Auth.loginPrompt(area, function() { loadLB(areaId, sc); });
@@ -1347,7 +1347,7 @@ function submitLB(area, areaId) {
   form.append('score', String(S.totalPaid));
   form.append('graze', String(S.day));
   form.append('game', CONFIG.LB_GAME);
-  fetch('api/leaderboard.php', {
+  fetch(API_BASE + 'api/leaderboard.php', {
     method: 'POST', body: form,
     headers: { 'Authorization': 'Bearer ' + Auth.token() }
   })

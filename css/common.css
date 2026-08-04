@@ -431,6 +431,137 @@ body {
 .mms-auth-terms-box b { color: var(--gold); }
 
 /* ========================================
+   底部任务栏 + 轻提示 (js/page-base.js)
+   ======================================== */
+
+.mms-tabbar {
+  display: none;
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 260;
+  background: rgba(26,21,32,.96);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--border);
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+}
+.mms-tabbar a {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 6px 0 4px; border-radius: 12px;
+  text-decoration: none; color: var(--muted);
+  font-size: 10px; letter-spacing: 1px;
+  transition: color .2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mms-tabbar a .tb-ico { font-size: 20px; line-height: 1; filter: grayscale(.4); opacity: .75; transition: all .2s; }
+.mms-tabbar a:hover { color: var(--gold); }
+.mms-tabbar a.on { color: var(--gold); }
+.mms-tabbar a.on .tb-ico { filter: none; opacity: 1; transform: translateY(-1px); }
+.mms-tabbar a.tb-dis { cursor: default; opacity: .55; }
+.mms-tabbar a.tb-dis:hover { color: var(--muted); }
+
+.mms-toast {
+  position: fixed; left: 50%; bottom: 92px; z-index: 600;
+  transform: translateX(-50%) translateY(8px);
+  background: rgba(36,30,42,.95); border: 1px solid var(--gold-dim);
+  color: var(--gold); font-size: 13px;
+  padding: 10px 20px; border-radius: 20px;
+  opacity: 0; pointer-events: none; transition: all .3s;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5); white-space: nowrap;
+}
+.mms-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ========================================
+   桌面端左侧栏 (js/page-base.js)
+   ======================================== */
+
+.mms-sidebar {
+  display: none;
+  position: fixed; left: 0; top: 48px; bottom: 0; z-index: 240;
+  width: 168px; padding: 14px 10px;
+  background: rgba(26,21,32,.92);
+  backdrop-filter: blur(8px);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+.mms-sidebar .ms-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 12px; border-radius: 12px;
+  color: var(--muted); text-decoration: none;
+  font-size: 13px; letter-spacing: 1px; transition: all .2s;
+}
+.mms-sidebar .ms-item:hover { color: var(--gold); background: rgba(255,255,255,.03); }
+.mms-sidebar .ms-item.on { color: var(--gold); background: rgba(240,192,96,.08); }
+.mms-sidebar .ms-item.tb-dis { opacity: .5; cursor: default; }
+.mms-sidebar .ms-item.tb-dis:hover { color: var(--muted); background: none; }
+.mms-sidebar .ms-ico { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0; }
+.mms-sidebar .ms-txt { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mms-sidebar .ms-divider { height: 1px; background: var(--border); margin: 12px 8px; }
+.mms-sidebar .ms-caption { font-size: 10px; color: var(--muted); letter-spacing: 2px; padding: 4px 12px 8px; }
+@media (min-width: 768px) {
+  .mms-sidebar { display: block; }
+}
+
+/* ========================================
+   我的页 (mine.html)
+   ======================================== */
+
+.mine-acc {
+  display: flex; align-items: center; gap: 14px;
+  background: rgba(255,255,255,.02); border: 1px solid var(--border);
+  border-radius: 16px; padding: 16px; margin-bottom: 18px;
+}
+.mine-acc .mine-avatar {
+  width: 52px; height: 52px; border-radius: 16px; flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(240,192,96,.2), rgba(176,159,255,.2));
+  border: 1px solid var(--gold-dim);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+}
+.mine-acc .mine-info { flex: 1; min-width: 0; }
+.mine-acc .mine-name { font-size: 16px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mine-acc .mine-sub { font-size: 11px; color: var(--muted); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mine-acc .mine-btn {
+  background: linear-gradient(135deg, var(--gold), #d9a84a); border: none;
+  color: #1a1520; font-weight: 700; font-size: 13px;
+  border-radius: 12px; padding: 9px 18px; cursor: pointer; font-family: inherit;
+  white-space: nowrap;
+}
+.mine-acc .mine-btn:hover { filter: brightness(1.1); }
+.mine-acc .mine-btn.ghost {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--muted); font-weight: 400;
+}
+.mine-acc .mine-btn.ghost:hover { color: var(--red); border-color: var(--red); }
+
+.mine-list {
+  background: rgba(255,255,255,.02); border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden; margin-bottom: 18px;
+}
+.mine-list-title {
+  font-size: 10px; color: var(--muted); letter-spacing: 2px;
+  padding: 12px 16px 6px;
+}
+.mine-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 16px; text-decoration: none; color: var(--text);
+  font-size: 14px; border-top: 1px solid var(--border);
+  transition: background .15s;
+}
+.mine-row:first-of-type { border-top: none; }
+.mine-row:hover { background: rgba(255,255,255,.03); }
+.mine-row .mr-ico { font-size: 18px; width: 26px; text-align: center; }
+.mine-row .mr-txt { flex: 1; }
+.mine-row .mr-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.mine-row .mr-arrow { color: var(--muted); font-size: 12px; }
+.mine-row.tb-dis { cursor: default; opacity: .55; }
+.mine-row.tb-dis:hover { background: none; }
+.mine-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 16px 14px; }
+.mine-chip {
+  font-size: 12px; color: var(--text); text-decoration: none;
+  background: rgba(255,255,255,.03); border: 1px solid var(--border);
+  border-radius: 20px; padding: 6px 14px; transition: all .2s;
+}
+.mine-chip:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ========================================
    标准 keyframes(页面内联同名定义优先)
    ======================================== */
 @keyframes fadeUp {

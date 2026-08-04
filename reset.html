@@ -88,7 +88,7 @@
     f.append('token', token);
     f.append('password', p1);
 
-    fetch('api/auth.php', { method: 'POST', body: f })
+    fetch(API_BASE + 'api/auth.php', { method: 'POST', body: f })
       .then(function(r) { return r.json(); })
       .then(function(res) {
         if (res.ok) {

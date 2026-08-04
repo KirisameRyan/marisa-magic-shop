@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<style>
+.container { max-width: 540px; }
+.head-wrap { text-align: center; margin-bottom: 22px; }
+.head-wrap .badge { display: inline-block; font-size: 10px; letter-spacing: 2px; color: var(--gold); border: 1px solid var(--gold); border-radius: 20px; padding: 4px 16px; margin-bottom: 12px; }
+.head-wrap h1 { font-size: 24px; margin-bottom: 6px; }
+.head-wrap .sub { font-size: 12px; color: var(--muted); line-height: 1.7; }
+
+.mine-about { text-align: center; font-size: 11px; color: var(--muted); line-height: 1.9; padding-top: 6px; }
+.mine-about a { color: var(--gold); text-decoration: none; }
+@media (max-width: 420px) { .container { padding: 24px 18px; } }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container">
+  <div class="head-wrap">
+    <div class="badge">霧雨魔法店 · 个人中心</div>
+    <h1>👤 我的</h1>
+    <p class="sub">账号、排行榜、账本与更多</p>
+  </div>
+
+  <!-- ══════ 账号卡 ══════ -->
+  <div class="mine-acc" id="accCard">
+    <div class="mine-avatar" id="accAvatar">✨</div>
+    <div class="mine-info">
+      <div class="mine-name" id="accName">未登录</div>
+      <div class="mine-sub" id="accSub">登录后可提交排行榜成绩</div>
+    </div>
+    <button class="mine-btn" id="accBtn">登录 / 注册</button>
+  </div>
+
+  <!-- ══════ 功能列表 ══════ -->
+  <div class="mine-list">
+    <div class="mine-list-title">🎮 排行榜</div>
+    <a class="mine-row" href="leaderboard.html">
+      <span class="mr-ico">🏆</span>
+      <span class="mr-txt">排行榜总览<em class="mr-desc" style="display:block;font-style:normal;">5 个榜 · 登录后可提交成绩</em></span>
+      <span class="mr-arrow">▸</span>
+    </a>
+    <div class="mine-chips">
+      <a class="mine-chip" href="marisa_dash.html">🧹 魔理沙快跑</a>
+      <a class="mine-chip" href="marisa_survivor.html">⭐ 魔理沙幸存者</a>
+      <a class="mine-chip" href="marisa_landlord.html">⛩️ 赛钱危机</a>
+      <a class="mine-chip" href="street_survival.html">🌃 流浪模拟器</a>
+    </div>
+
+    <div class="mine-list-title">🛠️ 工具</div>
+    <a class="mine-row tb-dis" href="javascript:void(0)" data-tip="账本建设中，敬请期待 ✨">
+      <span class="mr-ico">📒</span>
+      <span class="mr-txt">我的账本<em class="mr-desc" style="display:block;font-style:normal;">截屏 + AI 自动记账（建设中）</em></span>
+      <span class="mr-arrow">▸</span>
+    </a>
+    <a class="mine-row" href="feedback.html">
+      <span class="mr-ico">💬</span>
+      <span class="mr-txt">反馈建议</span>
+      <span class="mr-arrow">▸</span>
+    </a>
+    <a class="mine-row" href="collect.html">
+      <span class="mr-ico">📝</span>
+      <span class="mr-txt">建议新彩蛋人物</span>
+      <span class="mr-arrow">▸</span>
+    </a>
+
+    <div class="mine-list-title">🔗 关于</div>
+    <a class="mine-row" href="https://space.bilibili.com/1029138222" target="_blank">
+      <span class="mr-ico">🅱</span>
+      <span class="mr-txt">B站频道<em class="mr-desc" style="display:block;font-style:normal;">关注霧雨魔法店 · 更多抽象好活</em></span>
+      <span class="mr-arrow">▸</span>
+    </a>
+  </div>
+
+  <div class="mine-about" id="aboutBox">
+    <span id="verLine"></span>
+    <a href="https://github.com/KirisameRyan/marisa-magic-shop" target="_blank">✦ GitHub 开源</a>
+  </div>
+</div>
+
+<script>
+(function() {
+  // auth.js 由 page-base defer 注入, 需要等它就绪
+  function init() {
+    if (!window.Auth) { setTimeout(init, 50); return; }
+
+    // ═══ 账号卡刷新 ═══
+    function refresh(user) {
+      var name = document.getElementById('accName');
+      var sub = document.getElementById('accSub');
+      var btn = document.getElementById('accBtn');
+      if (user) {
+        name.textContent = user.username;
+        sub.textContent = user.email || '已登录';
+        btn.textContent = '退出';
+        btn.className = 'mine-btn ghost';
+      } else {
+        name.textContent = '未登录';
+        sub.textContent = '登录后可提交排行榜成绩';
+        btn.textContent = '登录 / 注册';
+        btn.className = 'mine-btn';
+      }
+    }
+    Auth.onAuth(refresh);
+
+    document.getElementById('accBtn').addEventListener('click', function() {
+      if (Auth.isLoggedIn()) {
+        Auth.logout();
+      } else {
+        Auth.openModal('login');
+      }
+    });
+
+    // ═══ 建设中行 → 轻提示 ═══
+    var dis = document.querySelectorAll('.mine-row.tb-dis');
+    for (var i = 0; i < dis.length; i++) {
+      dis[i].addEventListener('click', function() {
+        var tip = this.getAttribute('data-tip') || '建设中，敬请期待 ✨';
+        var old = document.getElementById('mmsToast');
+        if (old) old.remove();
+        var t = document.createElement('div');
+        t.id = 'mmsToast';
+        t.className = 'mms-toast';
+        t.textContent = tip;
+        document.body.appendChild(t);
+        setTimeout(function() { t.classList.add('show'); }, 10);
+        setTimeout(function() { t.classList.remove('show'); setTimeout(function() { t.remove(); }, 300); }, 1800);
+      });
+    }
+
+    // ═══ 版本信息(有网就显示)═══
+    fetch(API_BASE + 'version.json').then(function(r) { return r.json(); }).then(function(d) {
+      var el = document.getElementById('verLine');
+      if (el && d && d.version) el.textContent = '离线包 v' + d.version + ' · ';
+    }).catch(function() {});
+  }
+  init();
+})();
+</script>
+
+</body>
+</html>

@@ -16,7 +16,7 @@ var _countCache = {};
 // ── 内部:POST 计数 ──
 function _trackPost(egg) {
   if (!egg) return;
-  fetch('api/counter.php', {
+  fetch(API_BASE + 'api/counter.php', {
     method: 'POST',
     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
     body: 'egg=' + encodeURIComponent(egg)
@@ -35,7 +35,7 @@ function getCount(egg, callback) {
     callback(_countCache[egg]);
     return;
   }
-  fetch('api/readcount.php?egg=' + encodeURIComponent(egg))
+  fetch(API_BASE + 'api/readcount.php?egg=' + encodeURIComponent(egg))
     .then(function(r) { return r.json(); })
     .then(function(d) {
       var n = parseInt(d && d.count, 10) || 0;
@@ -47,7 +47,7 @@ function getCount(egg, callback) {
 
 function getTypeStats(prefix, callback) {
   if (!prefix || !callback) return;
-  fetch('api/readcount.php?prefix=' + encodeURIComponent(prefix))
+  fetch(API_BASE + 'api/readcount.php?prefix=' + encodeURIComponent(prefix))
     .then(function(r) { return r.json(); })
     .then(function(d) { callback(d); })
     .catch(function(){});
