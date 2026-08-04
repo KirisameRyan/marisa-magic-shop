@@ -70,7 +70,7 @@ function doSubmit() {
   if (!name) { document.getElementById('inpName').focus(); return; }
 
   var body = 'name=' + encodeURIComponent(name) + '&source=' + encodeURIComponent(source) + '&notes=' + encodeURIComponent(notes);
-  fetch('api/submit.php', {
+  fetch(API_BASE + 'api/submit.php', {
     method: 'POST',
     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
     body: body

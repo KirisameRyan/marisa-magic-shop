@@ -223,7 +223,7 @@ function loadLB(finalScore) {
   }
   lbArea.innerHTML = '<p style="color:#8a7e9a;font-size:13px;">⏳ 加载排行榜...</p>';
 
-  fetch('api/leaderboard.php', { headers: { 'Authorization': 'Bearer ' + Auth.token() } })
+  fetch(API_BASE + 'api/leaderboard.php', { headers: { 'Authorization': 'Bearer ' + Auth.token() } })
     .then(function(r) {
       if (r.status === 401) {
         Auth.loginPrompt(lbArea, function() { loadLB(lastFinalScore); });
@@ -298,7 +298,7 @@ function submitLB(area) {
   form.append('score', String(lastFinalScore));
   form.append('graze', String(totalGraze));
 
-  fetch('api/leaderboard.php', {
+  fetch(API_BASE + 'api/leaderboard.php', {
     method: 'POST', body: form,
     headers: { 'Authorization': 'Bearer ' + Auth.token() }
   })

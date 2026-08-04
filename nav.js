@@ -1,131 +1,91 @@
 // =============================================
-//  霧雨魔法店 · 共享导航
+//  霧雨魔法店 · 共享导航(菜单数据来自 js/catalog.js)
 // =============================================
 (function() {
   var current = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
 
-  var navData = {
-    brand: { href: 'index.html', text: '霧 雨 魔 法 店' },
-    sections: [
-      {
-        label: '🔥 热门测试',
-        links: [
-          { href: 'waifu-test.html',     emoji: '💕', text: '二次元老婆',   topNav: true },
-          { href: 'quiz-animal.html',    emoji: '🐾', text: '灵魂动物',     topNav: true },
-          { href: 'quiz-lolicon.html',   emoji: '💘', text: '隐藏人格',     topNav: true },
-          { href: 'quiz-internet.html',  emoji: '🌐', text: '抽象大手子',   topNav: true }
-        ]
-      },
-      {
-        label: '🎮 玩玩小游戏',
-        links: [
-          { href: 'marisa_dash.html',     emoji: '🧹', text: '魔理沙快跑',   topNav: true },
-          { href: 'marisa_survivor.html', emoji: '⭐', text: '魔理沙幸存者', topNav: true },
-          { href: 'marisa_landlord.html', emoji: '⛩️', text: '赛钱危机',     topNav: true },
-          { href: 'street_survival.html', emoji: '🌃', text: '流浪模拟器',   topNav: true },
-          { href: 'demo_roulette.html',   emoji: '🔫', text: '轮盘赌局',     topNav: true }
-        ]
-      },
-      {
-        label: '🆕 最新上线',
-        links: [
-          { href: 'quiz-jiahao.html',    emoji: '🖤', text: '嘉豪程度检测' },
-          { href: 'quiz-major.html',     emoji: '🏗️', text: '张雪峰选专业' },
-          { href: 'quiz-waifu-2.html',   emoji: '💀', text: '二次元老婆2' },
-          { href: 'quiz-waifu-3.html',   emoji: '🔮', text: '二次元老婆3' },
-          { href: 'quiz-nolove.html',    emoji: '💔', text: '对象在哪' },
-          { href: 'pig-test.html',       emoji: '🐷', text: '猪猪鉴定' },
-          { href: 'quiz-region.html',    emoji: '🗺️', text: '你是哪里人' },
-          { href: 'quiz-drowning.html',  emoji: '🌊', text: '防溺水问卷' }
-        ]
-      },
-      {
-        label: '📦 更多测试 ▸',
-        collapsed: true,
-        links: [
-          { href: 'quiz-touhou.html',             emoji: '🏮', text: '东方人物' },
-          { href: 'quiz-anime-world.html',        emoji: '🗺️', text: '二次元故乡' },
-          { href: 'quiz-anime-hero.html',         emoji: '⚔️', text: '动漫男主' },
-          { href: 'gaokao.html',                  emoji: '🎓', text: '高考出分' },
-          { href: 'bingo.html',                   emoji: '🎯', text: '社会宾果' },
-          { href: 'quiz-internet-identity.html',  emoji: '🪪', text: '互联网身份' },
-          { href: 'quiz-fruit.html',              emoji: '🧠', text: '读心水果' },
-          { href: 'quiz-food.html',               emoji: '🍽️', text: '今天吃啥' },
-          { href: 'quiz-food-care.html',          emoji: '🍲', text: '对症下菜' },
-          { href: 'quiz-deepspace.html',         emoji: '💘', text: '恋与深空' },
-          { href: 'quiz-isekai.html',           emoji: '🚛', text: '异世界转生' },
-          { href: 'quiz-math2026.html',         emoji: '🧠', text: '智力测试' },
-          { href: 'quiz-hometown.html',           emoji: '🏠', text: '灵魂故乡' },
-          { href: 'quiz-otokonoko.html',        emoji: '💅', text: '男娘指数' },
-          { href: 'quiz-sexual.html',           emoji: '⚠️', text: 'X压抑程度' },
-          { href: 'collect.html',                 emoji: '📝', text: '建议新彩蛋' }
-        ]
-      },
-      {
-        label: '🔗 其他',
-        links: [
-          { href: 'feedback.html',          emoji: '💬', text: '反馈建议' },
-          { href: 'https://space.bilibili.com/1029138222', emoji: '🅱', text: 'B站频道', ext: true }
-        ]
-      }
-    ]
-  };
+  var MENU = [
+    { label: '🔥 热门测试', key: 'hot',    topNav: true },
+    { label: '🎮 玩玩小游戏', key: 'games', topNav: true },
+    { label: '🆕 最新上线', key: 'latest' },
+    { label: '📚 更多测试 ▸', key: 'more', collapsed: true },
+    { label: '🧰 实用工具', key: 'tools' },
+    { label: '🔗 其他', key: 'links' }
+  ];
 
-  function isActive(href) { return current === href.toLowerCase(); }
+  function buildNav() {
+    var cat = window.MMS_CATALOG;
+    if (!cat) return false;
 
-  var navLinksHTML = '';
-  for (var s = 0; s < navData.sections.length; s++) {
-    var links = navData.sections[s].links;
-    for (var l = 0; l < links.length; l++) {
-      var ln = links[l];
-      if (ln.ext || !ln.topNav) continue;
-      var active = isActive(ln.href);
-      navLinksHTML += '<a href="' + ln.href + '"' + (active ? ' style="color:var(--gold);"' : '') + '>' + ln.text + '</a>';
-    }
-  }
+    function isActive(href) { return current === href.toLowerCase(); }
 
-  var overlayHTML = '';
-  var moreIdBase = 'navMore';
-  for (var s2 = 0; s2 < navData.sections.length; s2++) {
-    var sec = navData.sections[s2];
-    if (sec.collapsed) {
-      overlayHTML += '<div class="nav-section" onclick="var e=document.getElementById(\''+moreIdBase+'\');var t=this;if(e.style.display===\'none\'){e.style.display=\'block\';t.textContent=t.textContent.replace(\'▸\',\'▾\')}else{e.style.display=\'none\';t.textContent=t.textContent.replace(\'▾\',\'▸\')}" style="cursor:pointer;">' + sec.label + '</div>';
-      overlayHTML += '<div id="'+moreIdBase+'" style="display:none;">';
-      for (var l2 = 0; l2 < sec.links.length; l2++) {
-        var ln2 = sec.links[l2];
-        var active2 = isActive(ln2.href);
-        var target = ln2.ext ? ' target="_blank"' : '';
-        overlayHTML += '<a href="' + ln2.href + '"' + (active2 ? ' style="color:var(--gold);"' : '') + target + '>' + ln2.emoji + ' ' + ln2.text + '</a>';
-      }
-      overlayHTML += '</div>';
-    } else {
-      overlayHTML += '<div class="nav-section">' + sec.label + '</div>';
-      for (var l3 = 0; l3 < sec.links.length; l3++) {
-        var ln3 = sec.links[l3];
-        var active3 = isActive(ln3.href);
-        var target3 = ln3.ext ? ' target="_blank"' : '';
-        overlayHTML += '<a href="' + ln3.href + '"' + (active3 ? ' style="color:var(--gold);"' : '') + target3 + '>' + ln3.emoji + ' ' + ln3.text + '</a>';
+    var navLinksHTML = '';
+    for (var s = 0; s < MENU.length; s++) {
+      var sec = MENU[s];
+      if (!sec.topNav) continue;
+      var list = cat[sec.key] || [];
+      for (var l = 0; l < list.length; l++) {
+        var ln = list[l];
+        if (ln.ext) continue;
+        var active = isActive(ln.href);
+        navLinksHTML += '<a href="' + ln.href + '"' + (active ? ' style="color:var(--gold);"' : '') + '>' + ln.name + '</a>';
       }
     }
+
+    var overlayHTML = '';
+    var moreIdBase = 'navMore';
+    for (var s2 = 0; s2 < MENU.length; s2++) {
+      var sec2 = MENU[s2];
+      var list2 = cat[sec2.key] || [];
+      if (sec2.collapsed) {
+        overlayHTML += '<div class="nav-section" onclick="var e=document.getElementById(\'' + moreIdBase + '\');var t=this;if(e.style.display===\'none\'){e.style.display=\'block\';t.textContent=t.textContent.replace(\'▸\',\'▾\')}else{e.style.display=\'none\';t.textContent=t.textContent.replace(\'▾\',\'▸\')}" style="cursor:pointer;">' + sec2.label + '</div>';
+        overlayHTML += '<div id="' + moreIdBase + '" style="display:none;">';
+        for (var l2 = 0; l2 < list2.length; l2++) {
+          var ln2 = list2[l2];
+          var active2 = isActive(ln2.href);
+          var target2 = ln2.ext ? ' target="_blank"' : '';
+          overlayHTML += '<a href="' + ln2.href + '"' + (active2 ? ' style="color:var(--gold);"' : '') + target2 + '>' + ln2.emoji + ' ' + ln2.name + '</a>';
+        }
+        overlayHTML += '</div>';
+      } else {
+        overlayHTML += '<div class="nav-section">' + sec2.label + '</div>';
+        for (var l3 = 0; l3 < list2.length; l3++) {
+          var ln3 = list2[l3];
+          var active3 = isActive(ln3.href);
+          var target3 = ln3.ext ? ' target="_blank"' : '';
+          overlayHTML += '<a href="' + ln3.href + '"' + (active3 ? ' style="color:var(--gold);"' : '') + target3 + '>' + ln3.emoji + ' ' + ln3.name + '</a>';
+        }
+      }
+    }
+
+    var allHTML =
+      '<nav class="shop-bar">' +
+        '<a href="index.html" class="brand">霧 雨 魔 法 店</a>' +
+        '<div class="nav-links" id="navLinks">' + navLinksHTML + '</div>' +
+        '<button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="菜单">' +
+          '<span></span><span></span><span></span>' +
+        '</button>' +
+      '</nav>' +
+      '<div class="nav-overlay" id="navOverlay">' + overlayHTML + '</div>';
+
+    var target = document.getElementById('shopNav');
+    if (target) {
+      var wrapper = document.createElement('div');
+      wrapper.innerHTML = allHTML;
+      target.parentNode.insertBefore(wrapper.firstChild, target);
+      target.parentNode.insertBefore(wrapper.firstChild, target);
+      target.remove();
+    }
+    return true;
   }
 
-  var allHTML =
-    '<nav class="shop-bar">' +
-      '<a href="' + navData.brand.href + '" class="brand">' + navData.brand.text + '</a>' +
-      '<div class="nav-links" id="navLinks">' + navLinksHTML + '</div>' +
-      '<button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="菜单">' +
-        '<span></span><span></span><span></span>' +
-      '</button>' +
-    '</nav>' +
-    '<div class="nav-overlay" id="navOverlay">' + overlayHTML + '</div>';
-
-  var target = document.getElementById('shopNav');
-  if (target) {
-    var wrapper = document.createElement('div');
-    wrapper.innerHTML = allHTML;
-    target.parentNode.insertBefore(wrapper.firstChild, target);
-    target.parentNode.insertBefore(wrapper.firstChild, target);
-    target.remove();
+  // catalog 未就绪则轮询(由 page-base 动态注入)
+  if (!buildNav()) {
+    var tries = 0;
+    var timer = setInterval(function() {
+      tries++;
+      if (buildNav() || tries > 60) clearInterval(timer);
+    }, 50);
   }
 })();
 

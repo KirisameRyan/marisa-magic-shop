@@ -7,7 +7,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>流浪模拟器 · 霧雨魔法店</title>
-<script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/tailwindcss.js"></script>
 <style>
 :root {
   --g-bg: #1a1520; --g-card: #241e2a; --g-card-hover: #2d2535;
@@ -513,7 +513,7 @@ function loadLB(areaEl,cfg){
     return;
   }
   areaEl.innerHTML='<p style="color:var(--g-muted);font-size:12px;text-align:center">⏳ 加载排行榜...</p>';
-  fetch('api/leaderboard.php?game='+cfg.game,{headers:{'Authorization':'Bearer '+Auth.token()}}).then(function(r){
+  fetch(API_BASE + 'api/leaderboard.php?game='+cfg.game,{headers:{'Authorization':'Bearer '+Auth.token()}}).then(function(r){
     if(r.status===401){Auth.loginPrompt(areaEl,function(){loadLB(areaEl,cfg)});return null}
     return r.json();
   }).then(function(data){
@@ -553,7 +553,7 @@ function submitLB(area,cfg){
   }
   var b=document.getElementById('lbSubmit');b.disabled=true;b.textContent='提交中...';
   var f=new FormData();f.append('score',String(cfg.score));f.append('graze',String(cfg.graze));f.append('game',cfg.game);
-  fetch('api/leaderboard.php',{method:'POST',body:f,headers:{'Authorization':'Bearer '+Auth.token()}})
+  fetch(API_BASE + 'api/leaderboard.php',{method:'POST',body:f,headers:{'Authorization':'Bearer '+Auth.token()}})
     .then(function(r){return r.json().then(function(j){return{status:r.status,body:j}})})
     .then(function(res){
       if(res.status===401){

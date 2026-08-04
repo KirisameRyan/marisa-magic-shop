@@ -45,7 +45,7 @@
     if (token) headers['Authorization'] = 'Bearer ' + token;
     var cfg = { method: opts.method || 'GET', headers: headers };
     if (opts.body) cfg.body = opts.body;
-    return fetch(path, cfg).then(function(r) {
+    return fetch(API_BASE + path, cfg).then(function(r) {
       return r.json().then(function(j) {
         if (r.status === 401 && !opts.silent) clearSession();
         return j;

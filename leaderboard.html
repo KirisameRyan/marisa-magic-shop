@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>排行榜 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<style>
+.container { max-width: 720px; }
+.head-wrap { text-align: center; margin-bottom: 22px; }
+.head-wrap .badge { display: inline-block; font-size: 10px; letter-spacing: 2px; color: var(--gold); border: 1px solid var(--gold); border-radius: 20px; padding: 4px 16px; margin-bottom: 12px; }
+.head-wrap h1 { font-size: 24px; margin-bottom: 6px; }
+.head-wrap .sub { font-size: 12px; color: var(--muted); line-height: 1.7; }
+
+/* 榜 tab */
+.lb-tabs { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 18px; }
+.lb-tab {
+  background: transparent; border: 1px solid var(--border); border-radius: 20px;
+  padding: 8px 16px; font-size: 13px; color: var(--muted); cursor: pointer;
+  font-family: inherit; transition: all .2s;
+}
+.lb-tab:hover { border-color: var(--gold); color: var(--gold); }
+.lb-tab.on { border-color: var(--gold); color: var(--gold); background: rgba(240,192,96,.08); }
+
+/* 登录墙 */
+.lb-lock { text-align: center; padding: 40px 0 20px; }
+.lb-lock .lock-ico { font-size: 48px; margin-bottom: 12px; }
+.lb-lock p { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+
+/* 榜单表格 */
+.lb-panel { background: rgba(255,255,255,.02); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
+.lb-panel-title {
+  font-size: 11px; color: var(--gold); letter-spacing: 2px;
+  padding: 14px 18px 10px; border-bottom: 1px solid var(--border);
+}
+.lb-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.lb-table th {
+  font-size: 10px; color: var(--muted); letter-spacing: 1px; text-align: left;
+  padding: 10px 18px; border-bottom: 1px solid var(--border); font-weight: 600;
+}
+.lb-table td { padding: 12px 18px; border-bottom: 1px solid rgba(58,48,69,.5); }
+.lb-table tr:last-child td { border-bottom: none; }
+.lb-table .lb-rank { color: var(--gold-dim); font-weight: 700; width: 48px; }
+.lb-table tr.lb-my { background: rgba(240,192,96,.07); }
+.lb-table tr.lb-my td { color: var(--gold); }
+.lb-table .lb-my-tag { font-size: 10px; border: 1px solid var(--gold-dim); border-radius: 8px; padding: 1px 6px; margin-left: 6px; color: var(--gold); }
+.lb-empty { text-align: center; padding: 40px 0; font-size: 13px; color: var(--muted); }
+.lb-loading { text-align: center; padding: 40px 0; font-size: 13px; color: var(--muted); }
+
+.lb-foot { text-align: center; margin-top: 16px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.lb-refresh {
+  background: transparent; border: 1px solid var(--border); border-radius: 20px;
+  padding: 8px 20px; font-size: 12px; color: var(--text); cursor: pointer; font-family: inherit; transition: all .2s;
+}
+.lb-refresh:hover { border-color: var(--gold); color: var(--gold); }
+@media (max-width: 420px) { .container { padding: 24px 14px; } }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container">
+  <div class="head-wrap">
+    <div class="badge">霧雨魔法店 · 全服排行</div>
+    <h1>🏆 排行榜</h1>
+    <p class="sub">登录后查看 · 你的成绩会以账号名上榜</p>
+  </div>
+
+  <div id="lbLock" class="lb-lock" style="display:none;">
+    <div class="lock-ico">🔒</div>
+    <p>排行榜需登录后使用</p>
+    <button class="btn btn-main" style="max-width:220px;margin:0 auto;" onclick="lbLogin()">登录 / 注册</button>
+    <a href="index.html" class="home-link">← 返回魔法店</a>
+  </div>
+
+  <div id="lbMain" style="display:none;">
+    <div class="lb-tabs" id="lbTabs"></div>
+    <div class="lb-panel">
+      <div class="lb-panel-title" id="lbTitle">—</div>
+      <div id="lbBody"><div class="lb-loading">⏳ 加载排行榜...</div></div>
+    </div>
+    <div class="lb-foot">
+      <button class="lb-refresh" onclick="lbLoad(true)">🔄 刷新</button>
+      <a href="index.html" class="home-link" style="margin-top:0;">← 返回魔法店</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var BOARDS = [
+    { key: '',               name: '🧹 魔理沙快跑', s1: '得分', s2: '擦弹' },
+    { key: 'survivor',       name: '⭐ 魔理沙幸存者', s1: '得分', s2: '击杀' },
+    { key: 'landlord',       name: '⛩️ 赛钱危机',   s1: '缴纳', s2: '天数' },
+    { key: 'survival',       name: '🌃 流浪模拟器', s1: '金钱', s2: '存活', u2: '天' },
+    { key: 'survival_endless', name: '🔥 无尽模式', s1: '存活', u1: '天', s2: '金钱' }
+  ];
+  var data = {};   // key -> entries
+  var current = 0; // 当前 tab 下标
+
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function loadBoards(silent) {
+    var token = Auth.token();
+    if (!token) return;
+    if (!silent) showLoading();
+    var jobs = BOARDS.map(function(b) {
+      var url = API_BASE + 'api/leaderboard.php' + (b.key ? '?game=' + b.key : '');
+      return fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r) { return r.json(); });
+    });
+    Promise.all(jobs)
+      .then(function(results) {
+        for (var i = 0; i < BOARDS.length; i++) data[BOARDS[i].key] = results[i] || [];
+        render();
+      })
+      .catch(function() {
+        document.getElementById('lbBody').innerHTML = '<div class="lb-loading">排行榜暂不可用，稍后再试</div>';
+      });
+  }
+
+  function showLoading() {
+    var body = document.getElementById('lbBody');
+    if (body) body.innerHTML = '<div class="lb-loading">⏳ 加载排行榜...</div>';
+  }
+
+  function render() {
+    var b = BOARDS[current];
+    document.getElementById('lbTitle').textContent = b.name;
+    var entries = (data[b.key] || []).filter(function(e) { return e && e.name; });
+    var me = (window.Auth && Auth.user()) ? Auth.user().id : null;
+    var body = document.getElementById('lbBody');
+    if (!entries.length) {
+      body.innerHTML = '<div class="lb-empty">暂无记录，快去创造纪录！</div>';
+      return;
+    }
+    var html = '<table class="lb-table"><thead><tr><th>#</th><th>名字</th><th>' + b.s1 + '</th><th>' + b.s2 + '</th><th>日期</th></tr></thead><tbody>';
+    for (var i = 0; i < entries.length; i++) {
+      var e = entries[i];
+      var mine = me && String(e.user_id) === String(me);
+      var rank = i + 1;
+      var medal = rank === 1 ? '🥇' : (rank === 2 ? '🥈' : (rank === 3 ? '🥉' : rank));
+      html += '<tr' + (mine ? ' class="lb-my"' : '') + '>' +
+        '<td class="lb-rank">' + medal + '</td>' +
+        '<td>' + esc(e.name) + (mine ? '<span class="lb-my-tag">我的</span>' : '') + '</td>' +
+        '<td>' + e.score + (b.u1 || '') + '</td>' +
+        '<td>' + (e.graze || 0) + (b.u2 || '') + '</td>' +
+        '<td style="color:var(--muted);font-size:11px;">' + (e.time || '') + '</td></tr>';
+    }
+    html += '</tbody></table>';
+    body.innerHTML = html;
+  }
+
+  function buildTabs() {
+    var wrap = document.getElementById('lbTabs');
+    var html = '';
+    for (var i = 0; i < BOARDS.length; i++) {
+      html += '<button class="lb-tab' + (i === current ? ' on' : '') + '" data-i="' + i + '">' + BOARDS[i].name + '</button>';
+    }
+    wrap.innerHTML = html;
+    var tabs = wrap.querySelectorAll('.lb-tab');
+    for (var j = 0; j < tabs.length; j++) {
+      tabs[j].addEventListener('click', function() {
+        current = parseInt(this.getAttribute('data-i'), 10);
+        for (var k = 0; k < tabs.length; k++) tabs[k].classList.remove('on');
+        this.classList.add('on');
+        render();
+      });
+    }
+  }
+
+  function refreshUI(user) {
+    var lock = document.getElementById('lbLock');
+    var main = document.getElementById('lbMain');
+    if (user) {
+      lock.style.display = 'none';
+      main.style.display = 'block';
+      loadBoards(true);
+    } else {
+      lock.style.display = 'block';
+      main.style.display = 'none';
+    }
+  }
+
+  // 入口
+  function init() {
+    if (!window.Auth) { setTimeout(init, 50); return; }
+    window.lbLogin = function() {
+      Auth.openModal('login', function() { loadBoards(); });
+    };
+    window.lbLoad = loadBoards;
+    buildTabs();
+    Auth.onAuth(refreshUI);
+  }
+  init();
+})();
+</script>
+
+</body>
+</html>

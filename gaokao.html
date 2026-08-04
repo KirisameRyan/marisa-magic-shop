@@ -446,7 +446,7 @@ function renderIntro(app) {
   });
 
   if (typeof EASTER_EGGS !== 'undefined') {
-    fetch('api/stats.php')
+    fetch(API_BASE + 'api/stats.php')
       .then(function(r){return r.json()})
       .then(function(data){
         var el = document.getElementById('eggStats');
@@ -460,7 +460,7 @@ function checkName(raw, callback) {
   var s = raw.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '');
   if (!s || s.length < 2) return callback(s || '匿名考生');
 
-  fetch('api/checkname.php', {
+  fetch(API_BASE + 'api/checkname.php', {
     method: 'POST',
     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
     body: 'name=' + encodeURIComponent(s)
@@ -586,7 +586,7 @@ function renderResult(app) {
     resultFooterHTML({notice:'霧雨魔法店 · 纯属娱乐 · 分数已调高讨个彩头<br>祝各位考生金榜题名，得偿所愿 ✨'});
 
   if (d._eggName) {
-    fetch('api/counter.php', {
+    fetch(API_BASE + 'api/counter.php', {
       method: 'POST',
       headers: {'Content-Type': 'application/x-www-form-urlencoded'},
       body: 'egg=' + encodeURIComponent(d._eggName)
