@@ -3,6 +3,7 @@ package cloud.azureflame.magicshop;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
@@ -13,11 +14,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.Window;
 import android.webkit.JavascriptInterface;
 import android.webkit.MimeTypeMap;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -58,6 +61,7 @@ import org.json.JSONObject;
  */
 public class MainActivity extends Activity {
 
+    private static final String TAG = "MmsMain";
     private static final String SITE_BASE = "https://www.azureflame.cloud";
     private static final String HOME_URL = "https://appassets.androidapp.net/www/index.html";
     private static final String MANIFEST_PATH = "version.json";
@@ -87,6 +91,11 @@ public class MainActivity extends Activity {
         webView.setBackgroundColor(Color.BLACK);
         setContentView(webView);
 
+        // debug 包开启 WebView 远程调试(Chrome inspect 可查页面状态)
+        if ((getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            WebView.setWebContentsDebuggingEnabled(true);
+        }
+
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -99,15 +108,20 @@ public class MainActivity extends Activity {
 
         // ── 本地资源加载器: 更新层 → 内置层 → 联网兜底 ──
         assetLoader = new WebViewAssetLoader.Builder()
+                .setDomain("appassets.androidapp.net")
                 .addPathHandler("/www/", new SiteHandler())
                 .build();
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                if ("https".equalsIgnoreCase(request.getUrl().getScheme())
-                        && "appassets.androidapp.net".equals(request.getUrl().getHost())) {
-                    return assetLoader.shouldInterceptRequest(request.getUrl());
+                Uri url = request.getUrl();
+                Log.d(TAG, "拦截请求: " + url);
+                if ("https".equalsIgnoreCase(url.getScheme())
+                        && "appassets.androidapp.net".equals(url.getHost())) {
+                    WebResourceResponse r = assetLoader.shouldInterceptRequest(url);
+                    Log.d(TAG, "拦截结果: " + (r != null ? "命中(" + r.getMimeType() + ")" : "null"));
+                    return r;
                 }
                 return null;
             }
@@ -124,6 +138,16 @@ public class MainActivity extends Activity {
                 } catch (Exception ignored) {
                 }
                 return true;
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                Log.i(TAG, "页面加载完成: " + url);
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                Log.e(TAG, "页面加载错误: " + request.getUrl() + " -> " + error.getErrorCode() + " " + error.getDescription());
             }
         });
 
@@ -144,14 +168,29 @@ public class MainActivity extends Activity {
         // ── JS 桥: App 原生能力 ──
         webView.addJavascriptInterface(new MmsBridge(), "mmsNative");
 
-        if (savedInstanceState != null) {
-            webView.restoreState(savedInstanceState);
-        } else {
-            webView.loadUrl(HOME_URL);
-        }
-
-        // ── 首次启动: 解压内置离线包 www.zip → filesDir/www ──
-        ensureExtract();
+        // ── 启动流程: 先显示闪屏, 后台解压离线包, 完成后进主页 ──
+        // (解压 61.7MB/350 文件不能卡在 UI 线程, 否则首启黑屏)
+        showSplash("正在准备离线包…", true);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final boolean ok = ensureExtract();
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (ok) {
+                            if (savedInstanceState != null) {
+                                webView.restoreState(savedInstanceState);
+                            } else {
+                                webView.loadUrl(HOME_URL);
+                            }
+                        } else {
+                            showSplash("离线包加载失败，请重新安装 App 或联系店主", false);
+                        }
+                    }
+                });
+            }
+        }).start();
 
         // ── 联网状态监听 ──
         ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
@@ -178,11 +217,13 @@ public class MainActivity extends Activity {
     private class SiteHandler implements WebViewAssetLoader.PathHandler {
         @Override
         public WebResourceResponse handle(String path) {
+            Log.d(TAG, "handle: " + path);
             if (path == null || path.contains("..") || path.startsWith("/")) return null;
 
             // 1) 离线层(filesDir/www, 内置包解压 + 增量更新)
             File cached = new File(updateDir, path);
             if (cached.isFile() && cached.length() > 0) {
+                Log.d(TAG, "handle 命中 filesDir: " + path);
                 try {
                     return responseFor(path, new FileInputStream(cached));
                 } catch (IOException ignored) {
@@ -193,17 +234,27 @@ public class MainActivity extends Activity {
             if (online.get() && path.length() <= 128) {
                 byte[] data = httpGetBytes(SITE_BASE + "/" + path);
                 if (data != null) {
+                    Log.d(TAG, "handle 联网兜底: " + path);
                     writeCache(path, data);
                     return responseFor(path, data);
                 }
             }
+            Log.w(TAG, "handle 未命中: " + path);
             return null;
         }
     }
 
     // 首次启动: 从 assets/www.zip 解压内置离线包(UTF-8 条目名, 规避 AGP 文件名编码问题)
-    private void ensureExtract() {
-        if (new File(updateDir, "index.html").isFile()) return;
+    // 后台线程调用; 返回是否成功
+    private boolean ensureExtract() {
+        if (new File(updateDir, "index.html").isFile()) {
+            Log.i(TAG, "离线包已存在, 跳过解压");
+            return true;
+        }
+        Log.i(TAG, "开始解压内置离线包 www.zip → " + updateDir);
+        long t0 = System.currentTimeMillis();
+        int count = 0;
+        long bytes = 0;
         try {
             java.util.zip.ZipInputStream zin =
                     new java.util.zip.ZipInputStream(getAssets().open("www.zip"));
@@ -211,19 +262,52 @@ public class MainActivity extends Activity {
             java.util.zip.ZipEntry e;
             while ((e = zin.getNextEntry()) != null) {
                 if (e.isDirectory()) continue;
-                File out = new File(updateDir, e.getName());
-                if (e.getName().contains("..")) continue;
+                String name = e.getName();
+                if (name == null || name.contains("..") || name.startsWith("/")) continue;
+                File out = new File(updateDir, name);
                 File parent = out.getParentFile();
                 if (parent != null && !parent.isDirectory()) parent.mkdirs();
                 FileOutputStream fos = new FileOutputStream(out);
                 int n;
-                while ((n = zin.read(buf)) != -1) fos.write(buf, 0, n);
+                while ((n = zin.read(buf)) != -1) {
+                    fos.write(buf, 0, n);
+                    bytes += n;
+                }
                 fos.close();
                 zin.closeEntry();
+                count++;
             }
             zin.close();
-        } catch (Exception ignored) {
+        } catch (Exception ex) {
+            Log.e(TAG, "解压失败: " + ex.getMessage(), ex);
+            return false;
         }
+        boolean ok = new File(updateDir, "index.html").isFile();
+        Log.i(TAG, "解压结束: " + count + " 文件 / " + (bytes / 1024) + "KB / 耗时 "
+                + (System.currentTimeMillis() - t0) + "ms / index.html=" + ok);
+        return ok;
+    }
+
+    // 启动闪屏 / 错误提示(内联 HTML, 不依赖离线包)
+    private void showSplash(String msg, boolean ring) {
+        String html = "<!DOCTYPE html><html><head><meta charset='utf-8'>"
+                + "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+                + "<style>"
+                + "body{margin:0;background:#1a1520;color:#e0d8ec;font-family:sans-serif;"
+                + "display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;text-align:center;}"
+                + ".logo{font-size:42px;margin-bottom:14px;}"
+                + ".title{font-size:20px;font-weight:700;letter-spacing:3px;color:#f0c060;margin-bottom:16px;}"
+                + ".msg{font-size:13px;color:#8a7e9a;padding:0 32px;line-height:1.8;}"
+                + "@keyframes spin{to{transform:rotate(360deg)}}"
+                + ".ring{width:36px;height:36px;border:3px solid #3a3045;border-top-color:#f0c060;"
+                + "border-radius:50%;animation:spin 1s linear infinite;margin-bottom:18px;}"
+                + "</style></head><body>"
+                + "<div class='logo'>✦</div>"
+                + "<div class='title'>霧雨魔法店</div>"
+                + (ring ? "<div class='ring'></div>" : "")
+                + "<div class='msg'>" + msg + "</div>"
+                + "</body></html>";
+        webView.loadDataWithBaseURL(null, html, "text/html", "utf-8", null);
     }
 
     private WebResourceResponse responseFor(String path, InputStream is) {
@@ -272,15 +356,23 @@ public class MainActivity extends Activity {
 
     private void startUpdate() {
         if (!updateRunning.compareAndSet(false, true)) return;
+        Log.i(TAG, "更新器: 启动");
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     JSONObject remote = fetchManifest(SITE_BASE + "/" + MANIFEST_PATH);
-                    if (remote == null) return;
-                    JSONObject remoteFiles = remote.optJSONObject("files");
-                    if (remoteFiles == null) return;
+                    if (remote == null) {
+                        Log.e(TAG, "更新器: 拉取远程清单失败(网络或解析)");
+                        return;
+                    }
                     String remoteVersion = remote.optString("version", "");
+                    Log.i(TAG, "更新器: 远程清单 version=" + remoteVersion);
+                    JSONObject remoteFiles = remote.optJSONObject("files");
+                    if (remoteFiles == null) {
+                        Log.e(TAG, "更新器: 远程清单无 files 字段");
+                        return;
+                    }
 
                     JSONObject local = readLocalManifest();
                     List<String> changed = new ArrayList<>();
@@ -290,8 +382,12 @@ public class MainActivity extends Activity {
                         if (p.contains("..") || p.startsWith("/")) continue;
                         if (fileChanged(p, remoteFiles.optString(p, ""), local)) changed.add(p);
                     }
+                    Log.i(TAG, "更新器: 差异文件 " + changed.size() + " 个"
+                            + (changed.size() > 0 && changed.size() <= 8 ? " " + changed : ""));
+
                     if (changed.isEmpty()) {
                         writeManifest(remoteFiles, remoteVersion);
+                        Log.i(TAG, "更新器: 无差异, 清单已同步至 " + remoteVersion);
                         return;
                     }
 
@@ -307,7 +403,10 @@ public class MainActivity extends Activity {
                             @Override
                             public void run() {
                                 try {
-                                    if (!downloadToCache(p, remoteFiles.optString(p, ""))) fails.incrementAndGet();
+                                    if (!downloadToCache(p, remoteFiles.optString(p, ""))) {
+                                        fails.incrementAndGet();
+                                        Log.e(TAG, "更新器: 下载失败 " + p);
+                                    }
                                 } finally {
                                     latch.countDown();
                                 }
@@ -320,10 +419,15 @@ public class MainActivity extends Activity {
                     if (fails.get() == 0) {
                         writeManifest(remoteFiles, remoteVersion);
                         if (oldFiles != null) cleanupRemoved(oldFiles, remoteFiles);
+                        Log.i(TAG, "更新器: 同步完成 " + changed.size() + " 个文件 → " + remoteVersion);
+                    } else {
+                        Log.e(TAG, "更新器: " + fails.get() + "/" + changed.size() + " 下载失败, 放弃本次同步, 清单保持旧版");
                     }
-                } catch (Exception ignored) {
+                } catch (Exception ex) {
+                    Log.e(TAG, "更新器: 异常 " + ex.getMessage(), ex);
                 } finally {
                     updateRunning.set(false);
+                    Log.i(TAG, "更新器: 结束");
                 }
             }
         }).start();
@@ -425,9 +529,14 @@ public class MainActivity extends Activity {
             conn.setConnectTimeout(10000);
             conn.setReadTimeout(20000);
             conn.setRequestProperty("User-Agent", "mmsapp/1");
-            if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) return null;
+            int code = conn.getResponseCode();
+            if (code != HttpURLConnection.HTTP_OK) {
+                Log.w(TAG, "HTTP " + code + ": " + urlStr);
+                return null;
+            }
             return readFully(conn.getInputStream());
         } catch (Exception e) {
+            Log.w(TAG, "请求异常 " + urlStr + ": " + e.getMessage());
             return null;
         } finally {
             if (conn != null) conn.disconnect();

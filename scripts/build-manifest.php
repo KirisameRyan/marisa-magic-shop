@@ -17,7 +17,7 @@ $skipDirs = [
 
 // 排除的文件(完整相对路径)
 $skipFiles = [
-    'version.json', '.htaccess', '.user.ini', 'bdunion.txt',
+    'version.json', '.gitignore', '.htaccess', '.user.ini', 'bdunion.txt',
     '39be8777283b6964b055eb7e87a6dadb.txt', 'README.md',
 ];
 
