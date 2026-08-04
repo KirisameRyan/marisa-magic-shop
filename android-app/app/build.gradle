@@ -2,6 +2,10 @@ plugins {
     id 'com.android.application'
 }
 
+// ── 签名配置(keystore.properties 由 scripts 生成, gitignored 勿上传)──
+def keystorePropsFile = rootProject.file('keystore.properties')
+def hasKeystore = keystorePropsFile.exists()
+
 android {
     namespace 'cloud.azureflame.magicshop'
     compileSdk 34
@@ -10,7 +14,39 @@ android {
         applicationId "cloud.azureflame.magicshop"
         minSdk 24
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.1"
     }
+
+    signingConfigs {
+        release {
+            if (hasKeystore) {
+                def props = new Properties()
+                props.load(new FileInputStream(keystorePropsFile))
+                storeFile file(props['storeFile'])
+                storePassword props['storePassword']
+                keyAlias props['keyAlias']
+                keyPassword props['keyPassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (hasKeystore) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.12.1'
+    implementation 'androidx.core:core:1.13.1'
 }

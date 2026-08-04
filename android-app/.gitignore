@@ -4,3 +4,8 @@ app/build/
 local.properties
 *.iml
 .idea/
+
+# 离线包生成物 + 签名密钥(勿上传)
+app/src/main/assets/www/
+keystore/
+keystore.properties
