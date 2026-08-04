@@ -6,5 +6,5 @@
 // =============================================
 window.API_BASE = window.API_BASE || '';
 if (location.hostname === 'appassets.androidapp.net') {
-    window.API_BASE = 'https://www.azureflame.cloud';
+    window.API_BASE = 'https://www.azureflame.cloud/';
 }
