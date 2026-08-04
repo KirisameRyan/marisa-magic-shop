@@ -8,7 +8,7 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 
 $skipDirs = @('.git', 'api', 'android-app', 'scripts', '.opencode', 'proxy_cache_dir', '.well-known')
-$skipFiles = @('version.json', '.htaccess', '.user.ini', 'bdunion.txt',
+$skipFiles = @('version.json', '.gitignore', '.htaccess', '.user.ini', 'bdunion.txt',
     '39be8777283b6964b055eb7e87a6dadb.txt', 'README.md')
 $skipPatterns = @('\.tmp$', '\.log$', '\.DS_Store$', '\.php$',
     'leaderboard.*\.json$', 'counters\.json$', 'suggestions\.json$',

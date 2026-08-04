@@ -11,7 +11,7 @@ $assetsDir = Join-Path $root 'android-app\app\src\main\assets'
 $zipPath = Join-Path $assetsDir 'www.zip'
 
 $skipDirs = @('.git', 'api', 'android-app', 'scripts', '.opencode', 'proxy_cache_dir', '.well-known')
-$skipFiles = @('.htaccess', '.user.ini', 'bdunion.txt',
+$skipFiles = @('.gitignore', '.htaccess', '.user.ini', 'bdunion.txt',
     '39be8777283b6964b055eb7e87a6dadb.txt', 'README.md')
 $skipPatterns = @('\.tmp$', '\.log$', '\.DS_Store$', '\.php$',
     'leaderboard.*\.json$', 'counters\.json$', 'suggestions\.json$',

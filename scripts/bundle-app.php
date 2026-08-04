@@ -23,7 +23,7 @@ $skipDirs = [
 
 // 排除的文件(完整相对路径) — 注意: 版本清单 version.json 要打进包(出厂基线)
 $skipFiles = [
-    '.htaccess', '.user.ini', 'bdunion.txt',
+    '.gitignore', '.htaccess', '.user.ini', 'bdunion.txt',
     '39be8777283b6964b055eb7e87a6dadb.txt', 'README.md',
 ];
 
