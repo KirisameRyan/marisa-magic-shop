@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>重置密码 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<style>
+.container { max-width: 420px; }
+.head-wrap { text-align: center; margin-bottom: 20px; }
+.head-wrap .badge { display: inline-block; font-size: 10px; letter-spacing: 2px; color: var(--gold); border: 1px solid var(--gold); border-radius: 20px; padding: 4px 16px; margin-bottom: 12px; }
+.head-wrap h1 { font-size: 22px; margin-bottom: 6px; }
+.head-wrap .sub { font-size: 12px; color: var(--muted); line-height: 1.7; }
+
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-bottom: 6px; }
+.form-group input { width: 100%; background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 12px; padding: 13px 16px; font-size: 15px; color: var(--text); font-family: inherit; transition: border-color .2s; }
+.form-group input:focus { outline: none; border-color: var(--gold); }
+.form-group input::placeholder { color: var(--muted); opacity: .35; }
+
+.btn-submit { background: linear-gradient(135deg, var(--gold), #e8a830); color: #1a1520; font-weight: 700; }
+.btn-submit:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(240,192,96,.25); }
+.btn-submit:disabled { opacity: .6; transform: none; }
+
+.msg { display: none; font-size: 13px; line-height: 1.7; border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; }
+.msg.err { color: var(--red); background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.25); }
+.msg.ok { color: var(--green); background: rgba(111,207,151,.08); border: 1px solid rgba(111,207,151,.25); }
+
+.done { text-align: center; padding: 30px 0; }
+.done .icon { font-size: 56px; margin-bottom: 12px; }
+.done h2 { font-size: 20px; margin-bottom: 8px; }
+.done p { font-size: 13px; color: var(--muted); line-height: 1.8; }
+@media (max-width: 420px) { .container { padding: 24px 18px; } }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container">
+  <div class="head-wrap" id="formArea">
+    <div class="badge">霧雨魔法店 · 账号</div>
+    <h1>🔑 重置密码</h1>
+    <p class="sub">设置一个新密码，之后用新密码登录。</p>
+
+    <div class="form-group"><label>新密码（6-32位）</label><input type="password" id="inpPwd1" maxlength="32" placeholder="输入新密码" autocomplete="new-password"></div>
+    <div class="form-group"><label>确认新密码</label><input type="password" id="inpPwd2" maxlength="32" placeholder="再输一遍" autocomplete="new-password"></div>
+
+    <div class="msg" id="msgBox"></div>
+    <button class="btn btn-submit" id="btnReset" onclick="doReset()">设置新密码</button>
+    <a href="index.html" class="home-link">← 返回魔法店</a>
+  </div>
+
+  <div class="done" id="doneArea" style="display:none;">
+    <div class="icon">✨</div>
+    <h2>密码已重置</h2>
+    <p>现在可以重新登录了。<br>你的其他设备会被强制下线，需要重新登录。</p>
+    <button class="btn btn-main" style="margin-top:16px;" onclick="window.location.href='index.html'">回到魔法店</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  var token = new URLSearchParams(location.search).get('t') || '';
+  var msgBox = document.getElementById('msgBox');
+
+  function showMsg(ok, text) {
+    msgBox.textContent = text;
+    msgBox.className = 'msg ' + (ok ? 'ok' : 'err');
+    msgBox.style.display = 'block';
+  }
+
+  window.doReset = function() {
+    var p1 = document.getElementById('inpPwd1').value;
+    var p2 = document.getElementById('inpPwd2').value;
+    if (!token) { showMsg(false, '链接无效或已过期，请重新申请重置。'); return; }
+    if (p1.length < 6 || p1.length > 32) { showMsg(false, '密码需为 6-32 位'); return; }
+    if (p1 !== p2) { showMsg(false, '两次输入的密码不一致'); return; }
+
+    var btn = document.getElementById('btnReset');
+    btn.disabled = true; btn.textContent = '提交中...';
+
+    var f = new FormData();
+    f.append('action', 'reset');
+    f.append('token', token);
+    f.append('password', p1);
+
+    fetch('api/auth.php', { method: 'POST', body: f })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (res.ok) {
+          document.getElementById('formArea').style.display = 'none';
+          document.getElementById('doneArea').style.display = 'block';
+        } else {
+          btn.disabled = false; btn.textContent = '设置新密码';
+          showMsg(false, res.error || '重置失败，请重试');
+        }
+      })
+      .catch(function() {
+        btn.disabled = false; btn.textContent = '设置新密码';
+        showMsg(false, '网络错误，请稍后再试');
+      });
+  };
+})();
+</script>
+
+</body>
+</html>

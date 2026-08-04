@@ -70,4 +70,4 @@ git clone https://github.com/KirisameRyan/marisa-magic-shop.git
 
 ---
 
-<p align="center">🧹 魔法之森边缘 · 营业时间不定 · 没有数据收集 · 不追踪 · 不偷窥</p>
+<p align="center">🧹 魔法之森边缘 · 营业时间不定 · 账号仅用于排行榜与密码找回 · 数据只存本站服务器 · 不追踪 · 不贩卖</p>
