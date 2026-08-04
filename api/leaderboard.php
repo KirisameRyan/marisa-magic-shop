@@ -1,6 +1,23 @@
 <?php
+// =============================================
+//  霧雨魔法店 · 排行榜（需登录使用）
+//  GET 查看 Top 20 / POST 提交分数（用户名取自账号）
+// =============================================
+
+require __DIR__ . '/auth-lib.php';
+
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Headers: Authorization, Content-Type');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
+// ── 登录墙：查看/提交都必须登录 ──
+$user = mms_require_user();
 
 // ── 数据文件（可选 game 参数 → 各游戏独立榜单，默认保持原跑酷榜）──
 $game = '';
@@ -32,50 +49,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$name  = trim($_POST['name'] ?? '');
 $score = intval($_POST['score'] ?? 0);
 $graze = intval($_POST['graze'] ?? 0);
 
 // 校验
-if (!$name || mb_strlen($name) > 20) {
-    http_response_code(400);
-    echo json_encode(['error' => '昵称 1-20 字']);
-    exit;
-}
 if ($score <= 0 || $score > 99999999) {
     http_response_code(400);
     echo json_encode(['error' => '分数无效']);
     exit;
-}
-
-// 内容过滤
-$blockKeys = ['http://','https://','www.','@','<','>','script','onerror','onclick','javascript:','<img','<div','eval(','document.','window.','alert('];
-foreach ($blockKeys as $w) {
-    if (stripos($name, $w) !== false) {
-        http_response_code(400);
-        echo json_encode(['error' => '包含非法字符']);
-        exit;
-    }
-}
-
-// 敏感词检测（与 checkname.php 相同逻辑）
-$clean = preg_replace('/[^\x{4e00}-\x{9fa5}a-zA-Z0-9]/u', '', $name);
-if ($clean && mb_strlen($clean) >= 2) {
-    $words = [];
-    $jsFile = __DIR__ . '/../js/sensitive-words.js';
-    if (file_exists($jsFile)) {
-        $content = file_get_contents($jsFile);
-        if (preg_match('/\[([\s\S]*)\]/', $content, $m)) {
-            $arr = @json_decode('[' . $m[1] . ']', true);
-            if (is_array($arr)) { $words = array_flip($arr); }
-        }
-    }
-    $len = mb_strlen($clean);
-    for ($i = 0; $i < $len; $i++) {
-        for ($j = $i + 2; $j <= $len && ($j - $i) <= 10; $j++) {
-            if (isset($words[mb_substr($clean, $i, $j - $i)])) { $name = '匿名玩家'; break 2; }
-        }
-    }
 }
 
 // 加载数据
@@ -92,13 +73,14 @@ if ($first && isset($first['__cooldown__']) && ($first['__cooldown__'][$cooldown
     exit;
 }
 
-// 追加条目
+// 追加条目（用户名来自账号，user_id 绑定身份）
 $entry = [
-    'id'    => uniqid('', true),
-    'name'  => $name,
-    'score' => $score,
-    'graze' => $graze,
-    'time'  => date('Y-m-d H:i:s')
+    'id'      => uniqid('', true),
+    'user_id' => (int)$user['id'],
+    'name'    => $user['username'],
+    'score'   => $score,
+    'graze'   => $graze,
+    'time'    => date('Y-m-d H:i:s')
 ];
 $entries[] = $entry;
 

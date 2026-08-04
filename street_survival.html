@@ -506,8 +506,18 @@ function achBadgesHTML(){
 }
 function loadLB(areaEl,cfg){
   // cfg: {game, score, graze, slabel, glabel, title}
+  // 登录墙
+  if(!window.Auth){areaEl.innerHTML='<p class="lb-note">登录组件未加载,请刷新页面</p>';return}
+  if(!Auth.isLoggedIn()){
+    Auth.loginPrompt(areaEl,function(){loadLB(areaEl,cfg)});
+    return;
+  }
   areaEl.innerHTML='<p style="color:var(--g-muted);font-size:12px;text-align:center">⏳ 加载排行榜...</p>';
-  fetch('api/leaderboard.php?game='+cfg.game).then(function(r){return r.json()}).then(function(data){
+  fetch('api/leaderboard.php?game='+cfg.game,{headers:{'Authorization':'Bearer '+Auth.token()}}).then(function(r){
+    if(r.status===401){Auth.loginPrompt(areaEl,function(){loadLB(areaEl,cfg)});return null}
+    return r.json();
+  }).then(function(data){
+    if(!data)return;
     var rank=-1;for(var i=0;i<data.length;i++)if(cfg.score>data[i].score){rank=i+1;break}if(rank<0)rank=data.length<20?data.length+1:0;
     renderLB(areaEl,data,rank,cfg);
   }).catch(function(){areaEl.innerHTML='<p class="lb-note">排行榜暂不可用(本地纪录已保存)</p>'});
@@ -515,8 +525,8 @@ function loadLB(areaEl,cfg){
 function renderLB(area,data,rank,cfg){
   var html='<div class="lb-wrap" style="margin-top:12px"><div style="font-size:11px;color:var(--g-gold);letter-spacing:2px;margin-bottom:4px">'+cfg.title+'</div>';
   if(rank>0){
-    html+='<div class="lb-submit"><input class="lb-input" id="lbName" maxlength="12" placeholder="输入昵称(最多12字)">'+
-      '<button class="lb-btn" id="lbSubmit">提交</button><button class="lb-btn-ghost" id="lbSkip">跳过</button></div>';
+    html+='<div class="lb-submit">'+
+      '<button class="lb-btn" id="lbSubmit">提交成绩</button><button class="lb-btn-ghost" id="lbSkip">跳过</button></div>';
   }else if(data.length>=20){html+='<p class="lb-note">你的成绩未进入前 20</p>'}
   html+='<div class="lb-toggle" id="lbToggle">📊 排行榜 ▸</div>'+
     '<div class="lb-table-wrap" id="lbWrap" style="display:none">'+
@@ -535,13 +545,25 @@ function renderLB(area,data,rank,cfg){
   }
 }
 function submitLB(area,cfg){
-  var n=(document.getElementById('lbName').value||'').trim();if(!n||n.length>12)n='流浪者';
+  if(!window.Auth){area.innerHTML='<p class="lb-note">登录组件未加载,请刷新页面</p>';return}
+  if(!Auth.isLoggedIn()){
+    area.innerHTML='<p class="lb-note">需要登录后提交成绩</p>';
+    Auth.openModal('login',function(){loadLB(area,cfg)});
+    return;
+  }
   var b=document.getElementById('lbSubmit');b.disabled=true;b.textContent='提交中...';
-  var f=new FormData();f.append('name',n);f.append('score',String(cfg.score));f.append('graze',String(cfg.graze));f.append('game',cfg.game);
-  fetch('api/leaderboard.php',{method:'POST',body:f}).then(function(r){return r.json()}).then(function(res){
-    if(res.ok){area.innerHTML='<p class="lb-ok">✅ 提交成功!排名第 <b>'+res.rank+'</b></p>'}
-    else{area.innerHTML='<p class="lb-note">提交失败</p>'}
-  }).catch(function(){area.innerHTML='<p class="lb-note">网络错误</p>'});
+  var f=new FormData();f.append('score',String(cfg.score));f.append('graze',String(cfg.graze));f.append('game',cfg.game);
+  fetch('api/leaderboard.php',{method:'POST',body:f,headers:{'Authorization':'Bearer '+Auth.token()}})
+    .then(function(r){return r.json().then(function(j){return{status:r.status,body:j}})})
+    .then(function(res){
+      if(res.status===401){
+        area.innerHTML='<p class="lb-note">需要登录后提交成绩</p>';
+        Auth.openModal('login',function(){loadLB(area,cfg)});
+        return;
+      }
+      if(res.body.ok){area.innerHTML='<p class="lb-ok">✅ 提交成功!排名第 <b>'+res.body.rank+'</b></p>'}
+      else{area.innerHTML='<p class="lb-note">提交失败</p>'}
+    }).catch(function(){area.innerHTML='<p class="lb-note">网络错误</p>'});
 }
 // 双榜配置:普通榜按金钱,无尽榜按存活天数
 function lbCfgNormal(){ return {game:'survival', score:S.money, graze:S.day, slabel:'金钱', glabel:'存活', sunit:'', gunit:'天', title:'🏙️ 普通模式榜 · 谁攒的钱多'}; }

@@ -17,6 +17,12 @@
   skyScript.defer = true;
   document.head.appendChild(skyScript);
 
+  // ── 账号模块(右上角登录入口 + 弹窗)──
+  var authScript = document.createElement('script');
+  authScript.src = 'js/auth.js';
+  authScript.defer = true;
+  document.head.appendChild(authScript);
+
   // ── 赞助码注入（游戏页除外）──
   function injectSponsor() {
     var page = (window.location.pathname.split('/').pop() || '').toLowerCase();

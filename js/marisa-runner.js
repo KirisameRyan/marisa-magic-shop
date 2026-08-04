@@ -215,11 +215,24 @@ function loadLB(finalScore) {
   lastFinalScore = finalScore;
   var lbArea = document.getElementById('lbArea');
   lbArea.classList.remove('hide');
+
+  // 登录墙
+  if (!Auth.isLoggedIn()) {
+    Auth.loginPrompt(lbArea, function() { loadLB(lastFinalScore); });
+    return;
+  }
   lbArea.innerHTML = '<p style="color:#8a7e9a;font-size:13px;">⏳ 加载排行榜...</p>';
 
-  fetch('api/leaderboard.php')
-    .then(function(r) { return r.json(); })
+  fetch('api/leaderboard.php', { headers: { 'Authorization': 'Bearer ' + Auth.token() } })
+    .then(function(r) {
+      if (r.status === 401) {
+        Auth.loginPrompt(lbArea, function() { loadLB(lastFinalScore); });
+        return null;
+      }
+      return r.json();
+    })
     .then(function(data) {
+      if (!data) return;
       var rank = checkRank(finalScore, data);
       renderLB(lbArea, data, rank, finalScore);
     })
@@ -239,8 +252,7 @@ function renderLB(area, data, rank, score) {
   var html = '<div class="lb-wrap">';
   if (rank > 0) {
     html += '<div class="lb-submit">';
-    html += '<input id="lbName" class="lb-input" maxlength="12" placeholder="输入昵称（最多12字）">';
-    html += '<button id="lbSubmit" class="lb-btn">提交</button>';
+    html += '<button id="lbSubmit" class="lb-btn">提交成绩</button>';
     html += '<button id="lbSkip" class="lb-btn-ghost">跳过</button>';
     html += '</div>';
   } else if (data.length >= 20) {
@@ -274,22 +286,31 @@ function renderLB(area, data, rank, score) {
 }
 
 function submitLB(area) {
-  var nameEl = document.getElementById('lbName');
-  var name = (nameEl.value || '').trim();
-  if (!name || name.length > 12) { name = '魔理沙'; }
+  if (!Auth.isLoggedIn()) {
+    area.innerHTML = '<p class="lb-err">需要登录后提交成绩</p>';
+    Auth.openModal('login', function() { loadLB(lastFinalScore); });
+    return;
+  }
   var btn = document.getElementById('lbSubmit');
   btn.disabled = true; btn.textContent = '提交中...';
 
   var form = new FormData();
-  form.append('name', name);
   form.append('score', String(lastFinalScore));
   form.append('graze', String(totalGraze));
 
-  fetch('api/leaderboard.php', { method: 'POST', body: form })
-    .then(function(r) { return r.json(); })
+  fetch('api/leaderboard.php', {
+    method: 'POST', body: form,
+    headers: { 'Authorization': 'Bearer ' + Auth.token() }
+  })
+    .then(function(r) { return r.json().then(function(j) { return { status: r.status, body: j }; }); })
     .then(function(res) {
-      if (res.ok) {
-        area.innerHTML = '<p class="lb-ok">✅ 提交成功！排名第 <b>' + res.rank + '</b></p>';
+      if (res.status === 401) {
+        area.innerHTML = '<p class="lb-err">需要登录后提交成绩</p>';
+        Auth.openModal('login', function() { loadLB(lastFinalScore); });
+        return;
+      }
+      if (res.body.ok) {
+        area.innerHTML = '<p class="lb-ok">✅ 提交成功！排名第 <b>' + res.body.rank + '</b></p>';
         loadLB(lastFinalScore);
         // 自动展开排行榜
         setTimeout(function() {
@@ -298,7 +319,7 @@ function submitLB(area) {
           if (t && w) { w.style.display = 'block'; t.textContent = '📊 排行榜 ▾'; }
         }, 300);
       } else {
-        area.innerHTML = '<p class="lb-err">提交失败: ' + (res.error||'未知错误') + '</p>';
+        area.innerHTML = '<p class="lb-err">提交失败: ' + (res.body.error||'未知错误') + '</p>';
       }
     })
     .catch(function() {

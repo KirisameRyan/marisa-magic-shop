@@ -11,3 +11,6 @@ bdunion.txt
 # 彩蛋计数器数据（运行时生成）
 data/*
 !data/.gitkeep
+
+# SMTP 发信凭据（勿上传）
+api/mail-config.php

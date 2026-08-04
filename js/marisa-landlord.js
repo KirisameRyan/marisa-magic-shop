@@ -1279,10 +1279,23 @@ function goEndless() {
 /* ═══════════ 15. 排行榜(与幸存者同款) ═══════════ */
 function loadLB(areaId, sc) {
   var area = $(areaId);
+
+  // 登录墙
+  if (!Auth.isLoggedIn()) {
+    Auth.loginPrompt(area, function() { loadLB(areaId, sc); });
+    return;
+  }
   area.innerHTML = '<p style="color:#8a7e9a;font-size:13px;">⏳ 加载排行榜...</p>';
-  fetch('api/leaderboard.php?game=' + CONFIG.LB_GAME)
-    .then(function(r) { return r.json(); })
+  fetch('api/leaderboard.php?game=' + CONFIG.LB_GAME, { headers: { 'Authorization': 'Bearer ' + Auth.token() } })
+    .then(function(r) {
+      if (r.status === 401) {
+        Auth.loginPrompt(area, function() { loadLB(areaId, sc); });
+        return null;
+      }
+      return r.json();
+    })
     .then(function(data) {
+      if (!data) return;
       var rank = -1;
       for (var i = 0; i < data.length; i++) if (sc > data[i].score) { rank = i + 1; break; }
       if (rank < 0) rank = data.length < 20 ? data.length + 1 : 0;
@@ -1296,8 +1309,7 @@ function renderLB(area, data, rank, sc, areaId) {
   var html = '<div class="lb-wrap">';
   if (rank > 0) {
     html += '<div class="lb-submit">' +
-      '<input class="lb-input" id="lbName_' + areaId + '" maxlength="12" placeholder="输入昵称(最多12字)">' +
-      '<button class="lb-btn" id="lbSubmit_' + areaId + '">提交</button>' +
+      '<button class="lb-btn" id="lbSubmit_' + areaId + '">提交成绩</button>' +
       '<button class="lb-btn-ghost" id="lbSkip_' + areaId + '">跳过</button></div>';
   } else if (data.length >= 20) {
     html += '<p class="lb-note">你的成绩未进入前 20</p>';
@@ -1324,23 +1336,33 @@ function renderLB(area, data, rank, sc, areaId) {
   }
 }
 function submitLB(area, areaId) {
-  var nameEl = $('lbName_' + areaId);
-  var name = (nameEl.value || '').trim();
-  if (!name || name.length > 12) name = '魔理沙';
+  if (!Auth.isLoggedIn()) {
+    area.innerHTML = '<p class="lb-err">需要登录后提交成绩</p>';
+    Auth.openModal('login', function() { loadLB(areaId, S.totalPaid); });
+    return;
+  }
   var btn = $('lbSubmit_' + areaId);
   btn.disabled = true; btn.textContent = '提交中...';
   var form = new FormData();
-  form.append('name', name);
   form.append('score', String(S.totalPaid));
   form.append('graze', String(S.day));
   form.append('game', CONFIG.LB_GAME);
-  fetch('api/leaderboard.php', { method: 'POST', body: form })
-    .then(function(r) { return r.json(); })
+  fetch('api/leaderboard.php', {
+    method: 'POST', body: form,
+    headers: { 'Authorization': 'Bearer ' + Auth.token() }
+  })
+    .then(function(r) { return r.json().then(function(j) { return { status: r.status, body: j }; }); })
     .then(function(res) {
-      if (res.ok) {
-        area.innerHTML = '<p class="lb-ok">✅ 提交成功!排名第 <b>' + res.rank + '</b></p>';
+      if (res.status === 401) {
+        area.innerHTML = '<p class="lb-err">需要登录后提交成绩</p>';
+        Auth.openModal('login', function() { loadLB(areaId, S.totalPaid); });
+        return;
+      }
+      if (res.body.ok) {
+        area.innerHTML = '<p class="lb-ok">✅ 提交成功!排名第 <b>' + res.body.rank + '</b></p>';
+        loadLB(areaId, S.totalPaid);
       } else {
-        area.innerHTML = '<p class="lb-err">提交失败:' + (res.error || '未知错误') + '</p>';
+        area.innerHTML = '<p class="lb-err">提交失败:' + (res.body.error || '未知错误') + '</p>';
       }
     })
     .catch(function() { area.innerHTML = '<p class="lb-err">网络错误,稍后再试</p>'; });
