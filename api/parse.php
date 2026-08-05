@@ -34,7 +34,7 @@ function mms_llm_config(): ?array {
 
 function mms_llm_chat(array $messages, string $model, bool $jsonMode = false): array {
     $cfg = mms_llm_config();
-    if (!$cfg) return ['ok' => false, 'error' => 'LLM 未配置'];
+    if (!$cfg) return ['ok' => false, 'error' => 'LLM 未配置', 'http_code' => 0];
     $payload = [
         'model' => $model,
         'messages' => $messages,
@@ -45,7 +45,8 @@ function mms_llm_chat(array $messages, string $model, bool $jsonMode = false): a
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST => true,
-        CURLOPT_TIMEOUT => 90,
+        CURLOPT_TIMEOUT => 20,
+        CURLOPT_CONNECTTIMEOUT => 5,
         CURLOPT_HTTPHEADER => [
             'Content-Type: application/json',
             'Authorization: Bearer ' . $cfg['api_key'],
@@ -56,19 +57,19 @@ function mms_llm_chat(array $messages, string $model, bool $jsonMode = false): a
     $err = curl_error($ch);
     $code = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
     curl_close($ch);
-    if ($resp === false) return ['ok' => false, 'error' => '请求失败: ' . $err];
+    if ($resp === false) return ['ok' => false, 'error' => '请求失败: ' . $err, 'http_code' => 0];
     if ($code !== 200) {
         $msg = 'HTTP ' . $code;
         $data = json_decode($resp, true);
         if (isset($data['error']['message'])) $msg .= ' ' . $data['error']['message'];
-        return ['ok' => false, 'error' => $msg];
+        return ['ok' => false, 'error' => $msg, 'http_code' => $code];
     }
     $data = json_decode($resp, true);
     $content = $data['choices'][0]['message']['content'] ?? null;
-    return ['ok' => $content !== null, 'content' => (string)$content, 'error' => '内容为空'];
+    return ['ok' => $content !== null, 'content' => (string)$content, 'error' => '内容为空', 'http_code' => 200];
 }
 
-// 带模型降级的调用: 主模型失败自动试备选
+// 带模型降级的调用: 主模型失败自动试备选; 限流(429/1305)秒切不重试
 function mms_llm_try(array $messages, bool $jsonMode, string $kind): ?array {
     $cfg = mms_llm_config();
     if (!$cfg) return null;
@@ -78,11 +79,11 @@ function mms_llm_try(array $messages, bool $jsonMode, string $kind): ?array {
     $lastErr = '';
     foreach ($models as $m) {
         if (!$m) continue;
-        for ($try = 0; $try < 2; $try++) {
-            $r = mms_llm_chat($messages, $m, $jsonMode);
-            if ($r['ok']) return $r;
-            $lastErr = $r['error'];
-        }
+        $r = mms_llm_chat($messages, $m, $jsonMode);
+        if ($r['ok']) return $r;
+        $lastErr = $r['error'];
+        // 限流/配额错误 → 立即换模型, 不重试
+        if (($r['http_code'] ?? 0) === 429) continue;
     }
     return ['error' => $lastErr];
 }

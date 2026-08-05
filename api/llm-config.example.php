@@ -9,7 +9,7 @@
 return [
     'base_url' => 'https://open.bigmodel.cn/api/paas/v4',
     'api_key'  => '你的智谱API密钥',
-    'vision_model' => 'glm-4.6v-flash',
-    'vision_fallback' => 'glm-4v-flash',
+    'vision_model' => 'glm-4v-flash',
+    'vision_fallback' => 'glm-4.6v-flash',
     'text_model'   => 'glm-4-flash',
 ];
