@@ -608,22 +608,30 @@
   function uploadImage(file) {
     if (!file.type.match(/^image\//)) { toast('请选择图片文件'); return; }
     if (file.size > 5 * 1024 * 1024) { toast('图片需 ≤ 5MB'); return; }
-    toast('🖼️ AI 识别中…');
+    toast('🖼️ AI 识别中(约 10 秒)…');
     var f = new FormData();
     f.append('action', 'image');
     f.append('file', file);
-    fetch(API_BASE + 'api/parse.php', { method: 'POST', body: f, headers: { 'Authorization': 'Bearer ' + Auth.token() } })
-      .then(function(r) { return r.json(); })
+    var ctrl = new AbortController();
+    var timer = setTimeout(function() { ctrl.abort(); }, 90000);
+    fetch(API_BASE + 'api/parse.php', { method: 'POST', body: f, headers: { 'Authorization': 'Bearer ' + Auth.token() }, signal: ctrl.signal })
+      .then(function(r) { return r.json().catch(function() { return { __http: r.status }; }); })
       .then(function(res) {
+        clearTimeout(timer);
         if (res.ok && res.records) {
           state.parseRecords = res.records;
           state.parseType = 'shot';
           showParsePreview('截图识别结果 · ' + res.count + ' 条');
+        } else if (res.__http) {
+          toast('服务器响应异常(' + res.__http + ')，请稍后再试');
         } else {
           toast(res.error || '识别失败');
         }
       })
-      .catch(function() { toast('网络错误，识别失败'); });
+      .catch(function(e) {
+        clearTimeout(timer);
+        toast(e && e.name === 'AbortError' ? '识别超时，请重试' : '网络错误，连接失败');
+      });
   }
 
   // ═══════ CSV 导入 ═══════
@@ -634,18 +642,26 @@
       var f = new FormData();
       f.append('action', 'csv');
       f.append('csv', String(reader.result));
-      fetch(API_BASE + 'api/parse.php', { method: 'POST', body: f, headers: { 'Authorization': 'Bearer ' + Auth.token() } })
-        .then(function(r) { return r.json(); })
+      var ctrl = new AbortController();
+      var timer = setTimeout(function() { ctrl.abort(); }, 90000);
+      fetch(API_BASE + 'api/parse.php', { method: 'POST', body: f, headers: { 'Authorization': 'Bearer ' + Auth.token() }, signal: ctrl.signal })
+        .then(function(r) { return r.json().catch(function() { return { __http: r.status }; }); })
         .then(function(res) {
+          clearTimeout(timer);
           if (res.ok && res.records) {
             state.parseRecords = res.records;
             state.parseType = 'csv';
             showParsePreview('CSV 解析结果 · ' + res.count + ' 条');
+          } else if (res.__http) {
+            toast('服务器响应异常(' + res.__http + ')，请稍后再试');
           } else {
             toast(res.error || '解析失败');
           }
         })
-        .catch(function() { toast('网络错误，解析失败'); });
+        .catch(function(e) {
+          clearTimeout(timer);
+          toast(e && e.name === 'AbortError' ? '解析超时，请重试' : '网络错误，连接失败');
+        });
     };
     reader.readAsText(file);
   }
