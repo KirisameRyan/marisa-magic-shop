@@ -150,6 +150,9 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
         <div class="muted" style="font-size:10px">🏙️ 市场热度：<span id="hHeat" class="gold">0</span></div>
         <div class="muted" style="font-size:10px">🧾 未售地块：<span id="hLandCnt" class="gold">0</span> · 🏦 贷款：<span id="hLoanCnt" class="gold">0</span>笔</div>
       </div>
+      <div class="hud-item hud-wide" style="text-align:center;background:rgba(240,192,96,.06);border-color:var(--g-gold-dim);padding:10px">
+        <span style="font-size:11px;color:var(--g-muted)">🀄 负债泡沫：</span><span id="hXuBig" class="xu-big">0.00000 许家印</span>
+      </div>
     </div>
 
     <div id="eventZone"></div>
@@ -305,6 +308,11 @@ function frozenIncome() { return S.credit < 25; }                     // 收入�
 function magicBlocked() { return S.credit < 15; }                     // 财务魔术禁用
 
 /* ═══════ 格式化 ═══════ */
+function xuFmt(v) {
+  if (v >= 1) return v.toFixed(2);
+  if (v >= 0.01) return v.toFixed(3);
+  return v.toFixed(5);
+}
 function fmt(n) {
   n = Math.round(n);
   if (Math.abs(n) >= 1e12) return (n / 1e12).toFixed(2) + '万亿';
@@ -519,8 +527,9 @@ function render() {
   if (!S) return;
   document.getElementById('hRound').textContent = S.round;
   document.getElementById('hCash').textContent = fmt(S.cash);
-  document.getElementById('hDebt').textContent = fmt(totalDebt()) + (totalDebt() / XU >= 0.001 ? ' (' + (totalDebt() / XU).toFixed(2) + '许)' : '');
+  document.getElementById('hDebt').textContent = fmt(totalDebt());
   document.getElementById('hOffshore').textContent = fmt(S.offshore);
+  document.getElementById('hXuBig').textContent = xuFmt(totalDebt() / XU) + ' 许家印';
   document.getElementById('hHeat').textContent = S.heat >= 0 ? '+' + S.heat : String(S.heat);
   document.getElementById('hLandCnt').textContent = S.lands.length;
   document.getElementById('hLoanCnt').textContent = S.loans.length;
