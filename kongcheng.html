@@ -9,16 +9,14 @@
 <link rel="stylesheet" href="css/common.css">
 <style>
 :root { --g-bg:#1a1520; --g-card:#241e2a; --g-border:#3a3045; --g-gold:#f0c060; --g-gold-dim:#a08050;
-        --g-purple:#b89fff; --g-text:#e0d8ec; --g-muted:#8a7e9a; --g-green:#6fcf97; --g-red:#ef4444; }
+        --g-purple:#b89fff; --g-text:#e0d8ec; --g-muted:#8a7e9a; --g-green:#6fcf97; --g-red:#ef4444; --g-yellow:#f5c542; }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--g-bg);
   color:var(--g-text); min-height:100vh; padding:16px 12px 80px; display:flex; flex-direction:column; align-items:center; }
 .wrap { width:100%; max-width:420px; }
-
-/* ── 通用卡 ── */
 .card { background:var(--g-card); border:1px solid var(--g-border); border-radius:18px; padding:14px; margin-bottom:12px; }
 .gold-text { background:linear-gradient(135deg,var(--g-gold),#ffe8b0,var(--g-gold)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-.muted { color:var(--g-muted); } .gold { color:var(--g-gold); } .green { color:var(--g-green); } .red { color:var(--g-red); }
+.muted { color:var(--g-muted); } .gold { color:var(--g-gold); } .green { color:var(--g-green); } .red { color:var(--g-red); } .yellow { color:var(--g-yellow); }
 
 /* ── 开场/教程 ── */
 .overlay { position:fixed; inset:0; z-index:120; background:rgba(26,21,32,.96); backdrop-filter:blur(12px);
@@ -45,17 +43,23 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
 .hud { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 .hud-item { background:var(--g-card); border:1px solid var(--g-border); border-radius:14px; padding:8px 10px; }
 .hud-label { font-size:9px; color:var(--g-muted); letter-spacing:1px; }
-.hud-val { font-size:16px; font-weight:800; margin-top:2px; font-variant-numeric:tabular-nums; }
+.hud-val { font-size:15px; font-weight:800; margin-top:2px; font-variant-numeric:tabular-nums; }
 .hud-val.small { font-size:12px; }
 .hud-wide { grid-column:1 / -1; display:flex; justify-content:space-between; align-items:center; }
-.hud-wide .hud-label { font-size:10px; }
-.xu-big { font-size:20px; font-weight:900; color:var(--g-gold); letter-spacing:1px; }
+.xu-big { font-size:18px; font-weight:900; color:var(--g-gold); letter-spacing:1px; }
+/* 行动点 */
+.apt { display:flex; gap:6px; align-items:center; }
+.apt .dot { width:14px; height:14px; border-radius:50%; background:var(--g-border); border:1px solid var(--g-gold-dim); }
+.apt .dot.on { background:var(--g-gold); box-shadow:0 0 8px rgba(240,192,96,.5); }
+/* 信用条 */
+.credit-bar { height:8px; background:var(--g-border); border-radius:4px; overflow:hidden; margin-top:4px; }
+.credit-fill { height:100%; border-radius:4px; transition:width .3s;
+  background:linear-gradient(90deg, var(--g-red), var(--g-yellow), var(--g-green)); }
+.credit-mark { font-size:9px; color:var(--g-muted); margin-top:3px; }
 
-/* ── 区块标题 ── */
+/* ── 区块 ── */
 .sec-title { font-size:10px; color:var(--g-muted); letter-spacing:2px; margin:14px 0 8px; display:flex; align-items:center; gap:6px; }
 .sec-title .cnt { margin-left:auto; font-size:10px; color:var(--g-gold-dim); }
-
-/* ── 资产/债务/奢侈品列表 ── */
 .item { display:flex; align-items:center; gap:8px; padding:8px 10px; background:rgba(255,255,255,.02);
   border:1px solid var(--g-border); border-radius:12px; margin-bottom:6px; }
 .item .i-ico { font-size:18px; width:24px; text-align:center; flex-shrink:0; }
@@ -63,18 +67,19 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
 .item .i-name { font-size:13px; }
 .item .i-sub { font-size:10px; color:var(--g-muted); margin-top:2px; }
 .item .i-val { font-size:13px; font-weight:700; flex-shrink:0; }
-.debt-due { font-size:10px; color:var(--g-red); font-weight:700; }
-.debt-due.safe { color:var(--g-muted); }
 
 /* ── 操作区 ── */
 .actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 .act { background:var(--g-card); border:1px solid var(--g-border); border-radius:14px; padding:11px 8px;
-  cursor:pointer; color:var(--g-text); font-family:inherit; text-align:center; transition:all .15s; }
+  cursor:pointer; color:var(--g-text); font-family:inherit; text-align:center; transition:all .15s; position:relative; }
 .act:hover { border-color:var(--g-gold); transform:translateY(-1px); }
 .act .a-ico { font-size:20px; display:block; margin-bottom:3px; }
 .act .a-txt { font-size:12px; font-weight:700; }
 .act .a-sub { font-size:9px; color:var(--g-muted); margin-top:2px; }
+.act .a-cost { position:absolute; top:6px; right:8px; font-size:9px; color:var(--g-gold-dim); }
 .act:disabled { opacity:.35; cursor:default; transform:none; }
+.act.frozen { border-color:var(--g-red); opacity:.55; }
+.act.frozen .a-txt { color:var(--g-red); }
 .act.end { grid-column:1/-1; background:linear-gradient(135deg,var(--g-gold),#c89a40); color:#1a1520; }
 .act.end .a-txt { font-weight:900; }
 
@@ -87,28 +92,29 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
 .opt { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--g-border);
   border-radius:12px; margin-bottom:8px; cursor:pointer; background:rgba(255,255,255,.02); }
 .opt:hover { border-color:var(--g-gold); }
-.opt.sel { border-color:var(--g-gold); background:rgba(240,192,96,.08); }
 .opt .o-ico { font-size:20px; } .opt .o-main { flex:1; } .opt .o-name { font-size:13px; font-weight:700; }
 .opt .o-sub { font-size:10px; color:var(--g-muted); margin-top:2px; }
 .opt .o-val { font-size:13px; font-weight:800; color:var(--g-gold); }
+.opt.off { opacity:.4; cursor:default; }
 .pop-btn { width:100%; border:none; border-radius:12px; padding:12px 0; font-size:14px; font-weight:800;
   background:linear-gradient(135deg,var(--g-gold),#c89a40); color:#1a1520; cursor:pointer; font-family:inherit; margin-top:6px; }
-.pop-btn:disabled { opacity:.4; }
 
-/* ── 事件横幅 ── */
+/* ── 事件 ── */
 .event-bar { background:rgba(176,159,255,.08); border:1px solid var(--g-purple); border-radius:12px;
   padding:9px 12px; font-size:12px; margin-bottom:10px; animation:fadeUp .3s ease; }
 .event-bar .e-title { color:var(--g-purple); font-weight:800; }
+.event-choices { display:flex; gap:8px; margin-top:8px; }
+.event-btn { flex:1; background:rgba(255,255,255,.05); border:1px solid var(--g-border); border-radius:10px;
+  padding:8px 4px; font-size:11px; color:var(--g-text); cursor:pointer; font-family:inherit; }
+.event-btn:hover { border-color:var(--g-gold); color:var(--g-gold); }
 
 /* ── 结算 ── */
-.final-xu { font-size:44px; font-weight:900; letter-spacing:2px; margin:10px 0 4px; }
+.final-xu { font-size:40px; font-weight:900; letter-spacing:2px; margin:10px 0 4px; }
 .final-tag { font-size:13px; color:var(--g-gold); letter-spacing:2px; }
-.final-msg { font-size:13px; color:var(--g-text); line-height:2; margin:14px 0; padding:12px; background:rgba(255,255,255,.03);
+.final-msg { font-size:13px; line-height:2; margin:14px 0; padding:12px; background:rgba(255,255,255,.03);
   border:1px solid var(--g-border); border-radius:12px; }
 .final-msg i { color:var(--g-gold); font-style:italic; }
 .final-stats { font-size:12px; color:var(--g-muted); line-height:1.9; margin-bottom:14px; }
-
-/* ── 回合结算动画 ── */
 .settle-feed { font-size:11px; color:var(--g-muted); line-height:1.9; }
 .settle-feed .plus { color:var(--g-green); } .settle-feed .minus { color:var(--g-red); }
 
@@ -125,36 +131,49 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
   <!-- ═══════ 游戏主屏 ═══════ -->
   <div id="gameScreen" style="display:none;">
     <div class="card hud">
-      <div class="hud-item"><div class="hud-label">回合</div><div class="hud-val small" id="hRound">1</div></div>
-      <div class="hud-item"><div class="hud-label">称号</div><div class="hud-val small gold" id="hTitle">小开发商</div></div>
-      <div class="hud-item"><div class="hud-label">现金</div><div class="hud-val green" id="hCash">0</div></div>
-      <div class="hud-item"><div class="hud-label">总负债</div><div class="hud-val red" id="hDebt">0</div></div>
+      <div class="hud-item"><div class="hud-label">季度</div><div class="hud-val small" id="hRound">1</div></div>
+      <div class="hud-item"><div class="hud-label">行动点</div><div class="hud-val small"><span class="apt" id="hAP">●●●</span></div></div>
+      <div class="hud-item"><div class="hud-label">账面现金</div><div class="hud-val green" id="hCash">0</div></div>
+      <div class="hud-item"><div class="hud-label">负债</div><div class="hud-val red" id="hDebt">0</div></div>
       <div class="hud-item hud-wide">
-        <div><div class="hud-label">可借额度</div><div class="hud-val small" id="hCredit">0</div></div>
-        <div style="text-align:right"><div class="hud-label">已滚成</div><div class="xu-big" id="hXu">0 许</div></div>
+        <div style="flex:1;margin-right:10px">
+          <div class="hud-label">市场信用</div>
+          <div class="credit-bar"><div class="credit-fill" id="creditFill" style="width:60%"></div></div>
+          <div class="credit-mark" id="creditMark">60 · 正常</div>
+        </div>
+        <div style="text-align:right">
+          <div class="hud-label">已卷走</div>
+          <div class="xu-big green" id="hOffshore">0</div>
+        </div>
+      </div>
+      <div class="hud-item hud-wide">
+        <div class="muted" style="font-size:10px">🏙️ 市场热度：<span id="hHeat" class="gold">0</span></div>
+        <div class="muted" style="font-size:10px">🧾 未售地块：<span id="hLandCnt" class="gold">0</span> · 🏦 贷款：<span id="hLoanCnt" class="gold">0</span>笔</div>
       </div>
     </div>
 
     <div id="eventZone"></div>
     <div id="settleFeed" class="card" style="display:none;"></div>
 
-    <div class="sec-title">🏠 空城项目 <span class="cnt" id="cAssetCnt">0 座</span></div>
-    <div id="assetList"></div>
+    <div class="sec-title">🗺️ 地块 <span class="cnt" id="cLandCnt">0 块</span></div>
+    <div id="landList"></div>
 
-    <div class="sec-title">💳 债务 <span class="cnt" id="cDebtCnt">0 笔</span></div>
-    <div id="debtList"></div>
+    <div class="sec-title">🏦 永续贷款 <span class="cnt" id="cLoanCnt">0 笔</span></div>
+    <div id="loanList"></div>
 
     <div class="sec-title">💎 排面 <span class="cnt" id="cLuxCnt">0 件</span></div>
     <div id="luxList"></div>
 
-    <div class="sec-title">🎮 行动</div>
+    <div class="sec-title">🎮 行动 <span class="muted" style="font-weight:400;letter-spacing:0">剩余 <span id="apLeft">3</span> 点</span></div>
     <div class="actions">
-      <button class="act" id="aBorrow"><span class="a-ico">🏦</span><span class="a-txt">借钱</span><span class="a-sub">信用/抵押/高利</span></button>
-      <button class="act" id="aBuy"><span class="a-ico">🏗️</span><span class="a-txt">买楼盘</span><span class="a-sub">扩张空城</span></button>
-      <button class="act" id="aLux"><span class="a-ico">💎</span><span class="a-txt">买排面</span><span class="a-sub">奢侈品+分</span></button>
-      <button class="act" id="aSell"><span class="a-ico">🏷️</span><span class="a-txt">变卖</span><span class="a-sub">楼75%·奢50%</span></button>
+      <button class="act" id="aLand"><span class="a-cost" id="cLandCost">1点</span><span class="a-ico">🗺️</span><span class="a-txt">画饼拿地</span><span class="a-sub">3档地皮·价浮动</span></button>
+      <button class="act" id="aSale"><span class="a-cost" id="cSaleCost">1点</span><span class="a-ico">🏷️</span><span class="a-txt">预售圈钱</span><span class="a-sub">3~5倍·信用-</span></button>
+      <button class="act" id="aPatch"><span class="a-cost">1点</span><span class="a-ico">🛠️</span><span class="a-txt">缝补工程</span><span class="a-sub" id="cPatchSub">信用+</span></button>
+      <button class="act" id="aLoan"><span class="a-cost">1点</span><span class="a-ico">🏦</span><span class="a-txt">抵押贷款</span><span class="a-sub" id="cLoanSub">永续付息</span></button>
+      <button class="act" id="aMagic"><span class="a-cost">3点</span><span class="a-ico">💸</span><span class="a-txt">财务魔术</span><span class="a-sub">卷钱跑路</span></button>
+      <button class="act" id="aLuxBtn"><span class="a-cost">1点</span><span class="a-ico">💎</span><span class="a-txt">买排面</span><span class="a-sub">奢华分+</span></button>
       <button class="act" id="aMusic"><span class="a-ico">🎵</span><span class="a-txt">音乐</span><span class="a-sub" id="aMusicSub">开</span></button>
-      <button class="act end" id="aEnd"><span class="a-ico">⏭️</span><span class="a-txt">结束回合 · 结算</span></button>
+      <button class="act end" id="aEnd"><span class="a-ico">⏭️</span><span class="a-txt">结束季度 · 结算</span></button>
     </div>
     <div class="settle-feed" style="margin-top:10px;text-align:center" id="tipLine"></div>
   </div>
@@ -163,9 +182,9 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
   <div id="finalScreen" style="display:none;">
     <div class="card" style="text-align:center;padding:26px 18px;">
       <div style="font-size:56px;margin-bottom:6px">💥</div>
-      <div class="muted" style="font-size:12px;letter-spacing:3px">崩 盘 了</div>
-      <div style="font-size:13px;color:var(--g-muted);margin-top:12px">你崩盘时负债</div>
-      <div class="final-xu gold-text" id="fXu">0 许</div>
+      <div class="muted" style="font-size:12px;letter-spacing:3px">资 金 链 断 裂 · 全 剧 终</div>
+      <div style="font-size:13px;color:var(--g-muted);margin-top:12px">你成功卷走了</div>
+      <div class="final-xu gold-text" id="fXu">0</div>
       <div class="final-tag" id="fTitle">—</div>
       <div class="final-stats" id="fStats"></div>
       <div class="final-msg" id="fMsg"></div>
@@ -181,14 +200,15 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
   <div class="ov-card">
     <div class="ov-icon">🎭</div>
     <div class="ov-title gold-text">空 城 计</div>
-    <div class="ov-sub">你 · 就 · 是 · 许 · 家 · 印</div>
+    <div class="ov-sub">卖 楼 · 不 盖 · 卷 钱 · 跑 路</div>
     <div class="ov-body" id="introBody">
-      <p>你是 <b>许总</b>。白手起家，目标只有一个：<br>把泡沫滚到最大。</p>
-      <p style="margin-top:8px">今天，你手握 <b>1500 万</b> 启动资金，<br>准备盖楼、借钱、再盖楼。</p>
+      <p>你是 <b>许总</b>。出身微末，却有着不世出的才华：<br><b>把空气卖出黄金的价。</b></p>
+      <p style="margin-top:8px">今天，你握着 <b>2000 万</b>，站在一片荒地上。</p>
+      <p style="margin-top:8px">身后是即将被你卖掉的、<b>并不存在的楼</b>。</p>
     </div>
     <button class="ov-btn" id="introBtn">开始 →</button>
     <div class="music-row"><input type="checkbox" id="musicOn" checked> 🎵 背景音乐《朋友的酒》</div>
-    <div class="ov-note">本游戏纯属虚构 · 娱乐而已 · 请理性消费</div>
+    <div class="ov-note">本游戏纯属虚构 · 讽刺虚构 · 请勿对号入座</div>
   </div>
 </div>
 
@@ -205,39 +225,39 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
   </div>
 </div>
 
-<!-- ═══════ 借钱弹层 ═══════ -->
-<div class="mask" id="mBorrow">
+<!-- ═══════ 拿地弹层 ═══════ -->
+<div class="mask" id="mLand">
   <div class="pop">
-    <div class="pop-title"><span>🏦 借钱</span><button class="pop-close" onclick="closePop('mBorrow')">✕</button></div>
-    <div id="borrowOpts"></div>
-    <div class="settle-feed muted" style="margin-top:8px;text-align:center">利息按未还本金每回合复利计算，到期一次还清</div>
+    <div class="pop-title"><span>🗺️ 画饼拿地</span><button class="pop-close" onclick="closePop('mLand')">✕</button></div>
+    <div class="muted" style="font-size:11px;margin-bottom:10px">今日地价随市场浮动，买了地才有得卖。</div>
+    <div id="landOpts"></div>
   </div>
 </div>
 
-<!-- ═══════ 买楼弹层 ═══════ -->
-<div class="mask" id="mBuy">
+<!-- ═══════ 预售弹层 ═══════ -->
+<div class="mask" id="mSale">
   <div class="pop">
-    <div class="pop-title"><span>🏗️ 买楼盘</span><button class="pop-close" onclick="closePop('mBuy')">✕</button></div>
-    <div id="buyOpts"></div>
-    <div class="settle-feed muted" style="margin-top:8px;text-align:center">楼盘几乎不产生收益——但它是抵押融资的敲门砖</div>
+    <div class="pop-title"><span>🏷️ 预售圈钱</span><button class="pop-close" onclick="closePop('mSale')">✕</button></div>
+    <div class="muted" style="font-size:11px;margin-bottom:10px">对未建的楼收全额预售款。楼？楼会有的，在 PPT 里。</div>
+    <div id="saleOpts"></div>
   </div>
 </div>
 
-<!-- ═══════ 奢侈品弹层 ═══════ -->
+<!-- ═══════ 贷款弹层 ═══════ -->
+<div class="mask" id="mLoan">
+  <div class="pop">
+    <div class="pop-title"><span>🏦 抵押贷款</span><button class="pop-close" onclick="closePop('mLoan')">✕</button></div>
+    <div class="muted" style="font-size:11px;margin-bottom:10px">永续贷款：没有到期日，每季度都要付息，直到永远。</div>
+    <div id="loanOpts"></div>
+  </div>
+</div>
+
+<!-- ═══════ 排面弹层 ═══════ -->
 <div class="mask" id="mLux">
   <div class="pop">
     <div class="pop-title"><span>💎 买排面</span><button class="pop-close" onclick="closePop('mLux')">✕</button></div>
     <div id="luxOpts"></div>
-    <div class="settle-feed muted" style="margin-top:8px;text-align:center">奢侈品只涨分不涨钱——把救命现金换成虚荣</div>
-  </div>
-</div>
-
-<!-- ═══════ 变卖弹层 ═══════ -->
-<div class="mask" id="mSell">
-  <div class="pop">
-    <div class="pop-title"><span>🏷️ 变卖资产</span><button class="pop-close" onclick="closePop('mSell')">✕</button></div>
-    <div id="sellOpts"></div>
-    <div class="settle-feed muted" style="margin-top:8px;text-align:center">楼盘按 75% 回血，奢侈品按 50% 贱卖</div>
+    <div class="settle-feed muted" style="margin-top:8px;text-align:center">排面不产生一分钱收益——但落跑时体面一点。</div>
   </div>
 </div>
 
@@ -246,46 +266,43 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
    空城计 · 数值配置(调整平衡改这里)
    ═══════════════════════════════════════ */
 var WAN = 10000, YI = 10000 * WAN;
-var XU = 20000 * YI;                 // 1 许 = 2 万亿
+var XU = 20000 * YI;
 var CFG = {
   startCash: 2000 * WAN,
-  buildings: [
-    { name:'住宅盘', icon:'🏠', price:100*WAN,    desc:'城郊连排，远看还行' },
-    { name:'商业体', icon:'🏬', price:500*WAN,    desc:'招商手册很精美' },
-    { name:'文旅镇', icon:'🏯', price:2500*WAN,   desc:'主打"情怀"，没人来' },
-    { name:'产业新城', icon:'🏙️', price:1*YI,    desc:'PPT 上的一线城市' }
+  startCredit: 60,
+  lands: [
+    { tier: '鬼城', icon: '🏚️', base: 500 * WAN,  mult: 3, need: 0,  desc: '鸟不拉屎的开发区，横幅挂满墙' },
+    { tier: '二线', icon: '🏘️', base: 2000 * WAN, mult: 4, need: 50, desc: '三线城市的"新中心"，宣传册很厚' },
+    { tier: '一线', icon: '🏙️', base: 8000 * WAN, mult: 5, need: 80, desc: '宇宙中心的最后一块地，刚需接盘' }
   ],
-  loans: [
-    { key:'credit',  name:'信用贷', icon:'🏦', rate:0.06, term:4, desc:'额度固定，随楼盘等级提升' },
-    { key:'mortgage',name:'抵押贷', icon:'🏛️', rate:0.10, term:8, desc:'额度=楼盘90%，越贷越多' },
-    { key:'usury',   name:'高利贷', icon:'🔥', rate:0.35, term:1, desc:'额度1亿，拆东墙补西墙', unlock:3 }
-  ],
+  patchBase: 100 * WAN,     // 缝补基础费
+  patchGrowth: 0.3,         // 缝补费随卖地次数增长系数
+  magicRatio: 0.45,          // 财务魔术转化比例
   luxury: [
-    { name:'豪车',   icon:'🚗', price:50*WAN,   pts:200 },
-    { name:'游艇',   icon:'⛵', price:200*WAN,  pts:1000 },
-    { name:'私人飞机', icon:'✈️', price:1000*WAN, pts:6000 },
-    { name:'酒庄',   icon:'🍷', price:3000*WAN, pts:20000 }
+    { name: '豪车',   icon: '🚗', price: 50 * WAN,   pts: 200 },
+    { name: '游艇',   icon: '⛵', price: 200 * WAN,  pts: 1000 },
+    { name: '私人飞机', icon: '✈️', price: 1000 * WAN, pts: 6000 },
+    { name: '酒庄',   icon: '🍷', price: 3000 * WAN, pts: 20000 }
   ],
-  rollRate: 0.12, rollTerm: 4, maxRolls: 5,   // 展期
-  bgm: 'audio/friends-wine.mp3'               // 《朋友的酒》放 audio/ 目录并改此名
+  bgm: 'audio/friends-wine.mp3'
 };
+var AP_PER_ROUND = 3;
 
 /* ═══════ 状态 ═══════ */
 var S = null;
-var usedLoans = {};
 function newState() {
-  usedLoans = {};
-  return { cash: CFG.startCash, debts: [], assets: [], luxuries: [], round: 1, unlocked: 1,
-           rolls: 0, events: {}, crashed: false, eventMsg: '' };
+  return { cash: CFG.startCash, credit: CFG.startCredit, offshore: 0, luxPts: 0, luxuries: [],
+           lands: [], loans: [], round: 1, ap: AP_PER_ROUND, heat: 0, saleCount: 0,
+           patchCount: 0, magicCount: 0, loanCount: 0, events: {}, crashed: false };
 }
-function assetValue() { return S.assets.reduce(function(a, b) { return a + b.price; }, 0); }
-function mortgaged() { return S.debts.reduce(function(a, d) { return a + (d.isMortgage ? d.principal : 0); }, 0); }
-function totalDebt() { return S.debts.reduce(function(a, d) { return a + d.total; }, 0); }
-function creditLimit() {
-  var creditPool = [2000 * WAN, 5000 * WAN, 1 * YI, 2 * YI][S.unlocked - 1];
-  var byLoan = { credit: creditPool, mortgage: Math.max(0, assetValue() * 0.9 - mortgaged()), usury: 1 * YI };
-  return byLoan;
-}
+function totalLoan() { return S.loans.reduce(function(a, l) { return a + l.amount; }, 0); }
+function totalDebt() { return totalLoan(); }
+function landValue() { return S.lands.reduce(function(a, l) { return a + l.price; }, 0); }
+function creditFactor() { return 0.6 + S.credit / 100 * 0.4; }        // 信用→预售倍率加成 0.6~1.0
+function mortgageRate() { return 0.6 * (S.credit / 100); }            // 信用→抵押率 0~60%
+function interestRate() { return 0.10 - 0.05 * (S.credit / 100); }    // 信用→利率 10%~5%
+function frozenIncome() { return S.credit < 25; }                     // 收入冻结(预售/贷款不可用)
+function magicBlocked() { return S.credit < 15; }                     // 财务魔术禁用
 
 /* ═══════ 格式化 ═══════ */
 function fmt(n) {
@@ -295,17 +312,17 @@ function fmt(n) {
   if (Math.abs(n) >= 1e4) return (n / 1e4).toFixed(0) + '万';
   return String(n);
 }
-function xuStr() { return (totalDebt() / XU).toFixed(4); }
 
-/* ═══════ 开局/教程(分页, 效仿流浪模拟器) ═══════ */
+/* ═══════ 教程(故事化, 8页) ═══════ */
 var TUT = [
-  { icon:'🎭', title:'你是许总', body:'白手起家，手握 <b>1500 万</b>。<br><br>目标不是赢，是<b>把泡沫滚到最大</b>，直到崩盘。<br><br>滚得越大，分数越高。' },
-  { icon:'🏗️', title:'核心循环', body:'<b>借钱 → 买楼盘 → 抵押 → 再借钱 → 再买楼</b><br><br>楼盘几乎不产生收益，但它是<b>抵押融资</b>的敲门砖——资产越多，借得越多。' },
-  { icon:'💳', title:'债务雪球', body:'三种贷款：<b>信用贷</b>(现金×1)、<b>抵押贷</b>(楼盘90%)、<b>高利贷</b>(1亿, 后期解锁)。<br><br>利息每回合复利滚入，到期一次还清。' },
-  { icon:'💎', title:'排面', body:'买豪车、游艇、私人飞机——<b>只涨分不涨钱</b>。<br><br>把救命现金换成虚荣，崩盘时分数更高。<br><br>每个回合还要交 <b>2% 排场费</b>，现金越多烧得越狠。' },
-  { icon:'🆘', title:'展期', body:'到期还不起？可以<b>展期</b>：付 20% 违约金，债务延期 2 回合，利息暴涨。<br><br>最多展期 3 次。这是最后的救命稻草，也是加速死亡的毒药。' },
-  { icon:'📏', title:'许家印单位', body:'<b>1 许家印 = 2 万亿负债</b>。<br><br>崩盘时你负债多少，就是"几个许家印"：<br>0.5 许、1 许、5 许……<br><br>数字越大，你越接近传奇。' },
-  { icon:'💥', title:'崩盘', body:'每回合结束结算：现金流 → 利息 → 排场费 → 到期还款。<br><br><b>现金不够就崩盘</b>。崩盘是必然，只是早晚。<br><br>祝你好运，许总。' }
+  { icon:'🎭', title:'故事开始', body:'九十年代，你在工地上搬过砖，在售楼处发过传单。<br><br>你终于悟了：<b>盖楼的人累死，卖楼的人发财。</b><br><br>所以，你决定只卖楼，不盖楼。' },
+  { icon:'🗺️', title:'画饼拿地', body:'花钱买地——<b>鬼城 / 二线 / 一线</b> 三档，价格随市场浮动。<br><br>地买得越贵，将来预售圈的钱越多。<br><br>但信用不足时，好地不卖给你。' },
+  { icon:'🏷️', title:'预售圈钱', body:'对<b>还没盖的楼</b>收全额预售款：<br>回款 = 地价 × <b>3~5 倍</b>(随市场浮动)。<br><br>钱到手了，楼？<b>楼会有的，在 PPT 里。</b><br><br>代价：信用 -15。卖得越狠，信得越少。' },
+  { icon:'🛠️', title:'缝补工程', body:'偶尔花点小钱"动工"，给业主们一点希望。<br><br>信用 +20。<br><br>但每卖出一块地，缝补的费用就水涨船高——<br><b>窟窿越大，补丁越贵。</b>' },
+  { icon:'🏦', title:'抵押贷款', body:'拿地皮上银行借<b>工程款</b>。<br><br>这是<b>永续贷款</b>：没有到期日，每季度付息，直到永远。<br><br>信用越高，抵押率越高、利息越低。<br>信用 <30 → <b>收入冻结</b>：预售和贷款全都借不动。' },
+  { icon:'💸', title:'财务魔术', body:'把账面现金的 40% 变成<b>离岸资产</b>——<br>消耗2个行动点，信用 -5。<br><br><b>卷走的钱 = 最终得分。</b><br>信用 <20 时，连魔术都变不动了。' },
+  { icon:'⚖️', title:'信用是命', body:'信用驱动一切：<br>贷款上限 / 可买地块 / 缝补效果 / 预售收入。<br><br>业主维权、审计上门——<b>都是钱能摆平的事</b>，<br>但钱摆平得越多，窟窿越大。<br><br>信用归零的那天，就是全剧终。' },
+  { icon:'💥', title:'结局', body:'每个季度结算：付利息、养排场。<br><b>现金付不起利息+排场费 → 资金链断裂 → 全剧终。</b><br><br>结算时看你<b>卷走了多少钱</b>。<br><br>祝你好运，许总。愿你的空城，卖个好价钱。' }
 ];
 var tutIdx = 0;
 function renderTut() {
@@ -314,7 +331,7 @@ function renderTut() {
   document.getElementById('tutTitle').textContent = t.title;
   document.getElementById('tutBody').innerHTML = t.body;
   document.getElementById('tutPrev').style.display = tutIdx === 0 ? 'none' : '';
-  document.getElementById('tutNext').textContent = tutIdx === TUT.length - 1 ? '🏗️ 开始盖楼' : '下一步 →';
+  document.getElementById('tutNext').textContent = tutIdx === TUT.length - 1 ? '🗺️ 开始圈地' : '下一步 →';
 }
 document.getElementById('introBtn').addEventListener('click', function() {
   document.getElementById('introOverlay').style.display = 'none';
@@ -345,6 +362,7 @@ document.getElementById('musicOn').addEventListener('change', function() {
 /* ═══════ 开始 ═══════ */
 function startGame() {
   S = newState();
+  rollHeat();
   document.getElementById('tutOverlay').style.display = 'none';
   document.getElementById('finalScreen').style.display = 'none';
   document.getElementById('gameScreen').style.display = 'block';
@@ -352,132 +370,148 @@ function startGame() {
   render();
 }
 
-/* ═══════ 操作 ═══════ */
-function borrow(type) {
-  if (usedLoans[type]) return;  // 每回合每类限借一笔
-  var L = CFG.loans.find(function(l) { return l.key === type; });
-  var lim = creditLimit()[type];
-  if (lim <= 0) return;
-  if (type === 'usury' && S.unlocked < L.unlock) return;
-  S.cash += lim;
-  S.debts.push({ principal: lim, rate: L.rate, term: L.term, due: S.round + L.term, total: lim, isMortgage: type === 'mortgage' });
-  usedLoans[type] = true;
+/* ═══════ 核心操作 ═══════ */
+function spendAP(n) {
+  if (S.ap < n) return false;
+  S.ap -= n;
+  return true;
+}
+function buyLand(tierIdx) {
+  var l = CFG.lands[tierIdx];
+  var price = Math.round(l.base * (0.8 + Math.random() * 0.4 + S.heat * 0.05));
+  if (S.cash < price) return;
+  S.cash -= price;
+  S.lands.push({ tier: tierIdx, icon: l.icon, name: l.tier, price: price });
+  S.ap--;
   render();
 }
-function buyBuilding(lv) {
-  var b = CFG.buildings[lv - 1];
-  if (S.cash < b.price) return;
-  S.cash -= b.price;
-  S.assets.push({ price: b.price, lv: lv });
-  if (lv >= S.unlocked && S.unlocked < CFG.buildings.length) S.unlocked++;
+function presale(idx) {
+  var ld = S.lands[idx];
+  var l = CFG.lands[ld.tier];
+  var mult = (l.mult + S.heat) * creditFactor();
+  var money = Math.round(ld.price * mult);
+  S.cash += money;
+  S.lands.splice(idx, 1);           // 地没了(楼卖掉了, 楼没盖)
+  S.credit = Math.max(0, S.credit - 5);
+  S.saleCount++;
+  S.ap--;
+  toast('🏷️ 预售成功 +' + fmt(money) + '（' + ld.name + ' ×' + mult.toFixed(1) + '倍）');
+  render();
+}
+function patch() {
+  var cost = CFG.patchBase * (1 + S.saleCount * CFG.patchGrowth);   // 卖得越多补丁越贵
+  if (S.cash < cost) return;
+  S.cash -= cost;
+  S.credit = Math.min(100, S.credit + 30);
+  S.patchCount++;
+  S.ap--;
+  toast('🛠️ 打了地基，立了围挡，贴了横幅。信用 +20');
+  render();
+}
+function takeLoan(idx) {
+  var ld = S.lands[idx];
+  var amount = Math.round(ld.price * mortgageRate());
+  if (amount <= 0) return;
+  S.cash += amount;
+  S.loans.push({ amount: amount, rate: interestRate() });
+  S.credit = Math.max(0, S.credit - 1);
+  S.ap--;
+  toast('🏦 借到 ' + fmt(amount) + '（利率 ' + (interestRate() * 100).toFixed(0) + '%/季度）');
+  render();
+}
+function magic() {
+  if (magicBlocked()) return;
+  if (S.ap < 2) return;
+  var amount = Math.round(S.cash * CFG.magicRatio);
+  if (amount <= 0) return;
+  S.cash -= amount;
+  S.offshore += amount;
+  S.credit = Math.max(0, S.credit - 5);
+  S.ap -= 2;
+  S.magicCount++;
+  toast('💸 财务魔术：' + fmt(amount) + ' 已离岸！');
   render();
 }
 function buyLux(idx) {
   var l = CFG.luxury[idx];
-  if (S.cash < l.price) return;
+  if (S.cash < l.price || S.ap < 1) return;
   S.cash -= l.price;
   S.luxuries.push({ price: l.price, pts: l.pts, idx: idx });
+  S.luxPts += l.pts;
+  S.ap--;
+  toast('💎 ' + l.name + ' +' + l.pts + ' 奢华分');
   render();
 }
-function sellAsset(kind, idx) {
-  if (kind === 'asset') {
-    var b = S.assets.splice(idx, 1)[0];
-    S.cash += b.price * 0.75;
-  } else {
-    var l = S.luxuries.splice(idx, 1)[0];
-    S.cash += l.price * 0.5;
-  }
-  render();
+function toast(msg) {
+  var old = document.getElementById('mmsToast');
+  if (old) old.remove();
+  var t = document.createElement('div');
+  t.id = 'mmsToast'; t.className = 'mms-toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { t.classList.add('show'); }, 10);
+  setTimeout(function() { t.classList.remove('show'); setTimeout(function() { t.remove(); }, 300); }, 2600);
 }
 
 /* ═══════ 结束回合: 结算 ═══════ */
 function endRound() {
   var feed = [];
-  var flow = assetValue() * 0.01;
-  S.cash += flow;
-  feed.push('<span class="plus">+现金流 ' + fmt(flow) + '</span>');
-  var maint = assetValue() * 0.015;
-  S.cash -= maint;
-  feed.push('<span class="minus">-维护费 ' + fmt(maint) + '</span>');
-  var lux = Math.max(0, S.cash) * 0.015;
+  var interest = S.loans.reduce(function(a, l) { return a + Math.round(l.amount * l.rate); }, 0);
+  S.cash -= interest;
+  feed.push('<span class="minus">-贷款利息 ' + fmt(interest) + '</span>');
+  var lux = Math.round(Math.max(0, S.cash) * (frozenIncome() ? 0.05 : 0.015) + S.offshore * 0.012);
   S.cash -= lux;
   feed.push('<span class="minus">-排场费 ' + fmt(lux) + '</span>');
-  var fix = totalDebt() * 0.01;
-  S.cash -= fix;
-  feed.push('<span class="minus">-固定支出 ' + fmt(fix) + '</span>');
-  var intSum = 0;
-  for (var i = 0; i < S.debts.length; i++) {
-    var d = S.debts[i];
-    var it = d.principal * d.rate;
-    d.total += it;
-    intSum += it;
-  }
-  feed.push('<span class="minus">-利息 ' + fmt(intSum) + '</span>');
-
-  // 到期还款/展期
-  var due = 0, rollable = 0;
-  S.debts = S.debts.filter(function(d) {
-    if (d.due <= S.round) {
-      due += d.total;
-      if (!d.rolled) rollable += d.total;
-      return false;
-    }
-    return true;
-  });
-  var rolled = false;
-  if (due > 0) {
-    if (S.rolls < CFG.maxRolls && rollable > 0 && S.cash >= due * 0.2) {
-      S.cash -= due * 0.2;
-      S.rolls++;
-      S.debts.push({ principal: due * 0.8, rate: CFG.rollRate, term: CFG.rollTerm, due: S.round + CFG.rollTerm, total: due * 0.8, rolled: true });
-      rolled = true;
-      feed.push('<span class="red">🆘 到期 ' + fmt(due) + ' · 付违约金展期!</span>');
-    } else {
-      S.cash -= due;
-      feed.push('<span class="minus">-到期还款 ' + fmt(due) + '</span>');
-    }
-  }
   S.round++;
-  usedLoans = {};
-  document.getElementById('settleFeed').innerHTML = 'R' + (S.round - 1) + ' 结算：' + feed.join(' · ');
+  rollHeat();
+  document.getElementById('settleFeed').innerHTML = 'Q' + (S.round - 1) + ' 结算：' + feed.join(' · ');
   document.getElementById('settleFeed').style.display = 'block';
 
-  // 随机事件
+  if (S.cash < 0) { S.crashed = true; showFinal('资金链断裂'); return; }
+  if (S.round >= 60) { S.crashed = true; showFinal('市场窗口关闭 · 大清算'); return; }
   rollEvent();
-
-  if (S.cash < 0) { S.crashed = true; showFinal(); return; }
   render();
 }
 
-/* ═══════ 事件 ═══════ */
-var MILESTONES = [
-  { debt: 5000 * WAN,  icon:'🏙️', name:'XX市房地产大亨',   msg:'你成了 XX 市最大的开发商，市长亲自给你剪彩。' },
-  { debt: 1 * YI,      icon:'🎖️', name:'知名企业家',       msg:'你荣登富豪榜，记者蜂拥而至，问你成功的秘诀。你说：胆大。' },
-  { debt: 5 * YI,      icon:'🏆', name:'杰出青年企业家',   msg:'颁奖词：白手起家的楷模，脚踏实地的榜样。台下有人笑了。' },
-  { debt: 20 * YI,     icon:'👑', name:'首富候选人',       msg:'你离首富只差一个涨停。银行行长主动打来电话。' },
-  { debt: 100 * YI,    icon:'🀄', name:'许家印本印',       msg:'你是许家印本印。整个行业都在学你的"高周转"。' }
-];
+/* ═══════ 市场热度 ═══════ */
+function rollHeat() { S.heat = Math.round((Math.random() * 4) - 2); }  // -2 ~ +1
+
+/* ═══════ 事件系统 ═══════ */
 function rollEvent() {
-  // 里程碑
-  for (var i = 0; i < MILESTONES.length; i++) {
-    var m = MILESTONES[i];
-    if (!S.events['m' + i] && totalDebt() >= m.debt) {
-      S.events['m' + i] = true;
-      showEvent(m.icon, m.name, m.msg);
-      return;
-    }
-  }
-  // 随机事件
   var r = Math.random();
-  if (r < 0.15) showEvent('📈', '市场狂热', '楼市升温，可借额度提高 50%(2回合)。再借点？');
-  else if (r < 0.25) showEvent('🚫', '银行收紧', '监管出手，下回合利息 ×1.5。');
-  else if (r < 0.35) showEvent('💧', '政策放水', '神秘资金入市，白送现金 ' + fmt(assetValue() * 0.05) + '。');
-  else if (r < 0.42) showEvent('🍻', '朋友敬酒', '朋友端着《朋友的酒》来了：再干一杯，都是兄弟！(无实际效果)');
+  // 信用低 → 维权/审计优先
+  if (S.credit < 40 && r < 0.35) { showEventChoice('🚨', '业主维权', '业主们围在售楼处门口，横幅写着"还我房子"。（信用 -30 或 花钱公关）', [
+    { txt: '💸 花钱公关(-5%现金)', fn: function() { S.cash -= Math.round(S.offshore + totalDebt() + S.cash) * 0.05; S.credit += 10; toast('公关费已付，横幅被收走'); render(); } },
+    { txt: '😤 硬扛(-30信用)', fn: function() { S.credit = Math.max(0, S.credit - 30); toast('信用 -30，舆论哗然'); render(); } }
+  ]); return; }
+  if (S.credit < 25 && r < 0.5) { showEventChoice('🔍', '审计进驻', '监管的人来了，在翻你的账。（信用 -40 或 花钱摆平）', [
+    { txt: '💸 花钱摆平(-8%现金)', fn: function() { S.cash -= Math.round(S.cash * 0.08); S.credit += 5; toast('账本"恰好"整理完毕'); render(); } },
+    { txt: '😱 硬扛(-40信用)', fn: function() { S.credit = Math.max(0, S.credit - 40); toast('信用 -40，审计组坐进了你的办公室'); render(); } }
+  ]); return; }
+  // 随机事件
+  if (r < 0.12) { S.heat += 2; showEvent('📈', '市场狂热', '楼市升温！本季度预售倍率 +2。再卖一轮？'); }
+  else if (r < 0.22) { showEventChoice('🏦', '银行收紧', '监管窗口指导，下季度利息 ×1.5。（硬扛 或 紧急表态）', [
+    { txt: '😤 硬扛(下季度利息×1.5)', fn: function() { S.rateBoost = 1.5; toast('利息下季度 ×1.5'); render(); } },
+    { txt: '🤝 紧急表态(信用-10)', fn: function() { S.credit = Math.max(0, S.credit - 5); toast('表态"坚决拥护"，利息不变'); render(); } }
+  ]); return; }
+  else if (r < 0.32) { var bonus = Math.round((totalDebt() + S.cash) * 0.05); S.cash += bonus; showEvent('💧', '政策放水', '神秘资金入市，白送 ' + fmt(bonus) + '。拿好，别声张。'); }
+  else if (r < 0.42) { showEvent('🍻', '朋友敬酒', '朋友端着《朋友的酒》来了：再干一杯，都是兄弟！(无实际效果)'); }
 }
 function showEvent(icon, title, msg) {
   var zone = document.getElementById('eventZone');
   zone.innerHTML = '<div class="event-bar"><span class="e-title">' + icon + ' ' + title + '</span><br>' + msg + '</div>';
-  setTimeout(function() { zone.innerHTML = ''; }, 5000);
+  setTimeout(function() { zone.innerHTML = ''; }, 6000);
+}
+function showEventChoice(icon, title, msg, choices) {
+  var zone = document.getElementById('eventZone');
+  var btns = choices.map(function(c, i) { return '<button class="event-btn" id="evb' + i + '">' + c.txt + '</button>'; }).join('');
+  zone.innerHTML = '<div class="event-bar"><span class="e-title">' + icon + ' ' + title + '</span><br>' + msg +
+    '<div class="event-choices">' + btns + '</div></div>';
+  choices.forEach(function(c, i) {
+    document.getElementById('evb' + i).addEventListener('click', function() {
+      zone.innerHTML = '';
+      c.fn();
+    });
+  });
 }
 
 /* ═══════ 渲染 ═══════ */
@@ -485,164 +519,176 @@ function render() {
   if (!S) return;
   document.getElementById('hRound').textContent = S.round;
   document.getElementById('hCash').textContent = fmt(S.cash);
-  document.getElementById('hDebt').textContent = fmt(totalDebt());
-  document.getElementById('hXu').textContent = xuStr() + ' 许';
-  document.getElementById('hTitle').textContent = titleNow();
-  var lim = creditLimit();
-  document.getElementById('hCredit').textContent = fmt(lim.credit + lim.mortgage + lim.usury);
+  document.getElementById('hDebt').textContent = fmt(totalDebt()) + (totalDebt() / XU >= 0.001 ? ' (' + (totalDebt() / XU).toFixed(2) + '许)' : '');
+  document.getElementById('hOffshore').textContent = fmt(S.offshore);
+  document.getElementById('hHeat').textContent = S.heat >= 0 ? '+' + S.heat : String(S.heat);
+  document.getElementById('hLandCnt').textContent = S.lands.length;
+  document.getElementById('hLoanCnt').textContent = S.loans.length;
+  // 行动点
+  var apHtml = '';
+  for (var i = 0; i < AP_PER_ROUND; i++) apHtml += '<span class="dot' + (i < S.ap ? ' on' : '') + '"></span>';
+  document.getElementById('hAP').innerHTML = apHtml;
+  document.getElementById('apLeft').textContent = S.ap;
+  // 信用
+  document.getElementById('creditFill').style.width = S.credit + '%';
+  var cMark = S.credit >= 80 ? '稳固' : (S.credit >= 60 ? '正常' : (S.credit >= 40 ? '动摇' : (S.credit >= 30 ? '危险' : (S.credit >= 20 ? '濒临冻结' : '冻结'))));
+  document.getElementById('creditMark').textContent = S.credit + ' · ' + cMark + (frozenIncome() ? ' · 🔒收入冻结' : '');
+  // 操作可用性
+  setAct('aLand', S.ap >= 1);
+  setAct('aSale', S.ap >= 1 && S.lands.length > 0 && !frozenIncome());
+  setAct('aPatch', S.ap >= 1 && S.cash >= patchCost());
+  setAct('aLoan', S.ap >= 1 && S.lands.length > 0 && !frozenIncome());
+  setAct('aMagic', S.ap >= 2 && !magicBlocked() && S.cash > 0);
+  setAct('aLuxBtn', S.ap >= 1 && S.cash >= CFG.luxury[0].price);
+  if (frozenIncome()) {
+    document.getElementById('aSale').classList.add('frozen');
+    document.getElementById('aLoan').classList.add('frozen');
+  } else {
+    document.getElementById('aSale').classList.remove('frozen');
+    document.getElementById('aLoan').classList.remove('frozen');
+  }
+  if (magicBlocked()) document.getElementById('aMagic').classList.add('frozen');
+  else document.getElementById('aMagic').classList.remove('frozen');
+  document.getElementById('cPatchSub').textContent = '信用+20 · 费' + fmt(patchCost());
+  document.getElementById('cLoanSub').textContent = '抵押率' + Math.round(mortgageRate() * 100) + '% · 利率' + Math.round(interestRate() * 100) + '%';
 
-  // 资产
-  document.getElementById('cAssetCnt').textContent = S.assets.length + ' 座';
-  var ah = '';
-  S.assets.forEach(function(a) {
-    var b = CFG.buildings[a.lv - 1] || CFG.buildings[0];
-    ah += '<div class="item"><span class="i-ico">' + b.icon + '</span>' +
-      '<div class="i-main"><div class="i-name">' + b.name + '</div>' +
-      '<div class="i-sub">现金流 ' + fmt(a.price * 0.01) + '/回合 · 维护 ' + fmt(a.price * 0.015) + '</div></div>' +
-      '<div class="i-val">' + fmt(a.price) + '</div></div>';
-  });
-  document.getElementById('assetList').innerHTML = ah || '<div class="muted" style="font-size:12px">还没有楼盘。先借钱，再盖楼。</div>';
-
-  // 债务
-  document.getElementById('cDebtCnt').textContent = S.debts.length + ' 笔';
-  var dh = '';
-  S.debts.forEach(function(d, i) {
-    var left = d.due - S.round;
-    var cls = left <= 1 ? 'debt-due' : 'debt-due safe';
-    dh += '<div class="item"><span class="i-ico">' + (d.rolled ? '🆘' : (d.isMortgage ? '🏛️' : '🏦')) + '</span>' +
-      '<div class="i-main"><div class="i-name">' + (d.rolled ? '展期债' : (d.isMortgage ? '抵押贷' : '信用贷')) + ' · 利率' + (d.rate * 100).toFixed(0) + '%</div>' +
-      '<div class="i-sub">到期 ' + d.due + ' 回合 · 应还 ' + fmt(d.total) + '</div></div>' +
-      '<div class="' + cls + '">' + (left <= 0 ? '已到期!' : left + '回合后') + '</div></div>';
-  });
-  document.getElementById('debtList').innerHTML = dh || '<div class="muted" style="font-size:12px">无负债。干净的灵魂。</div>';
-
-  // 奢侈品
-  document.getElementById('cLuxCnt').textContent = S.luxuries.length + ' 件';
+  // 地块
+  document.getElementById('cLandCnt').textContent = S.lands.length + ' 块';
   var lh = '';
+  S.lands.forEach(function(ld, i) {
+    var mult = (CFG.lands[ld.tier].mult + S.heat) * creditFactor();
+    lh += '<div class="item"><span class="i-ico">' + ld.icon + '</span>' +
+      '<div class="i-main"><div class="i-name">' + ld.name + '地</div>' +
+      '<div class="i-sub">买入 ' + fmt(ld.price) + ' · 预计预售 ' + fmt(Math.round(ld.price * mult)) + '</div></div>' +
+      '<div class="i-val gold">' + mult.toFixed(1) + 'x</div></div>';
+  });
+  document.getElementById('landList').innerHTML = lh || '<div class="muted" style="font-size:12px">没有地。先去画个饼。</div>';
+
+  // 贷款
+  document.getElementById('cLoanCnt').textContent = S.loans.length + ' 笔';
+  var nh = '';
+  S.loans.forEach(function(l, i) {
+    nh += '<div class="item"><span class="i-ico">🏦</span>' +
+      '<div class="i-main"><div class="i-name">工程贷款</div>' +
+      '<div class="i-sub">永续 · 利率' + Math.round(l.rate * 100) + '%/季度 · 每季利息 ' + fmt(Math.round(l.amount * l.rate)) + '</div></div>' +
+      '<div class="i-val red">' + fmt(l.amount) + '</div></div>';
+  });
+  document.getElementById('loanList').innerHTML = nh || '<div class="muted" style="font-size:12px">无贷款。干净的灵魂。</div>';
+
+  // 排面
+  document.getElementById('cLuxCnt').textContent = S.luxuries.length + ' 件';
+  var xh = '';
   S.luxuries.forEach(function(l) {
     var lx = CFG.luxury[l.idx] || CFG.luxury[0];
-    lh += '<div class="item"><span class="i-ico">' + lx.icon + '</span>' +
+    xh += '<div class="item"><span class="i-ico">' + lx.icon + '</span>' +
       '<div class="i-main"><div class="i-name">' + lx.name + '</div>' +
       '<div class="i-sub">奢华分 +' + l.pts + '</div></div>' +
       '<div class="i-val gold">' + fmt(l.price) + '</div></div>';
   });
-  document.getElementById('luxList').innerHTML = lh || '<div class="muted" style="font-size:12px">毫无排面。买点好东西吧。</div>';
+  document.getElementById('luxList').innerHTML = xh || '<div class="muted" style="font-size:12px">毫无排面。逃命的时候也要体面。</div>';
 
   var tip = document.getElementById('tipLine');
-  if (S.rolls >= CFG.maxRolls) tip.innerHTML = '<span class="red">⚠️ 展期次数已用完，下次到期必须真还</span>';
+  if (frozenIncome()) tip.innerHTML = '<span class="red">🔒 信用过低，收入冻结：预售与贷款不可用——只能缝补和卖惨</span>';
+  else if (magicBlocked()) tip.innerHTML = '<span class="red">⚠️ 信用极低，财务魔术失效——再不缝补就卷不走了</span>';
   else tip.innerHTML = '';
 }
-
-function titleNow() {
-  var d = totalDebt();
-  var a = S.assets.length;
-  if (d >= 100 * YI) return '许家印本印';
-  if (d >= 20 * YI) return '首富候选人';
-  if (d >= 5 * YI) return '杰出青年企业家';
-  if (d >= 1 * YI) return '知名企业家';
-  if (d >= 5000 * WAN) return 'XX市大亨';
-  if (a >= 10) return '空城城主';
-  if (a >= 5) return '楼王';
-  return '小开发商';
+function setAct(id, on) {
+  document.getElementById(id).disabled = !on;
 }
+function patchCost() { return CFG.patchBase * (1 + S.saleCount * CFG.patchGrowth); }
 
 /* ═══════ 弹层 ═══════ */
 function openPop(id) { document.getElementById(id).style.display = 'flex'; }
 function closePop(id) { document.getElementById(id).style.display = 'none'; }
-document.getElementById('aBorrow').addEventListener('click', function() {
+document.getElementById('aLand').addEventListener('click', function() {
   var h = '';
-  CFG.loans.forEach(function(l) {
-    if (l.unlock && S.unlocked < l.unlock) return;
-    var lim = creditLimit()[l.key];
-    if (lim <= 0) return;
-    var used = usedLoans[l.key];
-    h += '<div class="opt' + (used ? '' : '') + '" onclick="' + (used ? '' : 'borrow(\'' + l.key + '\');closePop(\'mBorrow\')') + '" style="' + (used ? 'opacity:.4;cursor:default' : '') + '">' +
+  CFG.lands.forEach(function(l, i) {
+    if (S.credit < l.need) { h += '<div class="opt off"><span class="o-ico">' + l.icon + '</span><div class="o-main"><div class="o-name">' + l.tier + '地(信用需≥' + l.need + ')</div><div class="o-sub">' + l.desc + '</div></div></div>'; return; }
+    var price = Math.round(l.base * (0.8 + Math.random() * 0.4 + S.heat * 0.05));
+    var can = S.cash >= price;
+    h += '<div class="opt" onclick="buyLand(' + i + ');closePop(\'mLand\')" style="' + (can ? '' : 'opacity:.45') + '">' +
       '<span class="o-ico">' + l.icon + '</span>' +
-      '<div class="o-main"><div class="o-name">' + l.name + ' · 利率' + (l.rate * 100).toFixed(0) + '%/' + l.term + '回合' + (used ? ' · 本回合已借' : '') + '</div>' +
+      '<div class="o-main"><div class="o-name">' + l.tier + '地 · 预售' + l.mult + '倍起</div>' +
       '<div class="o-sub">' + l.desc + '</div></div>' +
-      '<div class="o-val">+' + fmt(lim) + '</div></div>';
+      '<div class="o-val">' + fmt(price) + '</div></div>';
   });
-  document.getElementById('borrowOpts').innerHTML = h || '<div class="muted" style="font-size:12px;text-align:center">当前没有可借额度</div>';
-  openPop('mBorrow');
+  document.getElementById('landOpts').innerHTML = h;
+  openPop('mLand');
 });
-document.getElementById('aBuy').addEventListener('click', function() {
+document.getElementById('aSale').addEventListener('click', function() {
+  if (S.lands.length === 0) { toast('没有可预售的地块，先去画饼'); return; }
   var h = '';
-  for (var i = 0; i < Math.min(S.unlocked, CFG.buildings.length); i++) {
-    var b = CFG.buildings[i];
-    var can = S.cash >= b.price;
-    h += '<div class="opt' + (can ? '' : '') + '" onclick="buyBuilding(' + (i + 1) + ');closePop(\'mBuy\')" style="' + (can ? '' : 'opacity:.45') + '">' +
-      '<span class="o-ico">' + b.icon + '</span>' +
-      '<div class="o-main"><div class="o-name">' + b.name + '</div>' +
-      '<div class="o-sub">' + b.desc + ' · 现金流1% · 抵押90%</div></div>' +
-      '<div class="o-val">' + fmt(b.price) + '</div></div>';
-  }
-  if (S.unlocked < CFG.buildings.length) h += '<div class="muted" style="font-size:11px;text-align:center;margin-top:6px">买下更高档楼盘解锁下一级</div>';
-  document.getElementById('buyOpts').innerHTML = h;
-  openPop('mBuy');
+  S.lands.forEach(function(ld, i) {
+    var mult = (CFG.lands[ld.tier].mult + S.heat) * creditFactor();
+    var money = Math.round(ld.price * mult);
+    h += '<div class="opt" onclick="presale(' + i + ');closePop(\'mSale\')">' +
+      '<span class="o-ico">' + ld.icon + '</span>' +
+      '<div class="o-main"><div class="o-name">' + ld.name + '地 · 预售' + mult.toFixed(1) + '倍</div>' +
+      '<div class="o-sub">收全额预售款 · 楼不盖 · 信用-15</div></div>' +
+      '<div class="o-val">+' + fmt(money) + '</div></div>';
+  });
+  document.getElementById('saleOpts').innerHTML = h;
+  openPop('mSale');
 });
-document.getElementById('aLux').addEventListener('click', function() {
+document.getElementById('aLoan').addEventListener('click', function() {
+  if (S.lands.length === 0) { toast('没有可抵押的地块'); return; }
+  var h = '';
+  S.lands.forEach(function(ld, i) {
+    var amt = Math.round(ld.price * mortgageRate());
+    h += '<div class="opt" onclick="takeLoan(' + i + ');closePop(\'mLoan\')">' +
+      '<span class="o-ico">🏦</span>' +
+      '<div class="o-main"><div class="o-name">抵押' + ld.name + '地</div>' +
+      '<div class="o-sub">永续贷款 · 利率' + Math.round(interestRate() * 100) + '%/季度 · 信用-3</div></div>' +
+      '<div class="o-val">+' + fmt(amt) + '</div></div>';
+  });
+  document.getElementById('loanOpts').innerHTML = h;
+  openPop('mLoan');
+});
+document.getElementById('aLuxBtn').addEventListener('click', function() {
   var h = '';
   CFG.luxury.forEach(function(l, i) {
     var can = S.cash >= l.price;
     h += '<div class="opt" onclick="buyLux(' + i + ');closePop(\'mLux\')" style="' + (can ? '' : 'opacity:.45') + '">' +
       '<span class="o-ico">' + l.icon + '</span>' +
       '<div class="o-main"><div class="o-name">' + l.name + '</div>' +
-      '<div class="o-sub">奢华分 +' + l.pts + ' · 纯消费</div></div>' +
+      '<div class="o-sub">奢华分 +' + l.pts + ' · 纯消费 · 1行动点</div></div>' +
       '<div class="o-val">' + fmt(l.price) + '</div></div>';
   });
   document.getElementById('luxOpts').innerHTML = h;
   openPop('mLux');
 });
-document.getElementById('aSell').addEventListener('click', function() {
-  var h = '';
-  S.assets.forEach(function(a, i) {
-    h += '<div class="opt" onclick="sellAsset(\'asset\',' + i + ');closePop(\'mSell\')">' +
-      '<span class="o-ico">🏠</span>' +
-      '<div class="o-main"><div class="o-name">楼盘(75%回血)</div></div>' +
-      '<div class="o-val">+' + fmt(a.price * 0.75) + '</div></div>';
-  });
-  S.luxuries.forEach(function(l, i) {
-    h += '<div class="opt" onclick="sellAsset(\'lux\',' + i + ');closePop(\'mSell\')">' +
-      '<span class="o-ico">💎</span>' +
-      '<div class="o-main"><div class="o-name">奢侈品(50%贱卖)</div></div>' +
-      '<div class="o-val">+' + fmt(l.price * 0.5) + '</div></div>';
-  });
-  document.getElementById('sellOpts').innerHTML = h || '<div class="muted" style="font-size:12px;text-align:center">没有可卖的资产</div>';
-  openPop('mSell');
-});
+document.getElementById('aPatch').addEventListener('click', patch);
+document.getElementById('aMagic').addEventListener('click', magic);
 document.getElementById('aEnd').addEventListener('click', endRound);
 
 /* ═══════ 结算 ═══════ */
 var FINAL_MSGS = [
-  '空城再大，终有一天会空。',
-  '以债养债，最终养的是泡沫。',
-  '雪球滚得越大，融化时越疼。',
-  '你盖的不是城，是一个传说。',
-  '银行家的微笑，是最后的温柔。'
+  '空城再大，终有一天会空。但你已经不在了。',
+  '以债养债，养的是泡沫；卷走的，才是人生。',
+  '雪球滚得越大，融化时越疼——但你在海岛上晒太阳。',
+  '你卖的不是楼，是时代的一个冷笑话。',
+  '许总的故事告诉我们：楼可以空，但账户不能空。'
 ];
-function showFinal() {
-  var debt = totalDebt() + Math.max(0, -S.cash);
-  var xu = debt / XU;
-  var luxPts = S.luxuries.reduce(function(a, l) { return a + l.pts; }, 0);
-  var score = Math.round(xu * 100000 + luxPts * 0.3 + S.round * 100);
+function showFinal(reason) {
+  var score = Math.round(S.offshore + S.luxPts * 100);
+  var grade = S.offshore >= 10 * YI ? '空城霸主' : (S.offshore >= 2 * YI ? '传奇跑路者' : (S.offshore >= 5000 * WAN ? '大鳄' : (S.offshore >= 1000 * WAN ? '小老板' : '打工命')));
   document.getElementById('gameScreen').style.display = 'none';
   document.getElementById('finalScreen').style.display = 'block';
-  document.getElementById('fXu').textContent = xu.toFixed(2) + ' 许';
-  document.getElementById('fTitle').textContent = '称号：' + titleNow() + ' · 极限负债 ' + fmt(debt);
+  document.getElementById('fXu').textContent = fmt(S.offshore);
+  document.getElementById('fTitle').textContent = '称号：' + grade + ' · 崩盘原因：' + reason;
   document.getElementById('fStats').innerHTML =
-    '存活 <b class="gold">' + S.round + '</b> 回合 · 楼盘 <b>' + S.assets.length + '</b> 座 · 排面 ' + S.luxuries.length + ' 件 · 奢华分 <b>' + luxPts + '</b>' +
-    '<br>得分 <b class="gold">' + score + '</b>';
+    '存活 <b class="gold">' + S.round + '</b> 季度 · 卖出 <b>' + S.saleCount + '</b> 块地的楼花 · 贷款 <b>' + S.loans.length + '</b> 笔' +
+    '<br>财务魔术 <b class="gold">' + S.magicCount + '</b> 次 · 奢华分 <b>' + S.luxPts + '</b> · 信用归零时 <b>' + S.credit + '</b>' +
+    '<br>最终得分 <b class="gold">' + score + '</b>（离岸 + 奢华×100）';
   document.getElementById('fMsg').innerHTML = '💬 <i>' + FINAL_MSGS[Math.floor(Math.random() * FINAL_MSGS.length)] + '</i>';
   document.getElementById('fRank').textContent = '';
   window.__finalScore = score;
-  window.__finalXu = xu;
-  // 本地最高
+  window.__finalOffshore = S.offshore;
   try {
-    var best = parseInt(localStorage.getItem('kc_best') || '0', 10);
-    if (score > best) localStorage.setItem('kc_best', String(score));
+    var best = parseInt(localStorage.getItem('kc_best2') || '0', 10);
+    if (score > best) localStorage.setItem('kc_best2', String(score));
     document.getElementById('fRank').textContent = '本地最高分：' + Math.max(best, score);
   } catch (e) {}
-  // 排行榜
   document.getElementById('fScore').onclick = submitScore;
 }
 function submitScore() {
@@ -654,7 +700,7 @@ function submitScore() {
   btn.disabled = true; btn.textContent = '提交中…';
   var f = new FormData();
   f.append('score', String(window.__finalScore));
-  f.append('graze', String(Math.round(window.__finalXu * 100)));
+  f.append('graze', String(Math.round(window.__finalOffshore / 10000)));
   fetch(API_BASE + 'api/leaderboard.php?game=kongcheng', {
     method: 'POST', body: f, headers: { 'Authorization': 'Bearer ' + Auth.token() }
   }).then(function(r) { return r.json(); }).then(function(res) {
@@ -666,13 +712,6 @@ function submitScore() {
 function restartGame() {
   document.getElementById('finalScreen').style.display = 'none';
   startGame();
-}
-
-/* ═══════ 初始化 ═══════ */
-init();
-function init() {
-  if (!window.Auth) { setTimeout(init, 50); return; }
-  // 进入游戏前显示开场
 }
 </script>
 
