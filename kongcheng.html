@@ -198,11 +198,11 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
 <!-- ═══════ 开场弹层 ═══════ -->
 <div class="overlay" id="introOverlay">
   <div class="ov-card">
-    <div class="ov-icon">🎭</div>
+    <div class="ov-icon" id="introImg" style="margin-bottom:14px"><img src="images/kongchengji.jpeg" alt="空城计" style="width:120px;height:120px;border-radius:24px;border:2px solid var(--g-gold);box-shadow:0 12px 40px rgba(240,192,96,.3);object-fit:cover;"></div>
     <div class="ov-title gold-text">空 城 计</div>
     <div class="ov-sub">卖 楼 · 不 盖 · 卷 钱 · 跑 路</div>
     <div class="ov-body" id="introBody">
-      <p>你是 <b>许总</b>。出身微末，却有着不世出的才华：<br><b>把空气卖出黄金的价。</b></p>
+      <p>你是 <b>许家印</b>。出身微末，却有着不世出的才华：<br><b>把空气卖出黄金的价。</b></p>
       <p style="margin-top:8px">今天，你握着 <b>2000 万</b>，站在一片荒地上。</p>
       <p style="margin-top:8px">身后是即将被你卖掉的、<b>并不存在的楼</b>。</p>
     </div>
@@ -315,14 +315,13 @@ function fmt(n) {
 
 /* ═══════ 教程(故事化, 8页) ═══════ */
 var TUT = [
-  { icon:'🎭', title:'故事开始', body:'九十年代，你在工地上搬过砖，在售楼处发过传单。<br><br>你终于悟了：<b>盖楼的人累死，卖楼的人发财。</b><br><br>所以，你决定只卖楼，不盖楼。' },
-  { icon:'🗺️', title:'画饼拿地', body:'花钱买地——<b>鬼城 / 二线 / 一线</b> 三档，价格随市场浮动。<br><br>地买得越贵，将来预售圈的钱越多。<br><br>但信用不足时，好地不卖给你。' },
+  { icon:'🎭', title:'故事开始', body:'九十年代，你在工地上搬过砖，在售楼处发过传单。<br><br>你终于悟了：<b>盖楼的人累死，卖楼的人发财。</b><br><br>所以，你决定只卖楼，不盖楼。' },  { icon:'🗺️', title:'画饼拿地', body:'花钱买地——<b>鬼城 / 二线 / 一线</b> 三档，价格随市场浮动。<br><br>地买得越贵，将来预售圈的钱越多。<br><br>但信用不足时，好地不卖给你。' },
   { icon:'🏷️', title:'预售圈钱', body:'对<b>还没盖的楼</b>收全额预售款：<br>回款 = 地价 × <b>3~5 倍</b>(随市场浮动)。<br><br>钱到手了，楼？<b>楼会有的，在 PPT 里。</b><br><br>代价：信用 -15。卖得越狠，信得越少。' },
   { icon:'🛠️', title:'缝补工程', body:'偶尔花点小钱"动工"，给业主们一点希望。<br><br>信用 +20。<br><br>但每卖出一块地，缝补的费用就水涨船高——<br><b>窟窿越大，补丁越贵。</b>' },
   { icon:'🏦', title:'抵押贷款', body:'拿地皮上银行借<b>工程款</b>。<br><br>这是<b>永续贷款</b>：没有到期日，每季度付息，直到永远。<br><br>信用越高，抵押率越高、利息越低。<br>信用 <30 → <b>收入冻结</b>：预售和贷款全都借不动。' },
   { icon:'💸', title:'财务魔术', body:'把账面现金的 40% 变成<b>离岸资产</b>——<br>消耗2个行动点，信用 -5。<br><br><b>卷走的钱 = 最终得分。</b><br>信用 <20 时，连魔术都变不动了。' },
   { icon:'⚖️', title:'信用是命', body:'信用驱动一切：<br>贷款上限 / 可买地块 / 缝补效果 / 预售收入。<br><br>业主维权、审计上门——<b>都是钱能摆平的事</b>，<br>但钱摆平得越多，窟窿越大。<br><br>信用归零的那天，就是全剧终。' },
-  { icon:'💥', title:'结局', body:'每个季度结算：付利息、养排场。<br><b>现金付不起利息+排场费 → 资金链断裂 → 全剧终。</b><br><br>结算时看你<b>卷走了多少钱</b>。<br><br>祝你好运，许总。愿你的空城，卖个好价钱。' }
+  { icon:'💥', title:'结局', body:'每个季度结算：付利息、养排场。<br><b>现金付不起利息+排场费 → 资金链断裂 → 全剧终。</b><br><br>结算时看你<b>卷走了多少钱</b>。<br><br>祝你好运，许家印。愿你的空城，卖个好价钱。' }
 ];
 var tutIdx = 0;
 function renderTut() {
@@ -667,7 +666,7 @@ var FINAL_MSGS = [
   '以债养债，养的是泡沫；卷走的，才是人生。',
   '雪球滚得越大，融化时越疼——但你在海岛上晒太阳。',
   '你卖的不是楼，是时代的一个冷笑话。',
-  '许总的故事告诉我们：楼可以空，但账户不能空。'
+  '许家印的故事告诉我们：楼可以空，但账户不能空。'
 ];
 function showFinal(reason) {
   var score = Math.round(S.offshore + S.luxPts * 100);
