@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>空城计 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<style>
+:root { --g-bg:#1a1520; --g-card:#241e2a; --g-border:#3a3045; --g-gold:#f0c060; --g-gold-dim:#a08050;
+        --g-purple:#b89fff; --g-text:#e0d8ec; --g-muted:#8a7e9a; --g-green:#6fcf97; --g-red:#ef4444; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--g-bg);
+  color:var(--g-text); min-height:100vh; padding:16px 12px 80px; display:flex; flex-direction:column; align-items:center; }
+.wrap { width:100%; max-width:420px; }
+
+/* ── 通用卡 ── */
+.card { background:var(--g-card); border:1px solid var(--g-border); border-radius:18px; padding:14px; margin-bottom:12px; }
+.gold-text { background:linear-gradient(135deg,var(--g-gold),#ffe8b0,var(--g-gold)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.muted { color:var(--g-muted); } .gold { color:var(--g-gold); } .green { color:var(--g-green); } .red { color:var(--g-red); }
+
+/* ── 开场/教程 ── */
+.overlay { position:fixed; inset:0; z-index:120; background:rgba(26,21,32,.96); backdrop-filter:blur(12px);
+  display:flex; align-items:center; justify-content:center; padding:16px; }
+.ov-card { background:var(--g-card); border:1px solid var(--g-border); border-radius:24px; max-width:400px; width:100%;
+  padding:26px 22px; text-align:center; position:relative; overflow:hidden; max-height:92vh; overflow-y:auto; }
+.ov-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg,var(--g-gold),var(--g-purple),var(--g-gold)); }
+.ov-icon { font-size:64px; margin-bottom:10px; filter:drop-shadow(0 0 18px rgba(240,192,96,.45)); }
+.ov-title { font-size:26px; font-weight:900; letter-spacing:4px; margin-bottom:4px; }
+.ov-sub { font-size:10px; color:var(--g-muted); letter-spacing:3px; margin-bottom:14px; }
+.ov-body { text-align:left; font-size:13px; line-height:1.9; color:var(--g-text); background:rgba(255,255,255,.03);
+  border:1px solid var(--g-border); border-radius:14px; padding:14px 16px; margin-bottom:16px; min-height:150px; }
+.ov-body b { color:var(--g-gold); }
+.ov-btn { width:100%; border:none; border-radius:14px; padding:13px 0; font-size:15px; font-weight:800;
+  background:linear-gradient(135deg,var(--g-gold),#c89a40); color:#1a1520; cursor:pointer; font-family:inherit; margin-top:6px; }
+.ov-btn.ghost { background:transparent; border:1px solid var(--g-border); color:var(--g-text); font-weight:500; font-size:13px; }
+.ov-btns { display:flex; gap:8px; } .ov-btns .ov-btn { flex:1; margin-top:6px; }
+.ov-note { font-size:10px; color:var(--g-muted); margin-top:10px; }
+.music-row { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px; font-size:12px; color:var(--g-muted); }
+.music-row input { accent-color:var(--g-gold); }
+
+/* ── 顶部状态 ── */
+.hud { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.hud-item { background:var(--g-card); border:1px solid var(--g-border); border-radius:14px; padding:8px 10px; }
+.hud-label { font-size:9px; color:var(--g-muted); letter-spacing:1px; }
+.hud-val { font-size:16px; font-weight:800; margin-top:2px; font-variant-numeric:tabular-nums; }
+.hud-val.small { font-size:12px; }
+.hud-wide { grid-column:1 / -1; display:flex; justify-content:space-between; align-items:center; }
+.hud-wide .hud-label { font-size:10px; }
+.xu-big { font-size:20px; font-weight:900; color:var(--g-gold); letter-spacing:1px; }
+
+/* ── 区块标题 ── */
+.sec-title { font-size:10px; color:var(--g-muted); letter-spacing:2px; margin:14px 0 8px; display:flex; align-items:center; gap:6px; }
+.sec-title .cnt { margin-left:auto; font-size:10px; color:var(--g-gold-dim); }
+
+/* ── 资产/债务/奢侈品列表 ── */
+.item { display:flex; align-items:center; gap:8px; padding:8px 10px; background:rgba(255,255,255,.02);
+  border:1px solid var(--g-border); border-radius:12px; margin-bottom:6px; }
+.item .i-ico { font-size:18px; width:24px; text-align:center; flex-shrink:0; }
+.item .i-main { flex:1; min-width:0; }
+.item .i-name { font-size:13px; }
+.item .i-sub { font-size:10px; color:var(--g-muted); margin-top:2px; }
+.item .i-val { font-size:13px; font-weight:700; flex-shrink:0; }
+.debt-due { font-size:10px; color:var(--g-red); font-weight:700; }
+.debt-due.safe { color:var(--g-muted); }
+
+/* ── 操作区 ── */
+.actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.act { background:var(--g-card); border:1px solid var(--g-border); border-radius:14px; padding:11px 8px;
+  cursor:pointer; color:var(--g-text); font-family:inherit; text-align:center; transition:all .15s; }
+.act:hover { border-color:var(--g-gold); transform:translateY(-1px); }
+.act .a-ico { font-size:20px; display:block; margin-bottom:3px; }
+.act .a-txt { font-size:12px; font-weight:700; }
+.act .a-sub { font-size:9px; color:var(--g-muted); margin-top:2px; }
+.act:disabled { opacity:.35; cursor:default; transform:none; }
+.act.end { grid-column:1/-1; background:linear-gradient(135deg,var(--g-gold),#c89a40); color:#1a1520; }
+.act.end .a-txt { font-weight:900; }
+
+/* ── 弹层 ── */
+.mask { position:fixed; inset:0; z-index:150; background:rgba(10,8,14,.78); display:none; align-items:center; justify-content:center; padding:16px; }
+.pop { background:var(--g-card); border:1px solid var(--g-border); border-radius:20px; max-width:400px; width:100%;
+  max-height:88vh; overflow-y:auto; padding:18px; position:relative; }
+.pop-title { font-size:14px; font-weight:800; color:var(--g-gold); margin-bottom:12px; display:flex; justify-content:space-between; }
+.pop-close { background:none; border:none; color:var(--g-muted); font-size:15px; cursor:pointer; }
+.opt { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--g-border);
+  border-radius:12px; margin-bottom:8px; cursor:pointer; background:rgba(255,255,255,.02); }
+.opt:hover { border-color:var(--g-gold); }
+.opt.sel { border-color:var(--g-gold); background:rgba(240,192,96,.08); }
+.opt .o-ico { font-size:20px; } .opt .o-main { flex:1; } .opt .o-name { font-size:13px; font-weight:700; }
+.opt .o-sub { font-size:10px; color:var(--g-muted); margin-top:2px; }
+.opt .o-val { font-size:13px; font-weight:800; color:var(--g-gold); }
+.pop-btn { width:100%; border:none; border-radius:12px; padding:12px 0; font-size:14px; font-weight:800;
+  background:linear-gradient(135deg,var(--g-gold),#c89a40); color:#1a1520; cursor:pointer; font-family:inherit; margin-top:6px; }
+.pop-btn:disabled { opacity:.4; }
+
+/* ── 事件横幅 ── */
+.event-bar { background:rgba(176,159,255,.08); border:1px solid var(--g-purple); border-radius:12px;
+  padding:9px 12px; font-size:12px; margin-bottom:10px; animation:fadeUp .3s ease; }
+.event-bar .e-title { color:var(--g-purple); font-weight:800; }
+
+/* ── 结算 ── */
+.final-xu { font-size:44px; font-weight:900; letter-spacing:2px; margin:10px 0 4px; }
+.final-tag { font-size:13px; color:var(--g-gold); letter-spacing:2px; }
+.final-msg { font-size:13px; color:var(--g-text); line-height:2; margin:14px 0; padding:12px; background:rgba(255,255,255,.03);
+  border:1px solid var(--g-border); border-radius:12px; }
+.final-msg i { color:var(--g-gold); font-style:italic; }
+.final-stats { font-size:12px; color:var(--g-muted); line-height:1.9; margin-bottom:14px; }
+
+/* ── 回合结算动画 ── */
+.settle-feed { font-size:11px; color:var(--g-muted); line-height:1.9; }
+.settle-feed .plus { color:var(--g-green); } .settle-feed .minus { color:var(--g-red); }
+
+@keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="wrap">
+
+  <!-- ═══════ 游戏主屏 ═══════ -->
+  <div id="gameScreen" style="display:none;">
+    <div class="card hud">
+      <div class="hud-item"><div class="hud-label">回合</div><div class="hud-val small" id="hRound">1</div></div>
+      <div class="hud-item"><div class="hud-label">称号</div><div class="hud-val small gold" id="hTitle">小开发商</div></div>
+      <div class="hud-item"><div class="hud-label">现金</div><div class="hud-val green" id="hCash">0</div></div>
+      <div class="hud-item"><div class="hud-label">总负债</div><div class="hud-val red" id="hDebt">0</div></div>
+      <div class="hud-item hud-wide">
+        <div><div class="hud-label">可借额度</div><div class="hud-val small" id="hCredit">0</div></div>
+        <div style="text-align:right"><div class="hud-label">已滚成</div><div class="xu-big" id="hXu">0 许</div></div>
+      </div>
+    </div>
+
+    <div id="eventZone"></div>
+    <div id="settleFeed" class="card" style="display:none;"></div>
+
+    <div class="sec-title">🏠 空城项目 <span class="cnt" id="cAssetCnt">0 座</span></div>
+    <div id="assetList"></div>
+
+    <div class="sec-title">💳 债务 <span class="cnt" id="cDebtCnt">0 笔</span></div>
+    <div id="debtList"></div>
+
+    <div class="sec-title">💎 排面 <span class="cnt" id="cLuxCnt">0 件</span></div>
+    <div id="luxList"></div>
+
+    <div class="sec-title">🎮 行动</div>
+    <div class="actions">
+      <button class="act" id="aBorrow"><span class="a-ico">🏦</span><span class="a-txt">借钱</span><span class="a-sub">信用/抵押/高利</span></button>
+      <button class="act" id="aBuy"><span class="a-ico">🏗️</span><span class="a-txt">买楼盘</span><span class="a-sub">扩张空城</span></button>
+      <button class="act" id="aLux"><span class="a-ico">💎</span><span class="a-txt">买排面</span><span class="a-sub">奢侈品+分</span></button>
+      <button class="act" id="aSell"><span class="a-ico">🏷️</span><span class="a-txt">变卖</span><span class="a-sub">楼75%·奢50%</span></button>
+      <button class="act" id="aMusic"><span class="a-ico">🎵</span><span class="a-txt">音乐</span><span class="a-sub" id="aMusicSub">开</span></button>
+      <button class="act end" id="aEnd"><span class="a-ico">⏭️</span><span class="a-txt">结束回合 · 结算</span></button>
+    </div>
+    <div class="settle-feed" style="margin-top:10px;text-align:center" id="tipLine"></div>
+  </div>
+
+  <!-- ═══════ 结算屏 ═══════ -->
+  <div id="finalScreen" style="display:none;">
+    <div class="card" style="text-align:center;padding:26px 18px;">
+      <div style="font-size:56px;margin-bottom:6px">💥</div>
+      <div class="muted" style="font-size:12px;letter-spacing:3px">崩 盘 了</div>
+      <div style="font-size:13px;color:var(--g-muted);margin-top:12px">你崩盘时负债</div>
+      <div class="final-xu gold-text" id="fXu">0 许</div>
+      <div class="final-tag" id="fTitle">—</div>
+      <div class="final-stats" id="fStats"></div>
+      <div class="final-msg" id="fMsg"></div>
+      <button class="pop-btn" id="fScore">🏆 提交排行榜</button>
+      <button class="ov-btn ghost" style="margin-top:8px" onclick="restartGame()">🔄 再来一局</button>
+      <div class="ov-note" id="fRank"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 开场弹层 ═══════ -->
+<div class="overlay" id="introOverlay">
+  <div class="ov-card">
+    <div class="ov-icon">🎭</div>
+    <div class="ov-title gold-text">空 城 计</div>
+    <div class="ov-sub">你 · 就 · 是 · 许 · 家 · 印</div>
+    <div class="ov-body" id="introBody">
+      <p>你是 <b>许总</b>。白手起家，目标只有一个：<br>把泡沫滚到最大。</p>
+      <p style="margin-top:8px">今天，你手握 <b>1500 万</b> 启动资金，<br>准备盖楼、借钱、再盖楼。</p>
+    </div>
+    <button class="ov-btn" id="introBtn">开始 →</button>
+    <div class="music-row"><input type="checkbox" id="musicOn" checked> 🎵 背景音乐《朋友的酒》</div>
+    <div class="ov-note">本游戏纯属虚构 · 娱乐而已 · 请理性消费</div>
+  </div>
+</div>
+
+<!-- ═══════ 教程弹层 ═══════ -->
+<div class="overlay" id="tutOverlay" style="display:none;">
+  <div class="ov-card">
+    <div class="ov-icon" id="tutIcon">🕐</div>
+    <div class="ov-title" style="font-size:18px;letter-spacing:2px" id="tutTitle">—</div>
+    <div class="ov-body" id="tutBody" style="min-height:200px"></div>
+    <div class="ov-btns">
+      <button class="ov-btn ghost" id="tutPrev">← 上一步</button>
+      <button class="ov-btn" id="tutNext">下一步 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 借钱弹层 ═══════ -->
+<div class="mask" id="mBorrow">
+  <div class="pop">
+    <div class="pop-title"><span>🏦 借钱</span><button class="pop-close" onclick="closePop('mBorrow')">✕</button></div>
+    <div id="borrowOpts"></div>
+    <div class="settle-feed muted" style="margin-top:8px;text-align:center">利息按未还本金每回合复利计算，到期一次还清</div>
+  </div>
+</div>
+
+<!-- ═══════ 买楼弹层 ═══════ -->
+<div class="mask" id="mBuy">
+  <div class="pop">
+    <div class="pop-title"><span>🏗️ 买楼盘</span><button class="pop-close" onclick="closePop('mBuy')">✕</button></div>
+    <div id="buyOpts"></div>
+    <div class="settle-feed muted" style="margin-top:8px;text-align:center">楼盘几乎不产生收益——但它是抵押融资的敲门砖</div>
+  </div>
+</div>
+
+<!-- ═══════ 奢侈品弹层 ═══════ -->
+<div class="mask" id="mLux">
+  <div class="pop">
+    <div class="pop-title"><span>💎 买排面</span><button class="pop-close" onclick="closePop('mLux')">✕</button></div>
+    <div id="luxOpts"></div>
+    <div class="settle-feed muted" style="margin-top:8px;text-align:center">奢侈品只涨分不涨钱——把救命现金换成虚荣</div>
+  </div>
+</div>
+
+<!-- ═══════ 变卖弹层 ═══════ -->
+<div class="mask" id="mSell">
+  <div class="pop">
+    <div class="pop-title"><span>🏷️ 变卖资产</span><button class="pop-close" onclick="closePop('mSell')">✕</button></div>
+    <div id="sellOpts"></div>
+    <div class="settle-feed muted" style="margin-top:8px;text-align:center">楼盘按 75% 回血，奢侈品按 50% 贱卖</div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════
+   空城计 · 数值配置(调整平衡改这里)
+   ═══════════════════════════════════════ */
+var WAN = 10000, YI = 10000 * WAN;
+var XU = 20000 * YI;                 // 1 许 = 2 万亿
+var CFG = {
+  startCash: 2000 * WAN,
+  buildings: [
+    { name:'住宅盘', icon:'🏠', price:100*WAN,    desc:'城郊连排，远看还行' },
+    { name:'商业体', icon:'🏬', price:500*WAN,    desc:'招商手册很精美' },
+    { name:'文旅镇', icon:'🏯', price:2500*WAN,   desc:'主打"情怀"，没人来' },
+    { name:'产业新城', icon:'🏙️', price:1*YI,    desc:'PPT 上的一线城市' }
+  ],
+  loans: [
+    { key:'credit',  name:'信用贷', icon:'🏦', rate:0.06, term:4, desc:'额度固定，随楼盘等级提升' },
+    { key:'mortgage',name:'抵押贷', icon:'🏛️', rate:0.10, term:8, desc:'额度=楼盘90%，越贷越多' },
+    { key:'usury',   name:'高利贷', icon:'🔥', rate:0.35, term:1, desc:'额度1亿，拆东墙补西墙', unlock:3 }
+  ],
+  luxury: [
+    { name:'豪车',   icon:'🚗', price:50*WAN,   pts:200 },
+    { name:'游艇',   icon:'⛵', price:200*WAN,  pts:1000 },
+    { name:'私人飞机', icon:'✈️', price:1000*WAN, pts:6000 },
+    { name:'酒庄',   icon:'🍷', price:3000*WAN, pts:20000 }
+  ],
+  rollRate: 0.12, rollTerm: 4, maxRolls: 5,   // 展期
+  bgm: 'audio/friends-wine.mp3'               // 《朋友的酒》放 audio/ 目录并改此名
+};
+
+/* ═══════ 状态 ═══════ */
+var S = null;
+var usedLoans = {};
+function newState() {
+  usedLoans = {};
+  return { cash: CFG.startCash, debts: [], assets: [], luxuries: [], round: 1, unlocked: 1,
+           rolls: 0, events: {}, crashed: false, eventMsg: '' };
+}
+function assetValue() { return S.assets.reduce(function(a, b) { return a + b.price; }, 0); }
+function mortgaged() { return S.debts.reduce(function(a, d) { return a + (d.isMortgage ? d.principal : 0); }, 0); }
+function totalDebt() { return S.debts.reduce(function(a, d) { return a + d.total; }, 0); }
+function creditLimit() {
+  var creditPool = [2000 * WAN, 5000 * WAN, 1 * YI, 2 * YI][S.unlocked - 1];
+  var byLoan = { credit: creditPool, mortgage: Math.max(0, assetValue() * 0.9 - mortgaged()), usury: 1 * YI };
+  return byLoan;
+}
+
+/* ═══════ 格式化 ═══════ */
+function fmt(n) {
+  n = Math.round(n);
+  if (Math.abs(n) >= 1e12) return (n / 1e12).toFixed(2) + '万亿';
+  if (Math.abs(n) >= 1e8) return (n / 1e8).toFixed(1) + '亿';
+  if (Math.abs(n) >= 1e4) return (n / 1e4).toFixed(0) + '万';
+  return String(n);
+}
+function xuStr() { return (totalDebt() / XU).toFixed(4); }
+
+/* ═══════ 开局/教程(分页, 效仿流浪模拟器) ═══════ */
+var TUT = [
+  { icon:'🎭', title:'你是许总', body:'白手起家，手握 <b>1500 万</b>。<br><br>目标不是赢，是<b>把泡沫滚到最大</b>，直到崩盘。<br><br>滚得越大，分数越高。' },
+  { icon:'🏗️', title:'核心循环', body:'<b>借钱 → 买楼盘 → 抵押 → 再借钱 → 再买楼</b><br><br>楼盘几乎不产生收益，但它是<b>抵押融资</b>的敲门砖——资产越多，借得越多。' },
+  { icon:'💳', title:'债务雪球', body:'三种贷款：<b>信用贷</b>(现金×1)、<b>抵押贷</b>(楼盘90%)、<b>高利贷</b>(1亿, 后期解锁)。<br><br>利息每回合复利滚入，到期一次还清。' },
+  { icon:'💎', title:'排面', body:'买豪车、游艇、私人飞机——<b>只涨分不涨钱</b>。<br><br>把救命现金换成虚荣，崩盘时分数更高。<br><br>每个回合还要交 <b>2% 排场费</b>，现金越多烧得越狠。' },
+  { icon:'🆘', title:'展期', body:'到期还不起？可以<b>展期</b>：付 20% 违约金，债务延期 2 回合，利息暴涨。<br><br>最多展期 3 次。这是最后的救命稻草，也是加速死亡的毒药。' },
+  { icon:'📏', title:'许家印单位', body:'<b>1 许家印 = 2 万亿负债</b>。<br><br>崩盘时你负债多少，就是"几个许家印"：<br>0.5 许、1 许、5 许……<br><br>数字越大，你越接近传奇。' },
+  { icon:'💥', title:'崩盘', body:'每回合结束结算：现金流 → 利息 → 排场费 → 到期还款。<br><br><b>现金不够就崩盘</b>。崩盘是必然，只是早晚。<br><br>祝你好运，许总。' }
+];
+var tutIdx = 0;
+function renderTut() {
+  var t = TUT[tutIdx];
+  document.getElementById('tutIcon').textContent = t.icon;
+  document.getElementById('tutTitle').textContent = t.title;
+  document.getElementById('tutBody').innerHTML = t.body;
+  document.getElementById('tutPrev').style.display = tutIdx === 0 ? 'none' : '';
+  document.getElementById('tutNext').textContent = tutIdx === TUT.length - 1 ? '🏗️ 开始盖楼' : '下一步 →';
+}
+document.getElementById('introBtn').addEventListener('click', function() {
+  document.getElementById('introOverlay').style.display = 'none';
+  tutIdx = 0; renderTut();
+  document.getElementById('tutOverlay').style.display = 'flex';
+});
+document.getElementById('tutPrev').addEventListener('click', function() { if (tutIdx > 0) { tutIdx--; renderTut(); } });
+document.getElementById('tutNext').addEventListener('click', function() {
+  if (tutIdx < TUT.length - 1) { tutIdx++; renderTut(); }
+  else startGame();
+});
+
+/* ═══════ BGM ═══════ */
+var bgm = document.createElement('audio');
+bgm.src = CFG.bgm; bgm.loop = true; bgm.volume = 0.5;
+var musicOn = true;
+function toggleMusic() {
+  musicOn = !musicOn;
+  document.getElementById('aMusicSub').textContent = musicOn ? '开' : '关';
+  if (musicOn) { bgm.play().catch(function(){}); } else { bgm.pause(); }
+}
+document.getElementById('aMusic').addEventListener('click', toggleMusic);
+document.getElementById('musicOn').addEventListener('change', function() {
+  musicOn = this.checked;
+  if (musicOn) bgm.play().catch(function(){}); else bgm.pause();
+});
+
+/* ═══════ 开始 ═══════ */
+function startGame() {
+  S = newState();
+  document.getElementById('tutOverlay').style.display = 'none';
+  document.getElementById('finalScreen').style.display = 'none';
+  document.getElementById('gameScreen').style.display = 'block';
+  if (musicOn) bgm.play().catch(function(){});
+  render();
+}
+
+/* ═══════ 操作 ═══════ */
+function borrow(type) {
+  if (usedLoans[type]) return;  // 每回合每类限借一笔
+  var L = CFG.loans.find(function(l) { return l.key === type; });
+  var lim = creditLimit()[type];
+  if (lim <= 0) return;
+  if (type === 'usury' && S.unlocked < L.unlock) return;
+  S.cash += lim;
+  S.debts.push({ principal: lim, rate: L.rate, term: L.term, due: S.round + L.term, total: lim, isMortgage: type === 'mortgage' });
+  usedLoans[type] = true;
+  render();
+}
+function buyBuilding(lv) {
+  var b = CFG.buildings[lv - 1];
+  if (S.cash < b.price) return;
+  S.cash -= b.price;
+  S.assets.push({ price: b.price, lv: lv });
+  if (lv >= S.unlocked && S.unlocked < CFG.buildings.length) S.unlocked++;
+  render();
+}
+function buyLux(idx) {
+  var l = CFG.luxury[idx];
+  if (S.cash < l.price) return;
+  S.cash -= l.price;
+  S.luxuries.push({ price: l.price, pts: l.pts, idx: idx });
+  render();
+}
+function sellAsset(kind, idx) {
+  if (kind === 'asset') {
+    var b = S.assets.splice(idx, 1)[0];
+    S.cash += b.price * 0.75;
+  } else {
+    var l = S.luxuries.splice(idx, 1)[0];
+    S.cash += l.price * 0.5;
+  }
+  render();
+}
+
+/* ═══════ 结束回合: 结算 ═══════ */
+function endRound() {
+  var feed = [];
+  var flow = assetValue() * 0.01;
+  S.cash += flow;
+  feed.push('<span class="plus">+现金流 ' + fmt(flow) + '</span>');
+  var maint = assetValue() * 0.015;
+  S.cash -= maint;
+  feed.push('<span class="minus">-维护费 ' + fmt(maint) + '</span>');
+  var lux = Math.max(0, S.cash) * 0.015;
+  S.cash -= lux;
+  feed.push('<span class="minus">-排场费 ' + fmt(lux) + '</span>');
+  var fix = totalDebt() * 0.01;
+  S.cash -= fix;
+  feed.push('<span class="minus">-固定支出 ' + fmt(fix) + '</span>');
+  var intSum = 0;
+  for (var i = 0; i < S.debts.length; i++) {
+    var d = S.debts[i];
+    var it = d.principal * d.rate;
+    d.total += it;
+    intSum += it;
+  }
+  feed.push('<span class="minus">-利息 ' + fmt(intSum) + '</span>');
+
+  // 到期还款/展期
+  var due = 0, rollable = 0;
+  S.debts = S.debts.filter(function(d) {
+    if (d.due <= S.round) {
+      due += d.total;
+      if (!d.rolled) rollable += d.total;
+      return false;
+    }
+    return true;
+  });
+  var rolled = false;
+  if (due > 0) {
+    if (S.rolls < CFG.maxRolls && rollable > 0 && S.cash >= due * 0.2) {
+      S.cash -= due * 0.2;
+      S.rolls++;
+      S.debts.push({ principal: due * 0.8, rate: CFG.rollRate, term: CFG.rollTerm, due: S.round + CFG.rollTerm, total: due * 0.8, rolled: true });
+      rolled = true;
+      feed.push('<span class="red">🆘 到期 ' + fmt(due) + ' · 付违约金展期!</span>');
+    } else {
+      S.cash -= due;
+      feed.push('<span class="minus">-到期还款 ' + fmt(due) + '</span>');
+    }
+  }
+  S.round++;
+  usedLoans = {};
+  document.getElementById('settleFeed').innerHTML = 'R' + (S.round - 1) + ' 结算：' + feed.join(' · ');
+  document.getElementById('settleFeed').style.display = 'block';
+
+  // 随机事件
+  rollEvent();
+
+  if (S.cash < 0) { S.crashed = true; showFinal(); return; }
+  render();
+}
+
+/* ═══════ 事件 ═══════ */
+var MILESTONES = [
+  { debt: 5000 * WAN,  icon:'🏙️', name:'XX市房地产大亨',   msg:'你成了 XX 市最大的开发商，市长亲自给你剪彩。' },
+  { debt: 1 * YI,      icon:'🎖️', name:'知名企业家',       msg:'你荣登富豪榜，记者蜂拥而至，问你成功的秘诀。你说：胆大。' },
+  { debt: 5 * YI,      icon:'🏆', name:'杰出青年企业家',   msg:'颁奖词：白手起家的楷模，脚踏实地的榜样。台下有人笑了。' },
+  { debt: 20 * YI,     icon:'👑', name:'首富候选人',       msg:'你离首富只差一个涨停。银行行长主动打来电话。' },
+  { debt: 100 * YI,    icon:'🀄', name:'许家印本印',       msg:'你是许家印本印。整个行业都在学你的"高周转"。' }
+];
+function rollEvent() {
+  // 里程碑
+  for (var i = 0; i < MILESTONES.length; i++) {
+    var m = MILESTONES[i];
+    if (!S.events['m' + i] && totalDebt() >= m.debt) {
+      S.events['m' + i] = true;
+      showEvent(m.icon, m.name, m.msg);
+      return;
+    }
+  }
+  // 随机事件
+  var r = Math.random();
+  if (r < 0.15) showEvent('📈', '市场狂热', '楼市升温，可借额度提高 50%(2回合)。再借点？');
+  else if (r < 0.25) showEvent('🚫', '银行收紧', '监管出手，下回合利息 ×1.5。');
+  else if (r < 0.35) showEvent('💧', '政策放水', '神秘资金入市，白送现金 ' + fmt(assetValue() * 0.05) + '。');
+  else if (r < 0.42) showEvent('🍻', '朋友敬酒', '朋友端着《朋友的酒》来了：再干一杯，都是兄弟！(无实际效果)');
+}
+function showEvent(icon, title, msg) {
+  var zone = document.getElementById('eventZone');
+  zone.innerHTML = '<div class="event-bar"><span class="e-title">' + icon + ' ' + title + '</span><br>' + msg + '</div>';
+  setTimeout(function() { zone.innerHTML = ''; }, 5000);
+}
+
+/* ═══════ 渲染 ═══════ */
+function render() {
+  if (!S) return;
+  document.getElementById('hRound').textContent = S.round;
+  document.getElementById('hCash').textContent = fmt(S.cash);
+  document.getElementById('hDebt').textContent = fmt(totalDebt());
+  document.getElementById('hXu').textContent = xuStr() + ' 许';
+  document.getElementById('hTitle').textContent = titleNow();
+  var lim = creditLimit();
+  document.getElementById('hCredit').textContent = fmt(lim.credit + lim.mortgage + lim.usury);
+
+  // 资产
+  document.getElementById('cAssetCnt').textContent = S.assets.length + ' 座';
+  var ah = '';
+  S.assets.forEach(function(a) {
+    var b = CFG.buildings[a.lv - 1] || CFG.buildings[0];
+    ah += '<div class="item"><span class="i-ico">' + b.icon + '</span>' +
+      '<div class="i-main"><div class="i-name">' + b.name + '</div>' +
+      '<div class="i-sub">现金流 ' + fmt(a.price * 0.01) + '/回合 · 维护 ' + fmt(a.price * 0.015) + '</div></div>' +
+      '<div class="i-val">' + fmt(a.price) + '</div></div>';
+  });
+  document.getElementById('assetList').innerHTML = ah || '<div class="muted" style="font-size:12px">还没有楼盘。先借钱，再盖楼。</div>';
+
+  // 债务
+  document.getElementById('cDebtCnt').textContent = S.debts.length + ' 笔';
+  var dh = '';
+  S.debts.forEach(function(d, i) {
+    var left = d.due - S.round;
+    var cls = left <= 1 ? 'debt-due' : 'debt-due safe';
+    dh += '<div class="item"><span class="i-ico">' + (d.rolled ? '🆘' : (d.isMortgage ? '🏛️' : '🏦')) + '</span>' +
+      '<div class="i-main"><div class="i-name">' + (d.rolled ? '展期债' : (d.isMortgage ? '抵押贷' : '信用贷')) + ' · 利率' + (d.rate * 100).toFixed(0) + '%</div>' +
+      '<div class="i-sub">到期 ' + d.due + ' 回合 · 应还 ' + fmt(d.total) + '</div></div>' +
+      '<div class="' + cls + '">' + (left <= 0 ? '已到期!' : left + '回合后') + '</div></div>';
+  });
+  document.getElementById('debtList').innerHTML = dh || '<div class="muted" style="font-size:12px">无负债。干净的灵魂。</div>';
+
+  // 奢侈品
+  document.getElementById('cLuxCnt').textContent = S.luxuries.length + ' 件';
+  var lh = '';
+  S.luxuries.forEach(function(l) {
+    var lx = CFG.luxury[l.idx] || CFG.luxury[0];
+    lh += '<div class="item"><span class="i-ico">' + lx.icon + '</span>' +
+      '<div class="i-main"><div class="i-name">' + lx.name + '</div>' +
+      '<div class="i-sub">奢华分 +' + l.pts + '</div></div>' +
+      '<div class="i-val gold">' + fmt(l.price) + '</div></div>';
+  });
+  document.getElementById('luxList').innerHTML = lh || '<div class="muted" style="font-size:12px">毫无排面。买点好东西吧。</div>';
+
+  var tip = document.getElementById('tipLine');
+  if (S.rolls >= CFG.maxRolls) tip.innerHTML = '<span class="red">⚠️ 展期次数已用完，下次到期必须真还</span>';
+  else tip.innerHTML = '';
+}
+
+function titleNow() {
+  var d = totalDebt();
+  var a = S.assets.length;
+  if (d >= 100 * YI) return '许家印本印';
+  if (d >= 20 * YI) return '首富候选人';
+  if (d >= 5 * YI) return '杰出青年企业家';
+  if (d >= 1 * YI) return '知名企业家';
+  if (d >= 5000 * WAN) return 'XX市大亨';
+  if (a >= 10) return '空城城主';
+  if (a >= 5) return '楼王';
+  return '小开发商';
+}
+
+/* ═══════ 弹层 ═══════ */
+function openPop(id) { document.getElementById(id).style.display = 'flex'; }
+function closePop(id) { document.getElementById(id).style.display = 'none'; }
+document.getElementById('aBorrow').addEventListener('click', function() {
+  var h = '';
+  CFG.loans.forEach(function(l) {
+    if (l.unlock && S.unlocked < l.unlock) return;
+    var lim = creditLimit()[l.key];
+    if (lim <= 0) return;
+    var used = usedLoans[l.key];
+    h += '<div class="opt' + (used ? '' : '') + '" onclick="' + (used ? '' : 'borrow(\'' + l.key + '\');closePop(\'mBorrow\')') + '" style="' + (used ? 'opacity:.4;cursor:default' : '') + '">' +
+      '<span class="o-ico">' + l.icon + '</span>' +
+      '<div class="o-main"><div class="o-name">' + l.name + ' · 利率' + (l.rate * 100).toFixed(0) + '%/' + l.term + '回合' + (used ? ' · 本回合已借' : '') + '</div>' +
+      '<div class="o-sub">' + l.desc + '</div></div>' +
+      '<div class="o-val">+' + fmt(lim) + '</div></div>';
+  });
+  document.getElementById('borrowOpts').innerHTML = h || '<div class="muted" style="font-size:12px;text-align:center">当前没有可借额度</div>';
+  openPop('mBorrow');
+});
+document.getElementById('aBuy').addEventListener('click', function() {
+  var h = '';
+  for (var i = 0; i < Math.min(S.unlocked, CFG.buildings.length); i++) {
+    var b = CFG.buildings[i];
+    var can = S.cash >= b.price;
+    h += '<div class="opt' + (can ? '' : '') + '" onclick="buyBuilding(' + (i + 1) + ');closePop(\'mBuy\')" style="' + (can ? '' : 'opacity:.45') + '">' +
+      '<span class="o-ico">' + b.icon + '</span>' +
+      '<div class="o-main"><div class="o-name">' + b.name + '</div>' +
+      '<div class="o-sub">' + b.desc + ' · 现金流1% · 抵押90%</div></div>' +
+      '<div class="o-val">' + fmt(b.price) + '</div></div>';
+  }
+  if (S.unlocked < CFG.buildings.length) h += '<div class="muted" style="font-size:11px;text-align:center;margin-top:6px">买下更高档楼盘解锁下一级</div>';
+  document.getElementById('buyOpts').innerHTML = h;
+  openPop('mBuy');
+});
+document.getElementById('aLux').addEventListener('click', function() {
+  var h = '';
+  CFG.luxury.forEach(function(l, i) {
+    var can = S.cash >= l.price;
+    h += '<div class="opt" onclick="buyLux(' + i + ');closePop(\'mLux\')" style="' + (can ? '' : 'opacity:.45') + '">' +
+      '<span class="o-ico">' + l.icon + '</span>' +
+      '<div class="o-main"><div class="o-name">' + l.name + '</div>' +
+      '<div class="o-sub">奢华分 +' + l.pts + ' · 纯消费</div></div>' +
+      '<div class="o-val">' + fmt(l.price) + '</div></div>';
+  });
+  document.getElementById('luxOpts').innerHTML = h;
+  openPop('mLux');
+});
+document.getElementById('aSell').addEventListener('click', function() {
+  var h = '';
+  S.assets.forEach(function(a, i) {
+    h += '<div class="opt" onclick="sellAsset(\'asset\',' + i + ');closePop(\'mSell\')">' +
+      '<span class="o-ico">🏠</span>' +
+      '<div class="o-main"><div class="o-name">楼盘(75%回血)</div></div>' +
+      '<div class="o-val">+' + fmt(a.price * 0.75) + '</div></div>';
+  });
+  S.luxuries.forEach(function(l, i) {
+    h += '<div class="opt" onclick="sellAsset(\'lux\',' + i + ');closePop(\'mSell\')">' +
+      '<span class="o-ico">💎</span>' +
+      '<div class="o-main"><div class="o-name">奢侈品(50%贱卖)</div></div>' +
+      '<div class="o-val">+' + fmt(l.price * 0.5) + '</div></div>';
+  });
+  document.getElementById('sellOpts').innerHTML = h || '<div class="muted" style="font-size:12px;text-align:center">没有可卖的资产</div>';
+  openPop('mSell');
+});
+document.getElementById('aEnd').addEventListener('click', endRound);
+
+/* ═══════ 结算 ═══════ */
+var FINAL_MSGS = [
+  '空城再大，终有一天会空。',
+  '以债养债，最终养的是泡沫。',
+  '雪球滚得越大，融化时越疼。',
+  '你盖的不是城，是一个传说。',
+  '银行家的微笑，是最后的温柔。'
+];
+function showFinal() {
+  var debt = totalDebt() + Math.max(0, -S.cash);
+  var xu = debt / XU;
+  var luxPts = S.luxuries.reduce(function(a, l) { return a + l.pts; }, 0);
+  var score = Math.round(xu * 100000 + luxPts * 0.3 + S.round * 100);
+  document.getElementById('gameScreen').style.display = 'none';
+  document.getElementById('finalScreen').style.display = 'block';
+  document.getElementById('fXu').textContent = xu.toFixed(2) + ' 许';
+  document.getElementById('fTitle').textContent = '称号：' + titleNow() + ' · 极限负债 ' + fmt(debt);
+  document.getElementById('fStats').innerHTML =
+    '存活 <b class="gold">' + S.round + '</b> 回合 · 楼盘 <b>' + S.assets.length + '</b> 座 · 排面 ' + S.luxuries.length + ' 件 · 奢华分 <b>' + luxPts + '</b>' +
+    '<br>得分 <b class="gold">' + score + '</b>';
+  document.getElementById('fMsg').innerHTML = '💬 <i>' + FINAL_MSGS[Math.floor(Math.random() * FINAL_MSGS.length)] + '</i>';
+  document.getElementById('fRank').textContent = '';
+  window.__finalScore = score;
+  window.__finalXu = xu;
+  // 本地最高
+  try {
+    var best = parseInt(localStorage.getItem('kc_best') || '0', 10);
+    if (score > best) localStorage.setItem('kc_best', String(score));
+    document.getElementById('fRank').textContent = '本地最高分：' + Math.max(best, score);
+  } catch (e) {}
+  // 排行榜
+  document.getElementById('fScore').onclick = submitScore;
+}
+function submitScore() {
+  var btn = document.getElementById('fScore');
+  if (!window.Auth || !Auth.isLoggedIn()) {
+    Auth.openModal('login', function() { submitScore(); });
+    return;
+  }
+  btn.disabled = true; btn.textContent = '提交中…';
+  var f = new FormData();
+  f.append('score', String(window.__finalScore));
+  f.append('graze', String(Math.round(window.__finalXu * 100)));
+  fetch(API_BASE + 'api/leaderboard.php?game=kongcheng', {
+    method: 'POST', body: f, headers: { 'Authorization': 'Bearer ' + Auth.token() }
+  }).then(function(r) { return r.json(); }).then(function(res) {
+    btn.disabled = false;
+    if (res.ok) btn.textContent = '✅ 已上榜 · 第 ' + res.rank + ' 名';
+    else btn.textContent = '提交失败';
+  }).catch(function() { btn.disabled = false; btn.textContent = '网络错误'; });
+}
+function restartGame() {
+  document.getElementById('finalScreen').style.display = 'none';
+  startGame();
+}
+
+/* ═══════ 初始化 ═══════ */
+init();
+function init() {
+  if (!window.Auth) { setTimeout(init, 50); return; }
+  // 进入游戏前显示开场
+}
+</script>
+
+</body>
+</html>
