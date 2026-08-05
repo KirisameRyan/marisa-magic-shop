@@ -57,7 +57,7 @@
   // ledger.html / community.html 上线时, 把对应 disabled 改成真链接即可
   var TAB = {
     'index.html':    { href: 'index.html',  ico: '🏠', txt: '主页', active: true },
-    'ledger.html':   { href: null,          ico: '📒', txt: '账本', active: false },
+    'ledger.html':   { href: 'ledger.html', ico: '📒', txt: '账本', active: true },
     'community.html':{ href: null,          ico: '💬', txt: '社区', active: false },
     'mine.html':     { href: 'mine.html',   ico: '👤', txt: '我的', active: true }
   };
