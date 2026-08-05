@@ -461,6 +461,7 @@ function endRound() {
   S.cash -= lux;
   feed.push('<span class="minus">-排场费 ' + fmt(lux) + '</span>');
   S.round++;
+  S.ap = AP_PER_ROUND;   // 新季度重置行动点
   rollHeat();
   document.getElementById('settleFeed').innerHTML = 'Q' + (S.round - 1) + ' 结算：' + feed.join(' · ');
   document.getElementById('settleFeed').style.display = 'block';
