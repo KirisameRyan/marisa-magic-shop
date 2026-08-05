@@ -148,7 +148,7 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
       </div>
       <div class="hud-item hud-wide">
         <div class="muted" style="font-size:10px">🏙️ 市场热度：<span id="hHeat" class="gold">0</span></div>
-        <div class="muted" style="font-size:10px">🧾 未售地块：<span id="hLandCnt" class="gold">0</span> · 🏦 贷款：<span id="hLoanCnt" class="gold">0</span>笔</div>
+        <div class="muted" style="font-size:10px">🧾 未售地块：<span id="hLandCnt" class="gold">0</span> · 🏷️ 维权金：<span id="hDuty" class="gold">0</span>/季</div>
       </div>
       <div class="hud-item hud-wide" style="text-align:center;background:rgba(240,192,96,.06);border-color:var(--g-gold-dim);padding:10px">
         <span style="font-size:11px;color:var(--g-muted)">🀄 负债泡沫：</span><span id="hXuBig" class="xu-big">0.00000 许家印</span>
@@ -278,9 +278,10 @@ var CFG = {
     { tier: '二线', icon: '🏘️', base: 2000 * WAN, mult: 4, need: 50, desc: '三线城市的"新中心"，宣传册很厚' },
     { tier: '一线', icon: '🏙️', base: 8000 * WAN, mult: 5, need: 80, desc: '宇宙中心的最后一块地，刚需接盘' }
   ],
-  patchBase: 100 * WAN,     // 缝补基础费
-  patchGrowth: 0.3,         // 缝补费随卖地次数增长系数
+  patchRatio: 0.08,           // 缝补费=现金×8%
+  patchGrowth: 0.2,         // 缝补费随次数递增系数
   magicRatio: 0.45,          // 财务魔术转化比例
+  dutyRatio: 0.015,          // 每块预售地每回合维权金(占预售额比例)
   luxury: [
     { name: '豪车',   icon: '🚗', price: 50 * WAN,   pts: 200 },
     { name: '游艇',   icon: '⛵', price: 200 * WAN,  pts: 1000 },
@@ -296,7 +297,7 @@ var S = null;
 function newState() {
   return { cash: CFG.startCash, credit: CFG.startCredit, offshore: 0, luxPts: 0, luxuries: [],
            lands: [], loans: [], round: 1, ap: AP_PER_ROUND, heat: 0, saleCount: 0,
-           patchCount: 0, magicCount: 0, loanCount: 0, events: {}, crashed: false };
+           patchCount: 0, magicCount: 0, loanCount: 0, duty: 0, events: {}, crashed: false };
 }
 function totalLoan() { return S.loans.reduce(function(a, l) { return a + l.amount; }, 0); }
 function totalDebt() { return totalLoan(); }
@@ -324,8 +325,8 @@ function fmt(n) {
 /* ═══════ 教程(故事化, 8页) ═══════ */
 var TUT = [
   { icon:'🎭', title:'故事开始', body:'九十年代，你在工地上搬过砖，在售楼处发过传单。<br><br>你终于悟了：<b>盖楼的人累死，卖楼的人发财。</b><br><br>所以，你决定只卖楼，不盖楼。' },  { icon:'🗺️', title:'画饼拿地', body:'花钱买地——<b>鬼城 / 二线 / 一线</b> 三档，价格随市场浮动。<br><br>地买得越贵，将来预售圈的钱越多。<br><br>但信用不足时，好地不卖给你。' },
-  { icon:'🏷️', title:'预售圈钱', body:'对<b>还没盖的楼</b>收全额预售款：<br>回款 = 地价 × <b>3~5 倍</b>(随市场浮动)。<br><br>钱到手了，楼？<b>楼会有的，在 PPT 里。</b><br><br>代价：信用 -15。卖得越狠，信得越少。' },
-  { icon:'🛠️', title:'缝补工程', body:'偶尔花点小钱"动工"，给业主们一点希望。<br><br>信用 +20。<br><br>但每卖出一块地，缝补的费用就水涨船高——<br><b>窟窿越大，补丁越贵。</b>' },
+  { icon:'🏷️', title:'预售圈钱', body:'对<b>还没盖的楼</b>收全额预售款：<br>回款 = 地价 × <b>3~5 倍</b>(随市场浮动)。<br><br>钱到手了，楼？<b>楼会有的，在 PPT 里。</b><br><br>代价：信用 -8，且<b>每块预售地每季度产生维权金</b>（=预售额1.5%）。<br>空城卖得越多，每季度被动支出越大——业主们不会放过你。' },
+  { icon:'🛠️', title:'缝补工程', body:'偶尔花点钱"动工"，给业主们一点希望。<br><br>信用 +30。<br><br>但缝补费 = <b>现金 × 8%</b>，且每补一次更贵——<br><b>钱越多，补丁越贵；补得越多，补丁越贵。</b><br>窟窿永远比补丁大。' },
   { icon:'🏦', title:'抵押贷款', body:'拿地皮上银行借<b>工程款</b>。<br><br>这是<b>永续贷款</b>：没有到期日，每季度付息，直到永远。<br><br>信用越高，抵押率越高、利息越低。<br>信用 <30 → <b>收入冻结</b>：预售和贷款全都借不动。' },
   { icon:'💸', title:'财务魔术', body:'把账面现金的 40% 变成<b>离岸资产</b>——<br>消耗2个行动点，信用 -5。<br><br><b>卷走的钱 = 最终得分。</b><br>信用 <20 时，连魔术都变不动了。' },
   { icon:'⚖️', title:'信用是命', body:'信用驱动一切：<br>贷款上限 / 可买地块 / 缝补效果 / 预售收入。<br><br>业主维权、审计上门——<b>都是钱能摆平的事</b>，<br>但钱摆平得越多，窟窿越大。<br><br>信用归零的那天，就是全剧终。' },
@@ -394,19 +395,21 @@ function buyLand(tierIdx) {
 }
 function presale(idx) {
   var ld = S.lands[idx];
+  if (!ld) return;
   var l = CFG.lands[ld.tier];
   var mult = (l.mult + S.heat) * creditFactor();
   var money = Math.round(ld.price * mult);
   S.cash += money;
   S.lands.splice(idx, 1);           // 地没了(楼卖掉了, 楼没盖)
-  S.credit = Math.max(0, S.credit - 5);
+  S.credit = Math.max(0, S.credit - 8);
   S.saleCount++;
+  S.duty += Math.round(money * CFG.dutyRatio);   // 空城代价: 每回合维权金
   S.ap--;
   toast('🏷️ 预售成功 +' + fmt(money) + '（' + ld.name + ' ×' + mult.toFixed(1) + '倍）');
   render();
 }
 function patch() {
-  var cost = CFG.patchBase * (1 + S.saleCount * CFG.patchGrowth);   // 卖得越多补丁越贵
+  var cost = Math.round(S.cash * CFG.patchRatio * (1 + S.patchCount * CFG.patchGrowth));   // 按现金比例, 越补越贵
   if (S.cash < cost) return;
   S.cash -= cost;
   S.credit = Math.min(100, S.credit + 30);
@@ -417,6 +420,7 @@ function patch() {
 }
 function takeLoan(idx) {
   var ld = S.lands[idx];
+  if (!ld) return;
   var amount = Math.round(ld.price * mortgageRate());
   if (amount <= 0) return;
   S.cash += amount;
@@ -468,6 +472,9 @@ function endRound() {
   var lux = Math.round(Math.max(0, S.cash) * (frozenIncome() ? 0.05 : 0.015) + S.offshore * 0.012);
   S.cash -= lux;
   feed.push('<span class="minus">-排场费 ' + fmt(lux) + '</span>');
+  var duty = S.duty;
+  S.cash -= duty;
+  feed.push('<span class="minus">-维权金 ' + fmt(duty) + '</span>');
   S.round++;
   S.ap = AP_PER_ROUND;   // 新季度重置行动点
   rollHeat();
@@ -487,11 +494,11 @@ function rollHeat() { S.heat = Math.round((Math.random() * 4) - 2); }  // -2 ~ +
 function rollEvent() {
   var r = Math.random();
   // 信用低 → 维权/审计优先
-  if (S.credit < 40 && r < 0.35) { showEventChoice('🚨', '业主维权', '业主们围在售楼处门口，横幅写着"还我房子"。（信用 -30 或 花钱公关）', [
-    { txt: '💸 花钱公关(-5%现金)', fn: function() { S.cash -= Math.round(S.offshore + totalDebt() + S.cash) * 0.05; S.credit += 10; toast('公关费已付，横幅被收走'); render(); } },
-    { txt: '😤 硬扛(-30信用)', fn: function() { S.credit = Math.max(0, S.credit - 30); toast('信用 -30，舆论哗然'); render(); } }
+  if (S.credit < 60 && r < 0.4) { showEventChoice('🚨', '业主维权', '业主们围在售楼处门口，横幅写着"还我房子"。（信用 -25 或 花钱公关）', [
+    { txt: '💸 花钱公关(-6%现金)', fn: function() { S.cash -= Math.round(S.cash * 0.06); S.credit += 8; toast('公关费已付，横幅被收走'); render(); } },
+    { txt: '😤 硬扛(-25信用)', fn: function() { S.credit = Math.max(0, S.credit - 25); toast('信用 -25，舆论哗然'); render(); } }
   ]); return; }
-  if (S.credit < 25 && r < 0.5) { showEventChoice('🔍', '审计进驻', '监管的人来了，在翻你的账。（信用 -40 或 花钱摆平）', [
+  if (S.credit < 30 && r < 0.5) { showEventChoice('🔍', '审计进驻', '监管的人来了，在翻你的账。（信用 -40 或 花钱摆平）', [
     { txt: '💸 花钱摆平(-8%现金)', fn: function() { S.cash -= Math.round(S.cash * 0.08); S.credit += 5; toast('账本"恰好"整理完毕'); render(); } },
     { txt: '😱 硬扛(-40信用)', fn: function() { S.credit = Math.max(0, S.credit - 40); toast('信用 -40，审计组坐进了你的办公室'); render(); } }
   ]); return; }
@@ -532,7 +539,7 @@ function render() {
   document.getElementById('hXuBig').textContent = xuFmt(totalDebt() / XU) + ' 许家印';
   document.getElementById('hHeat').textContent = S.heat >= 0 ? '+' + S.heat : String(S.heat);
   document.getElementById('hLandCnt').textContent = S.lands.length;
-  document.getElementById('hLoanCnt').textContent = S.loans.length;
+  document.getElementById('hDuty').textContent = fmt(S.duty);
   // 行动点
   var apHtml = '';
   for (var i = 0; i < AP_PER_ROUND; i++) apHtml += '<span class="dot' + (i < S.ap ? ' on' : '') + '"></span>';
@@ -558,7 +565,7 @@ function render() {
   }
   if (magicBlocked()) document.getElementById('aMagic').classList.add('frozen');
   else document.getElementById('aMagic').classList.remove('frozen');
-  document.getElementById('cPatchSub').textContent = '信用+20 · 费' + fmt(patchCost());
+  document.getElementById('cPatchSub').textContent = '信用+30 · 费' + fmt(patchCost()) + '(现金' + Math.round(CFG.patchRatio * 100) + '%)';
   document.getElementById('cLoanSub').textContent = '抵押率' + Math.round(mortgageRate() * 100) + '% · 利率' + Math.round(interestRate() * 100) + '%';
 
   // 地块
@@ -604,7 +611,7 @@ function render() {
 function setAct(id, on) {
   document.getElementById(id).disabled = !on;
 }
-function patchCost() { return CFG.patchBase * (1 + S.saleCount * CFG.patchGrowth); }
+function patchCost() { return Math.round(S.cash * CFG.patchRatio * (1 + S.patchCount * CFG.patchGrowth)); }
 
 /* ═══════ 弹层 ═══════ */
 function openPop(id) { document.getElementById(id).style.display = 'flex'; }
@@ -686,7 +693,7 @@ function showFinal(reason) {
   document.getElementById('fXu').textContent = fmt(S.offshore);
   document.getElementById('fTitle').textContent = '称号：' + grade + ' · 崩盘原因：' + reason;
   document.getElementById('fStats').innerHTML =
-    '存活 <b class="gold">' + S.round + '</b> 季度 · 卖出 <b>' + S.saleCount + '</b> 块地的楼花 · 贷款 <b>' + S.loans.length + '</b> 笔' +
+    '存活 <b class="gold">' + S.round + '</b> 季度 · 卖出 <b>' + S.saleCount + '</b> 块地的楼花 · 维权金 <b>' + fmt(S.duty) + '</b>/季度' +
     '<br>财务魔术 <b class="gold">' + S.magicCount + '</b> 次 · 奢华分 <b>' + S.luxPts + '</b> · 信用归零时 <b>' + S.credit + '</b>' +
     '<br>最终得分 <b class="gold">' + score + '</b>（离岸 + 奢华×100）';
   document.getElementById('fMsg').innerHTML = '💬 <i>' + FINAL_MSGS[Math.floor(Math.random() * FINAL_MSGS.length)] + '</i>';
