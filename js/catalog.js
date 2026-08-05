@@ -10,7 +10,8 @@ window.MMS_CATALOG = {
     { href: 'marisa_survivor.html', emoji: '⭐', name: '魔理沙幸存者', tag: '幸存者like',         color: 'purple', desc: '攻击全自动，只管走位！收集P点升级，17 种强化卡三选一，在琪露诺大军里活下去。' },
     { href: 'marisa_landlord.html', emoji: '⛩️', name: '魔理沙的赛钱危机', tag: 'Roguelike 老虎机构筑', color: 'red', desc: '灵梦上门收租了！转动祈愿转盘，58 种符号自由构筑：幽幽子吃料理永久成长，琪露诺冻青蛙……撑过 12 次收租！' },
     { href: 'street_survival.html', emoji: '🌃', name: '流浪模拟器',   tag: '街头生存模拟',       color: 'blue', desc: '你是李明，兜里剩 8 块钱。每天早中晚三个时段，打工、翻垃圾、乞讨……突发事件随时降临，活到攒够 1000 元那天。' },
-    { href: 'demo_roulette.html',   emoji: '🔫', name: '轮盘赌局',     tag: '双人心理博弈',       color: 'gold', desc: '一把左轮六枚弹膛。装弹、留话、朝谁开枪？三局两胜，挑战 AI 或匹配真人，读完对面再扣扳机。' }
+    { href: 'demo_roulette.html',   emoji: '🔫', name: '轮盘赌局',     tag: '双人心理博弈',       color: 'gold', desc: '一把左轮六枚弹膛。装弹、留话、朝谁开枪？三局两胜，挑战 AI 或匹配真人，读完对面再扣扳机。' },
+    { href: 'kongcheng.html',       emoji: '🎭', name: '空城计',       tag: '债务滚雪球模拟',     color: 'purple', desc: '你是许家印。借钱→盖楼→抵押→再借钱，把泡沫滚到最大，直到崩盘。看你能滚成几个许家印。' }
   ],
   // ── 🔥 热门测试 ──
   hot: [
