@@ -50,6 +50,7 @@ window.MMS_CATALOG = {
   ],
   // ── 🧰 实用工具 ──
   tools: [
+    { href: 'ledger.html',   emoji: '📒', name: '我的账本',     tag: '记账',   color: 'gold', desc: '微信/支付宝/美团账单截屏 + AI 自动记账，CSV 一键导入，图表统计，离线可用。' },
     { href: 'collect.html',  emoji: '📝', name: '建议新彩蛋人物', tag: '彩蛋征集', color: 'gold', desc: '想让谁加入高考模拟器的隐藏彩蛋？来提名，店主会挑合适的加进去。' },
     { href: 'feedback.html', emoji: '💬', name: '帮助我们改进网站', tag: '网站反馈', color: 'lime', desc: '有什么想对我们说的？新测试想法、bug反馈、建议都行。每条都会看。' }
   ],

@@ -40,8 +40,50 @@ function mms_db(): PDO {
                 used INTEGER NOT NULL DEFAULT 0
             )"
         );
+        $pdo->exec(
+            "CREATE TABLE IF NOT EXISTS categories (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL DEFAULT 0,
+                name TEXT NOT NULL,
+                icon TEXT NOT NULL DEFAULT '📦',
+                kind TEXT NOT NULL DEFAULT 'expense',
+                sort INTEGER NOT NULL DEFAULT 0
+            )"
+        );
+        $pdo->exec(
+            "CREATE TABLE IF NOT EXISTS transactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                type TEXT NOT NULL DEFAULT 'expense',
+                amount_cents INTEGER NOT NULL,
+                category_id INTEGER NOT NULL DEFAULT 0,
+                merchant TEXT NOT NULL DEFAULT '',
+                note TEXT NOT NULL DEFAULT '',
+                happened_at TEXT NOT NULL,
+                source TEXT NOT NULL DEFAULT 'manual',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )"
+        );
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)');
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_resets_user ON resets(user_id)');
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_tx_user_time ON transactions(user_id, happened_at)');
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_tx_user_upd ON transactions(user_id, updated_at)');
+        // 默认分类种子(仅首次)
+        $cnt = (int)$pdo->query('SELECT COUNT(*) FROM categories')->fetchColumn();
+        if ($cnt === 0) {
+            $defaults = [
+                ['餐饮', '🍜', 'expense'], ['交通', '🚇', 'expense'], ['购物', '🛍️', 'expense'],
+                ['娱乐', '🎮', 'expense'], ['居住', '🏠', 'expense'], ['医疗', '💊', 'expense'],
+                ['学习', '📚', 'expense'], ['人情', '🎁', 'expense'], ['其他', '📦', 'expense'],
+                ['工资', '💰', 'income'], ['理财', '📈', 'income'], ['红包', '🧧', 'income'],
+                ['其他收入', '✨', 'income'],
+            ];
+            $st = $pdo->prepare('INSERT INTO categories (user_id, name, icon, kind, sort) VALUES (0,?,?,?,?)');
+            foreach ($defaults as $i => $d) {
+                $st->execute([$d[0], $d[1], $d[2], $i]);
+            }
+        }
     }
     return $pdo;
 }
