@@ -130,11 +130,11 @@
     else injectSidebar(page);
   }
 
-  // 恐怖内容进入警告(全站首次)
-  function injectWarn() {
+  // 恐怖内容警告: 仅在点击"开始"类按钮时弹出
+  function mmsWarnGate(done) {
     var agreed = false;
     try { agreed = localStorage.getItem('mms_horror_warn') === '1'; } catch (e) {}
-    if (agreed) return;
+    if (agreed) { done(); return; }
     var mask = document.createElement('div');
     mask.id = 'mmsWarn';
     mask.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(8,5,10,.96);display:flex;align-items:center;justify-content:center;padding:20px;';
@@ -153,7 +153,25 @@
     document.getElementById('mmsWarnOk').addEventListener('click', function() {
       try { localStorage.setItem('mms_horror_warn', '1'); } catch (e) {}
       mask.remove();
+      done();
     });
+  }
+
+  // 捕获阶段拦截"开始"按钮: 未同意前阻止原逻辑, 同意后重放点击
+  function injectStartWarn() {
+    document.addEventListener('click', function(e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+      if (t.closest('#mmsWarn')) return;
+      var btn = t.closest('button, a, [onclick]');
+      if (!btn) return;
+      var txt = (btn.textContent || '').replace(/[^\u4e00-\u9fa5A-Za-z0-9]/g, '');
+      if (!/(^开始|^出发|^起飞|^挑战|开始测试|开始游戏|开始检测|开始调查|开始占卜|点击开始)/.test(txt)) return;
+      if (/重新测试|重新调查|再来|返回/.test(txt)) return;
+      var done = false;
+      mmsWarnGate(function() { done = true; btn.click(); });
+      if (!done) { e.preventDefault(); e.stopPropagation(); }
+    }, true);
   }
 
   // 轻提示
@@ -170,12 +188,12 @@
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
-      injectWarn();
+      injectStartWarn();
       injectSponsor();
       injectNav();
     });
   } else {
-    injectWarn();
+    injectStartWarn();
     injectSponsor();
     injectNav();
   }
