@@ -14,7 +14,7 @@ MQ.poster = {
   SITE_URL: 'www.azureflame.cloud',
   QR_IMG: 'images/qr-code.png',
   QQ_IMG: 'images/qq-group.png',
-  QQ_GROUP: '702973928',
+  QQ_GROUP: 'space.bilibili.com/1029138222',
   FONT: '-apple-system,"PingFang SC","Microsoft YaHei",sans-serif',
 
   // 标准海报框架:深底 + 斜向渐变罩 + 圆角卡片 + 顶部渐变条
@@ -44,7 +44,7 @@ MQ.poster = {
     return pad;
   },
 
-  // 底部双二维码(站码 + QQ群),居中排布
+  // 底部双二维码(站码 + B站频道),居中排布
   // 返回实际占用的总高度(含标签),便于排版
   qrPair: async function(ctx, W, y, qs, opts) {
     opts = opts || {};
@@ -54,7 +54,7 @@ MQ.poster = {
     var siteImg = await loadImg(opts.qrImg || MQ.poster.QR_IMG);
     var qqImg = await loadImg(opts.qqImg || MQ.poster.QQ_IMG);
     drawQRBox(ctx, siteImg, leftX, y, qs, opts.siteLabel || '扫码开测', MQ.poster.SITE_URL, opts.accent || '#f0c060');
-    drawQRBox(ctx, qqImg, leftX + qs + gap, y, qs, opts.qqLabel || '加 QQ 群', '群号 ' + MQ.poster.QQ_GROUP, opts.accent2 || '#b89fff');
+    drawQRBox(ctx, qqImg, leftX + qs + gap, y, qs, opts.qqLabel || '关注B站', MQ.poster.QQ_GROUP, opts.accent2 || '#b89fff');
     if (opts.bilibili !== false) {
       ctx.fillStyle = '#8a7e9a';
       ctx.font = '11px ' + MQ.poster.FONT;

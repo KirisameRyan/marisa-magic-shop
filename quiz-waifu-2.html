@@ -90,7 +90,7 @@ var BADGE_TEXT = '霧雨魔法店 · 正式鉴定';
 var SITE_URL = 'www.azureflame.cloud';
 var QR_IMG = 'images/qr-code.png';
 var QQ_IMG = 'images/qq-group.png';
-var QQ_GROUP = '702973928';
+var QQ_GROUP = 'space.bilibili.com/1029138222';
 var POSTER_W = 640;
 var POSTER_H = 960;
 
@@ -533,7 +533,7 @@ async function buildPoster() {
   var rightX = leftX + qs + gap2;
   var qy2 = H - pad - 232;
   drawQRBox(ctx, siteImg, leftX, qy2, qs, '扫码开测', SITE_URL, r.color || '#e04080');
-  drawQRBox(ctx, qqImg, rightX, qy2, qs, '加 QQ 群', '群号 ' + QQ_GROUP, '#b89fff');
+  drawQRBox(ctx, qqImg, rightX, qy2, qs, '关注B站', QQ_GROUP, '#b89fff');
 
   var pi = document.getElementById('posterImg');
   var pl = document.getElementById('posterLoading');

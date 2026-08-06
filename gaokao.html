@@ -125,7 +125,7 @@ var CURRENT_YEAR = '2026';
 var SITE_URL = 'www.azureflame.cloud';
 var QR_IMG = 'images/qr-code.png';
 var QQ_IMG = 'images/qq-group.png';
-var QQ_GROUP = '702973928';
+var QQ_GROUP = 'space.bilibili.com/1029138222';
 var POSTER_W = 600, POSTER_H = 960;
 
 var STORAGE_KEY = 'quiz_gaokao_v1';
@@ -710,7 +710,7 @@ async function buildPoster() {
   var lx = (W - tqw) / 2, rx = lx + qs + gap;
   var qY = H - pad - 170;
   drawQRBox(ctx, siteImg, lx, qY, qs, '扫码开测', SITE_URL, '#f0c060');
-  drawQRBox(ctx, qqImg, rx, qY, qs, '加 QQ 群', '群号 '+QQ_GROUP, '#b89fff');
+  drawQRBox(ctx, qqImg, rx, qY, qs, '关注B站', QQ_GROUP, '#b89fff');
 
   ctx.textAlign = 'center';
   ctx.fillStyle = '#8a7e9a'; ctx.font = '11px ' + FONT;

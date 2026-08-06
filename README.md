@@ -66,7 +66,6 @@ git clone https://github.com/KirisameRyan/marisa-magic-shop.git
 
 - **主页**：[www.azureflame.cloud](https://www.azureflame.cloud)
 - **B站**：[霧雨魔法店](https://space.bilibili.com/1029138222)
-- **QQ群**：702973928
 
 ---
 

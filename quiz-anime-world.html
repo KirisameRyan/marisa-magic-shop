@@ -221,7 +221,7 @@ var LOADING_STEPS = ['正在扫描灵魂波长…','检索二次元数据库…'
 var QR_IMG = 'images/qr-code.png';
 var QQ_IMG = 'images/qq-group.png';
 var SITE_URL = 'www.azureflame.cloud';
-var QQ_GROUP = '702973928';
+var QQ_GROUP = 'space.bilibili.com/1029138222';
 
 // ==================== 渲染 ====================
 
@@ -466,7 +466,7 @@ async function buildPoster() {
   var leftX = (W - totalQW)/2, rightX = leftX + qs + gap2;
   var qy = H - pad - 196;
   drawQRBox(ctx, siteImg, leftX, qy, qs, '扫码开测', SITE_URL, '#f0c060');
-  drawQRBox(ctx, qqImg, rightX, qy, qs, '加 QQ 群', '群号 '+QQ_GROUP, '#b89fff');
+  drawQRBox(ctx, qqImg, rightX, qy, qs, '关注B站', QQ_GROUP, '#b89fff');
 
   ctx.fillStyle = '#8a7e9a'; ctx.font = '11px ' + FONT;
   ctx.textAlign = 'center'; ctx.fillText('B站: bilibili.com/1029138222', W/2, qy+qs+62);

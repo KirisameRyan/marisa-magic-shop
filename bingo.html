@@ -102,7 +102,7 @@
 var SITE_URL = 'www.azureflame.cloud';
 var QR_IMG = 'images/qr-code.png';
 var QQ_IMG = 'images/qq-group.png';
-var QQ_GROUP = '702973928';
+var QQ_GROUP = 'space.bilibili.com/1029138222';
 var POSTER_W = 640, POSTER_H = 960;
 
 var CELLS = [
@@ -478,7 +478,7 @@ async function buildPoster() {
  var leftX = (W - totalQW) / 2, rightX = leftX + qs + gap2;
  var qy = H - pad - 196;
  drawQRBox(ctx, siteImg, leftX, qy, qs, '扫码开测', SITE_URL, '#f0c060');
- drawQRBox(ctx, qqImg, rightX, qy, qs, '加 QQ 群', '群号 ' + QQ_GROUP, '#b89fff');
+ drawQRBox(ctx, qqImg, rightX, qy, qs, '关注B站', QQ_GROUP, '#b89fff');
 
  var pi = document.getElementById('posterImg');
  var pl = document.getElementById('posterLoading');

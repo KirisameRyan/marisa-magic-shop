@@ -54,7 +54,7 @@
 | `js/quiz-stats.js` | `bindCount(el, key, {template})` / `trackStart` / `getCount` / `fmtCount` / `animateCount` | 服务端统计 + 人数显示 |
 | `js/quiz-storage.js` | `quizSave/quizLoad/quizClear/resumeButton` | localStorage 断点续答 |
 | `js/reveal-screen.js` | `showReveal(title, code, color, hint, callback, [duration])` | 揭示屏动画 |
-| `js/result-footer.js` | `resultFooterHTML([options])` | 结果页底部 QQ群+B站+notice |
+| `js/result-footer.js` | `resultFooterHTML([options])` | 结果页底部 B站+notice |
 | `js/utils.js` | `sleep / shuffle / copyToClipboard` | 通用工具 |
 | `js/radar.js` | `MQ.radar(vec, {labels, color, ...})` → svg 字符串 | 雷达图 |
 | `js/poster.js` | `MQ.poster.frame/qrPair/screenHTML/finish` + 常量 | Canvas 分享海报 |
