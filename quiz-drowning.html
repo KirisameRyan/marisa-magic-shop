@@ -687,6 +687,45 @@ function restartSurvey() {
   renderStart();
 }
 
+/* ── 公告页(每次打开必显示) ── */
+function renderNotice() {
+  var s = document.getElementById('survey');
+  s.innerHTML =
+    '<div style="max-width:640px;margin:18px auto;background:#fff;border:1px solid #e0e0e0;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.12);overflow:hidden;">'+
+      '<div style="background:linear-gradient(180deg,#b71c1c,#c62828);color:#fff;text-align:center;padding:18px 14px;">'+
+        '<div style="font-size:12px;opacity:.9;letter-spacing:3px;margin-bottom:6px;">霧雨魔法店 公告</div>'+
+        '<div style="font-size:17px;font-weight:800;letter-spacing:1px;line-height:1.5;">致各位一直以来支持雾雨魔法店网站运营的朋友们</div>'+
+      '</div>'+
+      '<div style="padding:20px 24px;font-size:14px;color:#333;line-height:1.9;">'+
+        '<p>你们好！</p>'+
+        '<p>自从上线了防溺水调查问卷后，我们收到了许多质疑的意见。</p>'+
+        '<p>由于设计时的疏忽——恐怖要素以及光敏性癫痫提示文字不够醒目、部分问卷选项的设置不够严谨，对此，我们制作组全体成员向每一位对这份问卷感到不适的朋友们表达最诚挚的歉意！</p>'+
+        '<p>我们深知，幺幺小朋友的事件在互联网上已经被赋予了各种各样的解读和引申扩大的意义。但是我们制作组内部成员在策划这个页面游戏之初的目的是：为了通过恐怖页面互动游戏的方式，用富有冲击力的效果唤起大家对溺水事故的警觉。</p>'+
+        '<p>我们承认最初的灵感或许带有一些轻率的成分，但在后面具体去构思、设计、实现想法的过程中，我们越来越多地关注到现实生活中那令人痛心的案例——制作组里面的成员们不止一次听闻过孩童结伴去陌生水域游泳、或是家长看护疏漏而失去生命的事情。这些溺亡事故的受害者，有时甚至是制作组成员的亲戚和同学。正因如此，我们选择了这种非常规的表现形式，试图用强烈的视觉语言传递“生命不可重来”的警示。</p>'+
+        '<p>但我们必须承认，设计方式上的欠妥可能掩盖了本意，甚至给部分抱有好奇心态的网友们带来了不必要的惊吓或困扰。这是我们的失职，我们绝不推卸。</p>'+
+        '<p>我们后续将会对警示标识、问卷选项重新进行调整。未来我们在制作诸如此类的页面互动游戏时，将会更加注重观感和教育意义上的平衡，尊重每一位朋友们的感受。</p>'+
+        '<p>再次为我们制作组在这个互动游戏页面设计上的疏忽向你们道歉！感谢朋友们的每一条意见和指正！</p>'+
+        '<div style="text-align:right;margin-top:8px;color:#666;">雾雨魔法店网站运营制作组全体敬上<br>2026.8.7</div>'+
+      '</div>'+
+    '</div>'+
+    '<div style="max-width:640px;margin:16px auto;background:#1a1010;border:2px solid #ef4444;border-radius:14px;padding:18px 22px;color:#f5ecec;">'+
+      '<div style="font-size:16px;font-weight:900;color:#ff5252;letter-spacing:2px;">⚠ 警告声明</div>'+
+      '<div style="font-size:13px;line-height:2;margin-top:10px;">'+
+        '本问卷为一款<b style="color:#f0c060;">模拟恐怖的试作互动游戏</b>，纯属虚构创作，仅供娱乐，<b style="color:#f0c060;">不对现实起任何指导作用</b>，亦不代表任何官方立场。<br>'+
+        '问卷中段起包含<b style="color:#f0c060;">大量恐怖元素</b>：恐怖画面、突发音效、跳脸惊吓、强光闪烁（<b style="color:#f0c060;">光敏性癫痫患者请勿进入</b>）。<br><br>'+
+        '心脏病患者、胆小者、心理承受能力较弱者，请勿点击进入；<br>答题途中如感不适，请立即退出页面。'+
+      '</div>'+
+    '</div>'+
+    '<button class="btn-go" style="max-width:400px;background:#b71c1c;letter-spacing:2px;" onclick="noticeGo()">我已阅读并了解，进入问卷 →</button>'+
+    '<div style="text-align:center;margin-top:14px;"><a href="index.html" style="color:#888;font-size:13px;text-decoration:none;">← 无法接受？返回魔法店</a></div>';
+}
+
+function noticeGo() {
+  var saved = localStorage.getItem(STORAGE_KEY);
+  if (saved === 'done') { renderEnding(); return; }
+  renderStart();
+}
+
 /* ── 起始页渲染 ── */
 function renderStart() {
   var s = document.getElementById('survey');
@@ -737,11 +776,9 @@ function beginSurvey() {
   });
 }
 
-/* ── 恢复进度 ── */
+/* ── 恢复进度: 每次打开先显示公告页 ── */
 (function() {
-  var saved = localStorage.getItem(STORAGE_KEY);
-  if (saved === 'done') { renderEnding(); return; }
-  renderStart();
+  renderNotice();
 })();
 </script>
 
