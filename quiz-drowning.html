@@ -172,10 +172,9 @@ var QUESTIONS = [
 
 var idx = 0;
 var finished = false;
-var audioTick = null, audioFail = null, audioCtx = null, humOsc = null;
+var audioTick = null, audioCtx = null, humOsc = null;
 
 function getTick() { if (!audioTick) audioTick = new Audio('audio/sfx/tick.mp3'); return audioTick; }
-function getFail() { if (!audioFail) audioFail = new Audio('audio/guijiao.mp3'); return audioFail; }
 
 /* ── 手势内解锁 AudioContext(浏览器自动播放策略) ── */
 function unlockAudio() {
@@ -606,7 +605,7 @@ function doSubmit() {
     if (el && si < states.length) el.textContent = states[si++];
   }, 650);
 
-  /* 时序: 雪花屏 → 全黑 → 幺幺扭曲突脸 → 收尾 */
+  /* 时序: 雪花屏 → 全黑 → 收尾(结尾跳脸已删除) */
   setTimeout(function(){
     /* 雪花屏开始 + 低频嗡鸣 */
     humStart();
@@ -624,26 +623,17 @@ function doSubmit() {
     bk.style.cssText = 'position:fixed;inset:0;background:#000;z-index:99998;';
     document.body.appendChild(bk);
   }, 1750);
-  /* 全黑 → 幺幺突脸 */
-  setTimeout(function(){
-    var pb = document.getElementById('preBlack');
-    if (pb && pb.parentNode) pb.parentNode.removeChild(pb);
-    var scare = document.getElementById('scareLayer');
-    document.getElementById('scareImg').src = SCARE_IMG;
-    scare.style.display = 'flex';
-    document.body.classList.add('scare-shake');
-    try{ getFail().currentTime=0; getFail().play(); }catch(e){}
-  }, 1950);
 
-  /* 突脸定格 1.5s 后收尾(只闪一次) */
+  /* 黑屏定格后收尾 */
   setTimeout(function(){
     clearInterval(st);
     humStop();
-    document.getElementById('scareLayer').style.display = 'none';
+    var pb = document.getElementById('preBlack');
+    if (pb && pb.parentNode) pb.parentNode.removeChild(pb);
     document.body.classList.remove('scare-shake');
     document.body.classList.remove('dark-shift');
     renderEnding();
-  }, 3450);
+  }, 2300);
 }
 
 /* ── 收尾页 ── */
@@ -712,9 +702,13 @@ function renderNotice() {
       '<div style="font-size:16px;font-weight:900;color:#ff5252;letter-spacing:2px;">⚠ 警告声明</div>'+
       '<div style="font-size:13px;line-height:2;margin-top:10px;">'+
         '本问卷为一款<b style="color:#f0c060;">模拟恐怖的试作互动游戏</b>，纯属虚构创作，仅供娱乐，<b style="color:#f0c060;">不对现实起任何指导作用</b>，亦不代表任何官方立场。<br>'+
-        '问卷中段起包含<b style="color:#f0c060;">大量恐怖元素</b>：恐怖画面、突发音效、跳脸惊吓、强光闪烁（<b style="color:#f0c060;">光敏性癫痫患者请勿进入</b>）。<br><br>'+
+        '问卷中段起包含<b style="color:#f0c060;">大量恐怖元素</b>：恐怖画面、突发音效、惊吓画面、强光闪烁（<b style="color:#f0c060;">光敏性癫痫患者请勿进入</b>）。<br><br>'+
         '心脏病患者、胆小者、心理承受能力较弱者，请勿点击进入；<br>答题途中如感不适，请立即退出页面。'+
       '</div>'+
+    '</div>'+
+    '<div style="max-width:640px;margin:16px auto;background:#0d2b1a;border:2px solid #2ecc71;border-radius:14px;padding:14px 22px;color:#d9f5e4;">'+
+      '<div style="font-size:14px;font-weight:900;color:#2ecc71;letter-spacing:2px;margin-bottom:6px;">📢 更新通告（2026.8.7）</div>'+
+      '<div style="font-size:13px;line-height:1.9;">已听取大家的反馈，问卷结尾的<b style="color:#f0c060;">跳脸惊吓画面与惊吓音效</b>已全部删除，感谢每一位朋友的指正。</div>'+
     '</div>'+
     '<button class="btn-go" style="max-width:400px;background:#b71c1c;letter-spacing:2px;" onclick="noticeGo()">我已阅读并了解，进入问卷 →</button>'+
     '<div style="text-align:center;margin-top:14px;"><a href="index.html" style="color:#888;font-size:13px;text-decoration:none;">← 无法接受？返回魔法店</a></div>';
