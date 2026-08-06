@@ -157,23 +157,6 @@
     });
   }
 
-  // 捕获阶段拦截"开始"按钮: 未同意前阻止原逻辑, 同意后重放点击
-  function injectStartWarn() {
-    document.addEventListener('click', function(e) {
-      var t = e.target;
-      if (!t || !t.closest) return;
-      if (t.closest('#mmsWarn')) return;
-      var btn = t.closest('button, a, [onclick]');
-      if (!btn) return;
-      var txt = (btn.textContent || '').replace(/[^\u4e00-\u9fa5A-Za-z0-9]/g, '');
-      if (!/(^开始|^出发|^起飞|^挑战|开始测试|开始游戏|开始检测|开始调查|开始占卜|点击开始)/.test(txt)) return;
-      if (/重新测试|重新调查|再来|返回/.test(txt)) return;
-      var done = false;
-      mmsWarnGate(function() { done = true; btn.click(); });
-      if (!done) { e.preventDefault(); e.stopPropagation(); }
-    }, true);
-  }
-
   // 轻提示
   function mmsToast(msg) {
     var old = document.getElementById('mmsToast');
@@ -188,15 +171,14 @@
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
-      injectStartWarn();
       injectSponsor();
       injectNav();
     });
   } else {
-    injectStartWarn();
     injectSponsor();
     injectNav();
   }
+  window.mmsWarnGate = mmsWarnGate;
 })();
 
 // ── 广告切换(已废弃,保留兼容) ──
