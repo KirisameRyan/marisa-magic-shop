@@ -130,6 +130,32 @@
     else injectSidebar(page);
   }
 
+  // 恐怖内容进入警告(全站首次)
+  function injectWarn() {
+    var agreed = false;
+    try { agreed = localStorage.getItem('mms_horror_warn') === '1'; } catch (e) {}
+    if (agreed) return;
+    var mask = document.createElement('div');
+    mask.id = 'mmsWarn';
+    mask.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(8,5,10,.96);display:flex;align-items:center;justify-content:center;padding:20px;';
+    mask.innerHTML =
+      '<div style="max-width:400px;width:100%;background:#201a17;border:1px solid #3a2f28;border-radius:20px;padding:26px 22px;text-align:center;position:relative;overflow:hidden;">' +
+      '<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#ef4444,#f0c060,#ef4444);"></div>' +
+      '<div style="font-size:44px;margin-bottom:10px;">⚠️</div>' +
+      '<div style="font-size:19px;font-weight:900;color:#ef4444;letter-spacing:2px;margin-bottom:12px;">内容警告</div>' +
+      '<div style="font-size:13px;color:#e0d8ec;line-height:1.9;text-align:left;margin-bottom:16px;">' +
+      '本店部分测试与游戏包含 <b style="color:#f0c060;">模拟恐怖</b> 与 <b style="color:#f0c060;">跳脸惊吓</b> 效果，可能引起不适。<br><br>' +
+      '心脏病、胆小或心理承受能力较弱者，请勿进入。<br><br>' +
+      '无法接受者，请立即退出本页面。</div>' +
+      '<button id="mmsWarnOk" style="width:100%;border:none;border-radius:12px;padding:13px 0;font-size:15px;font-weight:800;background:linear-gradient(135deg,#f0c060,#d9a84a);color:#1a1520;cursor:pointer;font-family:inherit;">我已了解，进入</button>' +
+      '<div style="font-size:10px;color:#8a7e9a;margin-top:10px;">霧雨魔法店 · 温馨提示</div>';
+    document.body.appendChild(mask);
+    document.getElementById('mmsWarnOk').addEventListener('click', function() {
+      try { localStorage.setItem('mms_horror_warn', '1'); } catch (e) {}
+      mask.remove();
+    });
+  }
+
   // 轻提示
   function mmsToast(msg) {
     var old = document.getElementById('mmsToast');
@@ -144,10 +170,12 @@
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
+      injectWarn();
       injectSponsor();
       injectNav();
     });
   } else {
+    injectWarn();
     injectSponsor();
     injectNav();
   }
