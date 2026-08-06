@@ -18,7 +18,8 @@ window.MMS_CATALOG = {
     { href: 'waifu-test.html',  emoji: '💕', name: '测测你的二次元老婆', tag: '二次元鉴定', color: 'gold',   desc: '20 道题，鉴定你命中注定的二次元老婆——放心，抽到的都是「好女孩」。⭐ 隐藏彩蛋等你发现。' },
     { href: 'quiz-animal.html', emoji: '🐾', name: '测一测你的灵魂动物', tag: '灵魂测试',   color: 'purple', desc: '回答日常问题，匹配与你灵魂最契合的动物。不管怎么选都是蛆。' },
     { href: 'quiz-lolicon.html', emoji: '💘', name: '测测你的隐藏人格属性', tag: '人格分析', color: 'pink', desc: '24道题 · 赛博心理学引擎。表面是性格测试，结果可能让你意想不到。' },
-    { href: 'quiz-internet.html', emoji: '🌐', name: '测一测你是哪位抽象圈大手子', tag: '人物鉴定', color: 'purple', desc: '26 道灵魂问题，精准扫描你的网络人格。还有隐藏人物等你发现。' }
+    { href: 'quiz-internet.html', emoji: '🌐', name: '测一测你是哪位抽象圈大手子', tag: '人物鉴定', color: 'purple', desc: '26 道灵魂问题，精准扫描你的网络人格。还有隐藏人物等你发现。' },
+    { href: 'quiz-linggen.html', emoji: '⚗️', name: '测测你的修仙灵根', tag: '灵根鉴定', color: 'green', desc: '修仙一途，灵根为先。上山测一测你身怀何种灵根——天品？极品？还是……某种传说灵根？' }
   ],
   // ── 🆕 最新上线 ──
   latest: [

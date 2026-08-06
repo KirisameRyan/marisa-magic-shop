@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>测测你的修仙灵根 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<style>
+:root { --lx-gold:#f0c060; --lx-gold-dim:#a08050; --lx-bg:#14100f; --lx-card:#201a17; --lx-border:#3a2f28;
+        --lx-text:#e8ddcc; --lx-muted:#8a7e6a; --lx-green:#7fbf6f; }
+body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--lx-bg);
+  background-image: radial-gradient(ellipse at 30% 0%, rgba(240,192,96,.06), transparent 55%),
+                    radial-gradient(ellipse at 70% 100%, rgba(127,191,111,.05), transparent 55%);
+  color:var(--lx-text); min-height:100vh; padding:64px 16px 60px; display:flex; align-items:center; justify-content:center; }
+.container { max-width:520px; width:100%; }
+.card { background:var(--lx-card); border:1px solid var(--lx-border); border-radius:22px; padding:30px 24px;
+  position:relative; overflow:hidden; box-shadow:0 4px 32px rgba(0,0,0,.35); }
+.card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg, transparent, var(--lx-gold), var(--lx-green), var(--lx-gold), transparent); }
+
+/* ── 通用 ── */
+.badge { display:inline-block; font-size:10px; letter-spacing:3px; color:var(--lx-gold);
+  border:1px solid var(--lx-gold); border-radius:20px; padding:4px 14px; margin-bottom:14px; }
+h1.title { font-size:26px; font-weight:900; letter-spacing:3px; margin-bottom:6px;
+  background:linear-gradient(135deg, var(--lx-gold), #ffe8b0, var(--lx-gold)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.sub { font-size:12px; color:var(--lx-muted); line-height:1.8; margin-bottom:20px; }
+.center { text-align:center; }
+.muted { color:var(--lx-muted); }
+
+/* ── 按钮 ── */
+.btn { font-family:inherit; border:none; border-radius:14px; padding:14px 28px; font-size:16px; font-weight:800;
+  cursor:pointer; width:100%; letter-spacing:2px; transition:all .15s; }
+.btn-main { background:linear-gradient(135deg, var(--lx-gold), #d9a84a); color:#1a1520; }
+.btn-main:hover { filter:brightness(1.1); }
+.btn-ghost { background:transparent; border:1px solid var(--lx-border); color:var(--lx-text); font-size:13px; margin-top:12px; }
+.btn-ghost:hover { border-color:var(--lx-gold); color:var(--lx-gold); }
+
+/* ── 题目 ── */
+.q-num { font-size:11px; color:var(--lx-gold); letter-spacing:2px; margin-bottom:8px; }
+.q-text { font-size:17px; font-weight:700; line-height:1.6; margin-bottom:20px; }
+.opt-btn { width:100%; background:transparent; border:1px solid var(--lx-border); border-radius:14px;
+  padding:13px 16px; font-size:14px; color:var(--lx-text); cursor:pointer; font-family:inherit;
+  text-align:left; margin-bottom:10px; transition:all .15s; display:flex; align-items:center; gap:10px; }
+.opt-btn:hover { border-color:var(--lx-gold); background:rgba(240,192,96,.05); transform:translateX(3px); }
+.opt-btn:active { transform:scale(.99); }
+.opt-letter { width:26px; height:26px; border-radius:8px; background:rgba(255,255,255,.05);
+  display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:var(--lx-muted); flex-shrink:0; }
+.opt-btn:hover .opt-letter { background:var(--lx-gold); color:#1a1520; }
+
+/* ── 加载 ── */
+.loading-orb { width:60px; height:60px; border-radius:50%; margin:20px auto;
+  background:conic-gradient(var(--lx-gold), var(--lx-green), var(--lx-gold));
+  animation:spin 1.2s linear infinite; box-shadow:0 0 30px rgba(240,192,96,.3); }
+.loading-text { font-size:13px; color:var(--lx-muted); margin-top:14px; letter-spacing:2px; }
+
+/* ── 结果 ── */
+.result-root { font-size:44px; font-weight:900; letter-spacing:4px; margin:10px 0 6px; }
+.result-rarity { display:inline-block; font-size:10px; letter-spacing:3px; border-radius:16px; padding:4px 14px; margin-bottom:14px; }
+.rr-n { background:rgba(136,136,136,.12); color:#aaa; border:1px solid rgba(136,136,136,.4); }
+.rr-r { background:rgba(72,140,255,.12); color:#6aa8ff; border:1px solid rgba(72,140,255,.4); }
+.rr-sr { background:rgba(176,120,255,.12); color:#c39aff; border:1px solid rgba(176,120,255,.4); }
+.rr-ssr { background:rgba(240,192,96,.12); color:var(--lx-gold); border:1px solid rgba(240,192,96,.5); }
+.rr-legend { background:rgba(127,191,111,.14); color:var(--lx-green); border:1px solid rgba(127,191,111,.6); box-shadow:0 0 16px rgba(127,191,111,.25); }
+.result-desc { text-align:left; font-size:13px; line-height:2; background:rgba(255,255,255,.02);
+  border:1px solid var(--lx-border); border-radius:14px; padding:16px 18px; margin-bottom:14px; }
+.result-tip { text-align:left; font-size:12px; color:var(--lx-muted); line-height:1.9;
+  background:rgba(127,191,111,.05); border:1px dashed rgba(127,191,111,.3); border-radius:12px; padding:12px 14px; margin-bottom:16px; }
+.result-tip b { color:var(--lx-green); }
+.stat-line { font-size:12px; color:var(--lx-muted); margin-bottom:14px; }
+
+/* ── 板蓝根特效 ── */
+.lx-fx-mask { position:fixed; inset:0; z-index:300; background:rgba(8,10,6,.88); display:none;
+  align-items:center; justify-content:center; flex-direction:column; }
+.lx-beam { position:absolute; left:50%; top:-20%; transform:translateX(-50%);
+  width:120px; height:140%; background:linear-gradient(180deg, transparent, rgba(127,191,111,.35), rgba(127,191,111,.12), transparent);
+  filter:blur(6px); animation:lxBeam .9s ease-out; opacity:0; }
+@keyframes lxBeam { 0% { opacity:0; transform:translateX(-50%) scaleY(0); } 30% { opacity:1; } 100% { opacity:0; transform:translateX(-50%) scaleY(1); } }
+.lx-fx-title { font-size:13px; color:var(--lx-green); letter-spacing:4px; margin-bottom:20px;
+  animation:lxFade 1s ease .3s both; text-shadow:0 0 20px rgba(127,191,111,.6); }
+@keyframes lxFade { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+.lx-card { width:200px; height:280px; border-radius:18px; position:relative; overflow:hidden;
+  background:linear-gradient(160deg, #23301d, #16200f); border:2px solid var(--lx-green);
+  box-shadow:0 0 40px rgba(127,191,111,.45), inset 0 0 30px rgba(127,191,111,.08);
+  animation:lxFlip .7s cubic-bezier(.2,1.4,.4,1) both; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; }
+@keyframes lxFlip { 0% { transform:rotateY(90deg) scale(.6); opacity:0; } 100% { transform:rotateY(0) scale(1); opacity:1; } }
+.lx-card::after { content:''; position:absolute; top:0; left:-100%; width:60%; height:100%;
+  background:linear-gradient(100deg, transparent, rgba(240,192,96,.25), transparent);
+  animation:lxShine 1.4s ease .6s infinite; }
+@keyframes lxShine { 0% { left:-100%; } 100% { left:150%; } }
+.lx-card .c-ico { font-size:56px; margin-bottom:10px; }
+.lx-card .c-name { font-size:17px; font-weight:900; color:var(--lx-green); letter-spacing:2px; }
+.lx-card .c-legend { font-size:9px; color:var(--lx-gold); letter-spacing:3px; margin-top:8px; }
+.lx-fx-hint { font-size:11px; color:var(--lx-muted); margin-top:24px; letter-spacing:2px; animation:lxFade 1s ease 1.2s both; }
+@keyframes lxShake { 0%,100% { transform:translate(0,0); } 20% { transform:translate(-3px,2px); }
+  40% { transform:translate(3px,-2px); } 60% { transform:translate(-2px,-2px); } 80% { transform:translate(2px,2px); } }
+.lx-shake { animation:lxShake .5s ease; }
+.lx-particle { position:fixed; width:6px; height:6px; border-radius:50%; z-index:301; pointer-events:none;
+  background:radial-gradient(circle, var(--lx-green), transparent); animation:lxFall linear forwards; }
+@keyframes lxFall { from { transform:translateY(-20px); opacity:1; } to { transform:translateY(110vh); opacity:0; } }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="container">
+  <div class="card" id="app">
+
+    <!-- ═══════ 开场 ═══════ -->
+    <div id="introView" class="center">
+      <div class="badge">霧雨魔法店 · 灵根鉴定</div>
+      <h1 class="title">测测你的修仙灵根</h1>
+      <p class="sub">修仙一途，灵根为先。<br>灵根定天赋，天赋定命运。<br><br>你，究竟身怀何种灵根？<br>随我上山，一试便知。</p>
+      <button class="btn btn-main" onclick="startQuiz()">⛰️ 上山测灵根 →</button>
+      <a href="index.html" class="home-link" style="margin-top:14px">← 返回魔法店</a>
+    </div>
+
+    <!-- ═══════ 答题 ═══════ -->
+    <div id="quizView" style="display:none;">
+      <div class="q-num" id="qNum">问 01</div>
+      <div class="q-text" id="qText"></div>
+      <div id="qOpts"></div>
+    </div>
+
+    <!-- ═══════ 加载 ═══════ -->
+    <div id="loadingView" style="display:none;" class="center">
+      <div class="loading-orb"></div>
+      <div class="loading-text" id="loadingText">灵根正在凝聚…</div>
+    </div>
+
+    <!-- ═══════ 结果 ═══════ -->
+    <div id="resultView" style="display:none;" class="center">
+      <div class="badge">灵 根 鉴 定 完 毕</div>
+      <div class="result-root" id="rootName"></div>
+      <div class="result-rarity" id="rootRarity"></div>
+      <div class="result-desc" id="rootDesc"></div>
+      <div class="result-tip" id="rootTip"></div>
+      <div class="stat-line" id="statLine"></div>
+      <button class="btn btn-ghost" onclick="restart()">🔄 再测一次</button>
+      <a href="index.html" class="home-link">← 返回魔法店</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════ 板蓝根特效层 ═══════ -->
+<div class="lx-fx-mask" id="lxFx">
+  <div class="lx-beam"></div>
+  <div class="lx-fx-title">天 地 异 象 · 灵 根 降 世</div>
+  <div class="lx-card">
+    <div class="c-ico">💊</div>
+    <div class="c-name">板蓝根</div>
+    <div class="c-legend">传 说 · 隐 藏 灵 根</div>
+  </div>
+  <div class="lx-fx-hint">点击揭晓 ↓</div>
+</div>
+
+<script src="js/quiz-stats.js"></script>
+<script>
+/* ═══════════ 灵根池 ═══════════ */
+var ROOTS = {
+  root_grass: { name:'草根', icon:'🌿', rarity:'n', rarityText:'N · 平凡灵根',
+    desc:'看似卑微，实则生命力最为顽强。无需灵田灵泉，随处可生，随处可长。修士拥有此根，往往出身平凡，却能在逆境中一次次重新发芽，最终也能长成一片天地。',
+    tip:'修炼建议：<b>低调发育，别急着露头。</b>春风吹又生，苟住就是赢。' },
+  root_wall: { name:'墙根', icon:'🧱', rarity:'r', rarityText:'R · 上品灵根',
+    desc:'常立于阴凉角落，默默承受风雨与人来人往。得此根者擅长"借势"，善于在不起眼处积蓄力量。修炼时喜静不喜动，一旦爆发，却能以守为攻，让敌人无从下手。',
+    tip:'修炼建议：<b>墙角确实暖和，但别蹲太久</b>——容易长蘑菇。' },
+  root_sick: { name:'病根', icon:'🍵', rarity:'r', rarityText:'R · 上品灵根',
+    desc:'天生体弱，药不离身。修士得此根者，一生与丹药为伴，久病成医，反倒悟出丹道真谛。旁人渡劫靠天，他渡劫靠药。板蓝根见了他，都要叫一声前辈。',
+    tip:'修炼建议：<b>药不能停。</b>建议把养生茶当饭吃。' },
+  root_food: { name:'馋根', icon:'🍜', rarity:'r', rarityText:'R · 上品灵根',
+    desc:'口腹之欲，动天地气机。得此根者炼丹全凭尝，炼器全凭啃，御剑飞行必先路过小吃摊。境界的提升，往往伴随着体重的增长。',
+    tip:'修炼建议：<b>干饭修仙两不误。</b>但渡劫前少吃点，怕你飞不动。' },
+  root_tree: { name:'树根', icon:'🌳', rarity:'sr', rarityText:'SR · 极品灵根',
+    desc:'深扎大地，盘根错节，吸尽四方灵气。得此根者根基极稳，任凭风吹雨打、天劫雷劈，皆难动摇分毫。越是被压得深，越能向上生长，是典型的"厚积薄发"之根。',
+    tip:'修炼建议：<b>别挪窝。</b>站得越久，修为越高。' },
+  root_love: { name:'情根', icon:'💞', rarity:'sr', rarityText:'SR · 极品灵根',
+    desc:'藕断丝连，情根深种。得此根者天生情劫缠身，每逢大比必遇旧情人。修炼速度随心动，道心随分手起落。渡情劫者方能证道——而你，渡了八百次都没过去。',
+    tip:'修炼建议：<b>建议单身。</b>情劫伤身，不如修仙。' },
+  root_tongue: { name:'舌根', icon:'🗣️', rarity:'ssr', rarityText:'SSR · 天品灵根',
+    desc:'掌管口舌与言辞之源。拥有此根的修士，一张嘴便能引动天地气机，或妙语连珠化解危机，或唇枪舌剑伤人无形。修炼到深处，甚至能做到"一言定乾坤，一语破心魔"。',
+    tip:'修炼建议：<b>多说话，少挨打。</b>嘴炮一时爽，渡劫火葬场。' },
+  root_banlangen: { name:'板蓝根', icon:'💊', rarity:'legend', rarityText:'传说 · 隐藏灵根',
+    desc:'此根性寒味苦，天生自带清热解毒之能。修士得此根者，体内常年流转抗病毒真气，寻常外邪难以近身。渡劫之时只需冲服一包，便可化劫为安，被誉为"保命第一根"。',
+    tip:'修炼建议：<b>建议冲泡服用，感冒好得很快。</b>渡劫时记得带热水。' }
+};
+var RARITY_CLS = { n:'rr-n', r:'rr-r', sr:'rr-sr', ssr:'rr-ssr', legend:'rr-legend' };
+
+/* ═══════ 题目(选项为灵根加分) ═══════ */
+var QUESTIONS = [
+  { q:'宗门大比前夜，子时三刻，你在——',
+    opts:[
+      { t:'盘膝打坐，调息养神', s:{ tree:2 } },
+      { t:'给同门讲道，越讲越上头', s:{ tongue:2 } },
+      { t:'默背药方，以备不时之需', s:{ sick:2 } },
+      { t:'美美睡大觉，明日再战', s:{ grass:2 } }
+    ]},
+  { q:'渡劫之时，雷云压顶，你——',
+    opts:[
+      { t:'岿然不动，稳如泰山', s:{ tree:2 } },
+      { t:'摆开药炉，以药抗雷', s:{ sick:2 } },
+      { t:'躲进墙根，避其锋芒', s:{ wall:2 } },
+      { t:'牵着心上人的手，同生共死', s:{ love:2 } }
+    ]},
+  { q:'宗门发放灵丹，你选择——',
+    opts:[
+      { t:'珍藏起来，留到渡劫再用', s:{ tree:2 } },
+      { t:'分给师弟师妹，雨露均沾', s:{ grass:2 } },
+      { t:'当场吞服，就地炼化', s:{ tongue:1, sick:1 } },
+      { t:'配着火锅吃，越吃越香', s:{ food:2 } }
+    ]},
+  { q:'御剑飞行，途经凡间夜市，你——',
+    opts:[
+      { t:'降落凡尘，来一串烧烤', s:{ food:2 } },
+      { t:'画道符，换两串烤面筋', s:{ tongue:2 } },
+      { t:'御剑直行，目不斜视', s:{ tree:1, wall:1 } },
+      { t:'打包一份，带给心上人', s:{ love:2 } }
+    ]},
+  { q:'长老问你：道心为何？你答——',
+    opts:[
+      { t:'大道三千，干饭第一', s:{ food:2 } },
+      { t:'一言定乾坤，一语破心魔', s:{ tongue:2 } },
+      { t:'为情所困，为爱痴狂', s:{ love:2 } },
+      { t:'厚积薄发，静待花开', s:{ tree:2 } }
+    ]},
+  { q:'同门向你讨教修炼心得，你——',
+    opts:[
+      { t:'倾囊相授，知无不言', s:{ tree:2 } },
+      { t:'讲得天花乱坠，他听得一愣一愣', s:{ tongue:2 } },
+      { t:'让他多喝热水，注意身体', s:{ sick:2 } },
+      { t:'把他拉到墙角，小声传授', s:{ wall:2 } }
+    ]},
+  { q:'闭关三月，不慎染了风寒，你——',
+    opts:[
+      { t:'卧榻养病，顺带参悟丹道', s:{ sick:2 } },
+      { t:'硬扛着继续打坐', s:{ tree:2 } },
+      { t:'被心上人悉心照顾，病中带笑', s:{ love:2 } },
+      { t:'病中偶有所悟，口若悬河讲给师弟听', s:{ sick:1, tongue:1 } }
+    ]},
+  { q:'你的储物袋里，常年装着——',
+    opts:[
+      { t:'一堆药草和炼丹炉', s:{ sick:2 } },
+      { t:'自热火锅、辣条、快乐水', s:{ food:2 } },
+      { t:'写给心上人的信，没敢送出去', s:{ love:2 } },
+      { t:'《百草经》手抄本，字迹工整', s:{ sick:1, tree:1 } }
+    ]},
+  { q:'山道旁，一株野草在石缝里发了芽，你——',
+    opts:[
+      { t:'驻足良久，若有所思', s:{ grass:2 } },
+      { t:'小心翼翼地给它浇了点露水', s:{ wall:2 } },
+      { t:'想起某个人，叹了口气', s:{ love:1, grass:1 } },
+      { t:'一脚踩过去，继续赶路', s:{ tree:1, wall:1 } }
+    ]},
+  { q:'若是来世，你愿做——',
+    opts:[
+      { t:'一棵树，站成永恒', s:{ tree:2 } },
+      { t:'一株草，野火烧不尽', s:{ grass:2 } },
+      { t:'一堵墙，默默守望', s:{ wall:2 } },
+      { t:'一阵风，来去自由', s:{ tongue:2 } }
+    ]}
+];
+var BANLANGEN_RATE = 0.10;   // 隐藏灵根爆率
+
+/* ═══════ 答题状态 ═══════ */
+var qi = 0;
+var scores = {};
+
+function startQuiz() {
+  document.getElementById('introView').style.display = 'none';
+  document.getElementById('resultView').style.display = 'none';
+  document.getElementById('quizView').style.display = 'block';
+  qi = 0;
+  scores = {};
+  trackStart('linggen_take');
+  renderQ();
+}
+
+function renderQ() {
+  var q = QUESTIONS[qi];
+  document.getElementById('qNum').textContent = '问 ' + String(qi + 1).padStart(2, '0') + ' / ' + QUESTIONS.length;
+  document.getElementById('qText').textContent = q.q;
+  var html = '';
+  var letters = ['甲', '乙', '丙', '丁'];
+  for (var i = 0; i < q.opts.length; i++) {
+    html += '<button class="opt-btn" onclick="pick(' + i + ')"><span class="opt-letter">' + letters[i] + '</span>' + q.opts[i].t + '</button>';
+  }
+  document.getElementById('qOpts').innerHTML = html;
+}
+
+function pick(i) {
+  var q = QUESTIONS[qi];
+  var s = q.opts[i].s;
+  for (var k in s) scores[k] = (scores[k] || 0) + s[k];
+  qi++;
+  if (qi < QUESTIONS.length) { renderQ(); }
+  else { showLoading(); }
+}
+
+function showLoading() {
+  document.getElementById('quizView').style.display = 'none';
+  document.getElementById('loadingView').style.display = 'block';
+  var texts = ['灵根正在凝聚…', '天机正在推演…', '正在翻阅《灵根谱》…'];
+  var ti = 0;
+  var iv = setInterval(function() {
+    ti++;
+    document.getElementById('loadingText').textContent = texts[ti % texts.length];
+  }, 700);
+  setTimeout(function() {
+    clearInterval(iv);
+    trackFooled('linggen_fooled');
+    judge();
+  }, 2100);
+}
+
+/* ═══════ 判定 ═══════ */
+function judge() {
+  // 10% 爆率 → 隐藏灵根
+  if (Math.random() < BANLANGEN_RATE) {
+    showLegend();
+    return;
+  }
+  // 常规判定: 最高分
+  var best = null, bestScore = -1;
+  for (var k in scores) {
+    if (scores[k] > bestScore) { bestScore = scores[k]; best = k; }
+  }
+  showResult(ROOTS['root_' + best]);
+}
+
+/* ═══════ 板蓝根特效 ═══════ */
+function showLegend() {
+  document.getElementById('loadingView').style.display = 'none';
+  var fx = document.getElementById('lxFx');
+  fx.style.display = 'flex';
+  fx.classList.remove('lx-shake');
+  void fx.offsetWidth;
+  fx.classList.add('lx-shake');
+  // 粒子
+  for (var i = 0; i < 30; i++) {
+    (function(n) {
+      setTimeout(function() {
+        var p = document.createElement('div');
+        p.className = 'lx-particle';
+        p.style.left = Math.random() * 100 + 'vw';
+        p.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+        p.style.animationDelay = (Math.random() * 0.5) + 's';
+        p.style.width = p.style.height = (3 + Math.random() * 5) + 'px';
+        document.body.appendChild(p);
+        setTimeout(function() { p.remove(); }, 4200);
+      }, n * 60);
+    })(i);
+  }
+  fx.onclick = function() {
+    fx.style.display = 'none';
+    showResult(ROOTS.root_banlangen);
+  };
+}
+
+/* ═══════ 结果 ═══════ */
+function showResult(root) {
+  document.getElementById('loadingView').style.display = 'none';
+  document.getElementById('resultView').style.display = 'block';
+  document.getElementById('rootName').textContent = root.icon + ' ' + root.name;
+  var rr = document.getElementById('rootRarity');
+  rr.textContent = root.rarityText;
+  rr.className = 'result-rarity ' + RARITY_CLS[root.rarity];
+  document.getElementById('rootDesc').innerHTML = root.desc;
+  document.getElementById('rootTip').innerHTML = root.tip;
+  bindCount('#statLine', 'linggen_take', { template: '已有 {n} 位道友测过灵根' });
+}
+
+function restart() {
+  document.getElementById('resultView').style.display = 'none';
+  document.getElementById('introView').style.display = 'block';
+}
+</script>
+
+</body>
+</html>
