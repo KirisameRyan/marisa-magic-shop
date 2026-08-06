@@ -670,6 +670,7 @@ function renderEnding() {
 
 /* ── 重新测试: 清除存档回起始页 ── */
 function restartSurvey() {
+  finished = false;
   localStorage.removeItem(STORAGE_KEY);
   document.getElementById('connectBar').style.display = 'none';
   document.getElementById('scanline').style.display = 'none';
