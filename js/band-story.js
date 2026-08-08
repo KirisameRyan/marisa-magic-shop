@@ -72,9 +72,12 @@
     n_b2a: {
       type: 'event', act: '第二幕 · 术力口', title: '二手平台奇遇',
       body: [
-        '来取货的是个戴耳机的中二少年。他看看你的设备，看看你：',
-        '"就这水平还玩术力口？我怎么在搞术力口？"',
-        '这句话抽得你耳根发烫。'
+        '来取货的是个戴耳机的中二少年。他看看你的设备，看看你，嗤了一声：',
+        '"就这水平还玩术力口？"',
+        '你愣在原地。',
+        '少年走后很久，你盯着那台调音台，忽然问了自己一句：',
+        '"我怎么在搞术力口？"',
+        '这句话像一记耳光，抽得你耳根发烫。'
       ],
       choices: [
         { label: '🤝 忍了，卖完收工', next: 'END:tuiquan' },
@@ -566,6 +569,8 @@
     if (n.type === 'emotion') {
       var idx = 0;
       function step() {
+        var old = body.querySelector('.more-btn');
+        if (old) old.remove();
         var p = document.createElement('p');
         p.className = 'sline';
         p.innerHTML = lines[idx];
