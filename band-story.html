@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>乐队人生 · 霧雨魔法店</title>
+<style>
+ :root {
+  --bg:#0c0913; --card:#17121f; --card2:#1e1729;
+  --gold:#f0c060; --pink:#f472b6; --purple:#a78bfa;
+  --text:#e9e2f2; --muted:#8a7e9a; --line:rgba(167,139,250,.18);
+  --danger:#ef4444;
+ }
+ * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+ body {
+  font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+  background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden;
+ }
+ .bg-glow {
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:
+   radial-gradient(600px 400px at 15% 10%, rgba(167,139,250,.14), transparent 60%),
+   radial-gradient(700px 450px at 85% 20%, rgba(244,114,182,.10), transparent 60%),
+   radial-gradient(800px 500px at 50% 100%, rgba(240,192,96,.07), transparent 60%);
+ }
+ #fx { position:fixed; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
+ #fx canvas { width:100%; height:100%; }
+ #app { position:relative; z-index:2; max-width:640px; margin:0 auto; padding:28px 16px 60px; }
+
+ .gold-p { position:absolute; top:-30px; color:var(--gold); opacity:0; animation:gfall linear infinite; }
+ @keyframes gfall { 0%{transform:translateY(-20px) rotate(0);opacity:0} 12%{opacity:.8} 100%{transform:translateY(105vh) rotate(240deg);opacity:0} }
+ body.fx-danger .end-card { animation:dangerShake .3s linear infinite; border-color:var(--danger); }
+ body.fx-danger .end-card::before {
+  content:""; position:absolute; inset:0; border-radius:22px; pointer-events:none;
+  background:repeating-linear-gradient(0deg, rgba(239,68,68,.06) 0 2px, transparent 2px 5px);
+  animation:dangerFlick .18s steps(2) infinite;
+ }
+ @keyframes dangerShake { 0%,100%{transform:translate(0,0)} 25%{transform:translate(1.5px,-1px)} 75%{transform:translate(-1.5px,1px)} }
+ @keyframes dangerFlick { 0%{opacity:.5} 100%{opacity:1} }
+
+ .open-card, .story-card, .end-card {
+  background:linear-gradient(180deg, var(--card), var(--card2));
+  border:1px solid var(--line); border-radius:22px;
+  padding:32px 24px; text-align:center; position:relative;
+  box-shadow:0 18px 60px rgba(0,0,0,.45);
+  animation:fadeUp .5s ease both;
+ }
+ @keyframes fadeUp { from{opacity:0; transform:translateY(18px)} to{opacity:1; transform:none} }
+
+ .logo { font-size:56px; line-height:1; margin-bottom:8px; filter:drop-shadow(0 0 22px rgba(240,192,96,.45)); }
+ .title {
+  font-size:34px; font-weight:900; letter-spacing:6px;
+  background:linear-gradient(120deg, var(--gold), var(--pink));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  margin-bottom:10px;
+ }
+ .subtitle { font-size:14px; color:var(--muted); line-height:1.7; }
+ .sub2 { font-size:11px; color:var(--muted); opacity:.75; margin-top:6px; letter-spacing:1px; }
+
+ .gender-row { display:flex; gap:12px; justify-content:center; margin:22px 0 8px; }
+ .gender-card {
+  flex:1; max-width:150px; padding:14px 0; border-radius:14px; cursor:pointer;
+  border:1.5px solid var(--line); background:rgba(255,255,255,.02); color:var(--muted);
+  font-size:14px; font-family:inherit; transition:all .2s;
+ }
+ .gender-card span { display:block; font-size:26px; margin-bottom:4px; }
+ .gender-card:hover { border-color:var(--purple); color:var(--text); }
+ .gender-card.sel { border-color:var(--gold); color:var(--gold); background:rgba(240,192,96,.08); box-shadow:0 0 24px rgba(240,192,96,.18); }
+
+ .btn {
+  display:block; width:100%; max-width:300px; margin:12px auto 0; padding:13px 0;
+  border:none; border-radius:13px; font-size:15px; font-weight:800; cursor:pointer;
+  font-family:inherit; letter-spacing:1px; transition:transform .15s, filter .15s;
+ }
+ .btn:hover { transform:translateY(-1px); filter:brightness(1.08); }
+ .btn-start { background:linear-gradient(135deg, var(--gold), #d9a84a); color:#1a1520; }
+ .btn-resume { background:rgba(244,114,182,.12); color:var(--pink); border:1px solid rgba(244,114,182,.4); }
+ .btn-main { background:linear-gradient(135deg, var(--gold), #d9a84a); color:#1a1520; }
+ .btn-ghost { background:rgba(255,255,255,.04); color:var(--muted); border:1px solid var(--line); }
+ .home-link { display:inline-block; margin-top:16px; font-size:12px; color:var(--muted); text-decoration:none; }
+ .home-link:hover { color:var(--gold); }
+
+ .act-bar {
+  display:flex; align-items:center; justify-content:space-between;
+  font-size:12px; color:var(--purple); letter-spacing:1px;
+  padding-bottom:14px; border-bottom:1px dashed var(--line); margin-bottom:20px;
+ }
+ .act-bar b { color:var(--gold); }
+ .restart-btn {
+  width:30px; height:30px; border-radius:50%; border:1px solid var(--line);
+  background:transparent; color:var(--muted); cursor:pointer; font-size:15px;
+ }
+ .restart-btn:hover { color:var(--pink); border-color:var(--pink); }
+
+ .story-body { text-align:left; min-height:80px; }
+ .sline { font-size:15px; line-height:2.05; color:var(--text); opacity:0; transform:translateY(8px); margin-bottom:10px; }
+ .sline.in { animation:lineIn .45s ease forwards; }
+ @keyframes lineIn { to { opacity:1; transform:none; } }
+ .more-btn {
+  display:block; margin:8px auto 0; padding:9px 30px; border-radius:20px; cursor:pointer;
+  border:1px solid var(--line); background:rgba(255,255,255,.03); color:var(--muted);
+  font-size:13px; font-family:inherit; animation:lineIn .3s ease forwards;
+ }
+ .more-btn:hover { color:var(--gold); border-color:var(--gold); }
+
+ .story-choices { display:flex; flex-direction:column; gap:10px; margin-top:22px; }
+ .opt-btn {
+  width:100%; padding:13px 14px; border-radius:13px; cursor:pointer; text-align:left;
+  border:1px solid var(--line); background:rgba(255,255,255,.03); color:var(--text);
+  font-size:14px; line-height:1.5; font-family:inherit; transition:all .18s;
+ }
+ .opt-btn:hover { border-color:var(--gold); background:rgba(240,192,96,.08); color:var(--gold); transform:translateX(3px); }
+
+ .end-flag { font-size:11px; letter-spacing:4px; color:var(--muted); margin-bottom:8px; }
+ .end-title { font-size:26px; font-weight:900; line-height:1.5; margin-bottom:18px; color:var(--gold); }
+ .end-card.secret .end-title { background:linear-gradient(120deg,#f6e27a,#f472b6); -webkit-background-clip:text; background-clip:text; color:transparent; }
+ .end-card.secret { border-color:rgba(246,226,122,.45); box-shadow:0 0 50px rgba(246,226,122,.14), 0 18px 60px rgba(0,0,0,.45); }
+ .end-body { text-align:left; }
+ .end-body p { font-size:15px; line-height:2.05; margin-bottom:10px; }
+
+ .score-card { display:flex; gap:10px; margin:22px 0 14px; }
+ .score-cell {
+  flex:1; background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:13px; padding:12px 6px;
+ }
+ .s-label { display:block; font-size:11px; color:var(--muted); letter-spacing:3px; margin-bottom:7px; }
+ .s-stars { font-size:13px; color:var(--gold); letter-spacing:1px; }
+ .end-quote { font-size:13px; color:var(--pink); line-height:1.8; margin:6px 0 14px; }
+ .end-badge { font-size:11px; color:var(--muted); letter-spacing:1px; margin-bottom:18px; }
+ .end-badge .b-secret { color:var(--gold); margin-left:8px; }
+ .end-badge .b-fail { color:var(--pink); margin-left:8px; }
+
+ .qq-section {
+  margin-top:26px; padding-top:20px; border-top:1px dashed var(--line);
+  text-align:center;
+ }
+ .qq-section img { width:180px; border-radius:14px; border:1px solid var(--line); }
+ .qq-section p { font-size:12px; color:var(--muted); }
+ .qq-section a p strong { color:var(--pink); }
+ .notice { font-size:10px; color:var(--muted); opacity:.7; margin-top:10px; }
+
+ .toast {
+  position:fixed; left:50%; bottom:40px; transform:translateX(-50%) translateY(14px);
+  background:#241d33; border:1px solid var(--gold); color:var(--gold);
+  padding:10px 22px; border-radius:20px; font-size:13px; z-index:99;
+  opacity:0; transition:all .3s;
+ }
+ .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+ @media (max-width:420px) {
+  #app { padding:16px 12px 48px; }
+  .open-card, .story-card, .end-card { padding:24px 16px; }
+  .title { font-size:28px; letter-spacing:4px; }
+ }
+ @media (prefers-reduced-motion: reduce) {
+  .sline, .open-card, .story-card, .end-card { animation:none; opacity:1; transform:none; }
+ }
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div id="fx"></div>
+<main id="app"></main>
+<script src="js/quiz-stats.js"></script>
+<script src="js/result-footer.js"></script>
+<script src="js/band-story.js"></script>
+</body>
+</html>
