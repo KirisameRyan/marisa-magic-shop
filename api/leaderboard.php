@@ -2,6 +2,7 @@
 // =============================================
 //  霧雨魔法店 · 排行榜（需登录使用）
 //  GET 查看 Top 20 / POST 提交分数（用户名取自账号）
+//  冷却记录独立存储,榜单文件只含有效成绩;同一账号每榜仅保留最高分
 // =============================================
 
 require __DIR__ . '/auth-lib.php';
@@ -25,17 +26,29 @@ if (isset($_REQUEST['game'])) {
     $g = strtolower(preg_replace('/[^a-z0-9_-]/', '', (string)$_REQUEST['game']));
     if ($g !== '' && strlen($g) <= 20) $game = $g;
 }
-$file = __DIR__ . '/../data/leaderboard' . ($game !== '' ? '_' . $game : '') . '.json';
+$suffix = $game !== '' ? '_' . $game : '';
+$file = __DIR__ . '/../data/leaderboard' . $suffix . '.json';
+$cdFile = __DIR__ . '/../data/lb_cooldown' . $suffix . '.json';
+
+function lb_read($f) {
+    $d = file_exists($f) ? json_decode(file_get_contents($f), true) : [];
+    if (!is_array($d)) $d = [];
+    // 清理旧版混入榜单的冷却标记
+    $d = array_values(array_filter($d, function ($e) {
+        return is_array($e) && !isset($e['__cooldown__']);
+    }));
+    return $d;
+}
+
+function lb_write($f, $arr) {
+    $tmp = $f . '.tmp';
+    file_put_contents($tmp, json_encode($arr, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+    rename($tmp, $f);
+}
 
 // ═══════════ GET: 返回 Top 20 ═══════════
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    if (!file_exists($file)) {
-        echo json_encode([]);
-        exit;
-    }
-    $entries = json_decode(file_get_contents($file), true);
-    if (!is_array($entries)) $entries = [];
-    // 只返回前20，剥离 id
+    $entries = lb_read($file);
     $out = array_slice($entries, 0, 20);
     foreach ($out as &$e) unset($e['id']);
     echo json_encode($out);
@@ -50,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $score = intval($_POST['score'] ?? 0);
-$graze = intval($_POST['graze'] ?? 0);
+$graze = max(0, intval($_POST['graze'] ?? 0));
 
 // 校验
 if ($score <= 0 || $score > 99999999) {
@@ -59,19 +72,37 @@ if ($score <= 0 || $score > 99999999) {
     exit;
 }
 
-// 加载数据
-$entries = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
-if (!is_array($entries)) $entries = [];
-
-// IP 频率限制（5 分钟冷却）
+// IP 频率限制（5 分钟冷却,独立文件记录,不污染榜单数据）
 $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-$cooldownKey = 'cooldown_' . md5($ip);
-$first = $entries[0] ?? null;
-if ($first && isset($first['__cooldown__']) && ($first['__cooldown__'][$cooldownKey] ?? 0) > time()) {
+$key = md5($ip);
+$cds = file_exists($cdFile) ? json_decode(file_get_contents($cdFile), true) : [];
+if (!is_array($cds)) $cds = [];
+if (($cds[$key] ?? 0) > time()) {
     http_response_code(429);
-    echo json_encode(['error' => '提交太频繁，请 5 分钟后再来']);
+    echo json_encode(['error' => '提交太频繁,请 5 分钟后再来']);
     exit;
 }
+
+$entries = lb_read($file);
+
+// 同一账号每榜只保留最高分
+$found = null;
+$foundIdx = -1;
+foreach ($entries as $i => $e) {
+    if (isset($e['user_id']) && (int)$e['user_id'] === (int)$user['id']) {
+        $found = $e;
+        $foundIdx = $i;
+        break;
+    }
+}
+if ($found !== null && (int)$found['score'] >= $score) {
+    // 旧分数更高:不覆盖,只刷新冷却并返回原排名
+    $cds[$key] = time() + 300;
+    lb_write($cdFile, $cds);
+    echo json_encode(['ok' => true, 'rank' => $foundIdx + 1, 'total' => count($entries)]);
+    exit;
+}
+if ($foundIdx >= 0) array_splice($entries, $foundIdx, 1);
 
 // 追加条目（用户名来自账号，user_id 绑定身份）
 $entry = [
@@ -85,20 +116,19 @@ $entry = [
 $entries[] = $entry;
 
 // 按分数降序
-usort($entries, function($a, $b) {
+usort($entries, function ($a, $b) {
     return $b['score'] - $a['score'];
 });
 
 // 最多保留 200 条
 $entries = array_slice($entries, 0, 200);
 
-// 写入冷却标记
-$entries[0]['__cooldown__'] = [$cooldownKey => time() + 300];
-
 // 原子写入
-$tmp = $file . '.tmp';
-file_put_contents($tmp, json_encode($entries, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-rename($tmp, $file);
+lb_write($file, $entries);
+
+// 写入冷却标记（独立文件）
+$cds[$key] = time() + 300;
+lb_write($cdFile, $cds);
 
 // 计算排名
 $rank = 0;
@@ -109,4 +139,4 @@ foreach ($entries as $i => $e) {
     }
 }
 
-echo json_encode(['ok' => true, 'rank' => $rank, 'total' => count($entries) - (isset($entries[0]['__cooldown__']) ? 1 : 0)]);
+echo json_encode(['ok' => true, 'rank' => $rank, 'total' => count($entries)]);
