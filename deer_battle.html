@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>鹿管大作战 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<style>
+:root { --g-bg:#1a1520; --g-card:#241e2a; --g-border:#3a3045; --g-gold:#f0c060; --g-gold-dim:#a08050;
+        --g-purple:#b89fff; --g-text:#e0d8ec; --g-muted:#8a7e9a; --g-green:#6fcf97; --g-red:#ef4444; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--g-bg);
+  color:var(--g-text); min-height:100vh; padding:64px 12px 24px; display:flex; flex-direction:column; align-items:center; }
+.wrap { width:100%; max-width:420px; }
+.gold-text { background:linear-gradient(135deg,var(--g-gold),#ffe8b0,var(--g-gold)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.muted { color:var(--g-muted); }
+
+/* ── 开场 ── */
+.overlay { position:fixed; inset:0; z-index:120; background:rgba(26,21,32,.96); backdrop-filter:blur(12px);
+  display:flex; align-items:center; justify-content:center; padding:16px; }
+.ov-card { background:var(--g-card); border:1px solid var(--g-border); border-radius:24px; max-width:400px; width:100%;
+  padding:26px 22px; text-align:center; position:relative; overflow:hidden; max-height:94vh; overflow-y:auto; }
+.ov-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg,var(--g-gold),var(--g-purple),var(--g-gold)); }
+.ov-icon { font-size:64px; margin-bottom:8px; filter:drop-shadow(0 0 18px rgba(240,192,96,.45)); }
+.ov-title { font-size:28px; font-weight:900; letter-spacing:4px; margin-bottom:4px; }
+.ov-sub { font-size:10px; color:var(--g-muted); letter-spacing:4px; margin-bottom:14px; text-transform:uppercase; }
+.ov-btn { width:100%; border:none; border-radius:14px; padding:13px 0; font-size:15px; font-weight:800;
+  background:linear-gradient(135deg,var(--g-gold),#c89a40); color:#1a1520; cursor:pointer; font-family:inherit; margin-top:6px; }
+.ov-note { font-size:10px; color:var(--g-muted); margin-top:12px; }
+
+/* 硬币图例 */
+.legend { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:14px 0 4px; text-align:left; }
+.lg { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.03); border:1px solid var(--g-border);
+  border-radius:12px; padding:7px 9px; }
+.lg .coin { position:static; }
+.lg .lg-txt { font-size:11px; line-height:1.4; }
+.lg .lg-txt b { font-size:12px; }
+
+/* ── 硬币 ── */
+.coin { position:absolute; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; user-select:none; touch-action:none; z-index:5;
+  box-shadow:inset -2px -3px 6px rgba(0,0,0,.35), inset 2px 3px 5px rgba(255,255,255,.35), 0 4px 10px rgba(0,0,0,.4); }
+.coin .deer { filter:drop-shadow(0 1px 2px rgba(0,0,0,.4)); pointer-events:none; }
+.coin.bob { animation:bob 2.4s ease-in-out infinite; }
+@keyframes bob { 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-6px);} }
+.coin.pop { animation:coinPop .38s ease forwards; pointer-events:none; }
+@keyframes coinPop { 40%{ transform:scale(1.35); opacity:1;} 100%{ transform:scale(1.7) rotate(24deg); opacity:0;} }
+.coin.pop .deer { animation:deerFlip .38s ease; }
+@keyframes deerFlip { 0%{ transform:rotate(0) scale(1);} 50%{ transform:rotate(180deg) scale(1.5);} 100%{ transform:rotate(360deg) scale(1.2);} }
+
+/* 点击飘字 */
+.ftext { position:absolute; font-weight:900; font-size:17px; pointer-events:none; z-index:20;
+  text-shadow:0 1px 4px rgba(0,0,0,.8); animation:floatUp .9s ease forwards; }
+@keyframes floatUp { 0%{ opacity:1; transform:translateY(0) scale(1);} 100%{ opacity:0; transform:translateY(-44px) scale(1.15);} }
+
+/* ── 顶部特效横幅(不挡操作) ── */
+#banner { position:absolute; top:10px; left:50%; transform:translateX(-50%) scale(.6); pointer-events:none;
+  z-index:40; font-size:36px; font-weight:900; letter-spacing:3px; opacity:0; white-space:nowrap;
+  text-shadow:0 0 20px currentColor; }
+#banner.on { animation:bannerFlash 1.4s ease forwards; }
+@keyframes bannerFlash {
+  0%{ opacity:0; transform:translateX(-50%) scale(.5);} 8%{ opacity:1; transform:translateX(-50%) scale(1.25);}
+  18%{ opacity:.15;} 26%{ opacity:1;} 36%{ opacity:.15;} 44%{ opacity:1; transform:translateX(-50%) scale(1.1);}
+  58%{ opacity:.25;} 70%{ opacity:1;} 82%{ opacity:1;} 100%{ opacity:0; transform:translateX(-50%) scale(1.15);} }
+
+/* ── 游戏屏 ── */
+.hud { display:flex; align-items:center; justify-content:space-between; background:var(--g-card);
+  border:1px solid var(--g-border); border-radius:14px; padding:8px 14px; margin-bottom:10px; position:relative; }
+.hud .t { font-size:9px; color:var(--g-muted); letter-spacing:1px; }
+.hud .v { font-size:20px; font-weight:900; font-variant-numeric:tabular-nums; }
+.hud .v.time { color:var(--g-green); }
+.hud .v.time.low { color:var(--g-red); animation:blink .5s steps(2) infinite; }
+@keyframes blink { 50%{ opacity:.25; } }
+#play { position:relative; height:calc(100vh - 220px); min-height:420px; max-height:640px; background:
+  radial-gradient(ellipse at 50% 0%, rgba(176,159,255,.06) 0%, transparent 60%), var(--g-card);
+  border:1px solid var(--g-border); border-radius:18px; overflow:hidden; }
+#play::before { content:'🦌'; position:absolute; font-size:90px; opacity:.05; right:8px; bottom:4px; pointer-events:none; }
+#play::after { content:'🦌'; position:absolute; font-size:54px; opacity:.04; left:10px; top:30px; pointer-events:none; }
+
+/* ── 结算 ── */
+.final { text-align:center; }
+.final .f-ico { font-size:64px; filter:drop-shadow(0 0 18px rgba(240,192,96,.45)); }
+.final .f-title { font-size:26px; font-weight:900; letter-spacing:3px; margin:8px 0 2px; }
+.final .f-sub { font-size:11px; color:var(--g-muted); margin-bottom:14px; }
+.final .f-score { font-size:44px; font-weight:900; color:var(--g-gold); font-variant-numeric:tabular-nums; }
+.final .f-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:14px 0; }
+.final .f-stat { background:rgba(255,255,255,.03); border:1px solid var(--g-border); border-radius:12px; padding:10px; }
+.final .f-stat .k { font-size:10px; color:var(--g-muted); }
+.final .f-stat .v { font-size:18px; font-weight:800; margin-top:2px; }
+.final .f-btns { display:flex; gap:8px; margin-top:8px; }
+.final .f-btns .ov-btn { margin-top:0; }
+.ov-btn.ghost { background:transparent; border:1px solid var(--g-border); color:var(--g-text); font-weight:500; font-size:13px; }
+#lbArea { margin-top:10px; }
+@media (max-width:420px){ #banner{ font-size:30px; } }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="wrap">
+
+  <!-- ═══════ 开场 ═══════ -->
+  <div class="overlay" id="introScreen">
+    <div class="ov-card">
+      <div class="ov-icon">🦌</div>
+      <div class="ov-title gold-text">鹿管大作战</div>
+      <div class="ov-sub">Deer Battle · 60 SEC</div>
+      <div class="ov-note" style="margin:0 0 6px;">60 秒狂点硬币!别让时间跑完,也别点错。</div>
+      <div class="legend">
+        <div class="lg"><div class="coin" style="width:40px;height:40px;background:radial-gradient(circle at 35% 30%,#8fd0ff,#2f6fd8)"><span class="deer" style="font-size:20px">🦌</span></div><div class="lg-txt"><b>蓝色</b><br>最常见的鹿,+1 分</div></div>
+        <div class="lg"><div class="coin" style="width:46px;height:46px;background:radial-gradient(circle at 35% 30%,#ffb3d9,#e0559c)"><span class="deer" style="font-size:23px">🦌</span></div><div class="lg-txt"><b>粉色</b><br>稀有一点,+3 分</div></div>
+        <div class="lg"><div class="coin" style="width:54px;height:54px;background:radial-gradient(circle at 35% 30%,#ff8a8a,#d83333)"><span class="deer" style="font-size:27px">🦌</span></div><div class="lg-txt"><b style="color:#ff6b6b">红色</b><br>陷阱!点了鹿萎了,-10 秒</div></div>
+        <div class="lg"><div class="coin" style="width:54px;height:54px;background:radial-gradient(circle at 35% 30%,#d4b3ff,#8b5fd8)"><span class="deer" style="font-size:27px">🦌</span></div><div class="lg-txt"><b style="color:#c39bff">紫色</b><br>大礼包!伟了,+5 秒</div></div>
+        <div class="lg" style="grid-column:1/-1"><div class="coin" style="width:64px;height:64px;background:radial-gradient(circle at 35% 30%,#ffe68a,#d8a32a)"><span class="deer" style="font-size:32px">🦌</span></div><div class="lg-txt"><b style="color:var(--g-gold)">金色</b><br>最稀有的鹿爽了!+10 分</div></div>
+      </div>
+      <button class="ov-btn" onclick="startGame()">🦌 开始点鹿</button>
+      <div class="ov-note">触屏 / 鼠标均可 · 切后台自动暂停</div>
+      <div style="margin-top:14px;padding:8px 10px;background:rgba(240,192,96,.08);border:1px solid rgba(240,192,96,.25);border-radius:10px;font-size:12px;color:var(--g-gold);font-weight:700;letter-spacing:.5px;">💡 本游戏借鉴了 QQ 上的变色硬币游戏</div>
+    </div>
+  </div>
+
+  <!-- ═══════ 游戏屏 ═══════ -->
+  <div id="gameScreen" style="display:none;position:relative;">
+    <div class="hud">
+      <div><div class="t">⏱ 剩余时间</div><div class="v time" id="hudTime">60.0</div></div>
+      <div style="text-align:center;"><div class="t">⭐ 分数</div><div class="v" id="hudScore" style="color:var(--g-gold)">0</div></div>
+      <div style="text-align:right;"><div class="t">本地最高</div><div class="v" id="hudBest" style="color:var(--g-muted);font-size:14px;margin-top:3px">0</div></div>
+    </div>
+    <div id="play"></div>
+    <div id="banner"></div>
+  </div>
+
+  <!-- ═══════ 结算 ═══════ -->
+  <div class="overlay" id="finalScreen" style="display:none;">
+    <div class="ov-card final">
+      <div class="f-ico" id="fIco">🦌</div>
+      <div class="f-title gold-text" id="fTitle">时间到!</div>
+      <div class="f-sub" id="fSub"></div>
+      <div class="f-score" id="fScore">0</div>
+      <div class="f-stats">
+        <div class="f-stat"><div class="k">🖱️ 点击数</div><div class="v" id="fClicks">0</div></div>
+        <div class="f-stat"><div class="k">🏅 本地最高</div><div class="v" id="fBest">0</div></div>
+      </div>
+      <div class="f-btns">
+        <button class="ov-btn" onclick="restart()">🦌 再玩一次</button>
+        <button class="ov-btn ghost" id="fScoreBtn" onclick="submitScore()">🏆 提交排行榜</button>
+      </div>
+      <div id="lbArea"></div>
+      <div class="ov-note">夷境工作室 · 出品</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════ 鹿管大作战 ═══════════
+var COINS = [
+  { id:'blue',  p:63, pts:1,  sec:0,  size:40, color:'#5aa7ff', txt:'+1',  ft:'#8fd0ff' },
+  { id:'pink',  p:22, pts:3,  sec:0,  size:46, color:'#f06bb3', txt:'+3',  ft:'#ffb3d9' },
+  { id:'red',   p:6,  pts:0,  sec:-10,size:54, color:'#ff4d4d', txt:'-10秒',ft:'#ff6b6b', banner:'鹿萎了!', bc:'#b8c4b0' },
+  { id:'purple',p:5,  pts:0,  sec:5,  size:54, color:'#b26bff', txt:'+5秒',ft:'#8fef9f', banner:'伟了!',   bc:'#c39bff' },
+  { id:'gold',  p:4,  pts:10, sec:0,  size:64, color:'#ffd24d', txt:'+10', ft:'#ffe68a', banner:'鹿爽了!', bc:'#f0c060' }
+];
+var T = { time:60, score:0, clicks:0, running:false, timer:null, spawner:null, coinCount:0, paused:false };
+var playEl = document.getElementById('play');
+
+function best() { try { return parseInt(localStorage.getItem('deer_best') || '0', 10) || 0; } catch(e){ return 0; } }
+
+function startGame(){
+  T.time=60; T.score=0; T.clicks=0; T.coinCount=0;
+  document.getElementById('introScreen').style.display='none';
+  document.getElementById('finalScreen').style.display='none';
+  document.getElementById('gameScreen').style.display='block';
+  document.getElementById('play').innerHTML='';
+  document.getElementById('banner').className='';
+  document.getElementById('hudBest').textContent=best();
+  T.running=true; T.paused=false;
+  for(var i=0;i<24;i++) spawnCoin();
+  T.spawner=setInterval(function(){ if(T.coinCount<maxCoins()) spawnCoin(); }, 220);
+  T.timer=setInterval(tick, 100);
+  hud();
+}
+function maxCoins(){ return Math.min(40, 24+Math.floor((60-T.time)/15)); }
+function tick(){
+  if(!T.running||T.paused) return;
+  T.time=Math.max(0, T.time-0.1);
+  if(T.time<=0){ T.time=0; endGame(); return; }
+  hud();
+}
+function hud(){
+  var t=document.getElementById('hudTime');
+  t.textContent=T.time.toFixed(1);
+  t.className='v time'+(T.time<=10?' low':'');
+  document.getElementById('hudScore').textContent=T.score;
+}
+function pickType(){
+  var r=Math.random()*100, acc=0;
+  for(var i=0;i<COINS.length;i++){ acc+=COINS[i].p; if(r<acc) return COINS[i]; }
+  return COINS[0];
+}
+function spawnCoin(){
+  if(!T.running) return;
+  var c=pickType();
+  var el=document.createElement('div');
+  el.className='coin bob';
+  el.style.width=c.size+'px'; el.style.height=c.size+'px';
+  el.style.background='radial-gradient(circle at 35% 30%, '+(c===COINS[0]?'#8fd0ff':c===COINS[1]?'#ffb3d9':c===COINS[2]?'#ff8a8a':c===COINS[3]?'#d4b3ff':'#ffe68a')+', '+c.color+')';
+  el.style.animationDelay=(Math.random()*2)+'s';
+  el.innerHTML='<span class="deer" style="font-size:'+Math.round(c.size*0.5)+'px">🦌</span>';
+  // 随机位置(避开已有点,重试几次)
+  var W=playEl.clientWidth, H=playEl.clientHeight;
+  for(var t2=0;t2<8;t2++){
+    var x=8+Math.random()*(W-c.size-16), y=10+Math.random()*(H-c.size-20);
+    if(!overlap(x,y,c.size)){ break; }
+  }
+  el.style.left=x+'px'; el.style.top=y+'px';
+  el.dataset.type=c.id;
+  el.addEventListener('pointerdown', function(ev){ hitCoin(this, ev); });
+  playEl.appendChild(el);
+  T.coinCount++;
+}
+function overlap(x,y,s){
+  var cs=playEl.children, pad=-10;   // 负间距:允许部分重叠,屏幕更满
+  for(var i=0;i<cs.length;i++){
+    var o=cs[i]; if(o.classList.contains('pop')) continue;
+    var ox=parseFloat(o.style.left), oy=parseFloat(o.style.top), os=parseFloat(o.style.width);
+    if(Math.abs(ox-x)<(os+s)/2+pad && Math.abs(oy-y)<(os+s)/2+pad) return true;
+  }
+  return false;
+}
+function hitCoin(el, ev){
+  if(!T.running||T.paused) return;
+  if(el.classList.contains('pop')) return;   // 防同一枚被快速连点
+  var c=null; for(var i=0;i<COINS.length;i++) if(COINS[i].id===el.dataset.type) c=COINS[i];
+  if(!c) return;
+  T.clicks++;
+  if(c.sec!==0){
+    T.time=Math.max(0, T.time+c.sec);
+    showBanner(c.banner, c.bc);
+  } else {
+    T.score+=c.pts;
+  }
+  floatText(el, c);
+  el.classList.add('pop');
+  el.classList.remove('bob');
+  T.coinCount--;
+  var self=el;
+  el.addEventListener('animationend', function(){ if(self.parentNode) self.parentNode.removeChild(self); });
+  hud();
+  if(T.time<=0){ endGame(); return; }
+}
+function floatText(el, c){
+  var f=document.createElement('div');
+  f.className='ftext';
+  f.textContent=c.txt;
+  f.style.color=c.ft;
+  f.style.left=(parseFloat(el.style.left)+c.size/2-15)+'px';
+  f.style.top=(parseFloat(el.style.top)-6)+'px';
+  playEl.appendChild(f);
+  setTimeout(function(){ if(f.parentNode) f.parentNode.removeChild(f); }, 950);
+}
+// 顶部特效横幅:鹿萎了/伟了/鹿爽了(pointer-events:none,不挡操作)
+function showBanner(text, color){
+  var b=document.getElementById('banner');
+  b.textContent=text;
+  b.style.color=color;
+  b.className='';
+  void b.offsetWidth;
+  b.className='on';
+}
+
+// ═══════════ 结算 ═══════════
+function endGame(){
+  T.running=false;
+  clearInterval(T.timer); clearInterval(T.spawner);
+  var nb=best();
+  if(T.score>nb){ try{ localStorage.setItem('deer_best', String(T.score)); }catch(e){} }
+  var isNew = T.score>nb;
+  document.getElementById('gameScreen').style.display='none';
+  document.getElementById('finalScreen').style.display='flex';
+  document.getElementById('fScore').textContent=T.score;
+  document.getElementById('fClicks').textContent=T.clicks;
+  document.getElementById('fBest').textContent=Math.max(nb,T.score)+(isNew?' (新纪录!)':'');
+  document.getElementById('fSub').textContent='点了 '+T.clicks+' 只鹿 · '+(T.time<=0&&T.clicks===0?'一只都没点着,鹿都跑了':'');
+  document.getElementById('fTitle').textContent = T.score>=150?'鹿神下凡!':(T.score>=100?'鹿场霸主!':(T.score>=60?'鹿管小能手':'鹿在哪?'));
+  document.getElementById('fIco').textContent = T.score>=150?'🦌🌟':(T.score>=100?'🦌✨':'🦌');
+  document.getElementById('lbArea').innerHTML='';
+  document.getElementById('fScoreBtn').disabled=false;
+  document.getElementById('fScoreBtn').textContent='🏆 提交排行榜';
+  window.__finalScore=T.score;
+  window.__finalClicks=T.clicks;
+}
+function restart(){
+  document.getElementById('finalScreen').style.display='none';
+  startGame();
+}
+
+// ═══════════ 排行榜(与空城计同款) ═══════════
+function submitScore(){
+  var btn=document.getElementById('fScoreBtn');
+  if(!window.Auth || !Auth.isLoggedIn()){
+    Auth.openModal('login', function(){ submitScore(); });
+    return;
+  }
+  btn.disabled=true; btn.textContent='提交中…';
+  var f=new FormData();
+  f.append('score', String(window.__finalScore));
+  f.append('graze', String(window.__finalClicks));
+  fetch(API_BASE + 'api/leaderboard.php?game=deer', {
+    method:'POST', body:f, headers:{ 'Authorization':'Bearer '+Auth.token() }
+  }).then(function(r){ return r.json(); }).then(function(res){
+    btn.disabled=false;
+    if(res.ok) btn.textContent='✅ 已上榜 · 第 '+res.rank+' 名';
+    else btn.textContent='⚠️ '+(res.error||'提交失败');
+  }).catch(function(){ btn.disabled=false; btn.textContent='网络错误'; });
+}
+
+// ═══════════ 切后台自动暂停 ═══════════
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden && T.running){ T.paused=true; }
+  else if(!document.hidden && T.running){ T.paused=false; }
+});
+window.addEventListener('blur', function(){ if(T.running) T.paused=true; });
+window.addEventListener('focus', function(){ if(T.running) T.paused=false; });
+</script>
+</body>
+</html>

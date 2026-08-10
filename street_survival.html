@@ -148,6 +148,9 @@ body>.container{display:none}
         <div>· 生命上限系统:蛋白粉越买越贵,拳赛/摊位/养猫也能提升</div>
         <div>· 危险值只来自治安事件(分值上调),身体伤害与天气改走 HP</div>
         <div>· 全事件文案扩写,增强代入感</div>
+        <div style="font-weight:800;color:var(--g-pink);margin:6px 0 2px">🐛 修复</div>
+        <div>· 剧情事件(网吧/大叔/家人/老乡/慈善/棉衣/橘猫)选择弹层被「事件完成」覆盖、点了没反应的 bug——现在选项正常弹出</div>
+        <div>· 背包改为 10 格上限,属性装备页与背包页分开</div>
         <div style="font-weight:800;color:var(--g-pink);margin:6px 0 2px">📝 v1.1 修复与新增</div>
         <div>· 彩票/收音机不再跳过回合;大叔事件不再无限刷;无尽榜按累计收入,每人每榜仅最高分;技能上限 Lv10</div>
         <div>· 新增:序章、战斗系统、地下拳赛、网吧/流浪猫/凛冬支线</div>
@@ -956,6 +959,7 @@ function handleChainEvent(e){
        {label:'🌃 我不回去',fn:function(){ gainMoney(50); showFeedback('🌃 我不回去','你哥沉默了很久,把兜里的钱塞给你,转身走了。<br>+<b>50 元</b>','💔',true); }}]);
     return;
   }
+  return false;   // 未命中的链式事件(正常不会发生)
 }
 // 双选项弹层
 function showChoice(title,desc,opts){
@@ -1119,8 +1123,8 @@ function rerollEvent(){
 function acceptEvent(){
   var e=S.events[S.period];
   if(!e) return;
-  // 链式剧情事件走专属流程
-  if(e.chainEvent && handleChainEvent(e)) return;
+  // 链式剧情事件走专属流程(选择弹层全权由 handleChainEvent 处理)
+  if(e.chainEvent){ handleChainEvent(e); return; }
   var mGain=e.m;
   if(e.skill && mGain>0) mGain+=skillBonus(e.skill);   // 熟练度收入加成
   if(S.passiveItems.indexOf('suit')>=0 && e.skill==='work' && mGain>0) mGain+=5;   // 工作服:打工收入+5
