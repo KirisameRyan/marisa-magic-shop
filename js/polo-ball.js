@@ -539,7 +539,7 @@
           spawnSparks(ob.x, ob.y, '#caa86a', 14, 260);
           for (var dg = 0; dg < 2; dg++) {
             var dfg = fighters[dg];
-            if (dfg.dead || dfg === ob.owner || dfg.invulnT > 0) continue;
+            if (dfg.dead || dfg.invulnT > 0) continue;
             var gdx2 = dfg.x - ob.x, gdy2 = dfg.y - ob.y;
             var gdd = Math.sqrt(gdx2 * gdx2 + gdy2 * gdy2);
             var gr = (ob.owner.char.skill.gateShockR || 46) + dfg.r;
@@ -586,8 +586,8 @@
             fj.vx -= onx * rvn * (1 + OPT.REST_OB);
             fj.vy -= ony * rvn * (1 + OPT.REST_OB);
           }
-          // 障碍不伤自己人(许家印撞自己门 / 美团踩自己箱均免疫)
-          if (ob.dmg > 0 && ob.damCd <= 0 && fj !== ob.owner) {
+          // 大门不认人: 许家印自己撞自己的门也掉血(平衡代价); 其余障碍不伤自己人
+          if (ob.dmg > 0 && ob.damCd <= 0 && (ob.kind === 'gate' || fj !== ob.owner)) {
             ob.damCd = OPT.OB_DAM_CD;
             applyDamage(fj, ob.dmg, ob.owner, onx, ony, ob.knock || 0, false);
           }
@@ -1446,7 +1446,6 @@
           '<div class="cc-name">' + c.name + '</div>' +
           '<div class="cc-sub">' + c.title + '</div>' +
           '<div class="cc-skill">💠 ' + c.skill.name + '</div>' +
-          '<div class="cc-desc">' + c.skill.desc + '</div>' +
           '<div class="cc-stats">HP ' + c.maxHp + '</div>';
         card.onclick = function () {
           if (side === 'A') pickA = i; else pickB = i;
