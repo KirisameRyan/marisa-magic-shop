@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>抽象角色大乱斗 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#1a1520;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;touch-action:manipulation;user-select:none;-webkit-user-select:none;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
+.wrap{width:100%;max-width:640px;padding:28px 20px 40px;display:flex;flex-direction:column;align-items:center;}
+.logo{font-size:34px;font-weight:900;color:#f0c060;letter-spacing:8px;text-shadow:0 0 28px rgba(240,192,96,.4);margin-bottom:6px;text-align:center;}
+.tag{font-size:12px;color:#8a7e9a;letter-spacing:3px;text-align:center;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:8px;}
+.tag .pill{font-size:10px;color:#b89fff;background:rgba(184,159,255,.12);border:1px solid #4a3f60;border-radius:10px;padding:2px 9px;letter-spacing:1px;}
+.note{font-size:12px;color:#6d6278;text-align:center;line-height:1.8;margin:10px 0 22px;max-width:480px;}
+.note b{color:#b89fff;font-weight:700;}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;}
+@media(max-width:480px){.grid{grid-template-columns:repeat(2,1fr);}}
+.card{background:#241e2a;border:2px solid #3a3045;border-radius:16px;padding:14px 10px 12px;text-align:center;transition:transform .15s,border-color .15s;}
+.card:hover{transform:translateY(-3px);border-color:#5a4c6e;}
+.img-wrap{width:78px;height:78px;border-radius:50%;overflow:hidden;margin:0 auto 9px;background:#141019;border:2px solid #3a3045;position:relative;}
+.img-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+.emoji{position:absolute;right:-4px;bottom:-4px;font-size:19px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7));}
+.name{font-size:15px;font-weight:800;color:#e0d8ec;margin-bottom:2px;}
+.sub{font-size:10px;color:#8a7e9a;margin-bottom:6px;}
+.skill{font-size:10px;color:#f0c060;font-weight:700;background:rgba(240,192,96,.08);border-radius:6px;padding:2px 6px;display:inline-block;}
+.stats{font-size:9px;color:#ff8a8a;font-weight:700;margin-top:6px;}
+.btn-start{margin-top:30px;font-size:18px;font-weight:800;padding:14px 64px;border-radius:18px;border:none;background:linear-gradient(135deg,#f0c060,#e8a830);color:#1a1520;cursor:pointer;letter-spacing:6px;transition:transform .15s,box-shadow .15s;font-family:inherit;box-shadow:0 8px 28px rgba(240,192,96,.25);}
+.btn-start:hover{transform:scale(1.05);}
+.btn-start:active{transform:scale(.95);}
+.foot{font-size:10px;color:#5a4c6e;margin-top:26px;letter-spacing:2px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">抽象角色大乱斗</div>
+  <div class="tag"><span>PURE AUTO BATTLE · 纯观战</span><span class="pill">玩法模仿 Polo 小球</span></div>
+  <div class="note">选人即开打，之后一切交给物理。<br><b>灵梦</b>的阴阳玉无限叠加、<b>魔理沙</b>的激光一发入魂、<b>褚嬴</b>黑白子重创追踪、<b>寸头猪</b>冲刺拱人、<b>野生狗奶</b>盾奶不息、<b>许家印</b>天降大门+跑路复活、<b>美团</b>准时宝外卖砸脸——残血狂暴，看谁笑到最后。</div>
+  <div class="grid" id="roster"></div>
+  <button class="btn-start" onclick="location.href='polo_pick.html'">开 始 选 人</button>
+  <div class="foot">霧雨魔法店 · 扩充角色包</div>
+</div>
+<script src="js/polo-characters.js"></script>
+<script>
+(function () {
+  var grid = document.getElementById('roster');
+  window.POLO_CHARS.forEach(function (c) {
+    var card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML =
+      '<div class="img-wrap"><img src="' + c.img + '" alt="" onerror="this.style.display=\'none\'">' +
+      '<span class="emoji">' + c.emoji + '</span></div>' +
+      '<div class="name">' + c.name + '</div>' +
+      '<div class="sub">' + c.title + '</div>' +
+      '<div class="skill">💠 ' + c.skill.name + '</div>' +
+      '<div class="stats">HP ' + c.maxHp + '</div>';
+    grid.appendChild(card);
+  });
+})();
+</script>
+</body>
+</html>

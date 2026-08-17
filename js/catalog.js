@@ -11,6 +11,7 @@ window.MMS_CATALOG = {
     { href: 'marisa_landlord.html', emoji: '⛩️', name: '魔理沙的赛钱危机', tag: 'Roguelike 老虎机构筑', color: 'red', desc: '灵梦上门收租了！转动祈愿转盘，58 种符号自由构筑：幽幽子吃料理永久成长，琪露诺冻青蛙……撑过 12 次收租！' },
     { href: 'street_survival.html', emoji: '🌃', name: '流浪模拟器',   tag: '街头生存模拟',       color: 'blue', desc: '你是李明，兜里剩 8 块钱。每天早中晚三个时段，打工、翻垃圾、乞讨……突发事件随时降临，活到攒够 1000 元那天。' },
     { href: 'deer_battle.html',     emoji: '🦌', name: '鹿管大作战',   tag: '60秒点硬币',         color: 'gold', desc: '60 秒狂点硬币!蓝色+1、粉色+3、金色+10、紫色加时间、红色扣 10 秒——点错就鹿萎了,点对就鹿爽了!触屏+鼠标。' },
+    { href: 'polo_ball.html',       emoji: '⚔️', name: '抽象角色大乱斗', tag: '物理弹跳对战',       color: 'red', desc: '玩法模仿 Polo 小球：选人即开打，圆形碰撞体物理大战。灵梦玉海滚雪球、魔理沙激光一发入魂、褚嬴落子封路、寸头猪冲刺拱人、野生狗奶盾奶一体、许家印跑路复活！残血狂暴，90 秒按血量定生死。' },
     { href: 'demo_roulette.html',   emoji: '🔫', name: '轮盘赌局',     tag: '双人心理博弈',       color: 'gold', desc: '一把左轮六枚弹膛。装弹、留话、朝谁开枪？三局两胜，挑战 AI 或匹配真人，读完对面再扣扳机。' },
     { href: 'kongcheng.html',       emoji: '🎭', name: '空城计',       tag: '卖楼不盖模拟',       color: 'purple', desc: '你是许家印。拿地→预售圈钱→财务魔术，把空城卖给后来者，看崩盘时你卷走了几个许家印。' },
     { href: 'band-story.html',      emoji: '🎸', name: '乐队人生',     tag: '剧情选择游戏',       color: 'purple', desc: '18 岁，高考落榜，你决定把人生押给一把吉他。20 个节点，16 种结局，滚圈黑话浓度预警。' }
