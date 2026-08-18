@@ -33,8 +33,7 @@ window.MMS_CATALOG = {
     { href: 'quiz-waifu-3.html',  emoji: '🔮', name: '测测你的二次元老婆 · 正式版', tag: '正式鉴定', color: 'purple', desc: '14 维标签 × 500 角色数据库 × 4 层筛选。真正的灵魂匹配，TOP 5 排名。' },
     { href: 'quiz-nolove.html',   emoji: '💔', name: '测测你未来的对象在哪里', tag: '姻缘占卜', color: 'red', desc: '10 道题 · 赛博月老深度检索。太阳系、银河系、平行宇宙全搜了一遍——结果只有一个。' },
     { href: 'pig-test.html',      emoji: '🐷', name: '测测你是什么种类的猪猪', tag: '猪猪鉴定', color: 'lime', desc: '长按汲取猪元素，1 秒鉴定你的猪格。34 种猪猪等你来当。' },
-    { href: 'quiz-region.html',   emoji: '🗺️', name: '测测你是哪里人', tag: '地域鉴定', color: 'blue', desc: '按下按钮，答案可能让你飞起来。中国人能飞，不是中国人……你自己看吧。' },
-    { href: 'quiz-drowning.html', emoji: '🌊', name: '暑期防溺水安全调查', tag: '安全问卷', color: 'red', desc: '全国统一安全教育问卷 · 10 题 · 30 秒完成。认真答题，注意安全。' }
+    { href: 'quiz-region.html',   emoji: '🗺️', name: '测测你是哪里人', tag: '地域鉴定', color: 'blue', desc: '按下按钮，答案可能让你飞起来。中国人能飞，不是中国人……你自己看吧。' }
   ],
   // ── 📚 更多测试 ──
   more: [
