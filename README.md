@@ -37,6 +37,8 @@
 - [流浪模拟器](street_survival.html) — 街头生存 · 双条拉扯 · 突发遭遇多分支 · 成就徽章 · 无尽模式
 - [鹿管大作战](deer_battle.html) — 60 秒点硬币 · 五种鹿币 · 陷阱/加时 · 在线排行榜
 - [轮盘赌局](demo_roulette.html) — 双人心理博弈 · 装弹留话 · 三局两胜 · AI 对战 / 真人匹配
+- [合成大BAKA](baka.html) — 合成大西瓜like · ⑨进化大BAKA · 立绘圆形贴图 · 连锁锤子 · 在线排行榜
+- [合成大BAKA](baka.html) — 合成大西瓜like · ⑨进化大BAKA · 立绘圆形贴图 · 连锁锤子 · 在线排行榜
 
 ---
 

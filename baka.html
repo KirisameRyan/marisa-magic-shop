@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>合成大BAKA · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a1520;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#e0d8ec;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:10px;padding-top:56px;user-select:none;-webkit-user-select:none;touch-action:none;overflow-x:hidden;overflow-y:auto;}
+body>.container{display:none}
+.wrap{width:100%;max-width:430px;background:#241e2a;border:1px solid #3a3045;border-radius:18px;box-shadow:0 16px 48px rgba(0,0,0,.5);position:relative;overflow:hidden;padding-bottom:10px}
+.wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f0c060,#8fd8ff,#f0c060);z-index:1}
+.hud{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 4px;gap:8px;flex-wrap:wrap}
+.hud .score{font-size:20px;font-weight:900;color:#f0c060;font-variant-numeric:tabular-nums}
+.hud .best{font-size:11px;color:#8a7e9a}
+.hud .next{display:flex;align-items:center;gap:6px;font-size:11px;color:#8a7e9a}
+.hud .next .preview{width:34px;height:34px;border-radius:50%;background:#1a1520;border:1px solid #3a3045;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.hud .next .preview img{width:100%;height:100%;object-fit:contain}
+.hud .next .preview span{font-size:16px;color:#f0c060;font-weight:900}
+.hud .tools{display:flex;gap:6px;align-items:center}
+.tool-btn{width:40px;height:40px;border-radius:12px;border:1px solid #3a3045;background:#1a1520;color:#f0c060;font-size:19px;cursor:pointer;position:relative;transition:all .15s}
+.tool-btn:not(:disabled):hover{border-color:#f0c060;transform:translateY(-1px)}
+.tool-btn:disabled{opacity:.35;cursor:default}
+.tool-btn .cnt{position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;font-size:10px;font-weight:800;border-radius:8px;padding:1px 5px;min-width:16px;text-align:center}
+.tool-btn.aiming{border-color:#ef4444;box-shadow:0 0 12px rgba(239,68,68,.5);animation:aimPulse 1s infinite}
+@keyframes aimPulse{50%{box-shadow:0 0 20px rgba(239,68,68,.9)}}
+#muteBtn{border-color:#3a3045;background:#1a1520;color:#8a7e9a;font-size:15px}
+canvas{display:block;width:100%;height:auto;cursor:crosshair}
+.fruit-wrap{position:relative;margin:0 14px;border-radius:14px;overflow:hidden;border:1px solid #3a3045}
+.line{position:absolute;left:0;right:0;top:0;height:2px;background:rgba(239,68,68,.7);box-shadow:0 0 8px rgba(239,68,68,.5);z-index:2}
+.line.warn{animation:lineFlash .45s infinite alternate}
+@keyframes lineFlash{from{opacity:.35;box-shadow:0 0 4px rgba(239,68,68,.3)}to{opacity:1;box-shadow:0 0 18px rgba(239,68,68,1)}}
+.line .tag{position:absolute;right:6px;top:3px;font-size:9px;color:#ef4444;font-weight:700}
+.toast{position:absolute;left:50%;top:22%;transform:translateX(-50%);background:rgba(26,21,32,.92);border:1px solid #f0c060;color:#f0c060;font-size:13px;font-weight:700;padding:7px 16px;border-radius:20px;z-index:8;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap}
+.toast.show{opacity:1}
+.floater{position:absolute;font-weight:900;color:#f0c060;font-size:16px;text-shadow:0 1px 3px #000;pointer-events:none;z-index:6;animation:floatUp 1s forwards;white-space:nowrap}
+.floater.big{color:#ffe8b0;font-size:24px}
+@keyframes floatUp{0%{opacity:0;transform:translate(-50%,6px)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-30px)}}
+.overlay{position:fixed;inset:0;z-index:30;background:rgba(26,21,32,.96);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:18px}
+.overlay.hide{display:none}
+.card{background:#241e2a;border:1px solid #3a3045;border-radius:20px;padding:22px;max-width:360px;width:100%;text-align:center;position:relative;overflow:hidden;max-height:92vh;overflow-y:auto}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f0c060,#8fd8ff,#f0c060)}
+.card h1{font-size:26px;color:#f0c060;margin:4px 0 2px;letter-spacing:1px}
+.card .sub{font-size:11px;color:#8a7e9a;margin-bottom:10px;letter-spacing:3px}
+.logo{width:150px;border-radius:14px;margin:4px auto 8px;display:block;border:2px solid #3a3045}
+.btn{display:block;width:100%;border:none;border-radius:14px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s;letter-spacing:2px}
+.btn-gold{background:linear-gradient(135deg,#f0c060,#c89a40);color:#1a1520;margin-top:12px}
+.btn-gold:hover{filter:brightness(1.08)}
+.btn-ghost{background:transparent;border:1px solid #3a3045;color:#8a7e9a;margin-top:8px}
+.btn-ghost:hover{border-color:#f0c060;color:#f0c060}
+.rules{text-align:left;font-size:11px;color:#b8acc8;line-height:1.9;background:#1a1520;border:1px solid #3a3045;border-radius:12px;padding:10px 14px;margin-top:10px}
+.rules b{color:#f0c060}
+/* 大BAKA演出 */
+.baka-burst{position:fixed;inset:0;z-index:50;background:rgba(10,8,16,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.baka-burst.hide{display:none}
+.baka-burst .bigpic{width:min(70vw,280px);border-radius:20px;border:3px solid #f0c060;box-shadow:0 0 40px rgba(240,192,96,.6);animation:bigPop .6s cubic-bezier(.2,1.5,.4,1),bigShake 1.2s .5s infinite;z-index:2}
+@keyframes bigPop{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes bigShake{0%,100%{transform:translate(0,0) rotate(0)}20%{transform:translate(-6px,3px) rotate(-2deg)}40%{transform:translate(6px,-3px) rotate(2deg)}60%{transform:translate(-5px,-2px) rotate(-1deg)}80%{transform:translate(5px,2px) rotate(1deg)}}
+.baka-burst .bakatitle{font-size:44px;font-weight:900;color:#ffe8b0;text-shadow:0 0 20px rgba(240,192,96,.8);margin-top:12px;letter-spacing:6px;animation:bigPop .5s .3s both;z-index:2}
+.baka-burst .bakascore{font-size:20px;color:#f0c060;margin-top:8px;animation:bigPop .5s .5s both;z-index:2}
+.baka-burst .baka{position:absolute;font-weight:900;color:#f0c060;opacity:0;animation:bakaFly 1.8s linear forwards;text-shadow:0 0 12px rgba(240,192,96,.6)}
+@keyframes bakaFly{0%{opacity:0;transform:translate(0,60vh) rotate(-10deg)}10%{opacity:1}90%{opacity:1}100%{opacity:0;transform:translate(var(--dx),-80vh) rotate(20deg)}}
+/* 排行榜 */
+.lb-wrap{text-align:center;font-size:12px;margin-top:10px}
+.lb-submit{display:flex;gap:8px;justify-content:center;margin:8px 0;flex-wrap:wrap}
+.lb-input{background:#1a1520;border:1px solid #3a3045;border-radius:10px;padding:8px 12px;color:#e0d8ec;font-size:13px;width:130px;outline:none;font-family:inherit}
+.lb-input:focus{border-color:#f0c060}
+.lb-btn{background:linear-gradient(135deg,#f0c060,#c89a40);border:none;border-radius:10px;padding:8px 18px;color:#1a1520;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
+.lb-btn-ghost{background:transparent;border:1px solid #3a3045;border-radius:10px;padding:8px 14px;color:#8a7e9a;font-size:12px;cursor:pointer;font-family:inherit}
+.lb-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px}
+.lb-table th{color:#8a7e9a;font-weight:400;padding:5px 4px;border-bottom:1px solid #3a3045}
+.lb-table td{padding:5px 4px;color:#e0d8ec;border-bottom:1px solid rgba(58,48,69,.3)}
+.lb-table .lb-my td{color:#f0c060;font-weight:700;background:rgba(240,192,96,.06)}
+.lb-toggle{font-size:12px;color:#8a7e9a;cursor:pointer;padding:6px 0}
+.lb-toggle:hover{color:#f0c060}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.stat-box{background:#1a1520;border:1px solid #3a3045;border-radius:12px;padding:9px;text-align:center}
+.stat-box .sv{font-size:19px;font-weight:900;color:#f0c060}
+.stat-box .sl{font-size:10px;color:#8a7e9a;margin-top:2px}
+@media(max-width:420px){.card h1{font-size:22px}}
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="wrap">
+  <div class="hud">
+    <div><div class="score" id="score">0</div><div class="best" id="bestLine">HI 0</div></div>
+    <div class="next">下一个
+      <div class="preview" id="nextPreview"></div>
+      <span id="nextLv" style="font-size:11px;font-weight:800;color:#f0c060">⑨</span>
+    </div>
+    <div class="tools">
+      <button class="tool-btn" id="hammerBtn" disabled title="小锤子:点击后选择要敲掉的琪露诺">🔨<span class="cnt" id="hammerCnt">0</span></button>
+      <button class="tool-btn" id="muteBtn" title="音效">🔊</button>
+    </div>
+  </div>
+  <div class="fruit-wrap">
+    <div class="line" id="lineEl" style="top:0%"><span class="tag">危险线</span></div>
+    <div class="toast" id="toast"></div>
+    <canvas id="game" width="400" height="560"></canvas>
+  </div>
+</div>
+
+<!-- 开场 -->
+<div class="overlay" id="startOverlay">
+  <div class="card">
+    <img class="logo" id="logoImg" src="images/cirno/cirno_logo.jpg" alt="琪露诺" onerror="this.style.display='none'">
+    <h1>合成大BAKA</h1>
+    <div class="sub">SUIKA × 东方 · 笨蛋养成计划</div>
+    <div class="rules">
+      <b>玩法</b><br>
+      🎯 移动鼠标/手指对准落点,点击/松手释放<br>
+      ⑨ 相同的琪露诺碰到一起会<b>合体进化</b>!<br>
+      🔨 连锁 3 连获得<b>小锤子</b>,敲掉挡路的笨蛋<br>
+      💥 合成终极大BAKA → 立绘大特写 + 超大分<br>
+      ☠️ 笨蛋堆过危险线 = 游戏结束
+    </div>
+    <button class="btn btn-gold" onclick="startGame()">🎮 开始合成</button>
+    <p style="font-size:10px;color:#8a7e9a;margin-top:10px">夷境工作室 · 出品</p>
+  </div>
+</div>
+
+<!-- 结束 -->
+<div class="overlay hide" id="overOverlay">
+  <div class="card">
+    <h1 style="color:#ef4444">💥 笨蛋太多了!</h1>
+    <p style="font-size:12px;color:#8a7e9a;margin-top:4px">灵梦:这么多⑨,还是退治了吧。</p>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="sv" id="fsScore">0</div><div class="sl">总分</div></div>
+      <div class="stat-box"><div class="sv" id="fsMax">Lv0</div><div class="sl">最高合成</div></div>
+      <div class="stat-box"><div class="sv" id="fsChain">0</div><div class="sl">最大连锁</div></div>
+      <div class="stat-box"><div class="sv" id="fsBest">0</div><div class="sl">历史最佳</div></div>
+    </div>
+    <button class="btn btn-gold" onclick="startGame()">🔄 再来一次</button>
+    <div id="lbArea"></div>
+  </div>
+</div>
+
+<!-- 大BAKA演出 -->
+<div class="baka-burst hide" id="bakaBurst">
+  <div id="bakaBarrage"></div>
+  <img class="bigpic" id="bakaImg" src="images/cirno/cirno_lihui.webp" alt="大BAKA">
+  <div class="bakatitle">大BAKA!!!</div>
+  <div class="bakascore" id="bakaScore"></div>
+</div>
+
+<script>
+/* ═══════ 常量与状态 ═══════ */
+var W=400, H=560, TOP=150, FLOOR=H-14, G=1600, MAXV=1400;
+var REST=0.25, FLOOR_REST=0.35, WALL_REST=0.4, ITER=6;
+
+var IMGS=['images/cirno/cirno01.webp','images/cirno/cirno02.webp','images/cirno/cirno03.webp',
+  'images/cirno/cirno04.webp','images/cirno/cirno05.webp','images/cirno/cirno06.webp',
+  'images/cirno/cirno07.webp','images/cirno/cirno08.jpg'];
+// 等级: 1=⑨文字, 2~9=贴图
+var LV_R=function(lv){ return 20*Math.pow(1.17,lv-1); };
+var DROP_W=[40,25,18,12,5];   // Lv1~Lv5 掉落权重
+
+var S={ running:false, score:0, best:0, maxLevel:0, maxChain:0,
+  fruits:[], next:1, holding:null, holdX:W/2,
+  chain:0, chainTimer:0, hammers:0, aiming:false,
+  frozen:false, gameOver:false, muted:false };
+
+var canvas, ctx, rafId=0, lastT=0, imgs={};
+
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+
+/* ═══════ 音效(WebAudio 合成) ═══════ */
+var SND=(function(){
+  var ctx=null;
+  function ac(){ if(!ctx){try{ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}} if(ctx&&ctx.state==='suspended')ctx.resume(); return ctx; }
+  function beep(f,dur,type,vol,slide){ var c=ac(); if(!c)return; var o=c.createOscillator(),g=c.createGain(); o.type=type||'sine'; o.frequency.setValueAtTime(f,c.currentTime); if(slide)o.frequency.exponentialRampToValueAtTime(slide,c.currentTime+dur); g.gain.setValueAtTime(vol||0.1,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur); o.connect(g);g.connect(c.destination); o.start();o.stop(c.currentTime+dur); }
+  return {
+    unlock:function(){ ac(); },
+    merge:function(lv){ beep(280+lv*45,0.12,'triangle',0.12,500+lv*80); },
+    chain:function(){ beep(700,0.08,'square',0.08,1000); },
+    hammer:function(){ beep(200,0.14,'square',0.14,80); },
+    drop:function(){ beep(150,0.06,'sine',0.05,120); },
+    big:function(){ beep(523,0.15,'triangle',0.14); setTimeout(function(){beep(659,0.15,'triangle',0.14)},120); setTimeout(function(){beep(784,0.2,'triangle',0.16)},240); setTimeout(function(){beep(1046,0.35,'triangle',0.18)},360); },
+    over:function(){ beep(300,0.5,'sawtooth',0.1,80); },
+    click:function(){ beep(500,0.05,'triangle',0.07); }
+  };
+})();
+
+/* ═══════ 图片加载 ═══════ */
+function loadImgs(cb){
+  var fired=false, left=IMGS.length+1;
+  var done=function(){ if(!fired){ fired=true; cb(); } };
+  IMGS.forEach(function(src){
+    var img=new Image(); img.onload=img.onerror=done; img.src=src; imgs[src]=img;
+  });
+  var logo=new Image(); logo.onload=logo.onerror=done; logo.src='images/cirno/cirno_lihui.webp'; imgs['lihui']=logo;
+  setTimeout(done, 2500);   // 兜底:2.5s 后无论如何启动(图片缺失也不阻塞)
+}
+
+/* ═══════ 得分/浮字 ═══════ */
+function addScore(n){
+  S.score+=n;
+  $('score').textContent=S.score;
+}
+function floater(x,y,txt,big){
+  var wrap=document.querySelector('.fruit-wrap');
+  var f=document.createElement('div');
+  f.className='floater'+(big?' big':'');
+  f.textContent=txt;
+  f.style.left=x+'px'; f.style.top=(y-10)+'px';
+  wrap.appendChild(f);
+  setTimeout(function(){ if(f.parentNode)f.parentNode.removeChild(f); },1000);
+}
+function toast(msg){
+  var t=$('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._tm); t._tm=setTimeout(function(){ t.classList.remove('show'); },1600);
+}
+
+/* ═══════ 物理 ═══════ */
+function step(dt){
+  var fs=S.fruits, i,j;
+  // 积分
+  for(i=0;i<fs.length;i++){
+    var f=fs[i];
+    f.vy+=G*dt;
+    if(f.vy>MAXV)f.vy=MAXV;
+    f.x+=f.vx*dt; f.y+=f.vy*dt;
+    // 墙壁与地板
+    if(f.x-f.r<0){ f.x=f.r; f.vx=-f.vx*WALL_REST; }
+    else if(f.x+f.r>W){ f.x=W-f.r; f.vx=-f.vx*WALL_REST; }
+    if(f.y+f.r>FLOOR){ f.y=FLOOR-f.r; f.vy=-f.vy*FLOOR_REST; }
+  }
+  // 合并优先:重叠即合并(先于碰撞分离,保证能合上)
+  var merged=true, guard=0;
+  while(merged&&guard++<20){
+    merged=false;
+    for(i=0;i<fs.length&&!merged;i++){
+      for(j=i+1;j<fs.length;j++){
+        var a=fs[i],b=fs[j];
+        if(a.lv!==b.lv||a.lv>=10) continue;
+        var now=Date.now();
+        if(a.cooldown>now||b.cooldown>now) continue;
+        var dx=a.x-b.x, dy=a.y-b.y, d=Math.sqrt(dx*dx+dy*dy);
+        if(d < a.r+b.r){ doMerge(a,b); merged=true; break; }
+      }
+    }
+  }
+  // 圆-圆碰撞(迭代稳定,质量加权:大球压小球)
+  for(var it=0;it<ITER;it++){
+    for(i=0;i<fs.length;i++){
+      for(j=i+1;j<fs.length;j++){
+        var c1=fs[i],c2=fs[j];
+        var dx=c2.x-c1.x, dy=c2.y-c1.y, d2=dx*dx+dy*dy, rr=c1.r+c2.r;
+        if(d2>=rr*rr||d2===0) continue;
+        var d=Math.sqrt(d2), nx=dx/d, ny=dy/d, ov=(rr-d);
+        // 质量按半径²,位置分离按质量反比(大球几乎不动)
+        var m1=c1.r*c1.r, m2=c2.r*c2.r, mt=m1+m2;
+        c1.x-=nx*ov*(m2/mt); c1.y-=ny*ov*(m2/mt);
+        c2.x+=nx*ov*(m1/mt); c2.y+=ny*ov*(m1/mt);
+        // 动量守恒速度交换(带恢复系数)
+        var rvx=c1.vx-c2.vx, rvy=c1.vy-c2.vy, rel=rvx*nx+rvy*ny;
+        if(rel>0){
+          var imp=-(1+REST)*rel*(m2/mt);
+          c1.vx+=imp*nx; c1.vy+=imp*ny;
+          c2.vx-=imp*nx*(m1/m2); c2.vy-=imp*ny*(m1/m2);
+        }
+      }
+    }
+  }
+}
+
+function doMerge(a,b){
+  var fs=S.fruits;
+  var lv=a.lv;
+  fs.splice(fs.indexOf(a),1);
+  fs.splice(fs.indexOf(b),1);
+  var x=(a.x+b.x)/2, y=(a.y+b.y)/2;
+  if(lv===9){
+    // 终极大BAKA: 立绘特写 + 弹幕 + 超大分
+    S.chain++; S.maxChain=Math.max(S.maxChain,S.chain);
+    var mult=Math.max(1,1+(S.chain-1)*0.5);
+    var pts=Math.round(8000*mult);
+    addScore(pts);
+    S.maxLevel=Math.max(S.maxLevel,10);
+    SND.big();
+    bigBaka(x,y,pts,mult);
+    resetChain();
+    return;
+  }
+  var nl=lv+1;
+  var nf={x:x,y:y,vx:0,vy:0,r:LV_R(nl),lv:nl,cooldown:Date.now()+250};
+  fs.push(nf);
+  S.chain++;
+  S.maxChain=Math.max(S.maxChain,S.chain);
+  var mult=Math.max(1,1+(S.chain-1)*0.5);
+  var pts=Math.round(lv*100*mult);
+  addScore(pts);
+  S.maxLevel=Math.max(S.maxLevel,nl);
+  floater(x,y,'+'+pts,mult>1.5);
+  SND.merge(nl);
+  if(S.chain>=3&&mult>=2) grantHammer();
+  // 连锁: 连合间隔窗口
+  clearTimeout(S._chainReset);
+  S._chainReset=setTimeout(resetChain,800);
+}
+function resetChain(){ S.chain=0; }
+function grantHammer(){
+  if(S.hammers<3){
+    S.hammers++; $('hammerCnt').textContent=S.hammers;
+    $('hammerBtn').disabled=false;
+    toast('🔨 连锁 3 连!获得小锤子!');
+    SND.chain();
+  }
+}
+
+/* ═══════ 大BAKA 演出 ═══════ */
+function bigBaka(x,y,pts,mult){
+  var el=$('bakaBurst');
+  var bar=$('bakaBarrage'); bar.innerHTML='';
+  var words=['バカ','バカバカ','⑨','BAKA!','バカバカバカ','⑨⑨','笨蛋!!','⑨⑨⑨'];
+  for(var i=0;i<26;i++){
+    var s=document.createElement('span');
+    s.className='baka';
+    s.textContent=words[i%words.length];
+    s.style.left=(Math.random()*90+2)+'%';
+    s.style.top=(Math.random()*60+10)+'%';
+    s.style.fontSize=(Math.random()*26+18)+'px';
+    s.style.setProperty('--dx',(Math.random()*200-100)+'px');
+    s.style.animationDelay=(Math.random()*0.6)+'s';
+    bar.appendChild(s);
+  }
+  $('bakaScore').textContent='+'+pts+' 分'+(mult>1?' ×'+mult.toFixed(1):'');
+  el.classList.remove('hide');
+  S.frozen=true;
+  setTimeout(function(){
+    el.classList.add('hide');
+    S.frozen=false;
+    checkOver();
+  },2800);
+}
+
+/* ═══════ 游戏循环 ═══════ */
+function loop(t){
+  rafId=requestAnimationFrame(loop);
+  if(!S.running||S.frozen) return;
+  var dt=Math.min(0.033,(t-lastT)/1000||0.016); lastT=t;
+  // 持球跟随
+  if(S.holding){
+    S.holding.x=S.holdX;
+    S.holding.y=TOP-S.holding.r;   // 球底贴危险线
+  }
+  step(dt);
+  draw();
+  checkOver(dt);   // 持续压线计时判定(持球不在 fruits 里,天然被忽略)
+}
+function draw(){
+  if(!ctx) return;
+  ctx.clearRect(0,0,W,H);
+  // 背景
+  ctx.fillStyle='#1a1520'; ctx.fillRect(0,0,W,H);
+  // 掉落区提示
+  ctx.fillStyle='rgba(240,192,96,.04)'; ctx.fillRect(0,0,W,TOP);
+  ctx.strokeStyle='rgba(240,192,96,.25)'; ctx.setLineDash([6,6]); ctx.beginPath(); ctx.moveTo(0,TOP); ctx.lineTo(W,TOP); ctx.stroke(); ctx.setLineDash([]);
+  for(var i=0;i<S.fruits.length;i++) drawFruit(S.fruits[i]);
+  if(S.aiming){
+    ctx.strokeStyle='rgba(239,68,68,.5)';
+    for(var i=0;i<S.fruits.length;i++){
+      ctx.beginPath(); ctx.arc(S.fruits[i].x,S.fruits[i].y,S.fruits[i].r+3,0,Math.PI*2); ctx.stroke();
+    }
+  }
+}
+function drawFruit(f){
+  var x=f.x,y=f.y,r=f.r;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+  if(f.lv===1){
+    // 透明底:不填白圆,clip 圆形区域直接画金色 ⑨
+    ctx.clip();
+    ctx.fillStyle='#f0c060';
+    ctx.shadowColor='rgba(0,0,0,.65)'; ctx.shadowBlur=r*0.2; ctx.shadowOffsetY=r*0.06;
+    ctx.font='900 '+(r*1.15)+'px "PingFang SC",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('⑨',x,y+r*0.06);
+  } else {
+    ctx.fillStyle='#fff'; ctx.fill();
+    ctx.clip();
+    var img=imgs[IMGS[f.lv-2]];
+    if(img&&img.complete&&img.naturalWidth>0) ctx.drawImage(img,x-r,y-r,r*2,r*2);
+  }
+  ctx.restore();
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+  // 压线预警:球描边变红
+  if(f.lineT>=WARN_AT){
+    ctx.strokeStyle='rgba(239,68,68,'+Math.min(1,0.4+f.lineT*0.12)+')';
+    ctx.lineWidth=3;
+  } else {
+    ctx.strokeStyle='rgba(0,0,0,.18)'; ctx.lineWidth=1.5;
+  }
+  ctx.stroke();
+  // 等级徽章(Lv2+ 底部数字角标)
+  if(f.lv>=2){
+    var bw=r*0.52, bh=r*0.34, bx=x-bw/2, by=y+r*0.62;
+    ctx.beginPath();
+    ctx.moveTo(bx+bh/2,by);
+    ctx.lineTo(bx+bw-bh/2,by); ctx.quadraticCurveTo(bx+bw,by,bx+bw,by+bh/2);
+    ctx.lineTo(bx+bw,by+bh-bh/2); ctx.quadraticCurveTo(bx+bw,by+bh,bx+bw-bh/2,by+bh);
+    ctx.lineTo(bx+bh/2,by+bh); ctx.quadraticCurveTo(bx,by+bh,bx,by+bh-bh/2);
+    ctx.lineTo(bx,by+bh/2); ctx.quadraticCurveTo(bx,by,bx+bh/2,by);
+    ctx.closePath();
+    ctx.fillStyle='rgba(15,10,20,.72)'; ctx.fill();
+    ctx.fillStyle='#ffe8b0';
+    ctx.font='900 '+(bh*0.78)+'px "PingFang SC",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(f.lv, x, by+bh/2+bh*0.03);
+  }
+}
+
+/* ═══════ 掉落 ═══════ */
+function pickLevel(){
+  var total=DROP_W.reduce(function(a,b){return a+b},0);
+  var r=Math.random()*total, acc=0;
+  for(var i=0;i<DROP_W.length;i++){ acc+=DROP_W[i]; if(r<acc) return i+1; }
+  return DROP_W.length;
+}
+function newHolding(){
+  var lv=S.next;
+  S.next=pickLevel();
+  var r=LV_R(lv);
+  S.holding={x:S.holdX,y:TOP-10,vx:0,vy:0,r:r,lv:lv,cooldown:0};
+  updatePreview();
+}
+function updatePreview(){
+  var p=$('nextPreview');
+  var lv=S.next;
+  if(lv===1){ p.innerHTML='<span>⑨</span>'; }
+  else{ p.innerHTML='<img src="'+IMGS[lv-2]+'" onerror="this.outerHTML=\'<span>⑨</span>\'">'; }
+  // 等级标注
+  var lbl=document.getElementById('nextLv');
+  if(lbl){ lbl.textContent=lv===1?'⑨':'Lv'+lv; }
+}
+function drop(){
+  if(!S.holding||S.gameOver) return;
+  S.holding.vy=0; S.holding.vx=0;
+  S.fruits.push(S.holding);
+  S.holding=null;
+  SND.drop();
+  newHolding();
+}
+
+/* ═══════ 结束判定:持续压线计时 ═══════ */
+var LINE_MAX=5;      // 持续压线 5 秒判负
+var WARN_AT=3;       // 压线 3 秒触发预警
+function checkOver(dt){
+  var warn=false, warnLv=0;
+  for(var i=0;i<S.fruits.length;i++){
+    var f=S.fruits[i];
+    if(f.y-f.r < TOP-2){
+      f.lineT=(f.lineT||0)+dt;
+      if(f.lineT>=WARN_AT) warn=true;
+      if(f.lineT>warnLv) warnLv=f.lineT;
+      if(f.lineT>=LINE_MAX){ gameOver(); return; }
+    } else {
+      f.lineT=0;
+    }
+  }
+  // 预警:危险线闪烁 + 压线球红描边
+  var line=document.querySelector('.line');
+  if(warn && line && !line.classList.contains('warn')) line.classList.add('warn');
+  if(!warn && line && line.classList.contains('warn')) line.classList.remove('warn');
+  S._warnLv=warnLv;
+}
+function gameOver(){
+  S.gameOver=true; S.running=false;
+  SND.over();
+  if(S.score>S.best){ S.best=S.score; try{localStorage.setItem('baka_best',String(S.best))}catch(e){} }
+  $('fsScore').textContent=S.score;
+  $('fsMax').textContent='Lv'+S.maxLevel;
+  $('fsChain').textContent='×'+S.maxChain;
+  $('fsBest').textContent=S.best;
+  $('overOverlay').classList.remove('hide');
+  loadLB();
+}
+
+/* ═══════ 排行榜 ═══════ */
+function loadLB(){
+  var area=$('lbArea');
+  area.innerHTML='<p style="color:#8a7e9a;font-size:12px">⏳ 加载排行榜...</p>';
+  fetch('api/leaderboard.php?game=baka').then(function(r){return r.json()}).then(function(data){
+    var rank=-1;for(var i=0;i<data.length;i++)if(S.score>data[i].score){rank=i+1;break}if(rank<0)rank=data.length<20?data.length+1:0;
+    var html='<div class="lb-wrap">';
+    if(rank>0){
+      html+='<div class="lb-submit"><input class="lb-input" id="lbName" maxlength="12" placeholder="昵称(最多12字)">'+
+        '<button class="lb-btn" id="lbSubmit">提交</button><button class="lb-btn-ghost" id="lbSkip">跳过</button></div>';
+    }else if(data.length>=20){ html+='<p style="color:#8a7e9a">未进入前 20</p>'; }
+    html+='<div class="lb-toggle" id="lbToggle">📊 排行榜 ▸</div><div class="lb-table-wrap" id="lbWrap" style="display:none">'+
+      '<table class="lb-table"><thead><tr><th>#</th><th>名字</th><th>分数</th><th>最高级</th><th>日期</th></tr></thead><tbody>';
+    for(var i=0;i<data.length;i++){
+      var d=data[i];
+      var cls=(rank>0&&i+1===rank&&d.score===S.score)?' class="lb-my"':'';
+      html+='<tr'+cls+'><td>'+(i+1)+'</td><td>'+esc(d.name)+'</td><td>'+d.score+'</td><td>Lv'+(d.graze||0)+'</td><td>'+(d.time||'')+'</td></tr>';
+    }
+    html+='</tbody></table></div></div>';
+    area.innerHTML=html;
+    document.getElementById('lbToggle').addEventListener('click',function(){
+      var w=document.getElementById('lbWrap');var o=w.style.display!=='none';w.style.display=o?'none':'block';
+      this.textContent=o?'📊 排行榜 ▸':'📊 排行榜 ▾';
+    });
+    if(rank>0){
+      document.getElementById('lbSubmit').addEventListener('click',function(){
+        var n=(document.getElementById('lbName').value||'').trim();if(!n||n.length>12)n='琪露诺';
+        var b=document.getElementById('lbSubmit');b.disabled=true;b.textContent='提交中...';
+        var f=new FormData();f.append('name',n);f.append('score',String(S.score));f.append('graze',String(S.maxLevel));f.append('game','baka');
+        fetch('api/leaderboard.php',{method:'POST',body:f}).then(function(r){return r.json()}).then(function(res){
+          area.innerHTML=res.ok?'<p style="color:#6fcf97;font-size:12px">✅ 提交成功!排名第 '+res.rank+'</p>':'<p style="color:#8a7e9a;font-size:12px">提交失败</p>';
+        }).catch(function(){area.innerHTML='<p style="color:#8a7e9a;font-size:12px">网络错误</p>'});
+      });
+      document.getElementById('lbSkip').addEventListener('click',function(){area.innerHTML=''});
+    }
+  }).catch(function(){area.innerHTML='<p style="color:#8a7e9a;font-size:12px">排行榜暂不可用</p>'});
+}
+
+/* ═══════ 锤子 ═══════ */
+function toggleAim(){
+  if(S.hammers<=0||S.gameOver) return;
+  S.aiming=!S.aiming;
+  $('hammerBtn').classList.toggle('aiming',S.aiming);
+  SND.click();
+}
+function smashAt(mx,my){
+  // 找最顶部的命中水果
+  var best=null,besty=-1;
+  for(var i=0;i<S.fruits.length;i++){
+    var f=S.fruits[i];
+    var dx=f.x-mx,dy=f.y-my;
+    if(dx*dx+dy*dy<f.r*f.r){
+      if(best===null||f.y<besty){best=f;besty=f.y;}
+    }
+  }
+  if(best){
+    S.fruits.splice(S.fruits.indexOf(best),1);
+    S.hammers--; $('hammerCnt').textContent=S.hammers;
+    if(S.hammers<=0){$('hammerBtn').disabled=true;}
+    S.aiming=false; $('hammerBtn').classList.remove('aiming');
+    var line=document.querySelector('.line');
+    if(line) line.classList.remove('warn');   // 敲掉压线球,立即解除预警
+    SND.hammer();
+    floater(best.x,best.y,'💥',false);
+    toast('敲掉了一个笨蛋!');
+  }
+}
+
+/* ═══════ 输入 ═══════ */
+function clientToCanvas(e){
+  var rect=canvas.getBoundingClientRect();
+  var cx=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;
+  var cy=(e.touches?e.touches[0].clientY:e.clientY)-rect.top;
+  return {x:cx*(W/rect.width), y:cy*(H/rect.height)};
+}
+function bindInput(){
+  canvas.addEventListener('mousemove',function(e){
+    var p=clientToCanvas(e);
+    S.holdX=Math.max(0,Math.min(W,p.x));
+  });
+  canvas.addEventListener('mousedown',function(e){
+    var p=clientToCanvas(e);
+    if(S.aiming){ smashAt(p.x,p.y); return; }
+    if(!S.running||S.gameOver||S.frozen) return;
+    S.holdX=Math.max(0,Math.min(W,p.x));
+    drop();
+  });
+  canvas.addEventListener('touchmove',function(e){
+    e.preventDefault();
+    var p=clientToCanvas(e);
+    S.holdX=Math.max(0,Math.min(W,p.x));
+  },{passive:false});
+  canvas.addEventListener('touchend',function(e){
+    e.preventDefault();
+    if(!S.aiming) drop();
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.code==='ArrowLeft'||e.code==='KeyA'){ S.holdX=Math.max(0,S.holdX-22); }
+    else if(e.code==='ArrowRight'||e.code==='KeyD'){ S.holdX=Math.min(W,S.holdX+22); }
+    else if(e.code==='Space'){ e.preventDefault(); if(!S.aiming) drop(); }
+  });
+}
+
+/* ═══════ 启动 ═══════ */
+function startGame(){
+  SND.unlock(); SND.click();
+  $('startOverlay').classList.add('hide');
+  $('overOverlay').classList.add('hide');
+  S.score=0; S.maxLevel=0; S.maxChain=0;
+  S.fruits=[]; S.chain=0; S.hammers=0; S.aiming=false; S.gameOver=false; S.frozen=false;
+  $('score').textContent='0';
+  $('hammerCnt').textContent='0'; $('hammerBtn').disabled=true; $('hammerBtn').classList.remove('aiming');
+  S.next=pickLevel();
+  S.holdX=W/2;
+  newHolding();
+  S.running=true;
+  lastT=performance.now();
+  rafId=requestAnimationFrame(loop);
+}
+$('hammerBtn').addEventListener('click',toggleAim);
+$('muteBtn').addEventListener('click',function(){
+  S.muted=!S.muted;
+  $('muteBtn').textContent=S.muted?'🔇':'🔊';
+});
+loadImgs(function(){
+  try{ S.best=parseInt(localStorage.getItem('baka_best')||'0')||0; }catch(e){}
+  $('bestLine').textContent='HI '+S.best;
+  // 静音状态
+  try{ if(localStorage.getItem('baka_mute')==='1'){S.muted=true;$('muteBtn').textContent='🔇';} }catch(e){}
+  canvas=document.getElementById('game');
+  ctx=canvas.getContext('2d');
+  // 危险线 DOM 与画布内判负线对齐
+  var lineEl=document.getElementById('lineEl');
+  if(lineEl) lineEl.style.top=(TOP/H*100)+'%';
+  bindInput();
+  startGame();
+});
+</script>
+</body>
+</html>

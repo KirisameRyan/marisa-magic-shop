@@ -15,7 +15,8 @@ window.MMS_CATALOG = {
     { href: 'polo_ball.html',       emoji: '⚔️', name: '抽象角色大乱斗', tag: '物理弹跳对战',       color: 'red', desc: '玩法模仿 Polo 小球：选人即开打，纯观战物理大战。残血狂暴，90 秒按血量定生死。' },
     { href: 'demo_roulette.html',   emoji: '🔫', name: '轮盘赌局',     tag: '双人心理博弈',       color: 'gold', desc: '一把左轮六枚弹膛。装弹、留话、朝谁开枪？三局两胜，挑战 AI 或匹配真人，读完对面再扣扳机。' },
     { href: 'kongcheng.html',       emoji: '🎭', name: '空城计',       tag: '卖楼不盖模拟',       color: 'purple', desc: '你是许家印。拿地→预售圈钱→财务魔术，把空城卖给后来者，看崩盘时你卷走了几个许家印。' },
-    { href: 'band-story.html',      emoji: '🎸', name: '乐队人生',     tag: '剧情选择游戏',       color: 'purple', desc: '18 岁，高考落榜，你决定把人生押给一把吉他。20 个节点，16 种结局，滚圈黑话浓度预警。' }
+    { href: 'band-story.html',      emoji: '🎸', name: '乐队人生',     tag: '剧情选择游戏',       color: 'purple', desc: '18 岁，高考落榜，你决定把人生押给一把吉他。20 个节点，16 种结局，滚圈黑话浓度预警。' },
+    { href: 'baka.html',            emoji: '⑨', name: '合成大BAKA',   tag: '合成大西瓜like',     color: 'blue', desc: '相同的琪露诺碰到一起就会合体进化！从⑨一路合成到大BAKA。连锁 3 连获得小锤子敲掉挡路的笨蛋，立绘大特写等着你。' }
   ],
   // ── 🔥 热门测试 ──
   hot: [
@@ -35,7 +36,8 @@ window.MMS_CATALOG = {
     { href: 'quiz-waifu-3.html',  emoji: '🔮', name: '测测你的二次元老婆 · 正式版', tag: '正式鉴定', color: 'purple', desc: '14 维标签 × 500 角色数据库 × 4 层筛选。真正的灵魂匹配，TOP 5 排名。' },
     { href: 'quiz-nolove.html',   emoji: '💔', name: '测测你未来的对象在哪里', tag: '姻缘占卜', color: 'red', desc: '10 道题 · 赛博月老深度检索。太阳系、银河系、平行宇宙全搜了一遍——结果只有一个。' },
     { href: 'pig-test.html',      emoji: '🐷', name: '测测你是什么种类的猪猪', tag: '猪猪鉴定', color: 'lime', desc: '长按汲取猪元素，1 秒鉴定你的猪格。34 种猪猪等你来当。' },
-    { href: 'quiz-region.html',   emoji: '🗺️', name: '测测你是哪里人', tag: '地域鉴定', color: 'blue', desc: '按下按钮，答案可能让你飞起来。中国人能飞，不是中国人……你自己看吧。' }
+    { href: 'quiz-region.html',   emoji: '🗺️', name: '测测你是哪里人', tag: '地域鉴定', color: 'blue', desc: '按下按钮，答案可能让你飞起来。中国人能飞，不是中国人……你自己看吧。' },
+    { href: 'baka.html',          emoji: '⑨', name: '合成大BAKA',     tag: '合成大西瓜like', color: 'blue', desc: '相同的琪露诺碰到一起就会合体进化!从⑨一路合成到大BAKA,立绘大特写+バカ弹幕+超大分。' }
   ],
   // ── 📚 更多测试 ──
   more: [
