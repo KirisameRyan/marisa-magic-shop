@@ -125,7 +125,7 @@
         if (!bgmMuted) bgmEl.play();
       } catch (e) { bgmEl = null; }
     }
-    function themeOf(c) { return c.bgm || 'audio/bgm.mp3'; }
+    function themeOf(c) { return c.bgm || ''; }
     return {
       play: play, playTheme: playTheme, themeOf: themeOf,
       toggleSfx: function () { sfxMuted = !sfxMuted; return sfxMuted; },
@@ -204,7 +204,9 @@
       dashHitCd: 0,            // 冲刺撞人冷却
       goStones: 0,             // 褚嬴已落子数
       revived: false,          // 许家印跑路标记
-      invulnT: 0               // 无敌计时(跑路)
+      invulnT: 0,              // 无敌计时(跑路)
+      timeStop: false,         // 狗奶时停(发动后全场冻结)
+      auraAcc: 0               // 时停光环伤害累积器
     };
     if (!char._img) { try { loadImage(char, char.img); } catch (e) {} }
     return f;
@@ -235,7 +237,9 @@
     state = 'count'; countT = 0;
     ovHide(el.ovResult);
     ovHide(el.ovSelect);
-    SND.playTheme(Math.random() < 0.5 ? SND.themeOf(a.char) : SND.themeOf(b.char));
+    // 开局 BGM: 优先选拥有专属 BGM 的一方, 双方都没有则静音
+    var tmA = SND.themeOf(a.char), tmB = SND.themeOf(b.char);
+    SND.playTheme(tmA || tmB);
   }
 
   function selText() {
@@ -246,6 +250,7 @@
   // ── 伤害 ──
   function applyDamage(f, dmg, srcFighter, kx, ky, kb, big, pierce) {
     if (f.dead || state === 'select' || state === 'result') return;
+    if (f.timeStop) return;       // 时停发动者: 免疫一切伤害
     if (f.invulnT > 0) return;
     var mul = f.enraged ? OPT.ENRAGE_DMG : 1;
     var eff = dmg * mul;
@@ -350,9 +355,32 @@
         fk.vx += Math.cos(ka) * kp; fk.vy += Math.sin(ka) * kp;
       }
     }
+    // 时停探测: 狗奶满 readyTime 未败 → 发动「ザ・ワールド」
+    var tstop = null;
+    for (i = 0; i < fighters.length; i++) {
+      var tfz = fighters[i];
+      if (tfz.dead || tfz.char.skill.type !== 'milk_guard') continue;
+      var rT = tfz.char.skill.readyTime || 15;
+      if (!tfz.timeStop && fightT >= rT) {
+        tfz.timeStop = true;
+        targetTS = 0.25; slowmoT = 0.9;      // 变身瞬间短暂慢放
+        shake = 16;
+        addFloat(W / 2, H / 2 - 60, 'ザ・ワールド 时停!', '#ffe066', 40, 1.6);
+        SND.play('beam');
+        spawnSparks(W / 2, H / 2, '#ffe066', 40, 460);
+      }
+      if (tfz.timeStop) tstop = tfz;
+    }
     for (i = 0; i < fighters.length; i++) {
       var f = fighters[i];
       if (f.dead) continue;
+      // 时停: 全场冻结, 只保留血条动画、受击闪光与状态计时(无敌帧应在时空中自然流逝)
+      if (tstop) {
+        f.barHp += (f.hp - f.barHp) * Math.min(1, dt * 8);
+        if (f.flashT > 0) f.flashT -= dt;
+        if (f.invulnT > 0) f.invulnT -= dt;
+        continue;
+      }
       var mul = 1;
       if (f.char.speedMul) mul *= f.char.speedMul;
       if (f.laser && f.laser.phase === 'charge') mul = f.char.skill.chargeSpeedMul;
@@ -379,6 +407,18 @@
       if (f.chipCd > 0) f.chipCd -= dt;
       updateSkill(f, dt);
     }
+    // 时停: 金色光环每秒 5 次 10 伤磨死敌人
+    if (tstop) {
+      var foeT = fighters[0] === tstop ? fighters[1] : fighters[0];
+      if (!foeT.dead && !foeT.timeStop) {
+        tstop.auraAcc += dt * (tstop.char.skill.auraTicks || 5);
+        while (tstop.auraAcc >= 1) {
+          tstop.auraAcc -= 1;
+          if (foeT.invulnT > 0) continue;
+          applyDamage(foeT, tstop.char.skill.auraDmg || 10, tstop, 0, 0, 0, false);
+        }
+      }
+    }
     // 加时狂暴: 45秒后全员狂暴 + 擦伤翻三倍, 保证对局收尾
     if (fightT > 45) {
       overtime = true;
@@ -399,7 +439,7 @@
       finish(loser);
     }
     // 缠斗引力: 距离超过 260 时轻微相吸, 保证擦伤/互撞密度(加时翻三倍强制收尾)
-    if (!fighters[0].dead && !fighters[1].dead) {
+    if (!tstop && !fighters[0].dead && !fighters[1].dead) {
       var gdx = fighters[1].x - fighters[0].x, gdy = fighters[1].y - fighters[0].y;
       var gd = Math.sqrt(gdx * gdx + gdy * gdy);
       if (gd > OPT.ATTRACT_RANGE && gd > 0.001) {
@@ -411,7 +451,7 @@
     }
     // 角色互撞 (擦伤 + 弹性反弹)
     var a = fighters[0], b = fighters[1];
-    if (!a.dead && !b.dead) {
+    if (!tstop && !a.dead && !b.dead) {
       var dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy);
       var rr = a.r + b.r;
       if (d < rr && d > 0.001) {
@@ -429,13 +469,18 @@
           a.chipCd = OPT.CHIP_CD; b.chipCd = OPT.CHIP_CD;
           var chipDmg = overtime ? OPT.CHIP_DAMAGE * 3 : OPT.CHIP_DAMAGE;
           var aArmor = !!a.dash, bArmor = !!b.dash;   // 冲刺期间免擦伤
-          if (!aArmor) applyDamage(a, chipDmg, b, -nx, -ny, 60, false);
-          if (!bArmor) applyDamage(b, chipDmg, a, nx, ny, 60, false);
+          // 蓄力狗奶: 站桩闭门, 互撞双方都不受擦伤(技能伤害照吃)
+          var aGod = a.char.skill.type === 'milk_guard' && !a.timeStop && fightT < (a.char.skill.readyTime || 15);
+          var bGod = b.char.skill.type === 'milk_guard' && !b.timeStop && fightT < (b.char.skill.readyTime || 15);
+          // 互撞伤害 = 撞击方(对方)的碰撞值: 大运撞人 300, 常规 20; 蓄力狗奶双向免疫擦伤
+          if (!aArmor && !aGod) applyDamage(a, b.char.collideDmg || chipDmg, b, -nx, -ny, 60, false);
+          if (!bArmor && !bGod) applyDamage(b, a.char.collideDmg || chipDmg, a, nx, ny, 60, false);
         }
       }
     }
     // 猪冲刺
     for (i = 0; i < fighters.length; i++) {
+      if (tstop) break;          // 时停: 冲刺凝固
       var pd = fighters[i];
       if (!pd.dash || pd.dead) continue;
       pd.dash.t += dt;
@@ -474,6 +519,7 @@
     }
     // 预警 → 砸落(褚嬴棋子 / 许家印天降大门)
     for (i = warns.length - 1; i >= 0; i--) {
+      if (tstop) break;          // 时停: 预警凝固, 不会落下
       var wn = warns[i];
       wn.t += dt;
       if (wn.t < wn.dur) continue;
@@ -527,6 +573,7 @@
     }
     // 障碍(残留棋子 / 大门): 双方都挡
     for (i = obstacles.length - 1; i >= 0; i--) {
+      if (tstop) break;          // 时停: 障碍凝固
       var ob = obstacles[i];
       ob.life -= dt;
       if (ob.life <= 0) { obstacles.splice(i, 1); continue; }
@@ -596,6 +643,7 @@
     }
     // 飞行物(奶弹 / 白子追踪小棋 / 美团外卖袋)
     for (i = shots.length - 1; i >= 0; i--) {
+      if (tstop) break;          // 时停: 飞行物凝固
       var sh = shots[i];
       sh.t += dt;
       if (sh.homing && sh.target && !sh.target.dead) {
@@ -639,6 +687,7 @@
     }
     // 阴阳玉
     for (i = 0; i < orbs.length; i++) {
+      if (tstop) break;          // 时停: 阴阳玉凝固
       var o = orbs[i];
       var foe = o.owner === a ? b : a;
       // 玉有轻微对敌引力: 距离近时角速度向敌人方向歪(保持旋转观感)
@@ -668,6 +717,7 @@
     }
     // 激光(含扫射: 光束朝敌人方向缓慢偏转追尾)
     for (i = 0; i < beams.length; i++) {
+      if (tstop) break;          // 时停: 激光凝固
       var bm = beams[i];
       bm.t += dt;
       if (bm.t >= bm.total) { beams.splice(i, 1); i--; continue; }
@@ -794,27 +844,8 @@
         addFloat(f.x, f.y - f.r - 26, '+' + sk.waterHeal, '#7ce8a0', 16);
       }
     } else if (sk.type === 'milk_guard') {
-      f.cd -= dt;
-      f.shieldCd -= dt;
-      f.regenCd -= dt;
-      if (f.cd <= 0 && !f.dead) {
-        f.cd = sk.milkInterval * (f.enraged ? OPT.ENRAGE_CD : 1);
-        var foeM = fighters[0] === f ? fighters[1] : fighters[0];
-        if (!foeM.dead) {
-          var mAng = Math.atan2(foeM.y - f.y, foeM.x - f.x);
-          shots.push({ x: f.x + Math.cos(mAng) * (f.r + 6), y: f.y + Math.sin(mAng) * (f.r + 6), vx: Math.cos(mAng) * sk.milkSpeed, vy: Math.sin(mAng) * sk.milkSpeed, r: 35, dmg: sk.milkDamage, life: sk.milkLife, t: 0, owner: f });
-        }
-      }
-      if (f.shieldCd <= 0 && f.shield <= 0) {
-        f.shieldCd = sk.shieldInterval;
-        f.shield = sk.shield;
-        addFloat(f.x, f.y - f.r - 34, '奶盾!', '#7ce8ff', 16);
-      }
-      if (f.regenCd <= 0 && f.hp > 0 && f.hp < f.maxHp) {
-        f.regenCd = sk.regenInterval;
-        f.hp = Math.min(f.maxHp, f.hp + sk.regen);
-        addFloat(f.x, f.y - f.r - 26, '+' + sk.regen, '#7ce8a0', 15);
-      }
+      // 蓄力期: 全部技能禁用, cd 冻结; 15s 后由 sim() 时停逻辑接管, 此处无事可做
+      if (fightT < (sk.readyTime || 15)) return;
     } else if (sk.type === 'gate_revive') {
       f.cd -= dt;
       if (f.cd <= 0 && !f.dead) {
@@ -911,6 +942,42 @@
     for (i = 0; i < floats.length; i++) drawFloat(floats[i]);
     if (state === 'count') drawCount();
     drawVignette();
+    // 时停全屏特效: 泛黄 + 金色裂纹四角 + 顶部大字
+    var tstNow = null;
+    for (i = 0; i < fighters.length; i++) if (fighters[i].timeStop && !fighters[i].dead) tstNow = fighters[i];
+    if (tstNow) {
+      var tt = Date.now() / 1000;
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,214,90,0.13)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = 'rgba(255,200,80,0.55)';
+      ctx.lineWidth = 2;
+      // 四角金色爪痕裂纹
+      ctx.beginPath();
+      ctx.moveTo(0, 0); ctx.lineTo(46, 8); ctx.lineTo(8, 44); ctx.lineTo(0, 34);
+      ctx.moveTo(W, 0); ctx.lineTo(W - 46, 8); ctx.lineTo(W - 8, 44); ctx.lineTo(W, 34);
+      ctx.moveTo(0, H); ctx.lineTo(46, H - 8); ctx.lineTo(8, H - 44); ctx.lineTo(0, H - 34);
+      ctx.moveTo(W, H); ctx.lineTo(W - 46, H - 8); ctx.lineTo(W - 8, H - 44); ctx.lineTo(W, H - 34);
+      ctx.stroke();
+      // 顶部大字
+      ctx.globalAlpha = 0.75 + 0.25 * Math.sin(tt * 3);
+      ctx.font = 'bold 22px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillStyle = '#ffd24d';
+      ctx.shadowColor = 'rgba(0,0,0,.9)'; ctx.shadowBlur = 6;
+      ctx.fillText('TIME STOP', W / 2, 14);
+      ctx.restore();
+    }
+    // 水印: 格斗台底部
+    ctx.save();
+    ctx.globalAlpha = 0.4;
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0,0,0,.8)'; ctx.shadowBlur = 3;
+    ctx.fillText('抖音：@春雪莎', W / 2, H - 8);
+    ctx.restore();
     ctx.restore();
   }
 
@@ -1007,6 +1074,64 @@
       ctx.globalAlpha = 0.18 + 0.1 * Math.sin(Date.now() / 60);
       ctx.fillStyle = '#7ce8ff';
       ctx.beginPath(); ctx.arc(f.x, f.y, r + 8, 0, 7); ctx.fill();
+      ctx.restore();
+    }
+
+    // 狗奶蓄力倒计时: 收拢金圈 + 中央大数字
+    var gsk = f.char.skill;
+    if (gsk.type === 'milk_guard' && !f.dead && fightT < (gsk.readyTime || 15)) {
+      var gReady = gsk.readyTime || 15;
+      var remain = Math.ceil(gReady - fightT);
+      var gProg = clamp(fightT / gReady, 0, 1);
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,210,77,' + (0.5 + 0.3 * Math.sin(Date.now() / 70)) + ')';
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(f.x, f.y, r + 18 + 16 * (1 - gProg), 0, 7); ctx.stroke();
+      ctx.font = 'bold 32px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ffd24d';
+      ctx.shadowColor = 'rgba(0,0,0,.95)'; ctx.shadowBlur = 6;
+      ctx.fillText(remain, f.x, f.y);
+      ctx.restore();
+    }
+    // 时停冻结方: 灰色调凝固罩 + 金色细线框
+    var tstF = null;
+    for (var tf2 = 0; tf2 < fighters.length; tf2++) if (fighters[tf2].timeStop && !fighters[tf2].dead) tstF = fighters[tf2];
+    if (tstF && tstF !== f && !f.dead) {
+      ctx.save();
+      var fzA = 0.45 + 0.1 * Math.sin(Date.now() / 200);
+      ctx.globalAlpha = fzA;
+      ctx.fillStyle = '#7c7c84';
+      ctx.beginPath(); ctx.arc(f.x, f.y, r + 6, 0, 7); ctx.fill();
+      ctx.globalAlpha = 0.9;
+      ctx.strokeStyle = 'rgba(255,210,77,.85)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(f.x, f.y, r + 6, 0, 7); ctx.stroke();
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ffe9b0';
+      ctx.fillText('冻', f.x, f.y);
+      ctx.restore();
+    }
+    // 时停发动者: 金色光柱 + 脉冲金环 + 上升金粒子
+    if (tstF === f && !f.dead) {
+      var gT2 = Date.now() / 1000;
+      ctx.save();
+      var grd = ctx.createRadialGradient(f.x, f.y, r * 0.2, f.x, f.y, r + 74);
+      grd.addColorStop(0, 'rgba(255,228,120,.55)');
+      grd.addColorStop(1, 'rgba(255,228,120,0)');
+      ctx.fillStyle = grd;
+      ctx.beginPath(); ctx.arc(f.x, f.y, r + 74, 0, 7); ctx.fill();
+      ctx.globalAlpha = 0.55 + 0.3 * Math.sin(gT2 * 6);
+      ctx.strokeStyle = '#ffd24d'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(f.x, f.y, r + 12 + 4 * Math.sin(gT2 * 4), 0, 7); ctx.stroke();
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = '#ffe98a';
+      for (var gp = 0; gp < 8; gp++) {
+        var ga = (gp / 8) * Math.PI * 2;
+        var gy2 = f.y + Math.sin(ga) * (r + 20 + rand(0, 30)) - ((gT2 * 40 + gp * 46) % 40);
+        var gx2 = f.x + Math.cos(ga) * (r + 20 + rand(0, 30));
+        ctx.beginPath(); ctx.arc(gx2, gy2, 1.5 + (gp % 2), 0, 7); ctx.fill();
+      }
       ctx.restore();
     }
   }
@@ -1509,7 +1634,9 @@
       gates: 0, stones: 0, goStones: fighters[0].goStones + fighters[1].goStones,
       revived: fighters[0].revived + fighters[1].revived,
       shield: [Math.round(fighters[0].shield), Math.round(fighters[1].shield)],
-      cd: [fighters[0].cd.toFixed(1), fighters[1].cd.toFixed(1)]
+      cd: [fighters[0].cd.toFixed(1), fighters[1].cd.toFixed(1)],
+      hp: [Math.round(fighters[0].hp), Math.round(fighters[1].hp)],
+      timeStop: [fighters[0].timeStop, fighters[1].timeStop]
     };
   };
 

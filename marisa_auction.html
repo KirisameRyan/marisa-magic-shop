@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>幻想乡拍卖会 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#1a1520;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;touch-action:manipulation;user-select:none;-webkit-user-select:none;min-height:100vh;color:#e0d8ec;transition:background .5s;}
+/* ── 地图主题背景 ── */
+body.map-korindo{background:linear-gradient(180deg,#241a10 0%,#1a1520 45%);}
+body.map-hakurei{background:linear-gradient(180deg,#241a22 0%,#1a1520 45%);}
+body.map-scarlet{background:linear-gradient(180deg,#25141c 0%,#1a1520 45%);}
+body.map-eientei{background:linear-gradient(180deg,#101a26 0%,#1a1520 45%);}
+.game-wrap{max-width:480px;margin:0 auto;padding:10px 12px 30px;position:relative;}
+/* ── HUD ── */
+.hud-top{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#8a7e9a;margin-bottom:8px;gap:6px;flex-wrap:wrap;}
+.hud-top strong{color:#f0c060;font-weight:800;}
+#hudCash{color:#f0c060;font-weight:800;font-size:17px;}
+.hud-round{background:#241e2a;border:1px solid #3a3045;border-radius:10px;padding:3px 10px;font-size:12px;color:#b8acc8;}
+.hud-round b{color:#8fd8ff;}
+.hud-map{font-size:12px;color:#b89fff;font-weight:700;}
+/* ── 仓库卡 + 格子可视化 ── */
+.wh-card{background:#241e2a;border:1px solid #3a3045;border-radius:16px;padding:14px 16px;margin-bottom:10px;position:relative;overflow:hidden;}
+.wh-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#f0c060,#b89fff,#f0c060);opacity:.7;}
+.wh-name{font-size:17px;font-weight:800;color:#e0d8ec;display:flex;align-items:center;gap:8px;}
+.wh-name .wh-emoji{font-size:24px;}
+.wh-meta{font-size:13px;color:#b8acc8;margin-top:5px;line-height:1.8;}
+.wh-meta b{color:#f0c060;font-size:20px;}
+.wh-flavor{font-size:12px;color:#8a7e9a;margin-top:6px;font-style:italic;}
+.slot-grid{display:grid;grid-template-columns:repeat(14,1fr);gap:3px;margin-top:10px;}
+.sl-cell{aspect-ratio:1;border-radius:4px;background:#14101a;border:1px solid #2b2433;position:relative;transition:all .3s;animation:popIn .3s both;}
+.sl-cell.unk::after{content:'?';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#3a3045;}
+.sl-cell.q0{background:rgba(184,184,196,.42);border-color:rgba(184,184,196,.5);}
+.sl-cell.q1{background:rgba(111,207,151,.5);border-color:rgba(111,207,151,.65);}
+.sl-cell.q2{background:rgba(143,216,255,.5);border-color:rgba(143,216,255,.65);}
+.sl-cell.q3{background:rgba(184,159,255,.55);border-color:rgba(184,159,255,.7);}
+.sl-cell.q4{background:rgba(240,192,96,.55);border-color:rgba(240,192,96,.75);}
+.sl-cell.q5{background:rgba(255,84,112,.6);border-color:#ff5470;box-shadow:0 0 8px rgba(255,84,112,.5);}
+.sl-cell.hot{border:2px solid #f0c060;box-shadow:0 0 10px rgba(240,192,96,.6);}
+.sl-cell.tagged::after{content:attr(data-tag);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;text-shadow:0 0 4px #000;}
+.sl-cell.reveal-bounce{animation:revealBounce .5s;}
+@keyframes revealBounce{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+@keyframes popIn{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+/* ── 线索面板(4 固定字段) ── */
+.clue-panel{background:#1f1a26;border:1px solid #3a3045;border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:12px;}
+.clue-panel .clue-title{color:#f0c060;font-weight:700;letter-spacing:1px;font-size:11px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;}
+.clue-field{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dashed rgba(58,48,69,.5);line-height:1.5;}
+.clue-field:last-child{border-bottom:none;}
+.clue-field .cf-ico{width:20px;text-align:center;flex:none;}
+.clue-field .cf-t{color:#8a7e9a;width:74px;flex:none;font-size:11px;}
+.clue-field .cf-v{color:#b8acc8;flex:1;}
+.clue-field .cf-v b{color:#f0c060;}
+.clue-field.locked{opacity:.55;}
+.clue-field.locked .cf-v{color:#5a5266;}
+.clue-field.locked .cf-v::after{content:' 🔒';}
+.clue-field.flash{animation:clueFlash 1.1s ease-out 2;border-radius:8px;}
+@keyframes clueFlash{0%{background:rgba(240,192,96,.35)}100%{background:transparent}}
+.clue-event{font-size:11px;color:#8fd8ff;padding:5px 0 2px;line-height:1.6;min-height:16px;animation:fadeIn .4s;}
+.clue-event b{color:#b89fff;}
+/* ── 席位 ── */
+.seats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;}
+.seat{background:#241e2a;border:1px solid #3a3045;border-radius:12px;padding:8px 4px;text-align:center;position:relative;transition:all .2s;}
+.seat.me{border-color:#b89fff;box-shadow:0 0 10px rgba(184,159,255,.18);}
+.seat .av{font-size:24px;line-height:1.1;}
+.av-img{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #3a3045;display:inline-block;}
+.seat .nm{font-size:10px;font-weight:700;color:#e0d8ec;margin-top:3px;white-space:nowrap;}
+.seat .st{font-size:9px;color:#8a7e9a;margin-top:2px;min-height:12px;}
+.seat .st.done{color:#6fcf97;}
+.seat .st.panic{color:#ef4444;animation:blink 1s infinite;}
+.seat.win{border-color:#f0c060;box-shadow:0 0 14px rgba(240,192,96,.35);}
+.seat.win .st{color:#f0c060;}
+.seat .bid-tag{position:absolute;top:-6px;right:-4px;font-size:9px;background:#3a3045;border-radius:8px;padding:1px 5px;color:#8a7e9a;display:none;}
+.seat.locked .bid-tag{display:block;color:#6fcf97;}
+@keyframes blink{50%{opacity:.4}}
+/* ── 出价面板 ── */
+.bid-panel{background:#241e2a;border:1px solid #3a3045;border-radius:16px;padding:12px 14px;margin-bottom:10px;}
+.bp-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#8a7e9a;margin-bottom:8px;}
+.bp-amt{font-size:24px;font-weight:900;color:#f0c060;cursor:pointer;padding:2px 8px;border-radius:10px;transition:background .15s;}
+.bp-amt small{font-size:11px;color:#8a7e9a;font-weight:400;}
+.bp-amt:hover{background:rgba(240,192,96,.1);}
+.bp-lock{width:100%;padding:13px 0;border-radius:14px;border:none;background:linear-gradient(135deg,#f0c060,#e8a830);color:#1a1520;font-size:16px;font-weight:800;cursor:pointer;letter-spacing:3px;transition:transform .12s,opacity .2s;font-family:inherit;}
+.bp-lock:hover{transform:scale(1.02);}
+.bp-lock:active{transform:scale(.97);}
+.bp-lock:disabled{opacity:.4;cursor:default;transform:none;}
+.bp-note{font-size:11px;color:#8a7e9a;margin-top:7px;text-align:center;line-height:1.7;min-height:15px;}
+.bp-note.ok{color:#6fcf97;}
+.bp-skill{display:flex;align-items:center;gap:10px;width:100%;background:#1f1a26;border:1px solid rgba(184,159,255,.45);border-radius:12px;padding:9px 12px;margin-bottom:10px;cursor:pointer;font-family:inherit;text-align:left;transition:border-color .15s,opacity .2s;}
+.bp-skill:hover:not(:disabled){border-color:#b89fff;}
+.bp-skill:disabled{opacity:.45;cursor:default;}
+.bp-skill .bs-e{font-size:26px;width:38px;text-align:center;flex:none;line-height:1;}
+.bp-skill .bs-info{flex:1;font-size:11px;color:#8a7e9a;line-height:1.5;}
+.bp-skill .bs-info b{color:#e0d8ec;font-size:14px;}
+.bp-skill .bs-badge{font-size:10px;color:#b89fff;font-weight:800;flex:none;}
+/* ── 实时估价计算器 ── */
+.calc-panel{background:#1f1a26;border:1px solid #3a3045;border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#b8acc8;}
+.calc-panel.hide{display:none;}
+.calc-head{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;}
+.calc-box{background:#241e2a;border:1px solid #3a3045;border-radius:10px;padding:6px 4px;text-align:center;}
+.calc-box .cb-t{font-size:9px;color:#8a7e9a;}
+.calc-box .cb-v{font-size:13px;font-weight:800;color:#f0c060;margin-top:2px;}
+.calc-box.range .cb-v{font-size:11px;color:#8fd8ff;}
+.calc-row{display:flex;align-items:center;gap:8px;padding:3px 0;line-height:1.6;font-size:11px;}
+.calc-row .q-dot{width:10px;height:10px;border-radius:3px;flex:none;}
+.calc-row .q-name{width:70px;flex:none;color:#b8acc8;}
+.calc-row .q-val{margin-left:auto;color:#8a7e9a;font-size:11px;}
+.calc-row .q-val b{color:#f0c060;}
+.calc-row.unknown .q-val{color:#5a5266;}
+.calc-toggle{text-align:center;font-size:11px;color:#8a7e9a;cursor:pointer;padding:4px 0 8px;letter-spacing:1px;}
+.calc-toggle:hover{color:#f0c060;}
+/* ── 控制按钮 ── */
+.ctrl-row{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
+.ctrl-btn{background:#241e2a;border:1px solid #3a3045;border-radius:12px;color:#b8acc8;font-size:15px;padding:11px 13px;cursor:pointer;transition:all .15s;line-height:1;font-family:inherit;}
+.ctrl-btn:hover{border-color:#f0c060;color:#f0c060;}
+.ctrl-btn.on{border-color:#f0c060;color:#f0c060;}
+/* ── 道具抽屉按钮(悬浮) ── */
+.tools-fab{position:fixed;right:14px;bottom:18px;z-index:15;width:56px;height:56px;border-radius:50%;border:none;background:linear-gradient(135deg,#b89fff,#8a6fd8);color:#fff;font-size:22px;cursor:pointer;box-shadow:0 6px 20px rgba(138,111,216,.4);display:flex;align-items:center;justify-content:center;font-family:inherit;transition:transform .15s;}
+.tools-fab:active{transform:scale(.92);}
+.tools-fab .fab-badge{position:absolute;top:-4px;right:-4px;background:#ff5470;color:#fff;font-size:10px;font-weight:800;border-radius:10px;min-width:18px;height:18px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
+.tools-fab.hide{display:none;}
+/* ── 弹层通用 ── */
+.overlay{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(26,21,32,.97);padding:18px;overflow-y:auto;}
+.overlay.hide{display:none;}
+.overlay h1{font-size:24px;color:#f0c060;margin-bottom:8px;text-align:center;}
+.overlay h2{font-size:16px;color:#e0d8ec;margin-bottom:10px;text-align:center;}
+.overlay .tip{font-size:13px;color:#8a7e9a;text-align:center;line-height:1.9;margin-bottom:14px;max-width:400px;}
+.btn-main{font-size:17px;font-weight:800;padding:13px 42px;border-radius:16px;border:none;background:linear-gradient(135deg,#f0c060,#e8a830);color:#1a1520;cursor:pointer;letter-spacing:2px;transition:transform .15s;margin:4px;font-family:inherit;}
+.btn-main:hover{transform:scale(1.05);}
+.btn-main:disabled{opacity:.5;cursor:default;transform:none;}
+.btn-ghost{background:transparent;border:1px solid #3a3045;border-radius:12px;padding:10px 20px;color:#8a7e9a;font-size:13px;cursor:pointer;margin:4px;font-family:inherit;}
+.btn-ghost:hover{border-color:#f0c060;color:#f0c060;}
+.howto{background:#241e2a;border:1px solid #3a3045;border-radius:14px;padding:12px 16px;font-size:12px;color:#b8acc8;line-height:1.9;max-width:400px;margin-bottom:14px;text-align:left;}
+.howto b{color:#f0c060;}
+/* ── 主页 ── */
+.home-logo{font-size:52px;line-height:1;margin-bottom:6px;text-align:center;animation:bob 3s ease-in-out infinite;}
+@keyframes bob{50%{transform:translateY(-6px)}}
+.home-sub{text-align:center;font-size:11px;color:#8a7e9a;margin-top:12px;line-height:1.9;}
+.home-menu{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px;}
+/* ── 菜单页 ── */
+.menu-inner{width:100%;max-width:360px;display:flex;flex-direction:column;align-items:center;}
+.menu-coins{font-size:14px;margin-top:2px;}
+.menu-cloud{font-size:10px;color:#8a7e9a;margin:8px 0 2px;}
+.menu-list{display:flex;flex-direction:column;gap:10px;width:100%;margin-top:12px;}
+.menu-btn{width:100%;background:#241e2a;border:2px solid #3a3045;border-radius:14px;padding:13px 0;color:#e0d8ec;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:2px;transition:all .15s;}
+.menu-btn:hover{border-color:#f0c060;color:#f0c060;transform:translateY(-1px);}
+.menu-btn.main{background:linear-gradient(135deg,#f0c060,#e8a830);border:none;color:#1a1520;font-size:17px;}
+.menu-set{display:flex;gap:8px;margin-top:14px;}
+/* ── 三步向导 ── */
+.wiz-dots{display:flex;gap:8px;margin-bottom:4px;width:100%;max-width:440px;justify-content:center;}
+.wiz-dot{font-size:11px;color:#5a5266;padding:4px 12px;border-radius:14px;background:#1f1a26;border:1px solid #3a3045;letter-spacing:1px;}
+.wiz-dot.on{color:#f0c060;border-color:#f0c060;}
+.wiz-actions{display:flex;gap:8px;justify-content:center;margin-top:14px;width:100%;max-width:440px;}
+.wiz-actions .btn-main,.wiz-actions .btn-ghost{margin:0;flex:1;}
+.wiz-tools-sum{font-size:11px;color:#8fd8ff;text-align:center;margin-top:10px;width:100%;max-width:440px;}
+/* ── 玩法说明翻页 ── */
+.hp-body{background:#1f1a26;border:1px solid #3a3045;border-radius:12px;padding:12px 14px;margin:10px 0;min-height:120px;}
+.hp-line{font-size:12px;color:#b8acc8;line-height:1.9;padding:3px 0;}
+.hp-line::before{content:'· ';color:#f0c060;font-weight:800;}
+.hp-dots{display:flex;gap:8px;justify-content:center;margin-bottom:10px;}
+.hp-dot{width:9px;height:9px;border-radius:50%;background:#3a3045;cursor:pointer;transition:background .2s;}
+.hp-dot.on{background:#f0c060;}
+.hp-actions{display:flex;gap:8px;justify-content:center;}
+.hp-actions .btn-main,.hp-actions .btn-ghost{margin:0;padding:10px 22px;flex:1;}
+.shop-card.bring-on{border-color:#6fcf97;background:rgba(111,207,151,.06);}
+.br-badge{font-size:11px;font-weight:800;flex:none;padding:4px 8px;border-radius:10px;background:#1f1a26;border:1px solid #3a3045;color:#8a7e9a;}
+.shop-card.bring-on .br-badge{border-color:#6fcf97;color:#6fcf97;}
+/* ── 收藏图鉴 ── */
+.collect-progress{width:100%;max-width:440px;margin-bottom:10px;text-align:center;}
+.collect-progress span{font-size:12px;color:#f0c060;font-weight:800;}
+.cp-bar{height:8px;background:#1f1a26;border:1px solid #3a3045;border-radius:8px;margin-top:6px;overflow:hidden;}
+.cp-fill{height:100%;width:0;background:linear-gradient(90deg,#f0c060,#b89fff);transition:width .6s;}
+.col-q{display:flex;align-items:center;gap:6px;font-size:12px;color:#e0d8ec;font-weight:800;margin:12px 0 6px;width:100%;max-width:440px;letter-spacing:1px;}
+.col-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;width:100%;max-width:440px;}
+.col-cell{aspect-ratio:.9;background:#1a1520;border:1px solid #2b2433;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:.4;}
+.col-cell.q0{border-color:rgba(184,184,196,.4);opacity:1;}
+.col-cell.q1{border-color:rgba(111,207,151,.5);opacity:1;}
+.col-cell.q2{border-color:rgba(143,216,255,.5);opacity:1;}
+.col-cell.q3{border-color:rgba(184,159,255,.6);opacity:1;}
+.col-cell.q4{border-color:rgba(240,192,96,.6);opacity:1;box-shadow:0 0 10px rgba(240,192,96,.12);}
+.col-cell.q5{border-color:#ff5470;opacity:1;box-shadow:0 0 14px rgba(255,84,112,.3);}
+.col-cell .cc-e{font-size:20px;line-height:1;}
+.col-cell .cc-n{font-size:8px;color:#8a7e9a;margin-top:3px;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%;padding:0 2px;}
+.col-cell .cc-c{font-size:9px;color:#f0c060;font-weight:800;margin-top:1px;}
+/* ── 大厅 ── */
+.lobby-head{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:440px;margin-bottom:12px;gap:8px;}
+.lobby-title{font-size:18px;font-weight:800;color:#f0c060;letter-spacing:2px;}
+.coins-pill{background:#241e2a;border:1px solid #f0c060;color:#f0c060;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:800;white-space:nowrap;}
+.lobby-sec{font-size:12px;color:#8fd8ff;letter-spacing:2px;margin:14px 0 8px;width:100%;max-width:440px;text-align:left;}
+.lobby-sec::before{content:'—— ';}
+.lobby-sec::after{content:' ——';}
+.map-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:440px;}
+.map-card{background:#241e2a;border:2px solid #3a3045;border-radius:14px;padding:10px 12px;cursor:pointer;transition:all .15s;text-align:left;}
+.map-card:hover{transform:translateY(-2px);}
+.map-card.sel{border-color:#f0c060;box-shadow:0 0 12px rgba(240,192,96,.2);}
+.map-card .mp-e{font-size:24px;}
+.map-card .mp-n{font-size:14px;font-weight:800;color:#e0d8ec;margin-top:4px;}
+.map-card .mp-f{font-size:10px;color:#f0c060;margin-top:2px;}
+.map-card .mp-d{font-size:10px;color:#8a7e9a;margin-top:2px;line-height:1.5;min-height:28px;}
+.pick-cards{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;width:100%;max-width:460px;}
+.pick-card{width:100px;background:#241e2a;border:2px solid #3a3045;border-radius:16px;padding:10px 6px 8px;cursor:pointer;text-align:center;transition:all .15s;position:relative;}
+.pick-card:hover{transform:translateY(-3px);}
+.pick-card.sel{border-color:#f0c060;box-shadow:0 0 14px rgba(240,192,96,.25);}
+.pick-card .pc-ava img{width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid #3a3045;background:#1a1520;}
+.pick-card.sel .pc-ava img{border-color:#f0c060;}
+.pick-card .pc-name{font-size:13px;font-weight:800;color:#e0d8ec;margin-top:5px;}
+.pick-card .pc-skill{font-size:9px;color:#b89fff;margin-top:2px;letter-spacing:1px;}
+.pick-card .pc-desc{font-size:9px;color:#8a7e9a;margin-top:4px;line-height:1.45;min-height:26px;}
+.pick-card .pc-own{display:inline-block;margin-top:6px;font-size:10px;color:#6fcf97;font-weight:800;letter-spacing:1px;}
+.pick-card .pc-lock{display:inline-block;margin-top:6px;font-size:10px;color:#8a7e9a;letter-spacing:1px;}
+.pick-card .pc-buy{width:100%;margin-top:6px;background:linear-gradient(135deg,#f0c060,#e8a830);border:none;border-radius:8px;padding:6px 0;color:#1a1520;font-weight:800;font-size:11px;cursor:pointer;font-family:inherit;}
+.pick-card .pc-buy:active{transform:scale(.96);}
+.shop-rows{display:flex;flex-direction:column;gap:8px;width:100%;max-width:440px;}
+.shop-card{display:flex;align-items:center;gap:10px;background:#241e2a;border:1px solid #3a3045;border-radius:14px;padding:10px 12px;}
+.shop-card .sh-e{font-size:26px;width:40px;text-align:center;flex:none;}
+.shop-card .sh-info{flex:1;font-size:11px;color:#8a7e9a;line-height:1.5;}
+.shop-card .sh-info b{color:#e0d8ec;font-size:13px;}
+.shop-card .sh-own{font-size:10px;color:#8fd8ff;}
+.sh-btn{background:linear-gradient(135deg,#f0c060,#e8a830);border:none;border-radius:10px;padding:8px 14px;color:#1a1520;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;flex:none;}
+.sh-btn:disabled{opacity:.35;cursor:default;}
+.sh-btn.limit{background:#3a3045;color:#8a7e9a;}
+.diff-row{display:flex;gap:8px;justify-content:center;margin-bottom:12px;width:100%;max-width:440px;}
+.diff-btn{background:#1f1a26;border:1px solid #3a3045;border-radius:12px;padding:9px 18px;color:#8a7e9a;font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s;}
+.diff-btn.sel{border-color:#f0c060;color:#f0c060;background:rgba(240,192,96,.08);}
+.lobby-actions{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;flex-wrap:wrap;}
+/* ── 出价输入弹层 ── */
+.bid-input-card{background:#241e2a;border:1px solid #f0c060;border-radius:18px;padding:18px;max-width:360px;width:100%;text-align:center;}
+.bi-t{font-size:14px;color:#f0c060;font-weight:800;margin-bottom:10px;}
+.bi-input-wrap{position:relative;margin-bottom:10px;}
+.bi-input-wrap input{width:100%;background:#1a1520;border:2px solid #3a3045;border-radius:12px;color:#f0c060;font-size:28px;font-weight:900;text-align:center;padding:12px 0;outline:none;font-family:inherit;}
+.bi-input-wrap input:focus{border-color:#f0c060;}
+.bi-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;}
+.bi-step{background:#1f1a26;border:1px solid #3a3045;border-radius:10px;padding:7px 0;color:#b8acc8;font-size:12px;cursor:pointer;font-family:inherit;}
+.bi-step:active{border-color:#f0c060;}
+.bi-chips{display:flex;gap:6px;margin-bottom:12px;}
+.bi-chip{flex:1;background:#1f1a26;border:1px solid #3a3045;border-radius:10px;padding:8px 0;font-size:12px;color:#b8acc8;cursor:pointer;font-family:inherit;}
+.bi-chip:active,.bi-chip.on{border-color:#f0c060;color:#f0c060;}
+.bi-note{font-size:11px;color:#8a7e9a;margin-bottom:12px;line-height:1.6;}
+.bi-btns{display:flex;gap:8px;}
+.bi-btns .btn-main{flex:1;padding:12px 0;font-size:15px;margin:0;}
+.bi-btns .btn-ghost{flex:1;margin:0;}
+/* ── 道具抽屉 ── */
+.drawer-overlay{position:fixed;inset:0;z-index:18;background:rgba(15,12,20,.5);display:flex;align-items:flex-end;justify-content:center;}
+.drawer-overlay.hide{display:none;}
+.drawer{background:#221b2a;border:1px solid #3a3045;border-bottom:none;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:14px 16px 22px;animation:slideUp .25s ease-out;}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.drawer-title{font-size:13px;color:#f0c060;font-weight:800;letter-spacing:2px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+.drawer-close{background:none;border:none;color:#8a7e9a;font-size:16px;cursor:pointer;font-family:inherit;}
+.tool-cards{display:flex;flex-direction:column;gap:8px;}
+.tool-card{display:flex;align-items:center;gap:10px;background:#1f1a26;border:1px solid #3a3045;border-radius:12px;padding:10px 12px;cursor:pointer;transition:all .15s;font-family:inherit;text-align:left;width:100%;}
+.tool-card:active{transform:scale(.98);}
+.tool-card .tc-e{font-size:22px;width:34px;text-align:center;flex:none;}
+.tool-card .tc-info{flex:1;font-size:11px;color:#8a7e9a;line-height:1.5;}
+.tool-card .tc-info b{color:#e0d8ec;font-size:13px;}
+.tool-card .tc-badge{font-size:10px;color:#8fd8ff;font-weight:800;}
+.tool-card.used,.tool-card.empty{opacity:.4;cursor:default;pointer-events:none;}
+.tool-card.skill .tc-e{font-size:26px;}
+.tool-card.skill{border-color:rgba(184,159,255,.4);}
+/* ── 揭标翻牌 ── */
+.reveal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;max-width:380px;margin:14px 0;}
+.rv-card{background:#241e2a;border:1px solid #3a3045;border-radius:14px;padding:12px 4px;text-align:center;position:relative;}
+.rv-card .rv-av img{width:42px;height:42px;}
+.rv-card .rv-nm{font-size:11px;color:#b8acc8;margin-top:3px;}
+.rv-card .rv-bid{font-size:16px;font-weight:800;color:#f0c060;margin-top:6px;min-height:22px;}
+.rv-card .rv-face{font-size:15px;color:#8a7e9a;margin-top:6px;min-height:20px;}
+.rv-card.hl{border-color:#f0c060;box-shadow:0 0 14px rgba(240,192,96,.35);}
+.rv-card.hl .rv-nm{color:#f0c060;}
+/* ── 开箱 ── */
+.unbox-head{text-align:center;margin-bottom:12px;}
+.unbox-head .uh-t{font-size:15px;color:#e0d8ec;font-weight:700;}
+.unbox-head .uh-s{font-size:12px;color:#8a7e9a;margin-top:4px;}
+.item-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;max-width:400px;}
+.ub-slots{width:100%;max-width:420px;margin:0 auto 12px;}
+.ub-slots .sl-cell{border-radius:3px;}
+.ub-slots .sl-cell.show{animation:revealBounce .45s;}
+.it-cell{aspect-ratio:1;background:#1a1520;border:1px solid #3a3045;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;transition:all .3s;opacity:0;transform:rotateY(90deg);}
+.it-cell.show{opacity:1;transform:rotateY(0);}
+.it-cell .it-e{font-size:24px;line-height:1;}
+.it-cell .it-s{position:absolute;right:4px;top:3px;font-size:9px;color:#8a7e9a;}
+.it-cell .it-v{font-size:10px;font-weight:800;margin-top:3px;}
+.it-cell .it-n{position:absolute;left:2px;right:2px;bottom:3px;font-size:9px;color:#8a7e9a;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.it-cell.q0{border-color:#3a3045;}.it-cell.q0 .it-v{color:#b8b8c4;}
+.it-cell.q1{border-color:rgba(111,207,151,.4);}.it-cell.q1 .it-v{color:#6fcf97;}
+.it-cell.q2{border-color:rgba(143,216,255,.4);}.it-cell.q2 .it-v{color:#8fd8ff;}
+.it-cell.q3{border-color:rgba(184,159,255,.5);}.it-cell.q3 .it-v{color:#b89fff;}
+.it-cell.q4{border-color:rgba(240,192,96,.5);}.it-cell.q4 .it-v{color:#f0c060;box-shadow:0 0 10px rgba(240,192,96,.15);}
+.it-cell.q5{border-color:#ff5470;box-shadow:0 0 18px rgba(255,84,112,.45);animation:redGlow 1.2s infinite;}
+.it-cell.q5 .it-v{color:#ff5470;}
+@keyframes redGlow{50%{box-shadow:0 0 26px rgba(255,84,112,.7)}}
+.unbox-sum{background:#241e2a;border:1px solid #3a3045;border-radius:14px;padding:12px 16px;text-align:center;margin-top:12px;width:100%;max-width:400px;line-height:1.9;font-size:12px;color:#b8acc8;}
+.unbox-sum .us-v{font-size:20px;font-weight:900;margin-top:3px;}
+.unbox-sum .us-v.profit{color:#6fcf97;}
+.unbox-sum .us-v.loss{color:#ef4444;}
+.unbox-sum .us-gr{font-size:11px;color:#ff5470;margin-top:4px;}
+/* ── 排行榜 ── */
+.lb-wrap{text-align:center;width:100%;max-width:380px;}
+.lb-btn-ghost{background:transparent;border:1px solid #3a3045;border-radius:10px;padding:8px 16px;color:#8a7e9a;font-size:12px;cursor:pointer;font-family:inherit;}
+.lb-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px;}
+.lb-table th{color:#8a7e9a;font-weight:400;padding:5px 4px;border-bottom:1px solid #3a3045;}
+.lb-table td{padding:5px 4px;color:#e0d8ec;border-bottom:1px solid rgba(58,48,69,.3);}
+.lb-table .lb-my td{color:#f0c060;font-weight:700;background:rgba(240,192,96,.06);}
+.lb-note,.lb-ok,.lb-err{font-size:12px;margin:6px 0;}
+.lb-ok{color:#6fcf97;}
+.lb-err{color:#ef4444;}
+.lb-note{color:#8a7e9a;}
+.lb-toggle{text-align:center;font-size:12px;color:#8a7e9a;cursor:pointer;padding:6px 0;margin-top:4px;}
+.lb-toggle:hover{color:#f0c060;}
+/* ── 平局加时 ── */
+.tie-box{background:#241e2a;border:1px solid #f0c060;border-radius:14px;padding:14px 16px;text-align:center;width:100%;max-width:360px;margin-bottom:10px;}
+.tie-box .tie-t{color:#f0c060;font-weight:800;font-size:14px;margin-bottom:6px;}
+/* ── 技能目标/假情报弹层 ── */
+.info-overlay{position:fixed;inset:0;z-index:30;background:rgba(26,21,32,.92);display:flex;align-items:center;justify-content:center;padding:18px;}
+.info-overlay.hide{display:none;}
+.info-card{background:#241e2a;border:1px solid #b89fff;border-radius:18px;padding:18px 20px;max-width:360px;width:100%;text-align:center;}
+.info-card .ic-t{font-size:12px;color:#b89fff;letter-spacing:2px;margin-bottom:8px;}
+.info-card .ic-v{font-size:17px;color:#e0d8ec;line-height:1.8;font-weight:600;}
+.info-card .ic-note{font-size:12px;color:#8a7e9a;margin-top:8px;line-height:1.7;}
+.info-btn{display:block;width:100%;background:#1f1a26;border:1px solid #3a3045;border-radius:12px;padding:10px 12px;margin:5px 0;color:#e0d8ec;font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s;text-align:center;}
+.info-btn:hover{border-color:#b89fff;color:#b89fff;}
+/* ── 统计 ── */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:340px;width:100%;margin:10px 0 14px;}
+.stat-box{background:#241e2a;border:1px solid #3a3045;border-radius:12px;padding:10px;text-align:center;}
+.stat-box .sv{font-size:20px;font-weight:800;color:#f0c060;}
+.stat-box .sl{font-size:11px;color:#8a7e9a;margin-top:2px;}
+.coins-gain{background:rgba(240,192,96,.1);border:1px dashed #f0c060;color:#f0c060;border-radius:12px;padding:8px 18px;font-size:14px;font-weight:800;margin-bottom:8px;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (max-width:420px){
+  .pick-card{width:31%;padding:8px 3px;}
+  .map-cards{grid-template-columns:1fr;}
+  .tool-card .tc-info{font-size:10px;}
+}
+@media (prefers-reduced-motion:reduce){
+  .it-cell{transition:none;}
+  .it-cell.q5{animation:none;}
+  .seat .st.panic{animation:none;}
+  .clue-field.flash{animation:none;}
+  .sl-cell{animation:none;}
+}
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="game-wrap" aria-label="幻想乡拍卖会">
+
+  <!-- HUD -->
+  <div class="hud-top">
+    <span class="hud-map" id="hudMap">🏚️ 香霖堂杂货店</span>
+    <span>📦 <strong id="hudWh">本局货柜</strong></span>
+    <span class="hud-round" id="hudRound">第 1 轮</span>
+    <span>🪙 <span id="hudCash">10000</span></span>
+    <span>🏆 <span id="hudBest">-</span></span>
+  </div>
+
+  <!-- 主画面 -->
+  <div id="screen"></div>
+
+  <!-- 控制 -->
+  <div class="ctrl-row" style="justify-content:flex-end;">
+    <button class="ctrl-btn" id="btnMute" title="音效">🔊</button>
+    <button class="ctrl-btn" id="btnHelp" title="玩法">❓</button>
+  </div>
+</div>
+
+<!-- 道具悬浮按钮 -->
+<button class="tools-fab hide" id="btnToolsFab" onclick="toggleToolsDrawer()">🎒<span class="fab-badge" id="fabBadge"></span></button>
+
+<!-- ══════════ 菜单页 ══════════ -->
+<div class="overlay" id="homeOverlay">
+  <div class="menu-inner">
+    <div class="home-logo">🔨</div>
+    <h1>幻想乡拍卖会</h1>
+    <div class="menu-coins coins-pill">🪙 <span id="menuCoins">0</span></div>
+    <div class="menu-cloud" id="cloudLine">☁️ 未登录 · 存档仅在本机</div>
+    <div class="menu-list">
+      <button class="menu-btn main" id="btnMenuStart">⚒️ 开始游戏</button>
+      <button class="menu-btn" id="btnCharHome">🏠 角色之家</button>
+      <button class="menu-btn" id="btnShopPage">🛒 道具商城</button>
+      <button class="menu-btn" id="btnStoragePage">📦 藏品仓库</button>
+      <button class="menu-btn" id="btnCollectPage">📚 收藏图鉴</button>
+      <button class="menu-btn" id="btnAiLogPage">🤝 对手档案</button>
+      <button class="menu-btn" id="btnHomeHelp">❓ 玩法说明</button>
+    </div>
+    <div class="menu-set">
+      <button class="diff-btn" id="btnMenuSfx">🔊 音效</button>
+      <button class="diff-btn" id="btnMenuBgm">🎵 音乐</button>
+    </div>
+    <div class="home-sub">
+      <div id="bestLine"></div>
+      <div id="takeCount"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 三步向导 ══════════ -->
+<div class="overlay hide" id="wizardOverlay">
+  <div class="lobby-head">
+    <button class="ctrl-btn" id="btnWizClose" style="padding:8px 10px;" title="返回">🔙</button>
+    <span class="lobby-title">⚒️ 开拍准备</span>
+    <span class="coins-pill">🪙 <span id="wizCoins">0</span></span>
+  </div>
+  <div class="wiz-dots">
+    <span class="wiz-dot on" data-step="1" onclick="wizGo(1)">① 选场与难度</span>
+    <span class="wiz-dot" data-step="2" onclick="wizGo(2)">② 出战角色</span>
+    <span class="wiz-dot" data-step="3" onclick="wizGo(3)">③ 携带道具</span>
+  </div>
+
+  <div id="wizStepMap">
+    <div class="lobby-sec">选择拍卖场</div>
+    <div class="map-cards" id="mapCards"></div>
+    <div class="lobby-sec">难度</div>
+    <div class="diff-row">
+      <button class="diff-btn sel" data-diff="normal" onclick="pickDiff('normal')">😌 普通</button>
+      <button class="diff-btn" data-diff="hard" onclick="pickDiff('hard')">😈 困难</button>
+    </div>
+  </div>
+
+  <div id="wizStepChar" class="hide">
+    <div class="lobby-sec">选择角色 · 已拥有</div>
+    <div class="pick-cards" id="charCards"></div>
+  </div>
+
+  <div id="wizStepTools" class="hide">
+    <div class="lobby-sec">选择携带道具 · 最多 3 个</div>
+    <div class="shop-rows" id="wizToolsRows"></div>
+    <div class="wiz-tools-sum" id="wizToolsSum"></div>
+  </div>
+
+  <div class="wiz-actions">
+    <button class="btn-ghost hide" id="btnWizBack">← 上一步</button>
+    <button class="btn-main" id="btnWizNext">下一步 →</button>
+    <button class="btn-main hide" id="btnWizStart">⚒️ 开拍!</button>
+  </div>
+</div>
+
+<!-- ══════════ 角色之家 ══════════ -->
+<div class="overlay hide" id="charHomeOverlay">
+  <div class="lobby-head">
+    <button class="ctrl-btn" id="btnCharHomeBack" style="padding:8px 10px;" title="返回">🔙</button>
+    <span class="lobby-title">🏠 角色之家</span>
+    <span class="coins-pill">🪙 <span id="charHomeCoins">0</span></span>
+  </div>
+  <p class="tip" style="margin-bottom:8px;">已拥有的角色可出战,其余用金币解锁<br>技能每局可用 1 次,开局后从出价面板上方使用</p>
+  <div class="pick-cards" id="charHomeCards"></div>
+  <div class="lobby-actions"><button class="btn-ghost" id="btnCharHomeDone">✔ 完成</button></div>
+</div>
+
+<!-- ══════════ 道具商城 ══════════ -->
+<div class="overlay hide" id="shopOverlay">
+  <div class="lobby-head">
+    <button class="ctrl-btn" id="btnShopBack" style="padding:8px 10px;" title="返回">🔙</button>
+    <span class="lobby-title">🛒 道具商城</span>
+    <span class="coins-pill">🪙 <span id="shopCoins">0</span></span>
+  </div>
+  <p class="tip" style="margin-bottom:8px;">局内点右下角 🎒 使用道具 · 每局每种限 1 次 · 开局向导第三步选择携带</p>
+  <div class="shop-rows" id="shopRows"></div>
+  <div class="lobby-actions"><button class="btn-ghost" id="btnShopHome">✔ 完成</button></div>
+</div>
+
+<!-- ══════════ 收藏图鉴 ══════════ -->
+<div class="overlay hide" id="collectOverlay">
+  <div class="lobby-head">
+    <button class="ctrl-btn" id="btnCollectBack" style="padding:8px 10px;" title="返回">🔙</button>
+    <span class="lobby-title">📚 收藏图鉴</span>
+    <span class="coins-pill">🪙 <span id="collectCoins">0</span></span>
+  </div>
+  <div class="collect-progress"><span id="collectProgress"></span><div class="cp-bar"><div class="cp-fill" id="collectBar"></div></div></div>
+  <div id="collectGrid"></div>
+</div>
+
+<!-- ══════════ 藏品仓库 ══════════ -->
+<div class="overlay hide" id="storageOverlay">
+  <div class="lobby-head">
+    <button class="ctrl-btn" id="btnStorageBack" style="padding:8px 10px;" title="返回">🔙</button>
+    <span class="lobby-title">📦 藏品仓库</span>
+    <span class="coins-pill">🪙 <span id="storageCoins">0</span></span>
+  </div>
+  <p class="tip" style="margin-bottom:8px;">拍下的藏品都在这里 · 出售价 = 估值 × 80% · 图鉴照常计数</p>
+  <div class="wiz-tools-sum" id="storageSum"></div>
+  <div class="shop-rows" id="storageRows" style="margin-top:10px;"></div>
+</div>
+
+<!-- ══════════ 对手档案 ══════════ -->
+<div class="overlay hide" id="aiLogOverlay">
+  <div class="lobby-head">
+    <button class="ctrl-btn" id="btnAiLogBack" style="padding:8px 10px;" title="返回">🔙</button>
+    <span class="lobby-title">🤝 对手档案</span>
+    <span class="coins-pill">🪙 <span id="aiLogCoins">0</span></span>
+  </div>
+  <p class="tip" style="margin-bottom:8px;">多打几局,摸清每位对手的出价习惯</p>
+  <div class="shop-rows" id="aiLogRows"></div>
+</div>
+
+<!-- ══════════ 玩法说明(翻页) ══════════ -->
+<div class="overlay hide" id="helpOverlay">
+  <div class="modal-box" style="background:#241e2a;border:1px solid #3a3045;border-radius:18px;padding:16px;max-width:420px;width:100%;">
+    <h2 style="font-size:17px;color:#f0c060;" id="helpTitle"></h2>
+    <div class="hp-body" id="helpBody"></div>
+    <div class="hp-dots">
+      <span class="hp-dot" data-p="1" onclick="helpJump(1)"></span>
+      <span class="hp-dot" data-p="2" onclick="helpJump(2)"></span>
+      <span class="hp-dot" data-p="3" onclick="helpJump(3)"></span>
+      <span class="hp-dot" data-p="4" onclick="helpJump(4)"></span>
+    </div>
+    <div class="hp-actions">
+      <button class="btn-ghost hide" id="btnHelpPrev" onclick="helpGo(-1)">← 上一页</button>
+      <button class="btn-main hide" id="btnHelpDone" onclick="ui.helpOverlay.classList.add('hide')">知道了</button>
+      <button class="btn-main" id="btnHelpNext" onclick="helpGo(1)">下一页 →</button>
+      <button class="btn-ghost hide" id="btnHelpClose" onclick="ui.helpOverlay.classList.add('hide')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 技能目标 ══════════ -->
+<div class="info-overlay hide" id="pickTargetOverlay">
+  <div class="info-card">
+    <div class="ic-t" id="ptTitle">选择目标</div>
+    <div id="pickTargetList"></div>
+    <div style="margin-top:10px;"><button class="btn-ghost" id="btnTargetCancel">取消</button></div>
+  </div>
+</div>
+
+<!-- ══════════ 假情报 ══════════ -->
+<div class="info-overlay hide" id="fakeInfoOverlay">
+  <div class="info-card">
+    <div class="ic-t">🐍 风祝·假情报</div>
+    <div id="fakeInfoBody"></div>
+    <div style="margin-top:10px;"><button class="btn-ghost" id="btnFakeCancel">取消</button></div>
+  </div>
+</div>
+
+<!-- ══════════ 出价输入 ══════════ -->
+<div class="overlay hide" id="bidInputOverlay">
+  <div class="bid-input-card">
+    <div class="bi-t" id="biTitle">✍️ 输入你的出价</div>
+    <div class="bi-input-wrap">
+      <input type="number" id="biInput" inputmode="numeric" min="100" max="10000" step="10">
+    </div>
+    <div class="bi-steps" id="biSteps">
+      <button class="bi-step" onclick="bidStep(100)">+100</button>
+      <button class="bi-step" onclick="bidStep(500)">+500</button>
+      <button class="bi-step" onclick="bidStep(1000)">+1000</button>
+      <button class="bi-step" onclick="bidStep(999999)">全部</button>
+    </div>
+    <div class="bi-chips" id="biChips"></div>
+    <div class="bi-note" id="biNote"></div>
+    <div class="bi-btns">
+      <button class="btn-main" id="biConfirm">✋ 确认锁定</button>
+      <button class="btn-ghost" id="biCancel">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 道具抽屉 ══════════ -->
+<div class="drawer-overlay hide" id="toolsDrawer">
+  <div class="drawer">
+    <div class="drawer-title">🎒 道具背包<span><button class="drawer-close" onclick="toggleToolsDrawer()">✕ 收起</button></span></div>
+    <div class="tool-cards" id="toolsDrawerBody"></div>
+  </div>
+</div>
+
+<!-- ══════════ 揭标 ══════════ -->
+<div class="overlay hide" id="revealOverlay">
+  <h2 id="rvTitle">📢 开标!</h2>
+  <div class="reveal-grid" id="rvGrid"></div>
+  <div class="tip" id="rvNote"></div>
+  <button class="btn-main" id="btnRvNext">下一步</button>
+</div>
+
+<!-- ══════════ 开箱 ══════════ -->
+<div class="overlay hide" id="unboxOverlay">
+  <div class="unbox-head">
+    <div class="uh-t" id="ubTitle">📦 开箱!</div>
+    <div class="uh-s" id="ubSub"></div>
+  </div>
+  <div class="ub-slots" id="ubSlots"></div>
+  <div class="item-grid" id="ubGrid"></div>
+  <div class="unbox-sum hide" id="ubSum"></div>
+  <button class="btn-main" id="btnUbNext">下一柜 →</button>
+</div>
+
+<!-- ══════════ 平局加时 ══════════ -->
+<div class="overlay hide" id="tieOverlay">
+  <div class="tie-box">
+    <div class="tie-t">⚖️ 平局!同价者加时暗标</div>
+    <div style="font-size:12px;color:#8a7e9a;" id="tieNote">第 5 轮最高价并列,同价者再出一价定胜负</div>
+  </div>
+  <div class="bid-panel" style="max-width:360px;width:100%;" id="tieBidPanel"></div>
+</div>
+
+<!-- ══════════ 终局 ══════════ -->
+<div class="overlay hide" id="finalOverlay">
+  <h1 id="finalTitle">🏆 幻想乡第一竞拍王</h1>
+  <p class="tip" id="finalDesc"></p>
+  <div class="coins-gain hide" id="coinsGain"></div>
+  <div class="stat-grid" id="finalStats"></div>
+  <div id="finalRank"></div>
+  <div id="lbArea"></div>
+  <div style="margin-top:8px;">
+    <button class="btn-main" id="btnPoster">🖼️ 分享战果</button>
+    <button class="btn-ghost" id="btnFinalRestart">🔁 再来一局</button>
+  </div>
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/canvas-utils.js"></script>
+<script src="js/poster.js"></script>
+<script src="js/quiz-stats.js"></script>
+<script src="js/auction-items.js"></script>
+<script src="js/marisa-auction.js"></script>
+
+</body>
+</html>

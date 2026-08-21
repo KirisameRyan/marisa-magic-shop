@@ -9,6 +9,7 @@ window.MMS_CATALOG = {
     { href: 'marisa_dash.html',     emoji: '🧹', name: '魔理沙快跑',   tag: '三通道飞行跑酷',     color: 'green', desc: '↑↓ 切换通道躲避蘑菇和妖精。擦弹连击触发爆发，冲刺撞碎一切障碍。触屏+键盘双支持。' },
     { href: 'marisa_survivor.html', emoji: '⭐', name: '魔理沙幸存者', tag: '幸存者like',         color: 'purple', desc: '攻击全自动，只管走位！收集P点升级，17 种强化卡三选一，在琪露诺大军里活下去。' },
     { href: 'marisa_landlord.html', emoji: '⛩️', name: '魔理沙的赛钱危机', tag: 'Roguelike 老虎机构筑', color: 'red', desc: '灵梦上门收租了！转动祈愿转盘，58 种符号自由构筑：幽幽子吃料理永久成长，琪露诺冻青蛙……撑过 12 次收租！' },
+    { href: 'marisa_auction.html',  emoji: '🔨', name: '幻想乡拍卖会',   tag: '四人暗拍博弈',       color: 'gold', desc: '对标《竞拍之王》：盲拍货柜只看格数，5 轮暗标+情报技能+假情报坑人，拍下仓库即刻开箱，先废铁后传说！' },
     { href: 'street_survival.html', emoji: '🌃', name: '流浪模拟器',   tag: '街头生存模拟',       color: 'blue', desc: '你是李明，兜里剩 8 块钱。每天早中晚三个时段，打工、翻垃圾、乞讨……突发事件随时降临，活到攒够 1000 元那天。' },
     { href: 'deer_battle.html',     emoji: '🦌', name: '鹿管大作战',   tag: '60秒点硬币',         color: 'gold', desc: '60 秒狂点硬币!蓝色+1、粉色+3、金色+10、紫色加时间、红色扣 10 秒——点错就鹿萎了,点对就鹿爽了!触屏+鼠标。' },
     { href: 'polo_ball.html',       emoji: '⚔️', name: '抽象角色大乱斗', tag: '物理弹跳对战',       color: 'red', desc: '玩法模仿 Polo 小球：选人即开打，纯观战物理大战。残血狂暴，90 秒按血量定生死。' },
@@ -26,6 +27,7 @@ window.MMS_CATALOG = {
   ],
   // ── 🆕 最新上线 ──
   latest: [
+    { href: 'marisa_auction.html',  emoji: '🔨', name: '幻想乡拍卖会',   tag: '四人暗拍博弈',       color: 'gold', desc: '对标《竞拍之王》：盲拍货柜只看格数，5 轮暗标+情报技能+假情报坑人，拍下仓库即刻开箱，先废铁后传说！' },
     { href: 'polo_ball.html',     emoji: '⚔️', name: '抽象角色大乱斗', tag: '物理弹跳对战', color: 'red', desc: '玩法模仿 Polo 小球：选人即开打，纯观战物理大战。残血狂暴，90 秒按血量定生死。' },
     { href: 'quiz-jiahao.html',   emoji: '🖤', name: '测测你的嘉豪程度', tag: '嘉豪检测', color: 'dark', desc: '25 道灵魂检测 · 五维雷达图。从普通人到自在极意豪——看看你距离嘉豪还有多远。' },
     { href: 'quiz-major.html',    emoji: '🏗️', name: '张雪峰八道题帮你选专业', tag: '专业测评', color: 'gold', desc: '8 道生涯规划题 · AI 精准匹配。张雪峰老师看了都说好。' },

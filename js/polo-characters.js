@@ -115,27 +115,21 @@ window.POLO_CHARS = [
   {
     id: 'dogmilk',
     name: '野生狗奶',
-    title: '保质期：永久',
+    title: 'MUDAMUDAMUDA',
     emoji: '🥛',
-    img: 'images/polo/dogmilk.JPG',
+    img: 'images/polo/dogmilk.png',
     color1: '#f7f3e8',
     color2: '#c4b08a',
     radius: 26,
-    maxHp: 1000,
+    maxHp: 500,
     bgm: 'audio/gounai.mp3',
     skill: {
       type: 'milk_guard',
-      name: '保质期：永久',
-      desc: '每 10.5s 刷新一面一次性奶盾: 挡下任意一次攻击(含激光)后碎盾反伤 60; 每 1.8s 吐奶弹 36 伤; 每 5.5s 自回 16 血',
-      shieldInterval: 10.5, // 护盾刷新间隔
-      shield: 1,            // 一次性盾(任意一击全额挡)
-      reflect: 60,          // 破盾反伤
-      milkInterval: 1.8,    // 奶弹间隔
-      milkDamage: 36,       // 奶弹伤害
-      milkSpeed: 260,       // 奶弹速度
-      milkLife: 2.2,        // 奶弹存活(秒)
-      regenInterval: 5.5,   // 自回间隔
-      regen: 16             // 自回量
+      name: '世界·时停',
+      desc: '血量仅 500。前 15 秒闭门蓄力(全部技能禁用+互撞擦伤免疫, 头顶倒计时); 满 15 秒未被击败则发动时停「ザ・ワールド」: 时间停止全场冻结, 金色光环每秒对敌人喷 5 次 10 伤, 直至敌人死亡',
+      readyTime: 15,        // 蓄力时长: 期间技能全禁(带倒计时特效)
+      auraTicks: 5,         // 时停光环每秒攻击次数
+      auraDmg: 10           // 时停光环单次伤害
     }
   },
   {
@@ -152,10 +146,10 @@ window.POLO_CHARS = [
     skill: {
       type: 'gate_revive',
       name: '空城计',
-      desc: '每 3.8s 天降一座巨型横门: 0.5s 预判预警后砸落(落地冲击 90 伤, 半径 60), 门墙横卧残留 8s 挡路(方形碰撞, 撞门 90 伤, 上限 3 座); 死亡时卷款跑路: 20% 血复活 + 瞬移 + 0.4s 无敌',
+      desc: '每 3.8s 天降一座巨型横门: 0.5s 预判预警后砸落(落地冲击 70 伤, 半径 60), 门墙横卧残留 8s 挡路(方形碰撞, 撞门 70 伤, 上限 3 座); 死亡时卷款跑路: 20% 血复活 + 瞬移 + 0.4s 无敌',
       interval: 3.8,        // 盖门间隔
       gateLife: 8,          // 门存在时长
-      gateDamage: 90,       // 撞门/落地伤害
+      gateDamage: 70,       // 撞门/落地伤害
       gateKnock: 200,       // 撞门击退
       gateFall: 0.3,        // 大门下落动画时长
       gateShockR: 60,       // 落地冲击半径
@@ -169,7 +163,7 @@ window.POLO_CHARS = [
     name: '美团',
     title: '准时宝 · 先送到家',
     emoji: '🦘',
-    img: 'images/polo/meituan.JPG',
+    img: 'images/polo/meituan.png',
     color1: '#ffb400',
     color2: '#2a2620',
     radius: 26,
@@ -187,6 +181,25 @@ window.POLO_CHARS = [
       boxRadius: 24,        // 外卖箱碰撞半径
       boxDmg: 20,           // 撞箱伤害
       maxBoxes: 4           // 同场外卖箱上限
+    }
+  },
+  {
+    id: 'dayun',
+    name: '大运',
+    title: '压死你',
+    emoji: '🚚',
+    img: 'images/polo/dayun.png',
+    color1: '#1a6fd1',
+    color2: '#0f1a2e',
+    radius: 30,
+    maxHp: 1000,
+    speedMul: 0.42,          // 移速极慢
+    attractMult: 2.2,        // 引力被动: 更容易缠住敌人贴身撞
+    collideDmg: 300,         // 撞人伤害(四下撞中带走)
+    skill: {
+      type: 'none',
+      name: '横冲直撞',
+      desc: '移速极慢但势大力沉: 撞到敌人立刻造成 300 伤害; 被撞只吃普通擦伤'
     }
   }
 ];
