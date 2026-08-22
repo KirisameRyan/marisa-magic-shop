@@ -15,7 +15,7 @@ var STARTER_CHARS = ['marisa', 'reimu'];
 var CHAR_PRICE = { sanae: 350, reisen: 300, patchouli: 450, sakuya: 550, yuyuko: 650, remilia: 750 };
 var THRESH = [2, 1.8, 1.6, 1.4];       // 前4轮提前结算阈值(须高出第二名: 100%/80%/60%/40%)
 var SLOT_BLIND = { garbage: 70, normal: 220, treasure: 460 }; // 无情报时按仓型盲估均格价(基准地图口径)
-var AI_CASH = { normal: 15000, hard: 12000 };   // AI 每局固定资金(与玩家钱包无关)
+var AI_CASH = { normal: 20000, hard: 16000 };   // AI 每局固定资金(与玩家钱包无关)
 var BAILOUT = 5000;                    // 钱包不足准入费时的保底金币
 var DEFAULT_PW = {
   garbage:  [55, 32, 10, 3, 0, 0],
@@ -169,7 +169,7 @@ function saveBest(v) { try { if (v > loadBest()) localStorage.setItem(CONFIG.SAV
 function loadSkill() { try { return localStorage.getItem(CONFIG.SAVE_SKILL) || 'marisa'; } catch (e) { return 'marisa'; } }
 function saveSkill(id) { try { localStorage.setItem(CONFIG.SAVE_SKILL, id); } catch (e) {} }
 function loadMapSel() { try { return localStorage.getItem(CONFIG.SAVE_MAP) || 'hakurei'; } catch (e) { return 'hakurei'; } }
-function loadCoins() { try { var v = localStorage.getItem(CONFIG.SAVE_COINS); if (v === null) { localStorage.setItem(CONFIG.SAVE_COINS, '10000'); return 10000; } return parseInt(v, 10) || 0; } catch (e) { return 10000; } }
+function loadCoins() { try { var v = localStorage.getItem(CONFIG.SAVE_COINS); if (v === null) { localStorage.setItem(CONFIG.SAVE_COINS, '50000'); return 50000; } return parseInt(v, 10) || 0; } catch (e) { return 50000; } }
 function saveCoins(n) { try { localStorage.setItem(CONFIG.SAVE_COINS, String(n)); } catch (e) {} }
 function loadTools() { try { var t = JSON.parse(localStorage.getItem(CONFIG.SAVE_TOOLS)) || {}; return { scan: t.scan || 0, probe: t.probe || 0, heavy: t.heavy || 0 }; } catch (e) { return { scan: 0, probe: 0, heavy: 0 }; } }
 function saveTools(t) { try { localStorage.setItem(CONFIG.SAVE_TOOLS, JSON.stringify(t)); } catch (e) {} }
@@ -1504,12 +1504,14 @@ function netWorth(p) {
   return v;
 }
 function titleOf(nw) {
-  if (nw >= 15000) return { t: '🏆 幻想乡第一竞拍王', c: '#f0c060', d: '连灵梦都对你刮目相看——当然,她主要关心你拍到的赛钱箱。' };
-  if (nw >= 12500) return { t: '🥇 捡漏大师', c: '#b89fff', d: '差价利润全进了你的口袋,对手们开始研究你的出价习惯。' };
-  if (nw >= 10500) return { t: '🥈 精明收藏家', c: '#8fd8ff', d: '不亏就是赚,更何况你还赚了。' };
-  if (nw >= 9000)  return { t: '🙂 勉强回本', c: '#6fcf97', d: '账面上没亏,但你的对手也觉得他们赢了。' };
-  if (nw >= 7500)  return { t: '🤡 小亏一笔', c: '#f4b860', d: '「投资嘛,总要有学费的。」你对自己说。' };
-  if (nw >= 5500)  return { t: '😵 冤大头预备役', c: '#f472b6', d: '早苗的情报你都信?啊,原来是你自己发的。' };
+  var base = S && S.walletStart ? S.walletStart : 10000;
+  var g = nw - base;
+  if (g >= 12000) return { t: '🏆 幻想乡第一竞拍王', c: '#f0c060', d: '连灵梦都对你刮目相看——当然,她主要关心你拍到的赛钱箱。' };
+  if (g >= 6000)  return { t: '🥇 捡漏大师', c: '#b89fff', d: '差价利润全进了你的口袋,对手们开始研究你的出价习惯。' };
+  if (g >= 3000)  return { t: '🥈 精明收藏家', c: '#8fd8ff', d: '不亏就是赚,更何况你还赚了。' };
+  if (g >= 0)     return { t: '🙂 勉强回本', c: '#6fcf97', d: '账面上没亏,但你的对手也觉得他们赢了。' };
+  if (g >= -5000) return { t: '🤡 小亏一笔', c: '#f4b860', d: '「投资嘛,总要有学费的。」你对自己说。' };
+  if (g >= -10000) return { t: '😵 冤大头预备役', c: '#f472b6', d: '早苗的情报你都信?啊,原来是你自己发的。' };
   return { t: '💸 幻想乡头号冤大头', c: '#ef4444', d: '魔理沙把钱都数好了,正等着看你下次再来。' };
 }
 function finalize() {

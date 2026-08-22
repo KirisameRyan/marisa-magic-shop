@@ -16,7 +16,8 @@ body>.container{display:none}
 .hud{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 4px;gap:8px;flex-wrap:wrap}
 .hud .score{font-size:20px;font-weight:900;color:#f0c060;font-variant-numeric:tabular-nums}
 .hud .best{font-size:11px;color:#8a7e9a}
-.hud .next{display:flex;align-items:center;gap:6px;font-size:11px;color:#8a7e9a}
+.hud .nextbox{display:flex;gap:10px;align-items:center}
+.hud .next{display:flex;align-items:center;gap:5px;font-size:10px;color:#8a7e9a;flex-direction:column}
 .hud .next .preview{width:34px;height:34px;border-radius:50%;background:#1a1520;border:1px solid #3a3045;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .hud .next .preview img{width:100%;height:100%;object-fit:contain}
 .hud .next .preview span{font-size:16px;color:#f0c060;font-weight:900}
@@ -49,6 +50,8 @@ canvas{display:block;width:100%;height:auto;cursor:crosshair}
 .btn{display:block;width:100%;border:none;border-radius:14px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s;letter-spacing:2px}
 .btn-gold{background:linear-gradient(135deg,#f0c060,#c89a40);color:#1a1520;margin-top:12px}
 .btn-gold:hover{filter:brightness(1.08)}
+.btn-sky{background:linear-gradient(135deg,#8fd8ff,#5a9fd0);color:#1a1520;margin-top:10px}
+.btn-sky:hover{filter:brightness(1.08)}
 .btn-ghost{background:transparent;border:1px solid #3a3045;color:#8a7e9a;margin-top:8px}
 .btn-ghost:hover{border-color:#f0c060;color:#f0c060}
 .rules{text-align:left;font-size:11px;color:#b8acc8;line-height:1.9;background:#1a1520;border:1px solid #3a3045;border-radius:12px;padding:10px 14px;margin-top:10px}
@@ -91,9 +94,15 @@ canvas{display:block;width:100%;height:auto;cursor:crosshair}
 <div class="wrap">
   <div class="hud">
     <div><div class="score" id="score">0</div><div class="best" id="bestLine">HI 0</div></div>
-    <div class="next">下一个
-      <div class="preview" id="nextPreview"></div>
-      <span id="nextLv" style="font-size:11px;font-weight:800;color:#f0c060">⑨</span>
+    <div class="nextbox">
+      <div class="next">当前
+        <div class="preview" id="curPreview"></div>
+        <span id="curLv" style="font-size:11px;font-weight:800;color:#f0c060">⑨</span>
+      </div>
+      <div class="next">下一个
+        <div class="preview" id="nextPreview"></div>
+        <span id="nextLv" style="font-size:11px;font-weight:800;color:#8a7e9a">⑨</span>
+      </div>
     </div>
     <div class="tools">
       <button class="tool-btn" id="hammerBtn" disabled title="小锤子:点击后选择要敲掉的琪露诺">🔨<span class="cnt" id="hammerCnt">0</span></button>
@@ -107,21 +116,22 @@ canvas{display:block;width:100%;height:auto;cursor:crosshair}
   </div>
 </div>
 
-<!-- 开场 -->
+<!-- 开场:模式选择 -->
 <div class="overlay" id="startOverlay">
   <div class="card">
     <img class="logo" id="logoImg" src="images/cirno/cirno_logo.jpg" alt="琪露诺" onerror="this.style.display='none'">
     <h1>合成大BAKA</h1>
-    <div class="sub">SUIKA × 东方 · 笨蛋养成计划</div>
+    <div class="sub">CHOOSE YOUR BAKA</div>
+    <button class="btn btn-gold" onclick="startGame('big')">🎮 合成大BAKA · 小→大</button>
+    <button class="btn btn-sky" onclick="startGame('small')">🎀 合成小BAKA · 大→小</button>
     <div class="rules">
       <b>玩法</b><br>
-      🎯 移动鼠标/手指对准落点,点击/松手释放<br>
-      ⑨ 相同的琪露诺碰到一起会<b>合体进化</b>!<br>
-      🔨 连锁 3 连获得<b>小锤子</b>,敲掉挡路的笨蛋<br>
-      💥 合成终极大BAKA → 立绘大特写 + 超大分<br>
+      🎯 对准落点,<b>点击/松手</b>释放;移动端<b>点一下</b>即放<br>
+      <b>大BAKA:</b> 相同琪露诺碰在一起<b>合体进化</b>,合成出终极大BAKA!<br>
+      <b>小BAKA:</b> 反过来!大球合体<b>退化变小</b>,合成出完全体 ⑨!<br>
+      🔨 连锁 3 连获得<b>小锤子</b>,敲掉挡路的笨蛋(压线救命)<br>
       ☠️ 笨蛋堆过危险线 = 游戏结束
     </div>
-    <button class="btn btn-gold" onclick="startGame()">🎮 开始合成</button>
     <p style="font-size:10px;color:#8a7e9a;margin-top:10px">夷境工作室 · 出品</p>
   </div>
 </div>
@@ -129,15 +139,16 @@ canvas{display:block;width:100%;height:auto;cursor:crosshair}
 <!-- 结束 -->
 <div class="overlay hide" id="overOverlay">
   <div class="card">
-    <h1 style="color:#ef4444">💥 笨蛋太多了!</h1>
-    <p style="font-size:12px;color:#8a7e9a;margin-top:4px">灵梦:这么多⑨,还是退治了吧。</p>
+    <h1 style="color:#ef4444" id="overTitle">💥 笨蛋太多了!</h1>
+    <p style="font-size:12px;color:#8a7e9a;margin-top:4px" id="overSub">灵梦:这么多⑨,还是退治了吧。</p>
     <div class="stat-grid">
       <div class="stat-box"><div class="sv" id="fsScore">0</div><div class="sl">总分</div></div>
-      <div class="stat-box"><div class="sv" id="fsMax">Lv0</div><div class="sl">最高合成</div></div>
+      <div class="stat-box"><div class="sv" id="fsMax">Lv0</div><div class="sl" id="fsMaxLabel">最高合成</div></div>
       <div class="stat-box"><div class="sv" id="fsChain">0</div><div class="sl">最大连锁</div></div>
       <div class="stat-box"><div class="sv" id="fsBest">0</div><div class="sl">历史最佳</div></div>
     </div>
-    <button class="btn btn-gold" onclick="startGame()">🔄 再来一次</button>
+    <button class="btn btn-gold" onclick="startGame(M.key)">🔄 再来一次</button>
+    <button class="btn btn-ghost" onclick="showSelect()">🏠 选择模式</button>
     <div id="lbArea"></div>
   </div>
 </div>
@@ -146,7 +157,7 @@ canvas{display:block;width:100%;height:auto;cursor:crosshair}
 <div class="baka-burst hide" id="bakaBurst">
   <div id="bakaBarrage"></div>
   <img class="bigpic" id="bakaImg" src="images/cirno/cirno_lihui.webp" alt="大BAKA">
-  <div class="bakatitle">大BAKA!!!</div>
+  <div class="bakatitle" id="bakaTitle">大BAKA!!!</div>
   <div class="bakascore" id="bakaScore"></div>
 </div>
 
@@ -160,9 +171,33 @@ var IMGS=['images/cirno/cirno01.webp','images/cirno/cirno02.webp','images/cirno/
   'images/cirno/cirno07.webp','images/cirno/cirno08.jpg'];
 // 等级: 1=⑨文字, 2~9=贴图
 var LV_R=function(lv){ return 20*Math.pow(1.17,lv-1); };
-var DROP_W=[40,25,18,12,5];   // Lv1~Lv5 掉落权重
 
-var S={ running:false, score:0, best:0, maxLevel:0, maxChain:0,
+// ═══════ 双模式配置 ═══════
+// 大BAKA: 小→大 合成进化;  小BAKA: 大→小 反向合成
+var DYN_TIER=[0,3000,8000];   // 动态难度分档阈值
+var MODES={
+  big:{ key:'big', dir:1, name:'合成大BAKA', sub:'SUIKA × 东方 · 笨蛋养成计划',
+    lb:'baka',
+    finalLv:9, finalTitle:'大BAKA!!!',
+    dropW:[[40,25,18,12,5],[30,24,18,16,12],[22,20,18,20,20]],   // Lv1~5,按分档
+    score:function(lv,nl,mult){ return Math.round(lv*100*mult); },
+    finalScore:function(mult){ return Math.round(8000*Math.max(1,mult)); },
+    overTitle:'💥 笨蛋太多了!', overSub:'灵梦:这么多⑨,还是退治了吧。',
+    statLabel:'最高合成'
+  },
+  small:{ key:'small', dir:-1, name:'合成小BAKA', sub:'大变小 · ⑨ 完全体计划',
+    lb:'baka_small',
+    finalLv:2, finalTitle:'琪露诺⑨!!',
+    dropW:[[30,25,20,15,10],[25,22,20,18,15],[20,20,20,20,20]],  // 对应 Lv9~5,按分档
+    score:function(lv,nl,mult){ return Math.round((10-nl)*100*mult); },
+    finalScore:function(mult){ return Math.round(8000*Math.max(1,mult)); },
+    overTitle:'🎀 ⑨ 全都完成了!', overSub:'大妖精:不愧是⑨,真正的完全体!',
+    statLabel:'⑨完成数'
+  }
+};
+var M=MODES.big;   // 当前模式
+
+var S={ running:false, score:0, best:0, maxLevel:0, maxChain:0, nines:0,
   fruits:[], next:1, holding:null, holdX:W/2,
   chain:0, chainTimer:0, hammers:0, aiming:false,
   frozen:false, gameOver:false, muted:false };
@@ -172,20 +207,69 @@ var canvas, ctx, rafId=0, lastT=0, imgs={};
 function $(id){return document.getElementById(id)}
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 
-/* ═══════ 音效(WebAudio 合成) ═══════ */
+/* ═══════ 音效(外部音频优先,WebAudio 合成兜底) ═══════ */
 var SND=(function(){
   var ctx=null;
+  var audios={}, broken={};
+  var FILES={ drop:'audio/baka/baka.mp3', merge:'audio/baka/baka.mp3', hammer:'audio/baka/baka.mp3' };
   function ac(){ if(!ctx){try{ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}} if(ctx&&ctx.state==='suspended')ctx.resume(); return ctx; }
   function beep(f,dur,type,vol,slide){ var c=ac(); if(!c)return; var o=c.createOscillator(),g=c.createGain(); o.type=type||'sine'; o.frequency.setValueAtTime(f,c.currentTime); if(slide)o.frequency.exponentialRampToValueAtTime(slide,c.currentTime+dur); g.gain.setValueAtTime(vol||0.1,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur); o.connect(g);g.connect(c.destination); o.start();o.stop(c.currentTime+dur); }
-  return {
-    unlock:function(){ ac(); },
-    merge:function(lv){ beep(280+lv*45,0.12,'triangle',0.12,500+lv*80); },
+  // 合成音兜底表(外部音频缺失/加载失败时使用)
+  var synths={
+    merge:function(lv){ beep(280+(lv||1)*45,0.12,'triangle',0.12,500+(lv||1)*80); },
     chain:function(){ beep(700,0.08,'square',0.08,1000); },
     hammer:function(){ beep(200,0.14,'square',0.14,80); },
     drop:function(){ beep(150,0.06,'sine',0.05,120); },
     big:function(){ beep(523,0.15,'triangle',0.14); setTimeout(function(){beep(659,0.15,'triangle',0.14)},120); setTimeout(function(){beep(784,0.2,'triangle',0.16)},240); setTimeout(function(){beep(1046,0.35,'triangle',0.18)},360); },
     over:function(){ beep(300,0.5,'sawtooth',0.1,80); },
     click:function(){ beep(500,0.05,'triangle',0.07); }
+  };
+  function load(){
+    for(var k in FILES){
+      (function(k,src){
+        var a=new Audio();
+        a.preload='auto';
+        a.src=src;
+        a.addEventListener('error',function(){ broken[k]=true; });
+        audios[k]=a;
+      })(k,FILES[k]);
+    }
+  }
+  function muted(){ return !!(window.S&&S.muted); }
+  function playOne(name,rate){
+    if(muted()) return;
+    if(broken[name]||!audios[name]){ (synths[name]||function(){})(); return; }
+    try{
+      var a=audios[name];
+      a.currentTime=0;
+      if(rate) a.playbackRate=rate;
+      var p=a.play();
+      if(p&&p.catch) p.catch(function(){});
+    }catch(e){ (synths[name]||function(){})(); }
+  }
+  // 连播:big 演出 = baka_drop 音效连续 3 次(baka!baka!baka!)
+  function playRepeated(name,times,gap){
+    if(muted()) return;
+    var t=0;
+    var fire=function(){ if(t++>=times) return; playOne(name); setTimeout(fire,gap); };
+    fire();
+  }
+  return {
+    unlock:function(){ ac(); },
+    load:load,
+    merge:function(lv){
+      // merge 优先用自身音频,缺失回退 drop 音频(共享 baka 音),再缺失用合成音
+      var rate=1+(lv||1)*0.04;
+      if(!broken.merge&&audios.merge){ playOne('merge',rate); return; }
+      if(!broken.drop&&audios.drop){ playOne('drop',rate); return; }
+      synths.merge(lv);
+    },
+    chain:function(){ playOne('chain'); },
+    hammer:function(){ playOne('hammer'); },
+    drop:function(){ playOne('drop'); },
+    big:function(){ playRepeated('drop',3,140); },
+    over:function(){ playOne('over'); },
+    click:function(){ playOne('click'); }
   };
 })();
 
@@ -233,7 +317,7 @@ function step(dt){
     else if(f.x+f.r>W){ f.x=W-f.r; f.vx=-f.vx*WALL_REST; }
     if(f.y+f.r>FLOOR){ f.y=FLOOR-f.r; f.vy=-f.vy*FLOOR_REST; }
   }
-  // 合并优先:重叠即合并(先于碰撞分离,保证能合上)
+  // 合并优先:重叠或相切(容差2px)即合并,保证能合上
   var merged=true, guard=0;
   while(merged&&guard++<20){
     merged=false;
@@ -244,7 +328,7 @@ function step(dt){
         var now=Date.now();
         if(a.cooldown>now||b.cooldown>now) continue;
         var dx=a.x-b.x, dy=a.y-b.y, d=Math.sqrt(dx*dx+dy*dy);
-        if(d < a.r+b.r){ doMerge(a,b); merged=true; break; }
+        if(d < a.r+b.r+2){ doMerge(a,b); merged=true; break; }
       }
     }
   }
@@ -270,6 +354,13 @@ function step(dt){
       }
     }
   }
+  // 边界 clamp:碰撞分离可能把球推出墙外,强制拉回(防穿墙/挤出)
+  for(i=0;i<fs.length;i++){
+    var cf=fs[i];
+    if(cf.x<cf.r){ cf.x=cf.r; }
+    else if(cf.x>W-cf.r){ cf.x=W-cf.r; }
+    if(cf.y>FLOOR-cf.r){ cf.y=FLOOR-cf.r; }
+  }
 }
 
 function doMerge(a,b){
@@ -278,25 +369,26 @@ function doMerge(a,b){
   fs.splice(fs.indexOf(a),1);
   fs.splice(fs.indexOf(b),1);
   var x=(a.x+b.x)/2, y=(a.y+b.y)/2;
-  if(lv===9){
-    // 终极大BAKA: 立绘特写 + 弹幕 + 超大分
+  if(lv===M.finalLv){
+    // 终极演出:大BAKA(正向 Lv9→10) / 琪露诺⑨(反向 Lv2→1)
     S.chain++; S.maxChain=Math.max(S.maxChain,S.chain);
     var mult=Math.max(1,1+(S.chain-1)*0.5);
-    var pts=Math.round(8000*mult);
+    var pts=M.finalScore(mult);
     addScore(pts);
     S.maxLevel=Math.max(S.maxLevel,10);
+    if(M.dir<0) S.nines++;
     SND.big();
     bigBaka(x,y,pts,mult);
     resetChain();
     return;
   }
-  var nl=lv+1;
-  var nf={x:x,y:y,vx:0,vy:0,r:LV_R(nl),lv:nl,cooldown:Date.now()+250};
+  var nl=lv+M.dir;   // 正向升级,反向降级
+  var nf={x:x,y:y,vx:0,vy:0,r:LV_R(nl),lv:nl,cooldown:Date.now()+100};
   fs.push(nf);
   S.chain++;
   S.maxChain=Math.max(S.maxChain,S.chain);
   var mult=Math.max(1,1+(S.chain-1)*0.5);
-  var pts=Math.round(lv*100*mult);
+  var pts=M.score(lv,nl,mult);
   addScore(pts);
   S.maxLevel=Math.max(S.maxLevel,nl);
   floater(x,y,'+'+pts,mult>1.5);
@@ -332,6 +424,7 @@ function bigBaka(x,y,pts,mult){
     s.style.animationDelay=(Math.random()*0.6)+'s';
     bar.appendChild(s);
   }
+  $('bakaTitle').textContent=M.finalTitle;
   $('bakaScore').textContent='+'+pts+' 分'+(mult>1?' ×'+mult.toFixed(1):'');
   el.classList.remove('hide');
   S.frozen=true;
@@ -419,11 +512,19 @@ function drawFruit(f){
 }
 
 /* ═══════ 掉落 ═══════ */
+function currentDropW(){
+  var tiers=M.dropW, w=tiers[0];
+  for(var i=tiers.length-1;i>=0;i--){
+    if(S.score>=DYN_TIER[i]){ w=tiers[i]; break; }
+  }
+  return w;
+}
 function pickLevel(){
-  var total=DROP_W.reduce(function(a,b){return a+b},0);
+  var w=currentDropW();
+  var total=0; for(var i=0;i<w.length;i++) total+=w[i];
   var r=Math.random()*total, acc=0;
-  for(var i=0;i<DROP_W.length;i++){ acc+=DROP_W[i]; if(r<acc) return i+1; }
-  return DROP_W.length;
+  for(var i=0;i<w.length;i++){ acc+=w[i]; if(r<acc) return M.dir>0?i+1:9-i; }
+  return M.dir>0?w.length:9-w.length+1;
 }
 function newHolding(){
   var lv=S.next;
@@ -432,19 +533,37 @@ function newHolding(){
   S.holding={x:S.holdX,y:TOP-10,vx:0,vy:0,r:r,lv:lv,cooldown:0};
   updatePreview();
 }
-function updatePreview(){
-  var p=$('nextPreview');
-  var lv=S.next;
+function renderPreview(pid,lblId,lv){
+  var p=$(pid);
   if(lv===1){ p.innerHTML='<span>⑨</span>'; }
   else{ p.innerHTML='<img src="'+IMGS[lv-2]+'" onerror="this.outerHTML=\'<span>⑨</span>\'">'; }
-  // 等级标注
-  var lbl=document.getElementById('nextLv');
+  var lbl=$(lblId);
   if(lbl){ lbl.textContent=lv===1?'⑨':'Lv'+lv; }
+}
+function updatePreview(){
+  // 当前:手里拿的球(俄罗斯方块式预览); 下一个:即将出的球
+  renderPreview('curPreview','curLv', S.holding?S.holding.lv:S.next);
+  renderPreview('nextPreview','nextLv', S.next);
 }
 function drop(){
   if(!S.holding||S.gameOver) return;
-  S.holding.vy=0; S.holding.vx=0;
-  S.fruits.push(S.holding);
+  var f=S.holding;
+  f.x=S.holdX;   // 落点=当前瞄准位置(避免用上一帧旧值)
+  var r=f.r;
+  // 防原地垒塔:释放位置随机散开;落点附近有同等级球则加大偏移
+  var off=r*0.4;
+  for(var t=0;t<2;t++){
+    var tx=Math.max(r,Math.min(W-r,f.x+(Math.random()*2-1)*off));
+    var clash=false;
+    for(var i=0;i<S.fruits.length;i++){
+      var g=S.fruits[i];
+      if(g.lv===f.lv&&Math.abs(g.x-tx)<r*2){ clash=true; break; }
+    }
+    if(!clash){ f.x=tx; break; }
+    off=r*0.9;
+  }
+  f.vy=0; f.vx=0;
+  S.fruits.push(f);
   S.holding=null;
   SND.drop();
   newHolding();
@@ -477,9 +596,12 @@ function gameOver(){
   SND.over();
   if(S.score>S.best){ S.best=S.score; try{localStorage.setItem('baka_best',String(S.best))}catch(e){} }
   $('fsScore').textContent=S.score;
-  $('fsMax').textContent='Lv'+S.maxLevel;
+  $('fsMax').textContent=M.dir<0?S.nines:'Lv'+S.maxLevel;
   $('fsChain').textContent='×'+S.maxChain;
   $('fsBest').textContent=S.best;
+  $('overTitle').textContent=M.overTitle;
+  $('overSub').textContent=M.overSub;
+  $('fsMaxLabel').textContent=M.statLabel;
   $('overOverlay').classList.remove('hide');
   loadLB();
 }
@@ -488,7 +610,7 @@ function gameOver(){
 function loadLB(){
   var area=$('lbArea');
   area.innerHTML='<p style="color:#8a7e9a;font-size:12px">⏳ 加载排行榜...</p>';
-  fetch('api/leaderboard.php?game=baka').then(function(r){return r.json()}).then(function(data){
+  fetch('api/leaderboard.php?game='+M.lb).then(function(r){return r.json()}).then(function(data){
     var rank=-1;for(var i=0;i<data.length;i++)if(S.score>data[i].score){rank=i+1;break}if(rank<0)rank=data.length<20?data.length+1:0;
     var html='<div class="lb-wrap">';
     if(rank>0){
@@ -512,7 +634,7 @@ function loadLB(){
       document.getElementById('lbSubmit').addEventListener('click',function(){
         var n=(document.getElementById('lbName').value||'').trim();if(!n||n.length>12)n='琪露诺';
         var b=document.getElementById('lbSubmit');b.disabled=true;b.textContent='提交中...';
-        var f=new FormData();f.append('name',n);f.append('score',String(S.score));f.append('graze',String(S.maxLevel));f.append('game','baka');
+        var f=new FormData();f.append('name',n);f.append('score',String(S.score));f.append('graze',String(M.dir<0?S.nines:S.maxLevel));f.append('game',M.lb);
         fetch('api/leaderboard.php',{method:'POST',body:f}).then(function(r){return r.json()}).then(function(res){
           area.innerHTML=res.ok?'<p style="color:#6fcf97;font-size:12px">✅ 提交成功!排名第 '+res.rank+'</p>':'<p style="color:#8a7e9a;font-size:12px">提交失败</p>';
         }).catch(function(){area.innerHTML='<p style="color:#8a7e9a;font-size:12px">网络错误</p>'});
@@ -571,15 +693,22 @@ function bindInput(){
     S.holdX=Math.max(0,Math.min(W,p.x));
     drop();
   });
-  canvas.addEventListener('touchmove',function(e){
+  canvas.addEventListener('touchstart',function(e){
     e.preventDefault();
     var p=clientToCanvas(e);
     S.holdX=Math.max(0,Math.min(W,p.x));
+    if(S.aiming){ smashAt(p.x,p.y); return; }   // 锤子瞄准:点哪敲哪
+    if(!S.running||S.gameOver||S.frozen) return;
+    drop();                                      // 点一下立即放置
+  },{passive:false});
+  canvas.addEventListener('touchmove',function(e){
+    e.preventDefault();
+    var p=clientToCanvas(e);
+    S.holdX=Math.max(0,Math.min(W,p.x));         // 新持球跟随手指(拖动瞄准)
   },{passive:false});
   canvas.addEventListener('touchend',function(e){
-    e.preventDefault();
-    if(!S.aiming) drop();
-  });
+    e.preventDefault();                          // 松手不再放置(防连放)
+  },{passive:false});
   document.addEventListener('keydown',function(e){
     if(e.code==='ArrowLeft'||e.code==='KeyA'){ S.holdX=Math.max(0,S.holdX-22); }
     else if(e.code==='ArrowRight'||e.code==='KeyD'){ S.holdX=Math.min(W,S.holdX+22); }
@@ -588,17 +717,29 @@ function bindInput(){
 }
 
 /* ═══════ 启动 ═══════ */
-function startGame(){
+function showSelect(){
+  S.running=false; S.gameOver=true; S.frozen=false;
+  $('overOverlay').classList.add('hide');
+  $('startOverlay').classList.remove('hide');
+  SND.click();
+}
+function startGame(mode){
+  M=MODES[mode]||MODES.big;
   SND.unlock(); SND.click();
   $('startOverlay').classList.add('hide');
   $('overOverlay').classList.add('hide');
-  S.score=0; S.maxLevel=0; S.maxChain=0;
+  document.title=M.name+' · 霧雨魔法店';
+  S.score=0; S.maxLevel=0; S.maxChain=0; S.nines=0;
   S.fruits=[]; S.chain=0; S.hammers=0; S.aiming=false; S.gameOver=false; S.frozen=false;
   $('score').textContent='0';
   $('hammerCnt').textContent='0'; $('hammerBtn').disabled=true; $('hammerBtn').classList.remove('aiming');
+  $('overTitle').textContent=M.overTitle;
+  $('overSub').textContent=M.overSub;
+  $('fsMaxLabel').textContent=M.statLabel;
   S.next=pickLevel();
   S.holdX=W/2;
   newHolding();
+  updatePreview();
   S.running=true;
   lastT=performance.now();
   rafId=requestAnimationFrame(loop);
@@ -618,8 +759,9 @@ loadImgs(function(){
   // 危险线 DOM 与画布内判负线对齐
   var lineEl=document.getElementById('lineEl');
   if(lineEl) lineEl.style.top=(TOP/H*100)+'%';
+  SND.load();
   bindInput();
-  startGame();
+  // 不自动开始:显示选择页,由玩家选择 大BAKA/小BAKA
 });
 </script>
 </body>
