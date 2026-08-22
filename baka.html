@@ -112,7 +112,7 @@ canvas{display:block;width:100%;height:auto;cursor:crosshair}
   <div class="fruit-wrap">
     <div class="line" id="lineEl" style="top:0%"><span class="tag">危险线</span></div>
     <div class="toast" id="toast"></div>
-    <canvas id="game" width="400" height="560"></canvas>
+    <canvas id="game" width="400" height="640"></canvas>
   </div>
 </div>
 
@@ -163,12 +163,12 @@ canvas{display:block;width:100%;height:auto;cursor:crosshair}
 
 <script>
 /* ═══════ 常量与状态 ═══════ */
-var W=400, H=560, TOP=150, FLOOR=H-14, G=1600, MAXV=1400;
+var W=400, H=640, TOP=170, FLOOR=H-14, G=1600, MAXV=1400;
 var REST=0.25, FLOOR_REST=0.35, WALL_REST=0.4, ITER=6;
 
 var IMGS=['images/cirno/cirno01.webp','images/cirno/cirno02.webp','images/cirno/cirno03.webp',
   'images/cirno/cirno04.webp','images/cirno/cirno05.webp','images/cirno/cirno06.webp',
-  'images/cirno/cirno07.webp','images/cirno/cirno08.jpg'];
+  'images/cirno/cirno07.webp','images/cirno/cirno08.jpg','images/cirno/cirno09.webp'];
 // 等级: 1=⑨文字, 2~9=贴图
 var LV_R=function(lv){ return 20*Math.pow(1.17,lv-1); };
 
@@ -178,8 +178,8 @@ var DYN_TIER=[0,3000,8000];   // 动态难度分档阈值
 var MODES={
   big:{ key:'big', dir:1, name:'合成大BAKA', sub:'SUIKA × 东方 · 笨蛋养成计划',
     lb:'baka',
-    finalLv:9, finalTitle:'大BAKA!!!',
-    dropW:[[40,25,18,12,5],[30,24,18,16,12],[22,20,18,20,20]],   // Lv1~5,按分档
+    finalLv:10, finalTitle:'大BAKA!!!',
+    dropW:[[40,25,18,12,5],[28,22,17,15,12,6],[20,18,17,18,17,10]],   // Lv1~6,按分档
     score:function(lv,nl,mult){ return Math.round(lv*100*mult); },
     finalScore:function(mult){ return Math.round(8000*Math.max(1,mult)); },
     overTitle:'💥 笨蛋太多了!', overSub:'灵梦:这么多⑨,还是退治了吧。',
@@ -188,7 +188,7 @@ var MODES={
   small:{ key:'small', dir:-1, name:'合成小BAKA', sub:'大变小 · ⑨ 完全体计划',
     lb:'baka_small',
     finalLv:2, finalTitle:'琪露诺⑨!!',
-    dropW:[[30,25,20,15,10],[25,22,20,18,15],[20,20,20,20,20]],  // 对应 Lv9~5,按分档
+    dropW:[[30,25,20,15,10],[25,22,20,18,15],[20,20,20,20,20]],  // 对应 Lv10~6,按分档
     score:function(lv,nl,mult){ return Math.round((10-nl)*100*mult); },
     finalScore:function(mult){ return Math.round(8000*Math.max(1,mult)); },
     overTitle:'🎀 ⑨ 全都完成了!', overSub:'大妖精:不愧是⑨,真正的完全体!',
@@ -324,7 +324,7 @@ function step(dt){
     for(i=0;i<fs.length&&!merged;i++){
       for(j=i+1;j<fs.length;j++){
         var a=fs[i],b=fs[j];
-        if(a.lv!==b.lv||a.lv>=10) continue;
+        if(a.lv!==b.lv||a.lv>=11) continue;
         var now=Date.now();
         if(a.cooldown>now||b.cooldown>now) continue;
         var dx=a.x-b.x, dy=a.y-b.y, d=Math.sqrt(dx*dx+dy*dy);
@@ -512,6 +512,7 @@ function drawFruit(f){
 }
 
 /* ═══════ 掉落 ═══════ */
+var CLICK_GAP=500;   // 点击间隔(ms):防连珠炮乱放
 function currentDropW(){
   var tiers=M.dropW, w=tiers[0];
   for(var i=tiers.length-1;i>=0;i--){
@@ -523,8 +524,8 @@ function pickLevel(){
   var w=currentDropW();
   var total=0; for(var i=0;i<w.length;i++) total+=w[i];
   var r=Math.random()*total, acc=0;
-  for(var i=0;i<w.length;i++){ acc+=w[i]; if(r<acc) return M.dir>0?i+1:9-i; }
-  return M.dir>0?w.length:9-w.length+1;
+  for(var i=0;i<w.length;i++){ acc+=w[i]; if(r<acc) return M.dir>0?i+1:10-i; }
+  return M.dir>0?w.length:10-w.length+1;
 }
 function newHolding(){
   var lv=S.next;
@@ -546,7 +547,9 @@ function updatePreview(){
   renderPreview('nextPreview','nextLv', S.next);
 }
 function drop(){
-  if(!S.holding||S.gameOver) return;
+  var now=Date.now();
+  if(!S.holding||S.gameOver||(S._lastDrop&&now-S._lastDrop<CLICK_GAP)) return;
+  S._lastDrop=now;
   var f=S.holding;
   f.x=S.holdX;   // 落点=当前瞄准位置(避免用上一帧旧值)
   var r=f.r;
@@ -730,7 +733,7 @@ function startGame(mode){
   $('overOverlay').classList.add('hide');
   document.title=M.name+' · 霧雨魔法店';
   S.score=0; S.maxLevel=0; S.maxChain=0; S.nines=0;
-  S.fruits=[]; S.chain=0; S.hammers=0; S.aiming=false; S.gameOver=false; S.frozen=false;
+  S.fruits=[]; S.chain=0; S.hammers=0; S.aiming=false; S.gameOver=false; S.frozen=false; S._lastDrop=0;
   $('score').textContent='0';
   $('hammerCnt').textContent='0'; $('hammerBtn').disabled=true; $('hammerBtn').classList.remove('aiming');
   $('overTitle').textContent=M.overTitle;
