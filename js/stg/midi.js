@@ -8,21 +8,25 @@ var STG = window.STG;
 
 STG.midi = (function() {
   var ac = null, master = null, timer = null;
-  var volF = 0.6, mutedF = false;   // 音量缩放(关0/小0.35/中0.6/大1) 与 静音
+  var volF = 0.5, mutedF = false;   // 音量缩放(关0/小0.3/中0.5/大0.8) 与 静音
   var events = [], total = 0;       // 绝对秒事件表 / 曲长
   var playT = 0, evIdx = 0;         // 本轮起点 / 事件指针
   var curPath = null;
   var active = [];                // 进行中的发声体
-  var VOICES = 16, LOOK = 0.15;
+  var VOICES = 12, LOOK = 0.15;
 
-  function applyGain() { if (master) master.gain.value = 0.24 * volF * (mutedF ? 0 : 1); }
+  function applyGain() { if (master) master.gain.value = 0.2 * volF * (mutedF ? 0 : 1); }
   function ensureAC() {
     if (ac) return true;
     try {
       ac = new (window.AudioContext || window.webkitAudioContext)();
       master = ac.createGain();
-      applyGain();
-      master.connect(ac.destination);
+      // 双向滤波: 低通砍刺耳高次谐波, 高通砍贝斯/底鼓的低频嗡嗡声
+      var lp = ac.createBiquadFilter();
+      lp.type = 'lowpass'; lp.frequency.value = 2400; lp.Q.value = 0.4;
+      var hp = ac.createBiquadFilter();
+      hp.type = 'highpass'; hp.frequency.value = 65; hp.Q.value = 0.5;
+      master.connect(lp); lp.connect(hp); hp.connect(ac.destination);
     } catch (e) { ac = null; return false; }
     return true;
   }
@@ -122,17 +126,17 @@ STG.midi = (function() {
     var g = ac.createGain();
     g.connect(master);
     if (ch === 9) {
-      // 鼓(通道10): 35/36 底鼓 = 低频下扫; 其余 = 噪声(短=帽, 长=军鼓)
+      // 鼓(通道10): 35/36 底鼓 = 低频下扫(收敛音量防轰头); 其余 = 噪声(短=帽, 长=军鼓)
       if (note === 35 || note === 36) {
         var o = ac.createOscillator();
         o.type = 'sine';
-        o.frequency.setValueAtTime(110, t);
-        o.frequency.exponentialRampToValueAtTime(40, t + 0.1);
-        g.gain.setValueAtTime(vol, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + Math.min(dur, 0.12));
+        o.frequency.setValueAtTime(96, t);
+        o.frequency.exponentialRampToValueAtTime(55, t + 0.09);
+        g.gain.setValueAtTime(vol * 0.65, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
         o.connect(g);
-        o.start(t); o.stop(t + 0.16);
-        active.push({ stop: t + 0.16, osc: o });
+        o.start(t); o.stop(t + 0.12);
+        active.push({ stop: t + 0.12, osc: o });
         return;
       }
       var len = (note === 42 || note === 44) ? 0.05 : 0.12;
@@ -145,9 +149,9 @@ STG.midi = (function() {
       active.push({ stop: t + len + 0.02 });
       return;
     }
-    // 旋律/贝斯: 低音区三角; program 弦乐类锯齿, 吉他类三角, 其余方波
+    // 旋律/贝斯: 低音区三角(降音量防嗡嗡); program 弦乐类锯齿, 吉他类三角, 其余方波
     var wave = 'square';
-    if (note < 48) wave = 'triangle';
+    if (note < 48) { wave = 'triangle'; vol *= 0.7; }
     else if (prog === 40 || prog === 41 || prog === 42 || prog === 45) wave = 'sawtooth';
     else if (prog >= 24 && prog <= 31) wave = 'triangle';
     var o2 = ac.createOscillator();

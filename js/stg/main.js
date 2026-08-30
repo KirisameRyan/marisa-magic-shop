@@ -41,9 +41,9 @@ STG.main = (function() {
   // ── BGM 音量档位(关0/小1/中2/大3), 偏好持久化 ──
   var BGM_LEVELS = [
     { label: '关', v: 0 },
-    { label: '小', v: 0.35 },
-    { label: '中', v: 0.6 },
-    { label: '大', v: 1 }
+    { label: '小', v: 0.3 },
+    { label: '中', v: 0.5 },
+    { label: '大', v: 0.8 }
   ];
   var bgmLv = 2;   // 默认「中」
   try {
@@ -57,6 +57,13 @@ STG.main = (function() {
     try { localStorage.setItem('stg_bgmvol', String(bgmLv)); } catch (e) {}
     applyBgmVol();
     if (btn) btn.textContent = bgmVolLabel();
+  }
+  // ── 触屏 UI 仅在游戏中启用(摇杆区会遮挡菜单按钮左半区); 桌面端永远隐藏 ──
+  var touchEnabled = false;
+  function setTouchUI(on) {
+    if (!touchEnabled) return;
+    var ui = document.getElementById('touchUI');
+    if (ui) ui.classList.toggle('hide', !on);
   }
   var bombFx = null;
 
@@ -94,11 +101,12 @@ STG.main = (function() {
     if (window.__joyClear) window.__joyClear();
   }
   function togglePause() {
-    if (gameState === 'playing') { gameState = 'paused'; document.getElementById('pauseOverlay').classList.remove('hide'); }
+    if (gameState === 'playing') { gameState = 'paused'; setTouchUI(false); document.getElementById('pauseOverlay').classList.remove('hide'); }
     else if (gameState === 'paused') {
       gameState = 'playing';
       document.getElementById('pauseOverlay').classList.add('hide');
       document.getElementById('buildOverlay').classList.add('hide');
+      setTouchUI(true);
       lastTs = performance.now();
     }
   }
@@ -714,6 +722,7 @@ STG.main = (function() {
   function enterLevelUp() {
     if (pendingLevels <= 0) return;
     gameState = 'levelup';
+    setTouchUI(false);
     currentCards = rollCards();
     var box = document.getElementById('lvCards');
     box.innerHTML = '';
@@ -755,6 +764,7 @@ STG.main = (function() {
       if (title) title.textContent = '选择你的魔法';
       document.getElementById('lvOverlay').classList.add('hide');
       gameState = 'playing';
+      setTouchUI(true);
       lastTs = performance.now();
       nextStage();
       return;
@@ -765,6 +775,7 @@ STG.main = (function() {
     if (pendingLevels > 0) { enterLevelUp(); return; }
     document.getElementById('lvOverlay').classList.add('hide');
     gameState = 'playing';
+    setTouchUI(true);
     lastTs = performance.now();
     if (stageUpgrade) {
       stageUpgrade = false;
@@ -1041,6 +1052,7 @@ STG.main = (function() {
   // ── 界面 ──
   function showTitle() {
     gameState = 'title';
+    setTouchUI(false);
     var tb = document.getElementById('titleBest');
     if (tb) tb.textContent = bestScore > 0 ? '🏆 最高分 ' + pad(bestScore) : '';
     document.getElementById('titleOverlay').classList.remove('hide');
@@ -1053,12 +1065,14 @@ STG.main = (function() {
     document.getElementById('deadScore').textContent = pad(S.score) + ' 分 · Graze ' + S.graze + ' · Stage ' + S.stage +
       (isNew ? ' · 🏆 新纪录!' : ' · 最高 ' + pad(bestScore));
     document.getElementById('deadOverlay').classList.remove('hide');
+    setTouchUI(false);
   }
   function hideDead() { document.getElementById('deadOverlay').classList.add('hide'); }
 
   // ── 玩法介绍 ──
   function showHowto() {
     gameState = 'howto';
+    setTouchUI(false);
     document.getElementById('titleOverlay').classList.add('hide');
     document.getElementById('howtoOverlay').classList.remove('hide');
   }
@@ -1068,6 +1082,7 @@ STG.main = (function() {
   function showGunSelect() {
     hideTitle(); hideHowto();
     gameState = 'gunselect';
+    setTouchUI(false);
     var box = document.getElementById('gunCards');
     box.innerHTML = '';
     var guns = ['chase', 'spread', 'cannon'];
@@ -1127,6 +1142,7 @@ STG.main = (function() {
     warningT = 0; clearT = 0; bombFx = null;
     stageTitleT = 2.0;
     gameState = 'playing';
+    setTouchUI(true);             // 游戏中才启用摇杆/按钮层
     STG.midi.setMuted(muted);   // 恢复静音状态
     applyBgmVol();              // 恢复 BGM 音量档
     STG.midi.play(C.BGM_STAGE);   // 道中曲开跑
@@ -1138,6 +1154,7 @@ STG.main = (function() {
     var isTouch = ('ontouchstart' in window) &&
       ((window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 1));
     if (!isTouch) return;
+    touchEnabled = true;   // 仅触屏设备启用 setTouchUI 切换
     var ui = document.getElementById('touchUI');
     if (ui) ui.classList.remove('hide');
     var joy = document.getElementById('joyArea');
