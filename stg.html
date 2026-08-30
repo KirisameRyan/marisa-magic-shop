@@ -60,14 +60,10 @@ canvas#game{display:block;width:100%;height:auto;aspect-ratio:3/4;image-renderin
 .build-empty{font-size:11px;color:#6d6278;text-align:center;padding:20px 0;}
 /* 暂停按钮 */
 .pause-btn{position:absolute;top:8px;right:8px;z-index:20;width:30px;height:30px;border-radius:9px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.35);color:#e0d8ec;font-size:14px;cursor:pointer;line-height:1;}
-/* 触摸 UI */
+/* 触摸 UI: 拖动移动 + 符卡按钮 */
 #touchUI{position:absolute;inset:0;z-index:15;pointer-events:none;}
 #touchUI.hide{display:none;}
-#joyArea{position:absolute;left:0;top:0;width:60%;height:100%;pointer-events:auto;}
-#joyBase{position:absolute;width:80px;height:80px;border-radius:50%;border:2px solid rgba(240,192,96,.5);background:rgba(240,192,96,.08);display:none;}
-#joyKnob{position:absolute;width:44px;height:44px;border-radius:50%;background:rgba(240,192,96,.5);border:2px solid rgba(240,192,96,.8);display:none;}
-#btnShoot{position:absolute;right:16px;bottom:110px;width:86px;height:86px;border-radius:50%;border:2px solid rgba(255,107,157,.7);background:rgba(255,107,157,.18);color:#ffb3c9;font-size:15px;font-weight:800;pointer-events:auto;display:flex;align-items:center;justify-content:center;}
-#btnBomb{position:absolute;right:16px;bottom:16px;width:64px;height:64px;border-radius:50%;border:2px solid rgba(124,196,255,.7);background:rgba(124,196,255,.15);color:#a8d8ff;font-size:13px;font-weight:800;pointer-events:auto;display:flex;align-items:center;justify-content:center;}
+#btnBomb{position:absolute;right:14px;bottom:96px;width:84px;height:84px;border-radius:50%;border:2px solid rgba(124,196,255,.7);background:rgba(124,196,255,.15);color:#a8d8ff;font-size:14px;font-weight:800;pointer-events:auto;display:flex;align-items:center;justify-content:center;}
 .hints{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:14px;}
 .hint-chip{font-size:11px;color:#8a7e9a;border:1px solid #3a3045;border-radius:20px;padding:4px 12px;letter-spacing:1px;}
 .foot{font-size:10px;color:#5a4c6e;margin-top:14px;letter-spacing:2px;}
@@ -98,12 +94,8 @@ canvas#game{display:block;width:100%;height:auto;aspect-ratio:3/4;image-renderin
   <canvas id="game" width="480" height="640"></canvas>
   <button class="pause-btn" id="btnPause" title="暂停">⏸</button>
 
-  <!-- 触摸操作 -->
+  <!-- 触摸操作: 按住拖动移动 · 自动开火 · 双击放符卡 -->
   <div id="touchUI" class="hide">
-    <div id="joyArea"></div>
-    <div id="joyBase"></div>
-    <div id="joyKnob"></div>
-    <div id="btnShoot">射击<br>按住</div>
     <div id="btnBomb">符卡</div>
   </div>
 
@@ -135,7 +127,7 @@ canvas#game{display:block;width:100%;height:auto;aspect-ratio:3/4;image-renderin
       <div class="howto-line"><span class="howto-ico">🔧</span>开局选择主炮,流派由你决定</div>
     </div>
     <button class="ov-btn" id="btnHowtoGo">进 入 选 炮</button>
-    <div class="ov-note">手机端:左半屏摇杆 · 右侧按钮 · 双指低速</div>
+    <div class="ov-note">手机端:按住拖动移动 · 自动开火 · 双击放符卡</div>
   </div>
 
   <!-- 选炮 -->
@@ -156,7 +148,7 @@ canvas#game{display:block;width:100%;height:auto;aspect-ratio:3/4;image-renderin
     <button class="ov-btn2" id="btnBgm">🎵 BGM:中</button>
     <div class="ov-desc" style="margin:10px 0 0;font-size:10px;">
       方向键 移动 · Shift 低速 · Z 射击 · X 符卡<br>
-      手机:左半屏摇杆 · 右侧射击/符卡 · 双指低速<br>
+      手机:按住拖动移动 · 自动开火 · 双击放符卡<br>
       擦弹加分 · 开局回收线提示 · 每 100 万分奖符卡
     </div>
     <button class="ov-btn2" id="btnPauseRestart" style="color:#ff7b7b;">重新开始</button>

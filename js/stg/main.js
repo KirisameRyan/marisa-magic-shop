@@ -68,11 +68,13 @@ STG.main = (function() {
   var bombFx = null;
 
   // ── 输入 ──
-  var input = { left:false, right:false, up:false, down:false, slow:false, shoot:false };
+  var input = { left:false, right:false, up:false, down:false, slow:false, shoot:false, shootKey:false };
+  // 触屏状态: 拖动跟手 + 双击 bomb
+  var touchState = { dragId: null, dragging: false, sx: 0, sy: 0, lastTapT: 0, lastTapX: 0, lastTapY: 0 };
   var KEYS = {
     37:'left', 39:'right', 38:'up', 40:'down',
     65:'left', 68:'right', 87:'up', 83:'down',
-    16:'slow', 90:'shoot', 88:'bomb'
+    16:'slow', 90:'shootKey', 88:'bomb'
   };
   function onKey(e, down) {
     var k = KEYS[e.keyCode];
@@ -82,7 +84,7 @@ STG.main = (function() {
     if (e.keyCode === 27 && down) { if (gameState === 'howto') { showTitle(); return; } togglePause(); return; }
     if (k && k !== 'bomb') input[k] = down;
     if (k === 'bomb' && down && gameState === 'playing') doBomb();
-    if (k === 'shoot' && down) {
+    if (k === 'shootKey' && down) {
       if (gameState === 'title') { showHowto(); return; }
       if (gameState === 'howto') { showGunSelect(); return; }
     }
@@ -98,7 +100,9 @@ STG.main = (function() {
   // 失焦/切后台清空输入(防 keyup/touchend 丢失导致射击卡死)
   function clearInput() {
     input.left = input.right = input.up = input.down = input.slow = input.shoot = false;
-    if (window.__joyClear) window.__joyClear();
+    touchState.dragId = null;
+    touchState.dragging = false;
+    STG.player.setTouchTarget(null);
   }
   function togglePause() {
     if (gameState === 'playing') { gameState = 'paused'; setTouchUI(false); document.getElementById('pauseOverlay').classList.remove('hide'); }
@@ -236,6 +240,14 @@ STG.main = (function() {
 
     // 经验升级(战斗暂停)
     if (pendingLevels > 0) { enterLevelUp(); return; }
+
+    // 触屏: 按住拖动 = 自动开火(Boss 时符期间停火); 桌面: 键盘 Z 走 shootKey
+    if (touchEnabled) {
+      var timeStop = STG.boss.alive() && STG.boss.phaseName() === 'time';
+      input.shoot = (touchState.dragging || input.shootKey) && !timeStop;
+    } else {
+      input.shoot = input.shootKey;
+    }
 
     // 低速时缓: 世界侧(敌弹/敌人/Boss/道具/自机弹)乘 SLOW_FACTOR
     var gdt = input.slow ? dt * C.SLOW_FACTOR : dt;
@@ -1150,75 +1162,74 @@ STG.main = (function() {
 
   // ── 移动端触摸(摇杆 + 右侧按钮 + 双指低速) ──
   function initTouch() {
-    // 收紧检测: 需要 touch 事件 + 粗指针(触摸屏), 触控板(maxTouchPoints>0)不算
-    var isTouch = ('ontouchstart' in window) &&
-      ((window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 1));
+    // 收紧检测: 需要 touch 事件 + 粗指针(触摸屏), 触控板(maxTouchPoints>0)不算; ?forcetouch 可在桌面预览
+    var isTouch = /forcetouch/i.test(window.location.search) ||
+      (('ontouchstart' in window) &&
+      ((window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 1)));
     if (!isTouch) return;
     touchEnabled = true;   // 仅触屏设备启用 setTouchUI 切换
     var ui = document.getElementById('touchUI');
     if (ui) ui.classList.remove('hide');
-    var joy = document.getElementById('joyArea');
-    var knob = document.getElementById('joyKnob');
-    var joyBase = document.getElementById('joyBase');
-    var btnShoot = document.getElementById('btnShoot');
     var btnBomb = document.getElementById('btnBomb');
-    var joyId = null, ox = 0, oy = 0;
-    var S2 = input;
 
-    function clearJoy() {
-      joyId = null;
-      S2.left = S2.right = S2.up = S2.down = false;
-      if (knob && joyBase) { joyBase.style.display = 'none'; knob.style.display = 'none'; }
+    function evPos(t) {
+      var r = cv.getBoundingClientRect();
+      return { x: (t.clientX - r.left) * (C.W / r.width), y: (t.clientY - r.top) * (C.H / r.height) };
     }
-    window.__joyClear = clearJoy;
-    window.addEventListener('blur', clearJoy);
-    joy.addEventListener('touchstart', function(e) {
+    // 触摸起点(轻点判定用)
+    function touchStart(e) {
       e.preventDefault();
-      var t = e.touches[0];
-      joyId = t.identifier;
-      ox = t.clientX; oy = t.clientY;
-      if (joyBase && knob) {
-        joyBase.style.display = 'block';
-        joyBase.style.left = (ox - 40) + 'px';
-        joyBase.style.top = (oy - 40) + 'px';
-        knob.style.display = 'block';
-        knob.style.left = (ox - 22) + 'px';
-        knob.style.top = (oy - 22) + 'px';
+      var t = e.changedTouches[0];
+      var now = performance.now();
+      // 双击: 350ms 内两次轻点(几乎无位移) → 放符卡
+      if (now - touchState.lastTapT < 350 &&
+          Math.abs(t.clientX - touchState.lastTapX) < 30 &&
+          Math.abs(t.clientY - touchState.lastTapY) < 30) {
+        touchState.lastTapT = 0;
+        if (gameState === 'playing') doBomb();
+        return;
       }
-      S2.slow = e.touches.length >= 2;   // 双指 = 低速
-    }, { passive: false });
-    joy.addEventListener('touchmove', function(e) {
+      touchState.lastTapT = now;
+      touchState.lastTapX = t.clientX;
+      touchState.lastTapY = t.clientY;
+      if (gameState !== 'playing') return;
+      if (touchState.dragId === null) {
+        touchState.dragId = t.identifier;
+        touchState.dragging = false;          // 移动超阈值才进入拖动
+        touchState.sx = t.clientX;
+        touchState.sy = t.clientY;
+      }
+    }
+    function touchMove(e) {
       e.preventDefault();
-      var t = null;
-      for (var i = 0; i < e.touches.length; i++) if (e.touches[i].identifier === joyId) { t = e.touches[i]; break; }
-      if (!t) return;
-      var dx = t.clientX - ox, dy = t.clientY - oy;
-      var L = Math.sqrt(dx * dx + dy * dy);
-      var max = 46;
-      if (L > max) { dx *= max / L; dy *= max / L; L = max; }
-      var dead = 8;
-      S2.left = dx < -dead; S2.right = dx > dead;
-      S2.up = dy < -dead; S2.down = dy > dead;
-      if (knob) knob.style.left = (ox + dx - 22) + 'px';
-      if (knob) knob.style.top = (oy + dy - 22) + 'px';
-      S2.slow = e.touches.length >= 2;
-    }, { passive: false });
-    joy.addEventListener('touchend', function(e) {
+      if (gameState !== 'playing' || touchState.dragId === null) return;
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        var t = e.changedTouches[i];
+        if (t.identifier !== touchState.dragId) continue;
+        var dd = Math.abs(t.clientX - touchState.sx) + Math.abs(t.clientY - touchState.sy);
+        if (!touchState.dragging && dd > 12) touchState.dragging = true;
+        if (touchState.dragging) {
+          var pp = evPos(t);
+          STG.player.setTouchTarget({ x: pp.x, y: pp.y - 90 });   // 角色保持在手指上方 90px
+        }
+      }
+    }
+    function touchEnd(e) {
       e.preventDefault();
-      var still = false;
-      for (var i = 0; i < e.touches.length; i++) if (e.touches[i].identifier === joyId) still = true;
-      if (!still) clearJoy();
-      S2.slow = e.touches.length >= 2;
-    }, { passive: false });
-    joy.addEventListener('touchcancel', function(e) { clearJoy(); }, { passive: false });
-    // 射击(按住) - touch + 鼠标双保险
-    btnShoot.addEventListener('touchstart', function(e) { e.preventDefault(); S2.shoot = true; }, { passive: false });
-    btnShoot.addEventListener('touchend', function(e) { e.preventDefault(); S2.shoot = false; }, { passive: false });
-    btnShoot.addEventListener('touchcancel', function() { S2.shoot = false; }, { passive: false });
-    btnShoot.addEventListener('pointerup', function() { S2.shoot = false; });
-    btnShoot.addEventListener('pointercancel', function() { S2.shoot = false; });
-    btnShoot.addEventListener('mouseup', function() { S2.shoot = false; });
-    // 符卡
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === touchState.dragId) {
+          touchState.dragId = null;
+          touchState.dragging = false;
+          STG.player.setTouchTarget(null);   // 松手: 停止移动/停火
+        }
+      }
+    }
+    cv.addEventListener('touchstart', touchStart, { passive: false });
+    cv.addEventListener('touchmove', touchMove, { passive: false });
+    cv.addEventListener('touchend', touchEnd, { passive: false });
+    cv.addEventListener('touchcancel', touchEnd, { passive: false });
+    window.addEventListener('blur', function() { touchState.dragId = null; touchState.dragging = false; STG.player.setTouchTarget(null); });
+    // 符卡按钮
     btnBomb.addEventListener('touchstart', function(e) { e.preventDefault(); if (gameState === 'playing') doBomb(); }, { passive: false });
   }
 

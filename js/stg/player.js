@@ -16,6 +16,7 @@ STG.player = (function() {
     invuln: 0,
     bombInvuln: 0,
     shootT: 0,
+    touchTarget: null,      // 触屏拖动目标点(角色跟随)
     gun: 'chase',           // chase / spread / cannon
     cState: 'charge',       // 魔炮: charge / beam / cool
     chargeT: 0, beamT: 0, coolT: 0,
@@ -50,29 +51,43 @@ STG.player = (function() {
     p.shootT = 0;
     p.face = 'stand';
     p.slow = false;
+    p.touchTarget = null;
     p.cState = 'charge'; p.chargeT = 0; p.beamT = 0; p.coolT = 0;
   }
+  function setTouchTarget(pt) { p.touchTarget = pt || null; }
   function setGun(gun) { p.gun = gun; p.cState = 'charge'; p.chargeT = 0; }
   function setMods(m) { p.mods = m || { speedMul: 1, hitMul: 1, shield: 0 }; }
   function setPerks(perks) { if (perks) p.perks = perks; }
   function perkLv(k) { return p.perks[k] || 0; }
 
   function update(dt, input, cb) {
-    var vx = (input.right ? 1 : 0) - (input.left ? 1 : 0);
-    var vy = (input.down ? 1 : 0) - (input.up ? 1 : 0);
-    p.slow = input.slow;
-    var spd = (p.slow ? C.PLAYER_SLOW : C.PLAYER_SPEED) * p.mods.speedMul;
-    // 魔炮蓄力减速
-    if (p.gun === 'cannon' && p.cState === 'charge' && input.shoot) spd *= C.CANNON_CHARGE_SLOW;
-    if (vx !== 0 && vy !== 0) { vx *= 0.7071; vy *= 0.7071; }
-    p.x += vx * spd * dt;
-    p.y += vy * spd * dt;
+    p.slow = false;
+    if (p.touchTarget) {
+      // 触屏拖动: 角色以低速平滑跟随触点(目标点在手指上方 90px)
+      p.slow = true;
+      var spd = C.PLAYER_SLOW * p.mods.speedMul * dt;
+      var tdx = p.touchTarget.x - p.x, tdy = p.touchTarget.y - p.y;
+      var tdist = Math.sqrt(tdx * tdx + tdy * tdy);
+      if (tdist <= spd || tdist < 1) { p.x = p.touchTarget.x; p.y = p.touchTarget.y; }
+      else { p.x += tdx / tdist * spd; p.y += tdy / tdist * spd; }
+      if (tdx < -2) p.face = 'left';
+      else if (tdx > 2) p.face = 'right';
+    } else {
+      var vx = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+      var vy = (input.down ? 1 : 0) - (input.up ? 1 : 0);
+      p.slow = input.slow;
+      var spd = (p.slow ? C.PLAYER_SLOW : C.PLAYER_SPEED) * p.mods.speedMul;
+      // 魔炮蓄力减速
+      if (p.gun === 'cannon' && p.cState === 'charge' && input.shoot) spd *= C.CANNON_CHARGE_SLOW;
+      if (vx !== 0 && vy !== 0) { vx *= 0.7071; vy *= 0.7071; }
+      p.x += vx * spd * dt;
+      p.y += vy * spd * dt;
+      if (vx < 0) p.face = 'left';
+      else if (vx > 0) p.face = 'right';
+      else if (vy === 0 && !input.shoot) p.face = 'stand';
+    }
     p.x = Math.max(14, Math.min(C.W - 14, p.x));
     p.y = Math.max(20, Math.min(C.RECOVER_Y - 6, p.y));
-
-    if (vx < 0) p.face = 'left';
-    else if (vx > 0) p.face = 'right';
-    else if (vy === 0 && !input.shoot) p.face = 'stand';
     p.anim += dt * 12;
     if (p.anim >= 8) p.anim -= 8;
 
@@ -214,7 +229,7 @@ STG.player = (function() {
   return {
     init: init, reset: reset, setMods: setMods, setGun: setGun, setPerks: setPerks, perkLv: perkLv,
     update: update, draw: draw, drawShot: drawShot,
-    hurt: hurt, hitR: hitR,
+    hurt: hurt, hitR: hitR, setTouchTarget: setTouchTarget,
     get x() { return p.x; }, get y() { return p.y; },
     get invuln() { return p.invuln; }, get bombInvuln() { return p.bombInvuln; },
     set invuln(v) { p.invuln = v; },

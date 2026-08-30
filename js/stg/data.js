@@ -52,7 +52,7 @@ STG.CONFIG = {
   GRAZE_WINDOW: 1.6,        // 连击窗口 s
   GRAZE_CD: 0.3,            // 擦弹触发冷却 s(防每帧重复计; 窗口内再次擦弹叠 combo)
   // ── 素材 ──
-  BGM_STAGE: 'audio/midi/Bad Apple.mid',   // 道中曲
+  BGM_STAGE: 'audio/midi/badapple.wav',   // 道中曲
   ASSETS: {
     marisa: 'images/stg/marisa.png',
     enemy:  'images/stg/enemy.png',
@@ -236,7 +236,7 @@ STG.BOSSES = [
   {
     name: '琪露诺', title: '湖之冰精 · ⑨', img: 'boss1', color: '#7cc4ff',
     n1: 'b3', n2: 'b1',
-    bgm: 'audio/midi/baka.mid',
+    bgm: 'audio/midi/baka.wav',
     spells: ['冰符·完美冻结', '霜符·冻气蔓延'],
     timeSpell: { name: '九秒的冰狱', dur: 30 },
     segHp: 5100, hpMul: 1
@@ -244,7 +244,7 @@ STG.BOSSES = [
   {
     name: '芙兰朵露', title: '红魔之妹', img: 'boss2', color: '#ff6b6b',
     n1: 'b2', n2: 'b6',
-    bgm: 'audio/midi/fulanduolu.mid',
+    bgm: 'audio/midi/fulanduolu.wav',
     spells: ['禁忌·红魔法', '秘弹·莱瓦汀'],
     timeSpell: { name: '毁灭之夜', dur: 30 },
     dash: true,
@@ -253,7 +253,7 @@ STG.BOSSES = [
   {
     name: '风见幽香', title: '四季鲜花之主', img: 'boss3', color: '#6fcf97',
     n1: 'b5', n2: 'b1',
-    bgm: 'audio/midi/fengjianyouxiang.mid',
+    bgm: 'audio/midi/fengjianyouxiang.wav',
     spells: ['花符·幻想乡的开花', '春花·幻想春花'],
     timeSpell: { name: '花之困境', dur: 45 },
     dash: true,
@@ -262,7 +262,7 @@ STG.BOSSES = [
   {
     name: '蕾米莉亚', title: '永远的红幼月', img: 'boss4', color: '#d63a5f',
     n1: 'b2', n2: 'b5',
-    bgm: 'audio/midi/leimiliya.mid',
+    bgm: 'audio/midi/leimiliya.wav',
     spells: ['神枪·冈格尼尔', '夜符·黑夜狂欢'],
     timeSpell: { name: '永夜红月', dur: 45 },
     night: true,
@@ -271,7 +271,7 @@ STG.BOSSES = [
   {
     name: '八云紫', title: '境界的妖怪贤者', img: 'boss5', color: '#b06ad4',
     n1: 'b6', n2: 'b5',
-    bgm: 'audio/midi/bayunzi.mid',
+    bgm: 'audio/midi/bayunzi.wav',
     spells: ['不思议结界', '境符·梦与现实', '罔两·八云紫的神隐'],
     timeSpell: { name: '境界之牢', dur: 60 },
     segHp: 5600, hpMul: 2
@@ -279,7 +279,7 @@ STG.BOSSES = [
   {
     name: '幽幽子', title: '幽冥的亡者公主', img: 'boss6', color: '#e8b4d8',
     n1: 'b6', n2: 'b1',
-    bgm: 'audio/midi/youyouzi.mid',
+    bgm: 'audio/midi/youyouzi.wav',
     spells: ['亡我乡·无道之道', '死符·逆死之蝶', '樱符·樱吹雪'],
     timeSpell: { name: '无常之春', dur: 60 },
     segHp: 6500, hpMul: 2.3
