@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>星之魔弹 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+#mmsAuthEntry{display:none !important;}   /* 游戏页不需要登录入口 */
+html,body{height:100%;}
+body{background:var(--bg,#1a1520);font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:16px;padding-top:72px;color:var(--text,#e0d8ec);user-select:none;-webkit-user-select:none;overscroll-behavior:none;}
+.game-shell{position:relative;width:100%;max-width:480px;border-radius:18px;overflow:hidden;border:1px solid var(--border,#3a3045);box-shadow:0 25px 50px -12px rgba(0,0,0,.8);background:#0a0612;touch-action:none;}
+canvas#game{display:block;width:100%;height:auto;aspect-ratio:3/4;image-rendering:pixelated;}
+.overlay{position:absolute;inset:0;background:rgba(10,6,18,.88);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;z-index:10;}
+.overlay.hide{display:none;}
+.ov-title{font-size:44px;font-weight:900;letter-spacing:8px;color:#f0c060;text-shadow:0 0 28px rgba(240,192,96,.45);margin-bottom:6px;}
+.ov-sub{font-size:12px;color:#b89fff;letter-spacing:6px;margin-bottom:22px;}
+.ov-desc{font-size:12px;color:#8a7e9a;line-height:2;margin-bottom:26px;}
+.ov-desc b{color:#f0c060;}
+.ctrl{display:inline-block;font-size:11px;color:#6d6278;border:1px solid #3a3045;border-radius:8px;padding:3px 10px;margin:2px;background:rgba(255,255,255,.03);}
+/* 玩法介绍 */
+.howto{width:100%;max-width:340px;margin-bottom:26px;}
+.howto-line{display:flex;align-items:center;gap:10px;font-size:13px;color:#e0d8ec;padding:8px 14px;border:1px solid rgba(58,48,69,.6);border-radius:12px;margin-bottom:8px;background:rgba(255,255,255,.03);text-align:left;}
+.howto-line b{color:#f0c060;}
+.howto-ico{font-size:16px;flex-shrink:0;}
+.ov-btn{margin-top:10px;font-size:17px;font-weight:800;padding:13px 58px;border-radius:16px;border:none;background:linear-gradient(135deg,#f0c060,#e8a830);color:#1a1520;cursor:pointer;letter-spacing:6px;font-family:inherit;box-shadow:0 8px 28px rgba(240,192,96,.25);transition:transform .15s;}
+.ov-btn:hover{transform:scale(1.04);}
+.ov-btn:active{transform:scale(.96);}
+.ov-btn2{margin-top:8px;font-size:13px;font-weight:700;padding:10px 30px;border-radius:12px;border:1px solid #3a3045;background:rgba(255,255,255,.03);color:#b89fff;cursor:pointer;letter-spacing:2px;font-family:inherit;}
+.ov-score{font-size:26px;font-weight:900;color:#f0c060;letter-spacing:2px;margin-bottom:18px;}
+.ov-note{font-size:10px;color:#5a4c6e;margin-top:18px;letter-spacing:2px;}
+.lv-row{display:flex;gap:10px;width:100%;max-width:440px;justify-content:center;}
+.lv-card{flex:1;max-width:136px;background:rgba(255,255,255,.04);border:2px solid #3a3045;border-radius:16px;padding:14px 8px 12px;cursor:pointer;text-align:center;transition:transform .12s,border-color .12s;position:relative;}
+.lv-card:hover{transform:translateY(-3px);border-color:#f0c060;}
+.lv-icon{font-size:30px;margin-bottom:6px;}
+.lv-name{font-size:13px;font-weight:800;color:#e0d8ec;margin-bottom:3px;}
+.lv-rarity{font-size:9px;margin-bottom:6px;}
+.lv-desc{font-size:10px;color:#8a7e9a;line-height:1.5;min-height:30px;}
+.lv-key{position:absolute;top:6px;right:9px;font-size:10px;color:#5a4c6e;border:1px solid #3a3045;border-radius:6px;width:16px;height:16px;line-height:15px;}
+.lv-tag{position:absolute;top:6px;left:8px;font-size:8px;color:#f0c060;border:1px solid rgba(240,192,96,.4);border-radius:6px;padding:1px 5px;letter-spacing:1px;}
+/* 选炮 */
+.gun-row{display:flex;gap:10px;width:100%;max-width:460px;justify-content:center;}
+.gun-card{flex:1;max-width:142px;background:rgba(255,255,255,.04);border:2px solid #3a3045;border-radius:18px;padding:18px 10px 14px;cursor:pointer;text-align:center;transition:transform .12s,border-color .12s;position:relative;}
+.gun-card:hover{transform:translateY(-4px);border-color:#f0c060;}
+.gun-icon{font-size:34px;margin-bottom:8px;}
+.gun-name{font-size:16px;font-weight:900;color:#f0c060;letter-spacing:2px;margin-bottom:4px;}
+.gun-sub{font-size:9px;color:#b89fff;letter-spacing:1px;margin-bottom:10px;}
+.gun-desc{font-size:10px;color:#8a7e9a;line-height:1.6;min-height:48px;margin-bottom:10px;}
+.gun-stats{font-size:10px;color:#6d6278;}
+/* Build 一览 */
+.build-list{width:100%;max-width:300px;margin-bottom:14px;max-height:60%;overflow-y:auto;}
+.build-head{font-size:14px;font-weight:900;color:#f0c060;letter-spacing:2px;padding:8px 12px;border:1px solid rgba(240,192,96,.35);border-radius:10px;margin-bottom:8px;background:rgba(240,192,96,.06);}
+.build-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px 8px;font-size:10px;color:#8a7e9a;margin-bottom:10px;padding:9px 12px;border:1px solid rgba(124,196,255,.3);border-radius:10px;background:rgba(124,196,255,.05);}
+.build-stats b{color:#7cc4ff;font-weight:700;}
+.build-item{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#e0d8ec;padding:7px 12px;border-bottom:1px solid rgba(58,48,69,.5);}
+.build-lv{color:#f0c060;font-weight:800;font-size:11px;}
+.build-empty{font-size:11px;color:#6d6278;text-align:center;padding:20px 0;}
+/* 暂停按钮 */
+.pause-btn{position:absolute;top:8px;right:8px;z-index:20;width:30px;height:30px;border-radius:9px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.35);color:#e0d8ec;font-size:14px;cursor:pointer;line-height:1;}
+/* 触摸 UI */
+#touchUI{position:absolute;inset:0;z-index:15;pointer-events:none;}
+#touchUI.hide{display:none;}
+#joyArea{position:absolute;left:0;top:0;width:60%;height:100%;pointer-events:auto;}
+#joyBase{position:absolute;width:80px;height:80px;border-radius:50%;border:2px solid rgba(240,192,96,.5);background:rgba(240,192,96,.08);display:none;}
+#joyKnob{position:absolute;width:44px;height:44px;border-radius:50%;background:rgba(240,192,96,.5);border:2px solid rgba(240,192,96,.8);display:none;}
+#btnShoot{position:absolute;right:16px;bottom:110px;width:86px;height:86px;border-radius:50%;border:2px solid rgba(255,107,157,.7);background:rgba(255,107,157,.18);color:#ffb3c9;font-size:15px;font-weight:800;pointer-events:auto;display:flex;align-items:center;justify-content:center;}
+#btnBomb{position:absolute;right:16px;bottom:16px;width:64px;height:64px;border-radius:50%;border:2px solid rgba(124,196,255,.7);background:rgba(124,196,255,.15);color:#a8d8ff;font-size:13px;font-weight:800;pointer-events:auto;display:flex;align-items:center;justify-content:center;}
+.hints{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:14px;}
+.hint-chip{font-size:11px;color:#8a7e9a;border:1px solid #3a3045;border-radius:20px;padding:4px 12px;letter-spacing:1px;}
+.foot{font-size:10px;color:#5a4c6e;margin-top:14px;letter-spacing:2px;}
+/* 调试栏(URL 带 ?debug 时出现) */
+#dbgBar{position:fixed;left:8px;top:52px;z-index:500;display:flex;gap:4px;align-items:center;background:rgba(10,6,18,.88);border:1px solid rgba(255,157,184,.55);border-radius:10px;padding:5px 8px;}
+.dbg-t{font-weight:900;color:#ff9db8;font-size:11px;letter-spacing:1px;}
+.dbg-s{color:#8a7e9a;font-size:10px;margin:0 2px;}
+.dbg-btn{background:rgba(255,157,184,.1);border:1px solid rgba(255,157,184,.45);color:#ffb3c9;border-radius:6px;font-size:11px;padding:2px 8px;cursor:pointer;font-family:inherit;}
+.dbg-btn:hover{background:rgba(255,157,184,.25);}
+.dbg-btn.dbg-on{background:rgba(184,159,255,.35);border-color:#b89fff;color:#e0d8f8;}
+/* 迷你排行榜 */
+.lb-mini{border:1px solid #3a3045;border-radius:12px;padding:8px 10px;background:rgba(255,255,255,.03);}
+.lb-t{font-size:11px;font-weight:800;color:#f0c060;margin-bottom:5px;letter-spacing:1px;}
+.lb-empty{font-size:10px;color:#6d6278;text-align:center;padding:4px 0;}
+.lb-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#c4b5fd;padding:2px 0;gap:6px;}
+.lb-ava{width:16px;height:16px;border-radius:50%;flex-shrink:0;}
+.lb-rank{color:#5a4c6e;width:16px;flex-shrink:0;}
+.lb-name{flex:1;text-align:left;color:#e0d8ec;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lb-score{color:#f0c060;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="game-shell">
+  <canvas id="game" width="480" height="640"></canvas>
+  <button class="pause-btn" id="btnPause" title="暂停">⏸</button>
+
+  <!-- 触摸操作 -->
+  <div id="touchUI" class="hide">
+    <div id="joyArea"></div>
+    <div id="joyBase"></div>
+    <div id="joyKnob"></div>
+    <div id="btnShoot">射击<br>按住</div>
+    <div id="btnBomb">符卡</div>
+  </div>
+
+  <!-- 标题 -->
+  <div class="overlay" id="titleOverlay">
+    <div class="ov-title">星之魔弹</div>
+    <div class="ov-sub">STAR MAGIC BULLET · 东方风弹幕STG</div>
+    <div class="ov-desc" style="margin-bottom:34px;">
+      魔法之森的夜晚,星屑漫天。<br>
+      魔理沙的弹幕就是她的语言——<br>
+      <b>躲过、擦过、击碎</b>,一路向着最深处的夜空。
+    </div>
+    <div id="titleBest" style="font-size:13px;font-weight:700;color:#f0c060;letter-spacing:2px;margin-bottom:18px;min-height:18px;"></div>
+    <button class="ov-btn" id="btnStart">开 始 游 戏</button>
+    <div id="lbArea" style="width:100%;max-width:290px;margin-top:16px;"></div>
+    <div class="ov-note" style="margin-top:24px;">霧雨魔法店 · 星之魔弹</div>
+  </div>
+
+  <!-- 玩法介绍 -->
+  <div class="overlay hide" id="howtoOverlay">
+    <div class="ov-title" style="font-size:26px;letter-spacing:5px;">玩法介绍</div>
+    <div class="ov-sub" style="margin-bottom:20px;">HOW TO PLAY</div>
+    <div class="howto">
+      <div class="howto-line"><span class="howto-ico">🕹</span>方向键移动 · <b>Shift</b> 低速走位</div>
+      <div class="howto-line"><span class="howto-ico">⚡</span><b>Z</b> 射击 · <b>X</b> 符卡清屏无敌</div>
+      <div class="howto-line"><span class="howto-ico">💠</span>贴近弹幕擦弹得分</div>
+      <div class="howto-line"><span class="howto-ico">👑</span>每关击败道中强敌与 BOSS</div>
+      <div class="howto-line"><span class="howto-ico">✨</span>击杀敌人升级,三选一强化构筑</div>
+      <div class="howto-line"><span class="howto-ico">🔧</span>开局选择主炮,流派由你决定</div>
+    </div>
+    <button class="ov-btn" id="btnHowtoGo">进 入 选 炮</button>
+    <div class="ov-note">手机端:左半屏摇杆 · 右侧按钮 · 双指低速</div>
+  </div>
+
+  <!-- 选炮 -->
+  <div class="overlay hide" id="gunOverlay">
+    <div class="ov-title" style="font-size:28px;letter-spacing:5px;">选择主炮</div>
+    <div class="ov-sub" style="margin-bottom:18px;">MAGIC GUN SELECT · 决定本局构筑</div>
+    <div class="gun-row" id="gunCards"></div>
+    <div class="ov-note">按 1 / 2 / 3 或点击选择</div>
+  </div>
+
+  <!-- 暂停 / 设置 -->
+  <div class="overlay hide" id="pauseOverlay">
+    <div class="ov-title" style="font-size:30px;letter-spacing:6px;">暂 停</div>
+    <button class="ov-btn" id="btnResume">继 续</button>
+    <button class="ov-btn2" id="btnBuild">📋 我的强化</button>
+    <div style="font-size:10px;color:#6d6278;margin-top:14px;letter-spacing:2px;">⚙ 游戏设置</div>
+    <button class="ov-btn2" id="btnMute">🔊 音效开</button>
+    <button class="ov-btn2" id="btnBgm">🎵 BGM:中</button>
+    <div class="ov-desc" style="margin:10px 0 0;font-size:10px;">
+      方向键 移动 · Shift 低速 · Z 射击 · X 符卡<br>
+      手机:左半屏摇杆 · 右侧射击/符卡 · 双指低速<br>
+      擦弹加分 · 开局回收线提示 · 每 100 万分奖符卡
+    </div>
+    <button class="ov-btn2" id="btnPauseRestart" style="color:#ff7b7b;">重新开始</button>
+  </div>
+
+  <!-- 我的强化(Build 一览) -->
+  <div class="overlay hide" id="buildOverlay" style="justify-content:flex-start;padding-top:56px;">
+    <div class="ov-title" style="font-size:24px;letter-spacing:4px;">我的强化</div>
+    <div class="ov-sub" style="margin-bottom:12px;">BUILD OVERVIEW</div>
+    <div class="build-list" id="buildList"></div>
+    <button class="ov-btn2" id="btnBuildBack">返 回</button>
+  </div>
+
+  <!-- 败北 -->
+  <div class="overlay hide" id="deadOverlay">
+    <div class="ov-title" style="font-size:34px;color:#ff7b7b;text-shadow:0 0 24px rgba(255,123,123,.4);">灵力耗尽</div>
+    <div class="ov-sub">GAME OVER</div>
+    <div class="ov-score" id="deadScore">00000000 分</div>
+    <button class="ov-btn" id="btnRestart">再 来 一 局</button>
+    <div class="ov-note">分数奖励残机 · 擦弹与符卡是活下去的关键</div>
+  </div>
+
+  <!-- 升级三选一 -->
+  <div class="overlay hide" id="lvOverlay" style="justify-content:flex-start;padding-top:80px;">
+    <div class="ov-title" id="lvTitle" style="font-size:26px;letter-spacing:4px;">选择你的魔法</div>
+    <div class="ov-sub" style="margin-bottom:16px;">星之魔弹 · 强化</div>
+    <div class="lv-row" id="lvCards"></div>
+    <div class="ov-note">按 1 / 2 / 3 或点击选择</div>
+  </div>
+</div>
+
+<div class="foot">霧雨魔法店 · 星之魔弹</div>
+
+<script src="js/stg/data.js"></script>
+<script src="js/stg/engine.js"></script>
+<script src="js/stg/player.js"></script>
+<script src="js/stg/bullets.js"></script>
+<script src="js/stg/enemies.js"></script>
+<script src="js/stg/options.js"></script>
+<script src="js/stg/boss.js"></script>
+<script src="js/stg/midi.js"></script>
+<script src="js/stg/main.js"></script>
+</body>
+</html>

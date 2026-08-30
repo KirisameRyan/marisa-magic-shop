@@ -976,7 +976,7 @@
     ctx.textBaseline = 'bottom';
     ctx.fillStyle = '#ffffff';
     ctx.shadowColor = 'rgba(0,0,0,.8)'; ctx.shadowBlur = 3;
-    ctx.fillText('抖音：@春雪莎', W / 2, H - 8);
+    ctx.fillText('B站：南彗Nahui', W / 2, H - 8);
     ctx.restore();
     ctx.restore();
   }

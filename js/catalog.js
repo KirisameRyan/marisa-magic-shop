@@ -16,7 +16,8 @@ window.MMS_CATALOG = {
     { href: 'demo_roulette.html',   emoji: '🔫', name: '轮盘赌局',     tag: '双人心理博弈',       color: 'gold', desc: '一把左轮六枚弹膛。装弹、留话、朝谁开枪？三局两胜，挑战 AI 或匹配真人，读完对面再扣扳机。' },
     { href: 'kongcheng.html',       emoji: '🎭', name: '空城计',       tag: '卖楼不盖模拟',       color: 'purple', desc: '你是许家印。拿地→预售圈钱→财务魔术，把空城卖给后来者，看崩盘时你卷走了几个许家印。' },
     { href: 'band-story.html',      emoji: '🎸', name: '乐队人生',     tag: '剧情选择游戏',       color: 'purple', desc: '18 岁，高考落榜，你决定把人生押给一把吉他。20 个节点，16 种结局，滚圈黑话浓度预警。' },
-    { href: 'baka.html',            emoji: '⑨', name: '合成大BAKA',   tag: '合成大西瓜like',     color: 'blue', desc: '相同的琪露诺碰到一起就会合体进化！从⑨一路合成到大BAKA。连锁 3 连获得小锤子敲掉挡路的笨蛋，立绘大特写等着你。' }
+    { href: 'baka.html',            emoji: '⑨', name: '合成大BAKA',   tag: '合成大西瓜like',     color: 'blue', desc: '相同的琪露诺碰到一起就会合体进化！从⑨一路合成到大BAKA。连锁 3 连获得小锤子敲掉挡路的笨蛋，立绘大特写等着你。' },
+    { href: 'stg.html',             emoji: '🌟', name: '星之魔弹',     tag: '东方风弹幕STG',      color: 'purple', desc: '躲过、擦过、击碎！魔理沙的弹幕就是她的语言：擦弹连击得分，每关道中强敌 + Boss 符卡战，升级三选一构筑，三种主炮由你决定。触屏+键盘双支持。' }
   ],
   // ── 🔥 热门测试 ──
   hot: [
@@ -28,6 +29,7 @@ window.MMS_CATALOG = {
   ],
   // ── 🆕 最新上线 ──
   latest: [
+    { href: 'stg.html',           emoji: '🌟', name: '星之魔弹',     tag: '东方风弹幕STG', color: 'purple', desc: '躲过、擦过、击碎！擦弹连击得分，每关道中强敌 + Boss 符卡战，升级三选一构筑你的魔法。' },
     { href: 'marisa_auction.html',  emoji: '🔨', name: '幻想乡拍卖会',   tag: '四人暗拍博弈',       color: 'gold', desc: '对标《竞拍之王》：盲拍货柜只看格数，5 轮暗标+情报技能+假情报坑人，拍下仓库即刻开箱，先废铁后传说！' },
     { href: 'polo_ball.html',     emoji: '⚔️', name: '抽象角色大乱斗', tag: '物理弹跳对战', color: 'red', desc: '玩法模仿 Polo 小球：选人即开打，纯观战物理大战。残血狂暴，90 秒按血量定生死。' },
     { href: 'quiz-jiahao.html',   emoji: '🖤', name: '测测你的嘉豪程度', tag: '嘉豪检测', color: 'dark', desc: '25 道灵魂检测 · 五维雷达图。从普通人到自在极意豪——看看你距离嘉豪还有多远。' },
