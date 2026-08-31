@@ -1210,7 +1210,7 @@ STG.main = (function() {
         if (!touchState.dragging && dd > 12) touchState.dragging = true;
         if (touchState.dragging) {
           var pp = evPos(t);
-          STG.player.setTouchTarget({ x: pp.x, y: pp.y - 90 });   // 角色保持在手指上方 90px
+          if (STG.player.setTouchTarget) STG.player.setTouchTarget({ x: pp.x, y: pp.y - 90 });   // 角色保持在手指上方 90px(防旧版 player.js 无此方法时抛错)
         }
       }
     }

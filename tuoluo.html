@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>抽陀螺模拟器 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<style>
+:root { --g-bg:#1a1520; --g-card:#241e2a; --g-border:#3a3045; --g-gold:#f0c060; --g-gold-dim:#a08050;
+        --g-purple:#b89fff; --g-text:#e0d8ec; --g-muted:#8a7e9a; --g-green:#6fcf97; --g-red:#ef4444; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--g-bg);
+  color:var(--g-text); min-height:100vh; padding:64px 10px 16px; display:flex; flex-direction:column; align-items:center; }
+.wrap { width:100%; max-width:520px; display:flex; flex-direction:column; flex:1; min-height:0; }
+.gold-text { background:linear-gradient(135deg,var(--g-gold),#ffe8b0,var(--g-gold)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.muted { color:var(--g-muted); }
+
+/* ── 顶栏 ── */
+.topbar { display:flex; align-items:center; justify-content:space-between; gap:10px;
+  background:var(--g-card); border:1px solid var(--g-border); border-radius:14px; padding:8px 14px; margin-bottom:10px; }
+.topbar .t { font-size:9px; color:var(--g-muted); letter-spacing:1px; }
+.topbar .v { font-size:18px; font-weight:900; font-variant-numeric:tabular-nums; }
+.topbar .title { font-size:16px; font-weight:900; letter-spacing:2px; }
+#scoreBadge { display:none; text-align:right; }
+#scoreBadge.show { display:block; }
+#lbBtn { border:none; border-radius:12px; padding:8px 14px; font-size:13px; font-weight:800; cursor:pointer;
+  background:linear-gradient(135deg,var(--g-gold),#c89a40); color:#1a1520; font-family:inherit; }
+#lbBtn:disabled { opacity:.5; cursor:default; }
+
+/* ── 游戏容器 ── */
+.game-frame { position:relative; flex:1; min-height:0; background:#000;
+  border:1px solid var(--g-border); border-radius:18px; overflow:hidden; }
+.game-frame iframe { position:absolute; inset:0; width:100%; height:100%; border:0; background:#0f0d14; }
+
+/* ── 引导条(首屏提示) ── */
+.hint-bar { display:flex; align-items:center; gap:8px; margin:10px 2px 2px;
+  font-size:11px; color:var(--g-muted); }
+.hint-bar b { color:var(--g-gold); }
+
+/* ── 结算成绩条(Unity postMessage 到达后显示) ── */
+.score-strip { display:none; margin-top:10px; background:var(--g-card); border:1px solid var(--g-border);
+  border-radius:14px; padding:12px 14px; }
+.score-strip.show { display:block; animation:fadeUp .35s ease both; }
+@keyframes fadeUp { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;} }
+.score-strip .row1 { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.score-strip .score { font-size:26px; font-weight:900; color:var(--g-gold); font-variant-numeric:tabular-nums; }
+.score-strip .rating { font-size:13px; color:var(--g-purple); font-weight:700; }
+.score-strip .stats { font-size:11px; color:var(--g-muted); margin-top:4px; }
+#lbArea { margin-top:8px; }
+.lb-note { font-size:10px; color:var(--g-muted); margin-top:6px; }
+@media (max-width:420px){ .game-frame{ border-radius:14px; } }
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="wrap">
+
+  <!-- ═══════ 顶栏 ═══════ -->
+  <div class="topbar">
+    <div>
+      <div class="t">🌀 抽陀螺模拟器</div>
+      <div class="title gold-text">抽不完的陀螺 · 转不完的梗</div>
+    </div>
+    <div id="scoreBadge">
+      <div class="t">本次得分</div>
+      <div class="v" id="scoreVal" style="color:var(--g-gold)">0</div>
+    </div>
+  </div>
+
+  <!-- ═══════ Unity WebGL ═══════ -->
+  <div class="game-frame">
+    <iframe id="gameIframe" src="unity/tuoluo/index.html" allow="autoplay; fullscreen" loading="eager"></iframe>
+  </div>
+
+  <div class="hint-bar">
+    <span>🎮 音符落过金色判定线时 <b>点击 / 按空格</b> 抽打</span>
+    <span style="margin-left:auto">转速归零 = 结束</span>
+  </div>
+
+  <!-- ═══════ 成绩条(Unity 结算后回传) ═══════ -->
+  <div class="score-strip" id="scoreStrip">
+    <div class="row1">
+      <div>
+        <div class="score" id="fScore">0</div>
+        <div class="stats" id="fStats"></div>
+      </div>
+      <div style="text-align:right;">
+        <button id="lbBtn" onclick="submitScore()">🏆 提交排行榜</button>
+        <div class="rating" id="fRating"></div>
+      </div>
+    </div>
+    <div id="lbArea"></div>
+    <div class="lb-note">成绩由游戏内自动回传 · 排行榜需登录账号 · 同一账号每榜仅保留最高分</div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════ 抽陀螺模拟器 · 页面壳 ═══════════
+var LAST = { score:0, perfects:0, maxCombo:0, rating:'' };
+
+// Unity WebGL 通过 postMessage 回传结算成绩
+window.addEventListener('message', function(ev) {
+  var d = ev.data;
+  if (!d || d.type !== 'tuoluo_score') return;
+  LAST.score = d.score || 0;
+  LAST.perfects = d.perfects || 0;
+  LAST.maxCombo = d.maxCombo || 0;
+  LAST.rating = d.rating || '';
+  document.getElementById('scoreBadge').classList.add('show');
+  document.getElementById('scoreVal').textContent = LAST.score;
+  var strip = document.getElementById('scoreStrip');
+  strip.classList.remove('show');
+  void strip.offsetWidth;
+  strip.classList.add('show');
+  document.getElementById('fScore').textContent = LAST.score;
+  document.getElementById('fRating').textContent = LAST.rating;
+  document.getElementById('fStats').textContent = '最高连击 ' + LAST.maxCombo + ' · 完美 ' + LAST.perfects + ' 鞭';
+  document.getElementById('lbArea').innerHTML = '';
+  var btn = document.getElementById('lbBtn');
+  btn.disabled = false;
+  btn.textContent = '🏆 提交排行榜';
+});
+
+// ═══════════ 排行榜提交(与鹿管大作战同款) ═══════════
+function submitScore(){
+  var btn = document.getElementById('lbBtn');
+  if(!window.Auth || !Auth.isLoggedIn()){
+    Auth.openModal('login', function(){ submitScore(); });
+    return;
+  }
+  btn.disabled = true; btn.textContent = '提交中…';
+  var f = new FormData();
+  f.append('score', String(LAST.score));
+  f.append('graze', String(LAST.perfects));
+  fetch(API_BASE + 'api/leaderboard.php?game=tuoluo', {
+    method:'POST', body:f, headers:{ 'Authorization':'Bearer '+Auth.token() }
+  }).then(function(r){ return r.json(); }).then(function(res){
+    btn.disabled = false;
+    if(res.ok) btn.textContent = '✅ 已上榜 · 第 '+res.rank+' 名';
+    else btn.textContent = '⚠️ '+(res.error||'提交失败');
+  }).catch(function(){ btn.disabled = false; btn.textContent = '网络错误'; });
+}
+</script>
+</body>
+</html>

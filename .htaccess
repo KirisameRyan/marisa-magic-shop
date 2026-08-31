@@ -5,3 +5,8 @@
     RewriteCond %{HTTP_REFERER} !^https?://(www\.)?azureflame\.cloud/ [NC]
     RewriteRule .* - [F,L]
 </FilesMatch>
+
+# ── Unity WebGL 支持(抽陀螺模拟器)──
+AddType application/wasm .wasm
+AddType application/octet-stream .data
+AddEncoding br .br
