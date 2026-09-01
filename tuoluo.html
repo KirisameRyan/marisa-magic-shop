@@ -56,6 +56,24 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
   touch-action:manipulation; }
 .btn-ghost:active { background:var(--g-gold); color:#1a1520; }
 
+/* 开始界面致谢 */
+.ov-credit { margin-top:14px; padding:8px 12px; font-size:11px; color:var(--g-muted);
+  background:rgba(255,255,255,.03); border:1px solid var(--g-border); border-radius:10px;
+  line-height:1.6; letter-spacing:.3px; }
+.ov-credit a { color:var(--g-gold); text-decoration:none; font-weight:700; }
+.ov-credit a:hover { text-decoration:underline; }
+
+/* ── loading 蒙层（Unity 加载期间） ── */
+.loading-mask { position:absolute; inset:0; z-index:30; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(26,21,32,.98); border-radius:18px; }
+.loading-mask.hide { display:none; }
+.loading-spinner { width:48px; height:48px; border:4px solid var(--g-border); border-top-color:var(--g-gold); border-radius:50%; animation:spin 1s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.loading-text { margin-top:16px; font-size:14px; color:var(--g-muted); }
+.loading-progress { margin-top:12px; width:200px; height:4px; background:var(--g-border); border-radius:2px; overflow:hidden; }
+.loading-progress-bar { width:0%; height:100%; background:linear-gradient(90deg,var(--g-gold),#f0c060); transition:width .3s; }
+.loading-error { margin-top:16px; color:#ef4444; font-size:13px; text-align:center; }
+.loading-retry { margin-top:12px; padding:8px 20px; border:none; border-radius:10px; background:linear-gradient(135deg,var(--g-gold),#e8a830); color:#1a1520; font-weight:700; cursor:pointer; display:none; }
+
 /* 难度选择 */
 .diff-title { font-size:13px; color:var(--g-muted); margin:8px 0 8px; letter-spacing:2px; }
 .diff-row { display:flex; gap:8px; margin-bottom:14px; }
@@ -150,6 +168,15 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
   <div class="game-frame">
     <iframe id="gameIframe" src="unity/tuoluo/index.html" allow="autoplay; fullscreen" loading="eager"></iframe>
 
+    <!-- ── loading 蒙层（Unity 加载期间） ── -->
+    <div class="loading-mask" id="loadingMask">
+      <div class="loading-spinner"></div>
+      <div class="loading-text" id="loadingText">游戏资源加载中…</div>
+      <div class="loading-progress"><div class="loading-progress-bar" id="loadingProgress"></div></div>
+      <div class="loading-error" id="loadingError"></div>
+      <button class="loading-retry" id="loadingRetry" onclick="location.reload()">重新加载</button>
+    </div>
+
     <!-- ── 开始 overlay ── -->
     <div class="overlay" id="startOverlay">
       <div class="ov-logo">🌀</div>
@@ -182,6 +209,9 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
             · <b>操作</b>:鼠标点击 / 空格 / 触屏抽打;顶栏按钮暂停与静音
           </div>
         </div>
+      </div>
+      <div class="ov-credit">
+        游戏音频来源 <a href="https://space.bilibili.com/" target="_blank">@蔚蓝边际</a> · 程序开发参考了 <a href="https://space.bilibili.com/" target="_blank">@半岛铁盒的韵</a>
       </div>
     </div>
 
