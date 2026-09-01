@@ -85,52 +85,36 @@
   // 事件徽章
   function showEventBadge(name, good) {
     var b = $('eventBadge');
-    if (!b) return;
     b.textContent = name;
     b.classList.remove('good', 'bad');
     b.classList.add(good ? 'good' : 'bad');
     b.style.display = 'block';
   }
   function hideEventBadge() {
-    var b = $('eventBadge');
-    if (b) b.style.display = 'none';
+    $('eventBadge').style.display = 'none';
   }
 
-  // 结算显示(全量判空, 任何元素缺失也不中断)
+  // 结算显示
   function showResult() {
     saveBest(LAST.score);
 
-    var team = LAST.team || 'GAM';
-    var desc = LAST.desc || '';
-
-    // 根据 team 选战队图片
-    var imgName = team.toLowerCase();
+    // 根据 tier 选战队图片
+    var imgName = LAST.team.toLowerCase();
+    // 特殊处理 Gen.G
     if (imgName === 'gen.g') imgName = 'geng';
-    var img = $('rTeamImg');
-    if (img) {
-      img.onerror = function () { img.style.display = 'none'; }; // 图片加载失败隐藏, 不挡文字
-      img.src = 'images/tes/' + imgName + '.webp';
-      img.alt = team;
-    }
-    var teamName = $('rTeamName');
-    if (teamName) teamName.textContent = team;
-    var flavor = $('rFlavor');
-    if (flavor) flavor.textContent = '根据你的抽陀螺手法 你的战力级别是 ' + team + '!';
-    var dsc = $('rDesc');
-    if (dsc) dsc.textContent = desc;
-    var sc = $('rScore');
-    if (sc) sc.textContent = (LAST.score || 0).toLocaleString();
-    var cb = $('rCombo');
-    if (cb) cb.textContent = (LAST.maxCombo || 0).toLocaleString();
-    var pf = $('rPerfect');
-    if (pf) pf.textContent = (LAST.perfects || 0).toLocaleString();
-    var rbs = $('rBest');
-    if (rbs) rbs.textContent = (Math.max(parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0, LAST.score || 0)).toLocaleString();
 
-    var lb = $('lbBtn');
-    if (lb) lb.style.display = '';
-    var la = $('lbArea');
-    if (la) la.innerHTML = '';
+    $('rTeamImg').src = 'images/tes/' + imgName + '.webp';
+    $('rTeamImg').alt = LAST.team;
+    $('rTeamName').textContent = LAST.team;
+    $('rFlavor').textContent = '根据你的抽陀螺手法 你的战力级别是 ' + LAST.team + '!';
+    $('rDesc').textContent = LAST.desc;
+    $('rScore').textContent = LAST.score.toLocaleString();
+    $('rCombo').textContent = LAST.maxCombo.toLocaleString();
+    $('rPerfect').textContent = LAST.perfects.toLocaleString();
+    $('rBest').textContent = (Math.max(parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0, LAST.score)).toLocaleString();
+
+    $('lbBtn').style.display = '';
+    $('lbArea').innerHTML = '';
     show('resultOverlay');
   }
 
@@ -145,8 +129,8 @@
         send({ type: 'tuoluo_audio_muted', muted: localStorage.getItem('tuoluo_muted') === '1' });
         break;
       case 'tuoluo_tick':
-        if ($('scoreVal')) $('scoreVal').textContent = String(d.score || 0);
-        if ($('spinVal')) $('spinVal').textContent = (d.spin || 0) + '%';
+        $('scoreVal').textContent = String(d.score || 0);
+        $('spinVal').textContent = (d.spin || 0) + '%';
         break;
       case 'tuoluo_judge':
         break;
