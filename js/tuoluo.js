@@ -1,8 +1,8 @@
 // =============================================
 //  抽陀螺模拟器 · 页面壳引擎
-//  负责: 开始/暂停/静音/结算/排行榜(全部 HTML 化)
+//  负责: 开始/暂停/静音/结算/排行榜/难度/事件(全部 HTML 化)
 //  与 Unity WebGL 双向通信:
-//    Unity → 页面: postMessage (tuoluo_ready/tick/judge/score/pause)
+//    Unity → 页面: postMessage (tuoluo_ready/tick/judge/score/pause/event/event_end)
 //    页面 → Unity: UnityInstanceGlobal.SendMessage('ParentCommandPump','OnCommand',json)
 // =============================================
 (function () {
@@ -10,9 +10,8 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var iframe = $('gameIframe');
-  var LAST = { score: 0, perfects: 0, maxCombo: 0, rating: '' };
+  var LAST = { score: 0, perfects: 0, maxCombo: 0, tier: 0, team: '', desc: '' };
 
-  // ── Unity 实例就绪后, 才可 SendMessage ──
   var unityReady = false;
 
   function send(cmd) {
@@ -24,9 +23,10 @@
     }
   }
 
-  // ═══════════ 页面状态切换 ═══════════
   function show(id) { $(id).classList.remove('hide'); }
   function hide(id) { $(id).classList.add('hide'); }
+
+  var selectedDiff = 1; // 默认 MSI
 
   function startGame() {
     hide('startOverlay');
@@ -34,6 +34,7 @@
     hide('pauseOverlay');
     $('scoreVal').textContent = '0';
     $('spinVal').textContent = '60%';
+    send({ type: 'tuoluo_difficulty', level: selectedDiff });
     send({ type: 'tuoluo_state', state: 'play' });
   }
 
@@ -56,7 +57,7 @@
     }
   }
 
-  // ═══════════ 最高分(localStorage) ═══════════
+  // 最高分
   var BEST_KEY = 'tuoluo_best';
   function loadBest() {
     var b = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0;
@@ -68,7 +69,7 @@
     loadBest();
   }
 
-  // ═══════════ 静音 ═══════════
+  // 静音
   function setMuteUI(muted) {
     $('muteBtn').textContent = muted ? '🔇' : '🔊';
     $('muteBtn').classList.toggle('off', muted);
@@ -81,46 +82,81 @@
     send({ type: 'tuoluo_audio_muted', muted: muted });
   }
 
-  // ═══════════ Unity → 页面消息 ═══════════
+  // 事件徽章
+  function showEventBadge(name, good) {
+    var b = $('eventBadge');
+    b.textContent = name;
+    b.classList.remove('good', 'bad');
+    b.classList.add(good ? 'good' : 'bad');
+    b.style.display = 'block';
+  }
+  function hideEventBadge() {
+    $('eventBadge').style.display = 'none';
+  }
+
+  // 结算显示
+  function showResult() {
+    saveBest(LAST.score);
+
+    // 根据 tier 选战队图片
+    var imgName = LAST.team.toLowerCase();
+    // 特殊处理 Gen.G
+    if (imgName === 'gen.g') imgName = 'geng';
+
+    $('rTeamImg').src = 'images/tes/' + imgName + '.webp';
+    $('rTeamImg').alt = LAST.team;
+    $('rTeamName').textContent = LAST.team;
+    $('rFlavor').textContent = '根据你的抽陀螺手法 你的战力级别是 ' + LAST.team + '!';
+    $('rDesc').textContent = LAST.desc;
+    $('rScore').textContent = LAST.score.toLocaleString();
+    $('rCombo').textContent = LAST.maxCombo.toLocaleString();
+    $('rPerfect').textContent = LAST.perfects.toLocaleString();
+    $('rBest').textContent = (Math.max(parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0, LAST.score)).toLocaleString();
+
+    $('lbBtn').style.display = '';
+    $('lbArea').innerHTML = '';
+    show('resultOverlay');
+  }
+
+  // Unity 消息
   window.addEventListener('message', function (ev) {
     var d = ev.data;
     if (!d || !d.type || d.type.indexOf('tuoluo_') !== 0) return;
     switch (d.type) {
       case 'tuoluo_ready':
         unityReady = true;
+        // 同步静音状态
+        send({ type: 'tuoluo_audio_muted', muted: localStorage.getItem('tuoluo_muted') === '1' });
         break;
       case 'tuoluo_tick':
         $('scoreVal').textContent = String(d.score || 0);
         $('spinVal').textContent = (d.spin || 0) + '%';
         break;
       case 'tuoluo_judge':
-        break; // 飘字/特效由 Unity 内展示, 页面不重复
+        break;
       case 'tuoluo_pause':
         if (d.paused) show('pauseOverlay');
         else hide('pauseOverlay');
+        break;
+      case 'tuoluo_event':
+        showEventBadge(d.name, d.good);
+        break;
+      case 'tuoluo_event_end':
+        hideEventBadge();
         break;
       case 'tuoluo_score':
         LAST.score = d.score || 0;
         LAST.perfects = d.perfects || 0;
         LAST.maxCombo = d.maxCombo || 0;
-        LAST.rating = d.rating || '';
+        LAST.tier = d.tier || 0;
+        LAST.team = d.team || '';
+        LAST.desc = d.desc || '';
         showResult();
         break;
     }
   });
 
-  function showResult() {
-    saveBest(LAST.score);
-    $('rScore').textContent = LAST.score.toLocaleString();
-    $('rRating').textContent = LAST.rating;
-    $('rStats').textContent = '最高连击 ' + LAST.maxCombo + ' · 完美 ' + LAST.perfects + ' 鞭';
-    $('rBest').textContent = '最高分 ' + (Math.max(parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0, LAST.score)).toLocaleString();
-    $('lbBtn').style.display = '';
-    $('lbArea').innerHTML = '';
-    show('resultOverlay');
-  }
-
-  // ═══════════ 排行榜提交(与鹿管大作战同款) ═══════════
+  // 排行榜提交
   function submitScore() {
     var btn = $('lbBtn');
     if (!window.Auth || !Auth.isLoggedIn()) {
@@ -146,7 +182,7 @@
     });
   }
 
-  // ═══════════ 键盘(Esc/P 暂停同步) ═══════════
+  // 键盘
   window.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
       var paused = !$('pauseOverlay').classList.contains('hide');
@@ -154,7 +190,7 @@
     }
   });
 
-  // ═══════════ 绑定 ═══════════
+  // 绑定
   $('startBtn').addEventListener('click', startGame);
   $('againBtn').addEventListener('click', startGame);
   $('homeBtn').addEventListener('click', backToTitle);
@@ -168,7 +204,18 @@
     $('helpPanel').classList.toggle('open');
   });
 
+  // 难度按钮
+  $$('.diff-btn').forEach(function (b) {
+    b.addEventListener('click', function () {
+      selectedDiff = parseInt(b.dataset.diff, 10);
+      $$('.diff-btn').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on');
+    });
+  });
+
   // 初始化
   loadBest();
   setMuteUI(localStorage.getItem('tuoluo_muted') === '1');
+
+  function $$(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
 })();

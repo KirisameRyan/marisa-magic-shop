@@ -53,6 +53,44 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
   color:var(--g-text); background:rgba(255,255,255,.06); border:1px solid var(--g-border); margin-bottom:8px; }
 .btn-ghost:active { background:var(--g-gold); color:#1a1520; }
 
+/* 难度选择 */
+.diff-title { font-size:13px; color:var(--g-muted); margin:8px 0 8px; letter-spacing:2px; }
+.diff-row { display:flex; gap:8px; margin-bottom:14px; }
+.diff-btn { flex:1; font-family:inherit; font-size:14px; font-weight:800; color:var(--g-text);
+  background:rgba(255,255,255,.04); border:1px solid var(--g-border); border-radius:12px;
+  padding:10px 6px; cursor:pointer; line-height:1.3; transition:all .15s; }
+.diff-btn small { display:block; font-size:10px; color:var(--g-muted); font-weight:500; margin-top:3px; }
+.diff-btn.on { background:linear-gradient(135deg,rgba(240,192,96,.25),rgba(240,192,96,.05));
+  border-color:var(--g-gold); color:var(--g-gold); }
+.diff-btn.on small { color:rgba(240,192,96,.7); }
+.diff-btn:active { transform:scale(.95); }
+
+/* 顶栏事件徽章 */
+#eventBadge { display:none; margin-top:4px; padding:3px 10px; border-radius:8px;
+  font-size:11px; font-weight:800; color:#fff; background:rgba(240,192,96,.18);
+  border:1px solid var(--g-gold); }
+#eventBadge.good { color:#a4e0a4; background:rgba(110,200,150,.18); border-color:#6fcf97; }
+#eventBadge.bad { color:#ffae6b; background:rgba(255,140,80,.18); border-color:#ff8c50; }
+
+/* 结算战队卡片 */
+.r-card { display:flex; align-items:center; gap:14px; margin:6px 0 8px;
+  background:linear-gradient(135deg,rgba(240,192,96,.12),rgba(184,159,255,.08));
+  border:1px solid var(--g-border); border-radius:18px; padding:14px 18px; width:90%; max-width:380px; }
+.r-team-pic { width:74px; height:74px; border-radius:14px; overflow:hidden; flex:none;
+  background:#0f0d14; box-shadow:0 4px 18px rgba(240,192,96,.18); }
+.r-team-pic img { width:100%; height:100%; object-fit:cover; display:block; }
+.r-team-block { text-align:left; flex:1; }
+.r-team-label { font-size:10px; color:var(--g-muted); letter-spacing:2px; }
+.r-team-name { font-size:32px; font-weight:900; background:linear-gradient(135deg,var(--g-gold),#ffe8b0,var(--g-gold));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1.1; margin-top:2px; }
+.r-flavor { font-size:12px; color:var(--g-muted); margin-bottom:6px; line-height:1.5; }
+.r-desc { font-size:12px; color:#d8d0e0; line-height:1.7; background:rgba(255,255,255,.03);
+  border-radius:10px; padding:10px 14px; margin-bottom:10px; width:90%; max-width:380px; text-align:left; }
+.r-score-row { display:flex; gap:6px; margin-bottom:8px; width:90%; max-width:380px; }
+.r-score-cell { flex:1; background:var(--g-card); border:1px solid var(--g-border); border-radius:12px; padding:8px 4px; text-align:center; }
+.r-score-cell .t { font-size:9px; color:var(--g-muted); letter-spacing:1px; }
+.r-score-cell .v { font-size:22px; font-weight:900; margin-top:2px; }
+
 /* 玩法说明折叠 */
 .help-wrap { width:100%; max-width:400px; }
 .help-panel { max-height:0; overflow:hidden; transition:max-height .35s ease; width:100%; }
@@ -88,6 +126,7 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
     <div>
       <div class="t">🌀 抽陀螺模拟器</div>
       <div class="title gold-text">抽不完的陀螺 · 转不完的梗</div>
+      <div class="t" id="eventBadge" style="display:none"></div>
     </div>
     <div class="tb-right">
       <div class="tb-badge">
@@ -114,8 +153,14 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
       <div class="ov-sub">
         指针来回摆动,落点抽打!<br>
         <b style="color:#f0c060">金色 完美 ×1.8</b>　·　<b style="color:#7fb8ff">蓝色 WellDone ×1.4</b><br>
-        <b style="color:#7fd97f">绿色 Good ×1</b>　·　<b style="color:#c9ccd6">白色 Miss 扣转速</b><br>
-        转速随时间衰减 · 抽对了才加速 · 上限 <b style="color:#f0c060">200%</b>
+        <b style="color:#7fd97f">绿色 Good ×1</b>　·　<b style="color:#c9ccd6">白色 Miss 扣转速</b>
+      </div>
+
+      <div class="diff-title">选择难度</div>
+      <div class="diff-row">
+        <button class="diff-btn" data-diff="0">🏟️ 先锋赛<br><small>轻松入门</small></button>
+        <button class="diff-btn on" data-diff="1">🏆 MSI<br><small>标准挑战</small></button>
+        <button class="diff-btn" data-diff="2">🌍 S赛<br><small>地狱难度</small></button>
       </div>
       <div class="ov-best">最高分 <b id="startBest">0</b></div>
       <button class="btn-main" id="startBtn">开始抽打!</button>
@@ -125,9 +170,11 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
           <div class="help-box">
             · <b>怎么玩</b>:画面下方时间条上指针来回摆动,在<b>金色/蓝色/绿色</b>区域内点击或按空格抽打<br>
             · <b>判定</b>:中心金色=完美(×1.8),蓝色=WellDone(×1.4),绿色=Good(×1),最外白色区=Miss 扣转速<br>
-            · <b>转速</b>:随播放时间持续衰减,只有抽对才会加速;最高 200%。转速越高每秒赚分越快<br>
+            · <b>转速</b>:随播放时间持续衰减,只有抽对才会加速;转速越高每秒赚分越快<br>
             · <b>超速特效</b>:转速跨过 <b>120% / 150% / 180% / 200%</b> 阈值时触发金色冲击波<br>
-            · <b>结束</b>:转速归零、陀螺倒地,成绩自动回传,可提交排行榜<br>
+            · <b>突发事件</b>:比赛中会随机触发有益/有害事件(T1附体/防御塔镀层/小龙魂/大龙逼团/GAM偷袭/手伤复发),留意屏幕横幅<br>
+            · <b>难度</b>:先锋赛(易) / MSI(中) / S赛(难),影响指针速度、转速衰减与事件频率<br>
+            · <b>结算</b>:按分数评定战力档位(GAM→T1),成绩自动回传,可提交排行榜<br>
             · <b>操作</b>:鼠标点击 / 空格 / 触屏抽打;顶栏按钮暂停与静音
           </div>
         </div>
@@ -145,12 +192,22 @@ body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; bac
 
     <!-- ── 结算 overlay ── -->
     <div class="overlay hide" id="resultOverlay">
-      <div class="ov-logo">💫</div>
       <div class="ov-title">陀螺倒下了!</div>
-      <div class="ov-score" id="rScore">0</div>
-      <div class="ov-rating" id="rRating"></div>
-      <div class="ov-stats" id="rStats"></div>
-      <div class="ov-best" id="rBest"></div>
+      <div class="r-card" id="rCard">
+        <div class="r-team-pic"><img id="rTeamImg" src="images/tes/gam.webp" alt="team"></div>
+        <div class="r-team-block">
+          <div class="r-team-label">你的战力级别</div>
+          <div class="r-team-name" id="rTeamName">GAM</div>
+        </div>
+      </div>
+      <div class="r-flavor" id="rFlavor">根据你的抽陀螺手法 你的战力级别是 GAM!</div>
+      <div class="r-desc" id="rDesc">越南老牌外卡队。曾经在2022世界赛小组赛爆冷1-0击败TES。</div>
+      <div class="r-score-row">
+        <div class="r-score-cell"><div class="t">得分</div><div class="v gold-text" id="rScore">0</div></div>
+        <div class="r-score-cell"><div class="t">最高连击</div><div class="v" id="rCombo">0</div></div>
+        <div class="r-score-cell"><div class="t">完美</div><div class="v" id="rPerfect">0</div></div>
+      </div>
+      <div class="r-best">最高分 <b id="rBest">0</b></div>
       <button class="btn-main" id="againBtn">再抽一次!</button>
       <button class="btn-ghost" id="homeBtn">回主菜单</button>
       <button class="btn-ghost" id="lbBtn" style="display:none">🏆 提交排行榜</button>
