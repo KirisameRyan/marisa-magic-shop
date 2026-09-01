@@ -63,13 +63,15 @@ STG.player = (function() {
   function update(dt, input, cb) {
     p.slow = false;
     if (p.touchTarget) {
-      // 触屏拖动: 角色以低速平滑跟随触点(目标点在手指上方 90px)
+      // 触屏拖动: 指数平滑跟随(快甩约0.15s贴手, 慢移精确贴合), 单帧步长封顶防穿弹幕
       p.slow = true;
-      var spd = C.PLAYER_SLOW * p.mods.speedMul * dt;
-      var tdx = p.touchTarget.x - p.x, tdy = p.touchTarget.y - p.y;
-      var tdist = Math.sqrt(tdx * tdx + tdy * tdy);
-      if (tdist <= spd || tdist < 1) { p.x = p.touchTarget.x; p.y = p.touchTarget.y; }
-      else { p.x += tdx / tdist * spd; p.y += tdy / tdist * spd; }
+      var k = Math.min(1, dt * 16);
+      var tdx = (p.touchTarget.x - p.x) * k;
+      var tdy = (p.touchTarget.y - p.y) * k;
+      var mdx = Math.max(-26, Math.min(26, tdx));
+      var mdy = Math.max(-26, Math.min(26, tdy));
+      p.x += mdx;
+      p.y += mdy;
       if (tdx < -2) p.face = 'left';
       else if (tdx > 2) p.face = 'right';
     } else {

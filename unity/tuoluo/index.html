@@ -80,9 +80,9 @@
       var buildUrl = "Build";
       var loaderUrl = buildUrl + "/7a2dbded24d57e056180125b1583e7c4.loader.js";
       var config = {
-        dataUrl: buildUrl + "/3590d4bf83b1f19e05509973fd0aa40e.data.br",
-        frameworkUrl: buildUrl + "/7b5249c35a4d354dff4588e4f1e9be70.framework.js.br",
-        codeUrl: buildUrl + "/b926161426654003ea16ba7afb54aa54.wasm.br",
+        dataUrl: buildUrl + "/fac91baffed78620cc3cad1761770520.data.br",
+        frameworkUrl: buildUrl + "/886691111547bb4952da9d1b1c485980.framework.js.br",
+        codeUrl: buildUrl + "/3a889027198533551306f7161e17af47.wasm.br",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "KirisameRyan",
         productName: "TuoluoSimulator",
@@ -135,7 +135,7 @@
       script.onload = () => {
         window.__startUnity(canvas, config, (progress) => {
           progressBarFull.style.width = 100 * progress + "%";
-              }).then((unityInstance) => {
+              }).then((unityInstance) => { window.UnityInstanceGlobal = unityInstance;
                 loadingBar.style.display = "none";
                 fullscreenButton.onclick = () => {
                   unityInstance.SetFullscreen(1);
