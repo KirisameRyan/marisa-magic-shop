@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>魔理沙幸存者 · 调试版</title>
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#1a1520;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;touch-action:manipulation;user-select:none;-webkit-user-select:none;overflow:hidden;height:100vh;height:100dvh;}
+.game-container{display:flex;flex-direction:column;align-items:center;width:100%;height:calc(100vh - 48px);height:calc(100dvh - 48px);background:#1a1520;overflow:hidden;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);}
+.canvas-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;position:relative;min-height:0;}
+/* 舞台：尺寸由 JS fitStage() 设置，canvas 与浮层一起等比缩放 */
+.stage{position:relative;flex:none;}
+.stage canvas{display:block;width:100%;height:100%;border:1px solid #3a3045;border-radius:12px;}
+/* 装饰浮层盒：960×540 逻辑坐标，随 canvas 缩放 */
+.stage-ui{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0;pointer-events:none;}
+/* 符卡宣告（东方正作式右侧滑入名牌） */
+#spellCard{position:absolute;top:20%;right:-420px;z-index:9;pointer-events:none;min-width:300px;text-align:left;background:linear-gradient(135deg,rgba(18,8,12,.94),rgba(80,18,30,.94));border-left:4px solid #f0c060;border-right:4px solid #f0c060;padding:10px 26px;transform:skewX(-8deg);box-shadow:0 8px 32px rgba(0,0,0,.6),0 0 24px rgba(240,192,96,.12);transition:right .38s cubic-bezier(.2,.85,.3,1);}
+#spellCard.show{right:5%;}
+#spellCard .sc-no{font-size:10px;color:#c8a050;letter-spacing:4px;transform:skewX(8deg);}
+#spellCard .sc-name{font-size:21px;font-weight:900;color:#ffe8b0;letter-spacing:2px;text-shadow:0 0 16px rgba(240,192,96,.55),0 1px 3px #000;transform:skewX(8deg);margin-top:1px;}
+.overlay{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:rgba(26,21,32,.78);z-index:10;border-radius:12px;overflow-y:auto;padding:20px;}
+.ov-inner{margin:auto 0;width:100%;display:flex;flex-direction:column;align-items:center;}
+.overlay h1{font-size:28px;color:#f0c060;margin-bottom:8px;letter-spacing:2px;text-shadow:0 0 20px rgba(240,192,96,.45);animation:titleGlow 2.4s ease-in-out infinite alternate;}
+@keyframes titleGlow{from{text-shadow:0 0 12px rgba(240,192,96,.3)}to{text-shadow:0 0 28px rgba(240,192,96,.75)}}
+.overlay p{font-size:13px;color:#8a7e9a;text-align:center;line-height:1.8;margin-bottom:16px;max-width:460px;}
+.overlay .btn-start{font-size:18px;font-weight:800;padding:14px 48px;border-radius:16px;border:none;background:linear-gradient(135deg,#f0c060,#e8a830);color:#1a1520;cursor:pointer;letter-spacing:2px;transition:transform .15s;margin-bottom:8px;box-shadow:0 6px 24px rgba(240,192,96,.3);animation:btnPulse 1.8s ease-in-out infinite alternate;}
+@keyframes btnPulse{from{box-shadow:0 6px 16px rgba(240,192,96,.22)}to{box-shadow:0 6px 34px rgba(240,192,96,.5)}}
+.overlay .btn-start:hover{transform:scale(1.05);}
+.overlay .btn-start:active{transform:scale(.95);}
+.overlay.hide{display:none;}
+.loading-text{color:#8a7e9a;font-size:14px;letter-spacing:1px;animation:pulse 1s infinite alternate;text-align:center;padding:40px 0;}
+@keyframes pulse{from{opacity:.5}to{opacity:1}}
+/* 升级三选一 */
+.lv-cards{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;max-width:660px;margin-bottom:8px;}
+.lv-card{width:180px;background:#241e2a;border:2px solid #3a3045;border-radius:16px;padding:16px 12px 14px;cursor:pointer;text-align:center;transition:all .15s;position:relative;animation:dealIn .45s cubic-bezier(.2,.9,.3,1.2) backwards;}
+@keyframes dealIn{from{opacity:0;transform:rotateY(85deg) translateY(26px) scale(.85)}to{opacity:1;transform:rotateY(0) translateY(0) scale(1)}}
+.lv-card:hover{border-color:#f0c060;transform:translateY(-4px);box-shadow:0 8px 24px rgba(240,192,96,.12);}
+.lv-card.evo{border-color:#ffd700;background:linear-gradient(160deg,#3a2c10,#241e2a);box-shadow:0 0 22px rgba(255,215,0,.25),inset 0 0 18px rgba(255,215,0,.08);}
+.lv-card.evo:hover{box-shadow:0 10px 34px rgba(255,215,0,.4);}
+.lv-card.evo .lv-name{color:#ffd700;text-shadow:0 0 12px rgba(255,215,0,.6);}
+.lv-card.evo .lv-pips{color:#ffd700;}
+/* 卡面分类配色：武器=蓝 / 普通强化=绿 / 面板强化=紫 / 超进化=金 */
+.lv-card.wpn{border-color:#3f6d99;background:linear-gradient(160deg,#15263a,#241e2a);}
+.lv-card.wpn:hover{border-color:#8fd8ff;box-shadow:0 8px 24px rgba(143,216,255,.18);}
+.lv-card.wpn .lv-name{color:#8fd8ff;}
+.lv-card.pas{border-color:#356b4a;background:linear-gradient(160deg,#122a1c,#241e2a);}
+.lv-card.pas:hover{border-color:#6fcf97;box-shadow:0 8px 24px rgba(111,207,151,.18);}
+.lv-card.pas .lv-name{color:#6fcf97;}
+.lv-card.enh{border-color:#5f4a8c;background:linear-gradient(160deg,#241a38,#241e2a);}
+.lv-card.enh:hover{border-color:#b89fff;box-shadow:0 8px 24px rgba(184,159,255,.2);}
+.lv-card.enh .lv-name{color:#b89fff;}
+.btn-reroll{margin-top:10px;font-size:13px;font-weight:700;padding:9px 26px;border-radius:12px;border:1px solid #3a3045;background:rgba(255,255,255,.04);color:#b89fff;cursor:pointer;font-family:inherit;letter-spacing:1px;transition:all .15s;}
+.btn-reroll:hover{border-color:#b89fff;color:#e0d8f8;}
+.btn-reroll:disabled{opacity:.4;cursor:default;}
+.lv-icon{font-size:34px;}
+.lv-name{font-size:15px;font-weight:800;color:#e0d8ec;margin-top:6px;}
+.lv-jp{font-size:10px;color:#8a7e9a;margin-top:2px;}
+.lv-pips{color:#f0c060;font-size:11px;letter-spacing:2px;margin-top:5px;}
+.lv-desc{font-size:12px;color:#b8acc8;margin-top:7px;line-height:1.5;}
+.lv-key{position:absolute;top:8px;right:10px;font-size:11px;color:#8a7e9a;border:1px solid #3a3045;border-radius:6px;padding:1px 6px;}
+/* 排行榜 */
+#lbArea{margin-top:12px;width:100%;max-width:380px;}
+#lbArea.hide{display:none;}
+.lb-wrap{text-align:center;}
+.lb-submit{display:flex;gap:8px;justify-content:center;margin-bottom:10px;flex-wrap:wrap;}
+.lb-input{background:#241e2a;border:1px solid #3a3045;border-radius:10px;padding:8px 14px;color:#e0d8ec;font-size:13px;width:140px;outline:none;font-family:inherit;}
+.lb-input:focus{border-color:#f0c060;}
+.lb-btn{background:linear-gradient(135deg,#f0c060,#e8a830);border:none;border-radius:10px;padding:8px 20px;color:#1a1520;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;}
+.lb-btn:disabled{opacity:.5;cursor:default;}
+.lb-btn-ghost{background:transparent;border:1px solid #3a3045;border-radius:10px;padding:8px 16px;color:#8a7e9a;font-size:12px;cursor:pointer;font-family:inherit;}
+.lb-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px;}
+.lb-table th{color:#8a7e9a;font-weight:400;padding:5px 4px;border-bottom:1px solid #3a3045;}
+.lb-table td{padding:5px 4px;color:#e0d8ec;border-bottom:1px solid rgba(58,48,69,0.3);}
+.lb-table .lb-my td{color:#f0c060;font-weight:700;background:rgba(240,192,96,0.06);}
+.lb-note,.lb-ok,.lb-err{font-size:12px;margin:6px 0;}
+.lb-ok{color:#6fcf97;}
+.lb-err{color:#ef4444;}
+.lb-note{color:#8a7e9a;}
+.lb-toggle{text-align:center;font-size:12px;color:#8a7e9a;cursor:pointer;padding:6px 0;margin-top:4px;transition:color .2s;}
+.lb-toggle:hover{color:#f0c060;}
+.lb-table-wrap{overflow-x:auto;}
+.sel-container{display:flex;gap:20px;justify-content:center;align-items:center;margin-bottom:16px;}
+.sel-card{text-align:center;cursor:pointer;transition:all .25s;opacity:.45;transform:scale(.88);}
+.sel-card.selected{opacity:1;transform:scale(1);}
+.sel-card img{transition:border-color .3s;width:clamp(96px,20vh,170px);border-radius:12px;}
+.sel-name{font-size:15px;color:#e0d8ec;font-weight:700;margin-top:6px;}
+.sel-desc{font-size:11px;color:#8a7e9a;margin-top:2px;}
+.sel-hint{font-size:11px;color:#8a7e9a;margin-top:8px;}
+/* 暂停按钮 */
+#pauseBtn{position:absolute;top:10px;right:10px;z-index:7;width:38px;height:38px;border:1px solid rgba(240,192,96,.25);border-radius:10px;background:rgba(36,30,42,.7);color:#8a7e9a;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;pointer-events:auto;font-family:inherit;line-height:1;}
+#pauseBtn:hover{border-color:#f0c060;color:#f0c060;}
+/* 暂停数据面板 */
+.pause-stats{width:100%;max-width:680px;max-height:58vh;overflow-y:auto;text-align:left;font-size:12px;color:#c9bfd8;margin-bottom:12px;padding-right:4px;}
+.pause-stats::-webkit-scrollbar{width:6px;}
+.pause-stats::-webkit-scrollbar-thumb{background:#3a3045;border-radius:3px;}
+/* 暂停 Tab 化 */
+.pause-box{width:100%;max-width:720px;}
+.pz-head{display:flex;flex-direction:column;align-items:center;margin-bottom:8px;}
+.pz-head h1{margin-bottom:4px;}
+.pz-sum{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;font-size:11px;}
+.pz-sum span{background:rgba(240,192,96,.08);border:1px solid rgba(240,192,96,.3);color:#f0c060;border-radius:20px;padding:2px 10px;}
+.pz-tabs{display:flex;gap:6px;margin-bottom:10px;max-width:100%;overflow-x:auto;padding-bottom:2px;}
+.pz-tab{flex:none;font-size:12px;font-weight:700;padding:6px 16px;border-radius:20px;border:1px solid #3a3045;background:rgba(255,255,255,.03);color:#8a7e9a;cursor:pointer;font-family:inherit;letter-spacing:1px;}
+.pz-tab.on{border-color:#f0c060;color:#1a1520;background:linear-gradient(135deg,#f0c060,#e8a830);}
+.pz-body{width:100%;max-height:52vh;overflow-y:auto;text-align:left;font-size:12px;color:#c9bfd8;padding-right:4px;}
+.pz-body::-webkit-scrollbar{width:6px;}
+.pz-body::-webkit-scrollbar-thumb{background:#3a3045;border-radius:3px;}
+.pz-foot{display:flex;gap:12px;justify-content:center;margin-top:12px;flex-wrap:wrap;}
+.pz-foot .btn-start{margin-bottom:0;}
+/* 加载 spinner */
+.load-ring{display:inline-block;width:14px;height:14px;margin-right:8px;border-radius:50%;border:2px solid rgba(240,192,96,.35);border-top-color:#f0c060;animation:loadspin .9s linear infinite;vertical-align:-2px;}
+@keyframes loadspin{to{transform:rotate(360deg)}}
+.ps-sec{margin-bottom:12px;}
+.ps-sec h3{font-size:12px;color:#f0c060;letter-spacing:2px;margin-bottom:6px;border-left:3px solid #f0c060;padding-left:8px;}
+.ps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px 8px;}
+.ps-cell{background:rgba(255,255,255,.03);border:1px solid #332b42;border-radius:8px;padding:5px 8px;}
+.ps-cell b{display:block;color:#e0d8ec;font-size:13px;}
+.ps-cell span{color:#8a7e9a;font-size:10px;}
+.ps-matrix{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;}
+.ps-mx{background:rgba(255,255,255,.03);border:1px solid #332b42;border-radius:8px;padding:5px 3px;text-align:center;font-size:10px;color:#6d6278;line-height:1.4;}
+.ps-mx.on{border-color:#f0c060;color:#e0d8ec;background:rgba(240,192,96,.07);}
+.ps-mx i{display:block;font-style:normal;font-size:15px;}
+.ps-mx em{display:block;font-style:normal;color:#f0c060;font-size:9px;}
+.ps-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 8px;border-bottom:1px solid rgba(58,48,69,.5);}
+.ps-row b{color:#e0d8ec;font-size:12px;}
+.ps-row span{color:#8a7e9a;font-size:11px;}
+.ps-row .ok{color:#ffd700;font-weight:700;}
+.lv-tags{font-size:10px;color:#8fd8ff;margin-top:2px;letter-spacing:1px;}
+/* 开始界面 & 公告 */
+.start-hero{text-align:center;}
+.start-tag{font-size:13px;color:#b89fff;letter-spacing:2px;margin:4px 0 10px;}
+.start-badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;}
+.sb{font-size:11px;color:#e0d8ec;border:1px solid #3a3045;border-radius:20px;padding:3px 12px;background:rgba(255,255,255,.04);white-space:nowrap;}
+.sb-rei{border-color:#8fd8ff;color:#8fd8ff;}
+.sb-ma{border-color:#b89fff;color:#b89fff;}
+.start-keys{font-size:11px;color:#8a7e9a;letter-spacing:1px;margin-bottom:14px;}
+/* 开始页双栏 */
+.start-wrap{max-width:880px;}
+.start-main{display:flex;align-items:center;justify-content:center;gap:28px;width:100%;margin-bottom:10px;}
+.start-copy{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;}
+.start-logo{font-size:clamp(34px,6vw,52px);font-weight:900;color:#f0c060;letter-spacing:6px;text-shadow:0 0 28px rgba(240,192,96,.5);animation:titleGlow 2.4s ease-in-out infinite alternate;}
+.start-sub{font-size:11px;color:#b89fff;letter-spacing:4px;margin:8px 0 12px;}
+.start-result{font-size:12px;color:#c9bfd8;line-height:1.9;margin:2px 0 10px;text-align:center;}
+.start-result.hide{display:none;}
+.start-chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:6px;}
+.start-links{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:10px;}
+.qq-chip{cursor:pointer;font-size:12px;color:#8a7e9a;border:1px solid #3a3045;border-radius:10px;padding:8px 16px;font-family:inherit;text-decoration:none;display:inline-block;}
+.qq-chip:hover{color:#f0c060;border-color:#f0c060;}
+.start-art img{max-height:min(52vh,420px);display:block;filter:drop-shadow(0 0 24px rgba(240,192,96,.25));animation:artFloat 3s ease-in-out infinite alternate;}
+@keyframes artFloat{from{transform:translateY(-6px)}to{transform:translateY(6px)}}
+@media (max-width:640px){
+  .start-main{flex-direction:column;gap:10px;}
+  .start-art img{max-height:26vh;}
+  .start-logo{font-size:clamp(28px,8vw,40px);letter-spacing:3px;}
+  .start-copy{order:2;}
+  .start-art{order:1;}
+}
+@media (max-height:480px){
+  .start-main{gap:16px;}
+  .start-art img{max-height:34vh;}
+  .start-logo{font-size:clamp(24px,5vw,34px);}
+  .start-chips .sb{padding:2px 8px;font-size:10px;}
+}
+.announce{width:100%;max-width:520px;border:1px solid #3a3045;border-radius:14px;background:rgba(36,30,42,.75);margin-bottom:14px;overflow:hidden;text-align:left;}
+.announce-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;cursor:pointer;font-size:12px;color:#f0c060;font-weight:700;letter-spacing:1px;}
+.announce-head:hover{background:rgba(240,192,96,.06);}
+.announce-body{max-height:0;overflow:hidden;transition:max-height .3s ease;padding:0 14px;}
+.announce-body.open{max-height:240px;overflow-y:auto;padding-bottom:10px;}
+.announce-body ul{margin:0;padding-left:18px;}
+.announce-body li{font-size:11px;color:#b8acc8;line-height:1.7;margin-bottom:2px;}
+.announce-actions{margin-top:8px;}
+/* 新手教程 */
+.tut-page{width:100%;max-width:480px;min-height:210px;border:1px solid #3a3045;border-radius:16px;background:rgba(36,30,42,.8);padding:22px 20px;text-align:center;margin-bottom:12px;}
+.tut-icon{font-size:46px;}
+.tut-name{font-size:17px;font-weight:800;color:#f0c060;margin:8px 0 12px;letter-spacing:1px;}
+.tut-lines p{font-size:12px;color:#c9bfd8;line-height:1.9;margin:0;}
+.tut-dots{display:flex;gap:6px;justify-content:center;margin-bottom:12px;}
+.tut-dot{width:8px;height:8px;border-radius:50%;background:#3a3045;}
+.tut-dot.on{background:#f0c060;box-shadow:0 0 8px rgba(240,192,96,.6);}
+.tut-nav{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;}
+.tut-next{font-size:14px !important;padding:10px 26px !important;}
+.tut-hint{font-size:10px;color:#5a4c6e;margin-top:10px;}
+@media (max-width:520px){
+  .lv-card{width:44vw;padding:12px 8px;}
+  .lv-key{display:none;}
+}
+/* Boss 入场横幅 */
+#bossBanner{position:absolute;top:36%;left:0;right:0;text-align:center;z-index:8;pointer-events:none;font-size:30px;font-weight:900;color:#ef4444;text-shadow:0 0 20px rgba(239,68,68,.65),0 2px 4px #000;letter-spacing:3px;opacity:0;transform:scale(.7);transition:opacity .3s,transform .3s;}
+#bossBanner.show{opacity:1;transform:scale(1);animation:bossShake .5s .3s ease-in-out;}
+@keyframes bossShake{0%,100%{transform:scale(1) translateX(0)}20%{transform:scale(1) translateX(-5px)}40%{transform:scale(1) translateX(5px)}60%{transform:scale(1) translateX(-3px)}80%{transform:scale(1) translateX(3px)}}
+/* 竖屏横屏引导遮罩（触屏设备） */
+#rotateOverlay{position:fixed;inset:0;z-index:99;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(26,21,32,.97);}
+#rotateOverlay.show{display:flex;}
+#rotateOverlay .ro-icon{animation:rospin 2s ease-in-out infinite;}
+#rotateOverlay .ro-icon svg{display:block;margin:0 auto;}
+@keyframes rospin{0%,20%{transform:rotate(0)}50%,70%{transform:rotate(-90deg)}100%{transform:rotate(-90deg)}}
+#rotateOverlay .ro-text{margin-top:18px;font-size:16px;color:#e0d8ec;font-weight:700;letter-spacing:1px;}
+#rotateOverlay .ro-sub{margin-top:8px;font-size:12px;color:#8a7e9a;}
+#rotateOverlay .ro-skip{margin-top:22px;font-size:12px;color:#8a7e9a;text-decoration:underline;cursor:pointer;padding:8px;}
+/* 短屏（手机横屏）加固：选角 / 三选一 / 通用 */
+@media (max-height:480px){
+  .overlay{padding:12px;}
+  .overlay h1{font-size:20px;margin-bottom:6px;}
+  .overlay p{font-size:11px;margin-bottom:8px;}
+  .lv-card{width:150px;padding:10px 8px;}
+  .lv-icon{font-size:26px;}
+  .btn-reroll{margin-top:6px;padding:7px 20px;}
+  #selectOverlay h1{font-size:18px;margin-bottom:4px;}
+  .sel-container{gap:14px;margin-bottom:8px;}
+  .sel-name{font-size:12px;}
+  .sel-desc{font-size:10px;}
+  .sel-hint{display:none;}
+  #selectOverlay .btn-start{font-size:14px;padding:9px 36px;}
+  .tut-page{min-height:160px;padding:14px 16px;}
+  .tut-icon{font-size:34px;}
+}
+</style>
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<div class="game-container" aria-label="魔理沙幸存者">
+  <div class="canvas-wrap">
+  <div class="stage" id="stage">
+    <canvas id="game" width="960" height="540"></canvas>
+    <div class="stage-ui">
+      <div id="bossBanner"></div>
+      <div id="spellCard"><div class="sc-no">SPELL CARD</div><div class="sc-name">神枪「冈格尼尔」</div></div>
+    </div>
+    <button id="pauseBtn" title="暂停 (ESC)">⏸</button>
+  </div>
+  <div id="rotateOverlay">
+    <div class="ro-icon">
+      <svg viewBox="0 0 72 72" width="76" height="76" aria-hidden="true">
+        <rect x="20" y="8" width="32" height="56" rx="7" fill="none" stroke="#b89fff" stroke-width="3"/>
+        <circle cx="36" cy="58" r="2.5" fill="#b89fff"/>
+        <path d="M22 30 A15 15 0 1 1 50 30" fill="none" stroke="#f0c060" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M50 30 l-5 -7 M50 30 l7 -5" fill="none" stroke="#f0c060" stroke-width="3.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="ro-text">请旋转手机，横屏游玩体验最佳</div>
+    <div class="ro-sub">游戏已暂停，旋转后自动继续</div>
+    <div class="ro-skip" id="roSkip">仍要竖屏玩（画面较小）</div>
+  </div>
+
+  <div class="overlay" id="loadingOverlay">
+    <div class="ov-inner">
+      <div class="loading-text"><span class="load-ring"></span>🧹 加载中...</div>
+    </div>
+  </div>
+
+  <div class="overlay hide" id="startOverlay">
+    <div class="ov-inner start-wrap">
+      <div class="start-main">
+        <div class="start-copy">
+          <div class="start-logo" id="startLogo">魔理沙幸存者</div>
+          <div class="start-sub">MARISA SURVIVORS · 東方弹幕生存</div>
+          <div class="start-result hide" id="startResult"></div>
+          <div class="start-keys">WASD / 方向键移动 · 手机拖动摇杆 · ESC 暂停</div>
+          <button class="btn-start" onclick="showSelect()">✦ 出发</button>
+          <div class="start-links">
+            <button class="lb-btn-ghost" onclick="window._openTutorial(true)">📖 教程</button>
+            <button class="lb-btn-ghost" id="lbToggle2">📊 排行榜</button>
+            <a class="qq-chip" href="https://space.bilibili.com/1029138222" target="_blank" rel="noopener">📺 B站 · 南彗Nahui</a>
+          </div>
+        </div>
+        <div class="start-art">
+          <img src="images/sprites/marisa_run1.png" alt="雾雨魔理沙">
+        </div>
+      </div>
+      <div class="announce" id="announceBox">
+        <div class="announce-head" onclick="window._toggleAnnounce()">
+          <span>📢 更新公告 · v2.0 武器体系重构</span><span class="announce-arrow" id="announceArrow">▸</span>
+        </div>
+        <div class="announce-body" id="announceBody">
+          <ul>
+            <li>武器重构为「灵 / 魔 × 六类」12 格矩阵：上海&蓬莱、红色冥界、冈格尼尔之枪、绯想剑、楼观&白楼 新登场</li>
+            <li>全新强化体系：灵力/魔力强化（Lv5）+ 六类武器强化（Lv3）；超进化条件改为 武器5级 + 属性5级 + 类型3级</li>
+            <li>Boss 符卡战强化：符卡超时会被反噬，Boss 越拖越强；击破 Boss 掉落遗物三选一</li>
+            <li>动态难度 + 处刑者；新敌人魂蝶（自爆）/向日葵（炮台）/幽灵（穿怪）；红心更稀有</li>
+            <li>角色差异：魔理沙高伤 · 灵梦高机动；起始武器与 HP 不同</li>
+          </ul>
+          <div class="announce-actions">
+            <button class="lb-btn-ghost" onclick="window._openTutorial(true)">📖 查看新手教程</button>
+          </div>
+        </div>
+      </div>
+      <div id="lbArea" class="hide"></div>
+    </div>
+  </div>
+
+  <div class="overlay hide" id="tutOverlay">
+    <div class="ov-inner">
+    <h1>📖 新手教程</h1>
+    <div class="tut-page" id="tutPage"></div>
+    <div class="tut-dots" id="tutDots"></div>
+    <div class="tut-nav">
+      <button class="lb-btn-ghost" id="tutPrev" onclick="window._tutNav(-1)">← 上一页</button>
+      <button class="btn-start tut-next" id="tutNext" onclick="window._tutNav(1)">下一页 →</button>
+      <button class="lb-btn-ghost" id="tutSkip" onclick="window._tutSkip()">跳过</button>
+    </div>
+    <p class="tut-hint">首次进入自动显示；之后可在开始界面「更新公告」里重看</p>
+    </div>
+  </div>
+
+  <div class="overlay hide" id="selectOverlay">
+    <div class="ov-inner">
+    <h1 id="selTitle">选择自机</h1>
+    <div class="sel-container">
+      <div class="sel-card selected" id="selMarisa" onclick="window._selChar('marisa')">
+        <img id="imgMarisa" src="images/sprites/mairsa_show.png" style="border:3px solid #f0c060;">
+        <div class="sel-name">🧹 魔理沙</div>
+        <div class="sel-desc">高伤 · HP140 · 初始：⭐ 星星弹</div>
+      </div>
+      <div class="sel-card" id="selReimu" onclick="window._selChar('reimu')">
+        <img id="imgReimu" src="images/sprites/reimu_show.png" style="border:3px solid #3a3045;">
+        <div class="sel-name">⛩️ 灵梦</div>
+        <div class="sel-desc">高机动 · HP110 · 初始：🪡 破魔针</div>
+      </div>
+    </div>
+    <button class="btn-start" onclick="confirmSelect()">✦ 确认</button>
+    <p class="sel-hint">← → 切换 · 滑动切换 · Enter 确认</p>
+    </div>
+  </div>
+
+  <div class="overlay hide" id="pauseOverlay">
+    <div class="ov-inner pause-box">
+      <div class="pz-head">
+        <h1>⏸ 暂停</h1>
+        <div class="pz-sum" id="pauseSum"></div>
+      </div>
+      <div class="pz-tabs" id="pauseTabs">
+        <button class="pz-tab on" data-t="panel">面板</button>
+        <button class="pz-tab" data-t="wpn">武器</button>
+        <button class="pz-tab" data-t="enh">强化</button>
+        <button class="pz-tab" data-t="relic">遗物 · 进化</button>
+      </div>
+      <div class="pz-body pause-stats" id="pauseStats"></div>
+      <div class="pz-foot">
+        <button class="btn-start" id="btnResume">▶ 继续</button>
+        <button class="lb-btn-ghost" id="btnRestart">↻ 重新开始</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay hide" id="levelOverlay">
+    <div class="ov-inner">
+    <h1>✨ 升级！Lv <span id="lvNum">2</span></h1>
+    <p>选择一张强化卡（点击或按 1 / 2 / 3）</p>
+    <div class="lv-cards" id="lvCards"></div>
+    <button class="btn-reroll" id="lvReroll" onclick="window._rerollCards()">🎲 重抽（每次升级 1 次）</button>
+    </div>
+  </div>
+
+  <div class="overlay hide" id="relicOverlay">
+    <div class="ov-inner">
+    <h1>🏆 Boss 战利品</h1>
+    <p>选择一件遗物（每个 Boss 一次 · 按 1 / 2 / 3）</p>
+    <div class="lv-cards" id="relicCards"></div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<script>window.__SURVIVOR_DEBUG__ = true;</script>
+<script src="js/marisa-survivor.js"></script>
+<script src="js/survivor-debug.js"></script>
+
+</body>
+</html>
