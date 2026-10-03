@@ -80,10 +80,12 @@
     if (!body) return;
     body.innerHTML = '';
     var info = ms.state ? ms.state() : {};
+    var res = ms.resNow ? ms.resNow() : null;
     body.appendChild(el('div', 'dbg-info',
       '状态: ' + info.gameState + ' · Lv' + info.level + ' · 怪 ' + info.enemies + ' · ' + Math.floor(info.gameTime || 0) + 's' +
       '<br>武器: ' + (ms.weapons() || []).map(function (w) { return w.id + (w.evoed ? '★' : 'Lv' + w.lv); }).join(' ') +
-      '<br>遗物: ' + Object.keys(ms.relics() || {}).map(function (k) { return k + '×' + ms.relics()[k]; }).join(' ') || '无'));
+      '<br>遗物: ' + (Object.keys(ms.relics() || {}).map(function (k) { return k + '×' + ms.relics()[k]; }).join(' ') || '无') +
+      (res ? '<br>抗性: 吸血 -' + Math.round(res.leech * 100) + '% · 冰冻 -' + Math.round(res.freeze * 100) + '%' : '')));
 
     // 玩家
     var ps = sec('玩家');
@@ -105,6 +107,9 @@
     pm._box.appendChild(btn('全收', function () { ms.magnetAll(); }));
     pm._box.appendChild(btn('清怪', function () { ms.clearEnemies(); }, 'danger'));
     ps.appendChild(pm);
+    var pe = row('结束本局');
+    pe._box.appendChild(btn('结束本局', function () { ms.endRun(); }, 'danger'));
+    ps.appendChild(pe);
     body.appendChild(ps);
 
     // Boss
