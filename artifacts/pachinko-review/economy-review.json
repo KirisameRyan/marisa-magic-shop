@@ -1,0 +1,5837 @@
+{
+  "rents": [
+    180,
+    450,
+    900,
+    1700,
+    3000,
+    5000,
+    8000,
+    12500,
+    18500,
+    27000
+  ],
+  "runsPerPolicy": 12,
+  "summary": [
+    {
+      "policy": "random",
+      "runs": 12,
+      "wins": 7,
+      "winRate": 0.5833333333333334,
+      "medianCash": 22821
+    },
+    {
+      "policy": "quantity",
+      "runs": 12,
+      "wins": 9,
+      "winRate": 0.75,
+      "medianCash": 23228
+    },
+    {
+      "policy": "peg",
+      "runs": 12,
+      "wins": 10,
+      "winRate": 0.8333333333333334,
+      "medianCash": 72542
+    },
+    {
+      "policy": "marble",
+      "runs": 12,
+      "wins": 6,
+      "winRate": 0.5,
+      "medianCash": 16086
+    },
+    {
+      "policy": "slot",
+      "runs": 12,
+      "wins": 3,
+      "winRate": 0.25,
+      "medianCash": 9299
+    }
+  ],
+  "results": [
+    {
+      "seed": 1,
+      "policy": "random",
+      "phase": "lost",
+      "day": 10,
+      "cash": 22821,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 100,
+      "build": [
+        "supply_overdrive×1",
+        "aimed_launch×2",
+        "golden_marble×4",
+        "gold_slots×4",
+        "polished_marble×3",
+        "precision_pegs×3",
+        "chain_impact×3",
+        "mass_production×4"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 477,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 5
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 2161,
+          "rent": 450,
+          "supply": 100,
+          "singleLaunch": 15,
+          "upgrades": 8
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 5493,
+          "rent": 900,
+          "supply": 100,
+          "singleLaunch": 15,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 10805,
+          "rent": 1700,
+          "supply": 100,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 18085,
+          "rent": 3000,
+          "supply": 100,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 25600,
+          "rent": 5000,
+          "supply": 100,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 30860,
+          "rent": 8000,
+          "supply": 100,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 32906,
+          "rent": 12500,
+          "supply": 100,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 30883,
+          "rent": 18500,
+          "supply": 100,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 22821,
+          "rent": 27000,
+          "supply": 100,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 2,
+      "policy": "random",
+      "phase": "lost",
+      "day": 8,
+      "cash": 7966,
+      "rent": 12500,
+      "singleLaunch": 50,
+      "dailySupply": 130,
+      "build": [
+        "aimed_launch×2",
+        "golden_marble×4",
+        "recycle_bin×3",
+        "precision_pegs×3",
+        "expand_hopper×4",
+        "mass_production×4",
+        "perpetual_recycle×1",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 524,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 5
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 1244,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 35,
+          "upgrades": 7
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 3061,
+          "rent": 900,
+          "supply": 58,
+          "singleLaunch": 45,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 5283,
+          "rent": 1700,
+          "supply": 87,
+          "singleLaunch": 45,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 7530,
+          "rent": 3000,
+          "supply": 95,
+          "singleLaunch": 45,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 9240,
+          "rent": 5000,
+          "supply": 103,
+          "singleLaunch": 45,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 9877,
+          "rent": 8000,
+          "supply": 124,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 7966,
+          "rent": 12500,
+          "supply": 130,
+          "singleLaunch": 50,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 3,
+      "policy": "random",
+      "phase": "lost",
+      "day": 10,
+      "cash": 9034,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 50,
+      "build": [
+        "slot_expansion×3",
+        "golden_marble×4",
+        "overload×1",
+        "recycle_bin×3",
+        "polished_marble×3",
+        "mass_production×4",
+        "brass_pegs×4",
+        "infinite_breeding×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 1058,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 5442,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 7
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 10578,
+          "rent": 900,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 16851,
+          "rent": 1700,
+          "supply": 50,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 21705,
+          "rent": 3000,
+          "supply": 50,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 25520,
+          "rent": 5000,
+          "supply": 50,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 27505,
+          "rent": 8000,
+          "supply": 50,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 26395,
+          "rent": 12500,
+          "supply": 50,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 20711,
+          "rent": 18500,
+          "supply": 50,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 9034,
+          "rent": 27000,
+          "supply": 50,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 4,
+      "policy": "random",
+      "phase": "lost",
+      "day": 10,
+      "cash": 15741,
+      "rent": 27000,
+      "singleLaunch": 10,
+      "dailySupply": 99,
+      "build": [
+        "golden_marble×4",
+        "gold_slots×4",
+        "recycle_bin×3",
+        "expand_hopper×4",
+        "slot_streak×1",
+        "chain_impact×3",
+        "brass_pegs×4",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 1318,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 5
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 5128,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 7
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 9948,
+          "rent": 900,
+          "supply": 59,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 16053,
+          "rent": 1700,
+          "supply": 75,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 22443,
+          "rent": 3000,
+          "supply": 76,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 27719,
+          "rent": 5000,
+          "supply": 97,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 30530,
+          "rent": 8000,
+          "supply": 99,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 30616,
+          "rent": 12500,
+          "supply": 101,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 26217,
+          "rent": 18500,
+          "supply": 100,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 15741,
+          "rent": 27000,
+          "supply": 99,
+          "singleLaunch": 10,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 5,
+      "policy": "random",
+      "phase": "won",
+      "day": 10,
+      "cash": 30959,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 160,
+      "build": [
+        "slot_expansion×3",
+        "golden_marble×4",
+        "nitori_supply×2",
+        "polished_marble×3",
+        "precision_pegs×3",
+        "expand_hopper×4",
+        "mass_production×4",
+        "brass_pegs×4"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 421,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 6
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 1122,
+          "rent": 450,
+          "supply": 105,
+          "singleLaunch": 15,
+          "upgrades": 8
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 4460,
+          "rent": 900,
+          "supply": 150,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 11173,
+          "rent": 1700,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 23633,
+          "rent": 3000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 36489,
+          "rent": 5000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 47805,
+          "rent": 8000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 55777,
+          "rent": 12500,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 59916,
+          "rent": 18500,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 57959,
+          "rent": 27000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 6,
+      "policy": "random",
+      "phase": "won",
+      "day": 10,
+      "cash": 23439,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 180,
+      "build": [
+        "supply_overdrive×1",
+        "aimed_launch×2",
+        "golden_marble×4",
+        "recycle_bin×3",
+        "expand_hopper×4",
+        "mass_production×4",
+        "brass_pegs×4",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 366,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 25,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 1286,
+          "rent": 450,
+          "supply": 130,
+          "singleLaunch": 25,
+          "upgrades": 7
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 5432,
+          "rent": 900,
+          "supply": 140,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 11855,
+          "rent": 1700,
+          "supply": 170,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 24043,
+          "rent": 3000,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 35885,
+          "rent": 5000,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 45660,
+          "rent": 8000,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 52160,
+          "rent": 12500,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 54357,
+          "rent": 18500,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 50439,
+          "rent": 27000,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 7,
+      "policy": "random",
+      "phase": "won",
+      "day": 10,
+      "cash": 56509,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 106,
+      "build": [
+        "gold_slots×4",
+        "polished_marble×3",
+        "expand_hopper×4",
+        "chain_impact×3",
+        "mass_production×4",
+        "brass_pegs×4",
+        "infinite_breeding×1",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 804,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 5
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 3145,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 7707,
+          "rent": 900,
+          "supply": 70,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 16996,
+          "rent": 1700,
+          "supply": 103,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 32099,
+          "rent": 3000,
+          "supply": 105,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 47790,
+          "rent": 5000,
+          "supply": 104,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 62236,
+          "rent": 8000,
+          "supply": 107,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 74719,
+          "rent": 12500,
+          "supply": 110,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 82474,
+          "rent": 18500,
+          "supply": 109,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 83509,
+          "rent": 27000,
+          "supply": 106,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 8,
+      "policy": "random",
+      "phase": "won",
+      "day": 10,
+      "cash": 35521,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 160,
+      "build": [
+        "supply_overdrive×1",
+        "aimed_launch×2",
+        "golden_marble×4",
+        "overload×1",
+        "precision_pegs×3",
+        "expand_hopper×4",
+        "mass_production×4",
+        "brass_pegs×4"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 1026,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 5
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 3749,
+          "rent": 450,
+          "supply": 60,
+          "singleLaunch": 25,
+          "upgrades": 7
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 9382,
+          "rent": 900,
+          "supply": 130,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 15274,
+          "rent": 1700,
+          "supply": 130,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 28119,
+          "rent": 3000,
+          "supply": 150,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 41631,
+          "rent": 5000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 52692,
+          "rent": 8000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 60861,
+          "rent": 12500,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 64726,
+          "rent": 18500,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 62521,
+          "rent": 27000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 9,
+      "policy": "random",
+      "phase": "won",
+      "day": 10,
+      "cash": 12255,
+      "rent": 27000,
+      "singleLaunch": 10,
+      "dailySupply": 146,
+      "build": [
+        "resonance×2",
+        "nitori_supply×2",
+        "recycle_bin×3",
+        "polished_marble×3",
+        "expand_hopper×4",
+        "chain_impact×3",
+        "brass_pegs×4",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 1202,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 4
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 4934,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 12739,
+          "rent": 900,
+          "supply": 91,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 22676,
+          "rent": 1700,
+          "supply": 127,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 31600,
+          "rent": 3000,
+          "supply": 145,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 39831,
+          "rent": 5000,
+          "supply": 149,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 46046,
+          "rent": 8000,
+          "supply": 144,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 48624,
+          "rent": 12500,
+          "supply": 147,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 47081,
+          "rent": 18500,
+          "supply": 154,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 39255,
+          "rent": 27000,
+          "supply": 146,
+          "singleLaunch": 10,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 10,
+      "policy": "random",
+      "phase": "lost",
+      "day": 9,
+      "cash": 15456,
+      "rent": 18500,
+      "singleLaunch": 30,
+      "dailySupply": 50,
+      "build": [
+        "slot_expansion×3",
+        "aimed_launch×2",
+        "golden_marble×4",
+        "overload×1",
+        "recycle_bin×3",
+        "polished_marble×3",
+        "mass_production×4",
+        "brass_pegs×4"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 985,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 6
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 3736,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 8
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 6585,
+          "rent": 900,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 11157,
+          "rent": 1700,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 15345,
+          "rent": 3000,
+          "supply": 50,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 18136,
+          "rent": 5000,
+          "supply": 50,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 20633,
+          "rent": 8000,
+          "supply": 50,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 20458,
+          "rent": 12500,
+          "supply": 50,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 15456,
+          "rent": 18500,
+          "supply": 50,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 11,
+      "policy": "random",
+      "phase": "won",
+      "day": 10,
+      "cash": 12077,
+      "rent": 27000,
+      "singleLaunch": 10,
+      "dailySupply": 100,
+      "build": [
+        "supply_overdrive×1",
+        "golden_marble×4",
+        "gold_slots×4",
+        "recycle_bin×3",
+        "polished_marble×3",
+        "slot_streak×1",
+        "chain_impact×3",
+        "brass_pegs×4"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 2136,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 4
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 6590,
+          "rent": 450,
+          "supply": 100,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 12759,
+          "rent": 900,
+          "supply": 100,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 20540,
+          "rent": 1700,
+          "supply": 100,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 29540,
+          "rent": 3000,
+          "supply": 100,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 37422,
+          "rent": 5000,
+          "supply": 100,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 43679,
+          "rent": 8000,
+          "supply": 100,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 47601,
+          "rent": 12500,
+          "supply": 100,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 46273,
+          "rent": 18500,
+          "supply": 100,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 39077,
+          "rent": 27000,
+          "supply": 100,
+          "singleLaunch": 10,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 12,
+      "policy": "random",
+      "phase": "won",
+      "day": 10,
+      "cash": 26377,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 160,
+      "build": [
+        "supply_overdrive×1",
+        "golden_marble×4",
+        "gold_slots×4",
+        "precision_pegs×3",
+        "expand_hopper×4",
+        "slot_streak×1",
+        "mass_production×4",
+        "brass_pegs×4"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 391,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 4
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 3036,
+          "rent": 450,
+          "supply": 100,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 6122,
+          "rent": 900,
+          "supply": 130,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 13811,
+          "rent": 1700,
+          "supply": 140,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 25454,
+          "rent": 3000,
+          "supply": 150,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 37464,
+          "rent": 5000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 47316,
+          "rent": 8000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 54363,
+          "rent": 12500,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 57208,
+          "rent": 18500,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 53377,
+          "rent": 27000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 1,
+      "policy": "quantity",
+      "phase": "lost",
+      "day": 9,
+      "cash": 13431,
+      "rent": 18500,
+      "singleLaunch": 50,
+      "dailySupply": 160,
+      "build": [
+        "aimed_launch×2",
+        "golden_marble×4",
+        "nitori_supply×2",
+        "gold_slots×4",
+        "recycle_bin×3",
+        "expand_hopper×4",
+        "mass_production×4",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 504,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 5
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 889,
+          "rent": 450,
+          "supply": 105,
+          "singleLaunch": 25,
+          "upgrades": 7
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 2290,
+          "rent": 900,
+          "supply": 125,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 6068,
+          "rent": 1700,
+          "supply": 150,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 10072,
+          "rent": 3000,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 14335,
+          "rent": 5000,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 17320,
+          "rent": 8000,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 17423,
+          "rent": 12500,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 13431,
+          "rent": 18500,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 2,
+      "policy": "quantity",
+      "phase": "lost",
+      "day": 5,
+      "cash": 1280,
+      "rent": 3000,
+      "singleLaunch": 40,
+      "dailySupply": 200,
+      "build": [
+        "supply_overdrive×1",
+        "nitori_supply×2",
+        "expand_hopper×1",
+        "mass_production×4",
+        "perpetual_recycle×1",
+        "auto_line×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 452,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 25,
+          "upgrades": 2
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 660,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 25,
+          "upgrades": 4
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 1310,
+          "rent": 900,
+          "supply": 115,
+          "singleLaunch": 30,
+          "upgrades": 4
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 1739,
+          "rent": 1700,
+          "supply": 139,
+          "singleLaunch": 30,
+          "upgrades": 5
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 1280,
+          "rent": 3000,
+          "supply": 200,
+          "singleLaunch": 40,
+          "upgrades": 6
+        }
+      ]
+    },
+    {
+      "seed": 3,
+      "policy": "quantity",
+      "phase": "won",
+      "day": 10,
+      "cash": 84393,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 180,
+      "build": [
+        "supply_overdrive×1",
+        "overload×1",
+        "recycle_bin×3",
+        "expand_hopper×4",
+        "chain_impact×3",
+        "mass_production×4",
+        "brass_pegs×4",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 608,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 3385,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 7
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 11681,
+          "rent": 900,
+          "supply": 130,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 25341,
+          "rent": 1700,
+          "supply": 130,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 45864,
+          "rent": 3000,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 65392,
+          "rent": 5000,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 82981,
+          "rent": 8000,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 97416,
+          "rent": 12500,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 107426,
+          "rent": 18500,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 111393,
+          "rent": 27000,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 4,
+      "policy": "quantity",
+      "phase": "won",
+      "day": 10,
+      "cash": 35335,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 120,
+      "build": [
+        "aimed_launch×2",
+        "golden_marble×4",
+        "nitori_supply×2",
+        "recycle_bin×3",
+        "chain_impact×3",
+        "mass_production×4",
+        "brass_pegs×4",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 767,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 4
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 2796,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 25,
+          "upgrades": 7
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 6129,
+          "rent": 900,
+          "supply": 82,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 12119,
+          "rent": 1700,
+          "supply": 119,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 22638,
+          "rent": 3000,
+          "supply": 115,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 36499,
+          "rent": 5000,
+          "supply": 118,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 48788,
+          "rent": 8000,
+          "supply": 117,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 58704,
+          "rent": 12500,
+          "supply": 120,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 63208,
+          "rent": 18500,
+          "supply": 115,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 62335,
+          "rent": 27000,
+          "supply": 120,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 5,
+      "policy": "quantity",
+      "phase": "won",
+      "day": 10,
+      "cash": 6696,
+      "rent": 27000,
+      "singleLaunch": 50,
+      "dailySupply": 160,
+      "build": [
+        "aimed_launch×2",
+        "golden_marble×4",
+        "nitori_supply×2",
+        "precision_pegs×3",
+        "expand_hopper×4",
+        "mass_production×4",
+        "brass_pegs×4",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 393,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 4
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 737,
+          "rent": 450,
+          "supply": 105,
+          "singleLaunch": 25,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 3388,
+          "rent": 900,
+          "supply": 115,
+          "singleLaunch": 35,
+          "upgrades": 6
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 6540,
+          "rent": 1700,
+          "supply": 150,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 10640,
+          "rent": 3000,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 18632,
+          "rent": 5000,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 27962,
+          "rent": 8000,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 34519,
+          "rent": 12500,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 37147,
+          "rent": 18500,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 33696,
+          "rent": 27000,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 6,
+      "policy": "quantity",
+      "phase": "won",
+      "day": 10,
+      "cash": 55384,
+      "rent": 27000,
+      "singleLaunch": 50,
+      "dailySupply": 180,
+      "build": [
+        "supply_overdrive×1",
+        "gold_slots×4",
+        "polished_marble×3",
+        "expand_hopper×4",
+        "mass_production×4",
+        "brass_pegs×4",
+        "perpetual_recycle×1",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 396,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 816,
+          "rent": 450,
+          "supply": 70,
+          "singleLaunch": 15,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 3619,
+          "rent": 900,
+          "supply": 154,
+          "singleLaunch": 40,
+          "upgrades": 7
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 8757,
+          "rent": 1700,
+          "supply": 163,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 22651,
+          "rent": 3000,
+          "supply": 180,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 40618,
+          "rent": 5000,
+          "supply": 180,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 56953,
+          "rent": 8000,
+          "supply": 180,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 70466,
+          "rent": 12500,
+          "supply": 180,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 79348,
+          "rent": 18500,
+          "supply": 180,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 82384,
+          "rent": 27000,
+          "supply": 180,
+          "singleLaunch": 50,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 7,
+      "policy": "quantity",
+      "phase": "won",
+      "day": 10,
+      "cash": 92951,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 160,
+      "build": [
+        "aimed_launch×2",
+        "nitori_supply×2",
+        "polished_marble×3",
+        "expand_hopper×4",
+        "chain_impact×3",
+        "mass_production×4",
+        "brass_pegs×4",
+        "jackpot_lens×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 492,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 2512,
+          "rent": 450,
+          "supply": 105,
+          "singleLaunch": 25,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 8740,
+          "rent": 900,
+          "supply": 125,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 22173,
+          "rent": 1700,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 44336,
+          "rent": 3000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 66056,
+          "rent": 5000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 84919,
+          "rent": 8000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 101570,
+          "rent": 12500,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 113586,
+          "rent": 18500,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 119951,
+          "rent": 27000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 8,
+      "policy": "quantity",
+      "phase": "lost",
+      "day": 9,
+      "cash": 17484,
+      "rent": 18500,
+      "singleLaunch": 30,
+      "dailySupply": 230,
+      "build": [
+        "supply_overdrive×1",
+        "aimed_launch×2",
+        "golden_marble×4",
+        "nitori_supply×2",
+        "expand_hopper×4",
+        "chain_impact×3",
+        "mass_production×4",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 417,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 1002,
+          "rent": 450,
+          "supply": 130,
+          "singleLaunch": 20,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 3271,
+          "rent": 900,
+          "supply": 130,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 5711,
+          "rent": 1700,
+          "supply": 195,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 10398,
+          "rent": 3000,
+          "supply": 230,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 16209,
+          "rent": 5000,
+          "supply": 230,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 20209,
+          "rent": 8000,
+          "supply": 230,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 21076,
+          "rent": 12500,
+          "supply": 230,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 17484,
+          "rent": 18500,
+          "supply": 230,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 9,
+      "policy": "quantity",
+      "phase": "won",
+      "day": 10,
+      "cash": 1883,
+      "rent": 27000,
+      "singleLaunch": 50,
+      "dailySupply": 130,
+      "build": [
+        "slot_expansion×3",
+        "golden_marble×4",
+        "precision_pegs×3",
+        "expand_hopper×4",
+        "mass_production×4",
+        "brass_pegs×4",
+        "perpetual_recycle×1",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 488,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 4
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 1086,
+          "rent": 450,
+          "supply": 60,
+          "singleLaunch": 20,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 4341,
+          "rent": 900,
+          "supply": 76,
+          "singleLaunch": 35,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 10034,
+          "rent": 1700,
+          "supply": 105,
+          "singleLaunch": 45,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 16259,
+          "rent": 3000,
+          "supply": 118,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 24758,
+          "rent": 5000,
+          "supply": 130,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 31440,
+          "rent": 8000,
+          "supply": 130,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 35287,
+          "rent": 12500,
+          "supply": 129,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 35051,
+          "rent": 18500,
+          "supply": 130,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 28883,
+          "rent": 27000,
+          "supply": 130,
+          "singleLaunch": 50,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 10,
+      "policy": "quantity",
+      "phase": "won",
+      "day": 10,
+      "cash": 23228,
+      "rent": 27000,
+      "singleLaunch": 50,
+      "dailySupply": 180,
+      "build": [
+        "slot_expansion×3",
+        "supply_overdrive×1",
+        "recycle_bin×3",
+        "polished_marble×3",
+        "expand_hopper×4",
+        "mass_production×4",
+        "perpetual_recycle×1",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 512,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 1720,
+          "rent": 450,
+          "supply": 100,
+          "singleLaunch": 20,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 3129,
+          "rent": 900,
+          "supply": 140,
+          "singleLaunch": 40,
+          "upgrades": 7
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 10922,
+          "rent": 1700,
+          "supply": 180,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 23695,
+          "rent": 3000,
+          "supply": 180,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 35377,
+          "rent": 5000,
+          "supply": 180,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 44959,
+          "rent": 8000,
+          "supply": 180,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 51609,
+          "rent": 12500,
+          "supply": 180,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 53952,
+          "rent": 18500,
+          "supply": 180,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 50228,
+          "rent": 27000,
+          "supply": 180,
+          "singleLaunch": 50,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 11,
+      "policy": "quantity",
+      "phase": "won",
+      "day": 10,
+      "cash": 53186,
+      "rent": 27000,
+      "singleLaunch": 50,
+      "dailySupply": 160,
+      "build": [
+        "supply_overdrive×1",
+        "golden_marble×4",
+        "gold_slots×4",
+        "polished_marble×3",
+        "expand_hopper×4",
+        "mass_production×4",
+        "brass_pegs×4",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 745,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 4
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 2415,
+          "rent": 450,
+          "supply": 110,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 7445,
+          "rent": 900,
+          "supply": 140,
+          "singleLaunch": 45,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 17231,
+          "rent": 1700,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 29821,
+          "rent": 3000,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 45606,
+          "rent": 5000,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 60399,
+          "rent": 8000,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 72160,
+          "rent": 12500,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 79028,
+          "rent": 18500,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 80186,
+          "rent": 27000,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 12,
+      "policy": "quantity",
+      "phase": "won",
+      "day": 10,
+      "cash": 20628,
+      "rent": 27000,
+      "singleLaunch": 50,
+      "dailySupply": 180,
+      "build": [
+        "golden_marble×4",
+        "nitori_supply×2",
+        "recycle_bin×3",
+        "expand_hopper×4",
+        "mass_production×4",
+        "brass_pegs×4",
+        "perpetual_recycle×1",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 623,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 1691,
+          "rent": 450,
+          "supply": 60,
+          "singleLaunch": 25,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 4390,
+          "rent": 900,
+          "supply": 115,
+          "singleLaunch": 40,
+          "upgrades": 7
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 7643,
+          "rent": 1700,
+          "supply": 145,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 15082,
+          "rent": 3000,
+          "supply": 151,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 27933,
+          "rent": 5000,
+          "supply": 180,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 38816,
+          "rent": 8000,
+          "supply": 180,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 46604,
+          "rent": 12500,
+          "supply": 180,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 50278,
+          "rent": 18500,
+          "supply": 180,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 47628,
+          "rent": 27000,
+          "supply": 180,
+          "singleLaunch": 50,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 1,
+      "policy": "peg",
+      "phase": "won",
+      "day": 10,
+      "cash": 72542,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 90,
+      "build": [
+        "resonance×2",
+        "polished_marble×3",
+        "precision_pegs×3",
+        "expand_hopper×4",
+        "chain_impact×3",
+        "mass_production×4",
+        "brass_pegs×4",
+        "infinite_breeding×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 1503,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 5
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 5920,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 8
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 13804,
+          "rent": 900,
+          "supply": 60,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 25362,
+          "rent": 1700,
+          "supply": 70,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 40078,
+          "rent": 3000,
+          "supply": 70,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 58276,
+          "rent": 5000,
+          "supply": 90,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 75111,
+          "rent": 8000,
+          "supply": 90,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 87803,
+          "rent": 12500,
+          "supply": 90,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 96470,
+          "rent": 18500,
+          "supply": 90,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 99542,
+          "rent": 27000,
+          "supply": 90,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 2,
+      "policy": "peg",
+      "phase": "lost",
+      "day": 10,
+      "cash": 19698,
+      "rent": 27000,
+      "singleLaunch": 50,
+      "dailySupply": 128,
+      "build": [
+        "aimed_launch×2",
+        "golden_marble×4",
+        "overload×1",
+        "expand_hopper×4",
+        "mass_production×4",
+        "brass_pegs×4",
+        "perpetual_recycle×1",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 565,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 1715,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 40,
+          "upgrades": 4
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 4081,
+          "rent": 900,
+          "supply": 60,
+          "singleLaunch": 40,
+          "upgrades": 7
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 7624,
+          "rent": 1700,
+          "supply": 87,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 13917,
+          "rent": 3000,
+          "supply": 94,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 19422,
+          "rent": 5000,
+          "supply": 96,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 23923,
+          "rent": 8000,
+          "supply": 107,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 27081,
+          "rent": 12500,
+          "supply": 125,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 26533,
+          "rent": 18500,
+          "supply": 130,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 19698,
+          "rent": 27000,
+          "supply": 128,
+          "singleLaunch": 50,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 3,
+      "policy": "peg",
+      "phase": "won",
+      "day": 10,
+      "cash": 4640,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 60,
+      "build": [
+        "overload×1",
+        "gold_slots×4",
+        "recycle_bin×3",
+        "chain_impact×3",
+        "mass_production×4",
+        "brass_pegs×4",
+        "infinite_breeding×1",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 608,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 4007,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 9922,
+          "rent": 900,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 17375,
+          "rent": 1700,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 26095,
+          "rent": 3000,
+          "supply": 58,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 33720,
+          "rent": 5000,
+          "supply": 58,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 38723,
+          "rent": 8000,
+          "supply": 58,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 40853,
+          "rent": 12500,
+          "supply": 59,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 39239,
+          "rent": 18500,
+          "supply": 61,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 31640,
+          "rent": 27000,
+          "supply": 60,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 4,
+      "policy": "peg",
+      "phase": "won",
+      "day": 10,
+      "cash": 43224,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 103,
+      "build": [
+        "slot_expansion×3",
+        "overload×1",
+        "precision_pegs×3",
+        "expand_hopper×4",
+        "chain_impact×3",
+        "mass_production×4",
+        "brass_pegs×4",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 941,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 5031,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 11603,
+          "rent": 900,
+          "supply": 60,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 21450,
+          "rent": 1700,
+          "supply": 80,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 34120,
+          "rent": 3000,
+          "supply": 94,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 47846,
+          "rent": 5000,
+          "supply": 105,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 58681,
+          "rent": 8000,
+          "supply": 102,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 68269,
+          "rent": 12500,
+          "supply": 110,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 73049,
+          "rent": 18500,
+          "supply": 109,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 70224,
+          "rent": 27000,
+          "supply": 103,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 5,
+      "policy": "peg",
+      "phase": "won",
+      "day": 10,
+      "cash": 92710,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 160,
+      "build": [
+        "golden_marble×4",
+        "overload×1",
+        "nitori_supply×2",
+        "expand_hopper×4",
+        "chain_impact×3",
+        "mass_production×4",
+        "brass_pegs×4",
+        "jackpot_lens×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 585,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 4
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 2365,
+          "rent": 450,
+          "supply": 85,
+          "singleLaunch": 15,
+          "upgrades": 7
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 10847,
+          "rent": 900,
+          "supply": 125,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 28162,
+          "rent": 1700,
+          "supply": 135,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 50607,
+          "rent": 3000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 71209,
+          "rent": 5000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 89578,
+          "rent": 8000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 104296,
+          "rent": 12500,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 114997,
+          "rent": 18500,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 119710,
+          "rent": 27000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 6,
+      "policy": "peg",
+      "phase": "lost",
+      "day": 10,
+      "cash": 15417,
+      "rent": 27000,
+      "singleLaunch": 10,
+      "dailySupply": 94,
+      "build": [
+        "aimed_launch×2",
+        "overload×1",
+        "polished_marble×3",
+        "precision_pegs×3",
+        "expand_hopper×4",
+        "chain_impact×3",
+        "brass_pegs×4",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 577,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 2513,
+          "rent": 450,
+          "supply": 70,
+          "singleLaunch": 10,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 7003,
+          "rent": 900,
+          "supply": 88,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 13685,
+          "rent": 1700,
+          "supply": 98,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 20117,
+          "rent": 3000,
+          "supply": 97,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 25861,
+          "rent": 5000,
+          "supply": 99,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 29222,
+          "rent": 8000,
+          "supply": 95,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 29636,
+          "rent": 12500,
+          "supply": 95,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 25862,
+          "rent": 18500,
+          "supply": 100,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 15417,
+          "rent": 27000,
+          "supply": 94,
+          "singleLaunch": 10,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 7,
+      "policy": "peg",
+      "phase": "won",
+      "day": 10,
+      "cash": 86909,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 160,
+      "build": [
+        "overload×1",
+        "nitori_supply×2",
+        "recycle_bin×3",
+        "precision_pegs×3",
+        "expand_hopper×4",
+        "chain_impact×3",
+        "mass_production×4",
+        "brass_pegs×4"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 1240,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 4629,
+          "rent": 450,
+          "supply": 85,
+          "singleLaunch": 15,
+          "upgrades": 7
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 13274,
+          "rent": 900,
+          "supply": 115,
+          "singleLaunch": 15,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 24131,
+          "rent": 1700,
+          "supply": 160,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 43322,
+          "rent": 3000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 64122,
+          "rent": 5000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 82657,
+          "rent": 8000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 97884,
+          "rent": 12500,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 108658,
+          "rent": 18500,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 113909,
+          "rent": 27000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 8,
+      "policy": "peg",
+      "phase": "won",
+      "day": 10,
+      "cash": 53653,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 179,
+      "build": [
+        "supply_overdrive×1",
+        "aimed_launch×2",
+        "golden_marble×4",
+        "expand_hopper×4",
+        "chain_impact×3",
+        "mass_production×4",
+        "brass_pegs×4",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 417,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 1002,
+          "rent": 450,
+          "supply": 130,
+          "singleLaunch": 20,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 4140,
+          "rent": 900,
+          "supply": 130,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 12542,
+          "rent": 1700,
+          "supply": 155,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 26104,
+          "rent": 3000,
+          "supply": 152,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 43279,
+          "rent": 5000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 58275,
+          "rent": 8000,
+          "supply": 178,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 70544,
+          "rent": 12500,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 78533,
+          "rent": 18500,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 80653,
+          "rent": 27000,
+          "supply": 179,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 9,
+      "policy": "peg",
+      "phase": "won",
+      "day": 10,
+      "cash": 81581,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 180,
+      "build": [
+        "supply_overdrive×1",
+        "overload×1",
+        "precision_pegs×3",
+        "expand_hopper×4",
+        "chain_impact×3",
+        "mass_production×4",
+        "brass_pegs×4",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 620,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 1946,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 7
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 6797,
+          "rent": 900,
+          "supply": 68,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 18531,
+          "rent": 1700,
+          "supply": 158,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 39476,
+          "rent": 3000,
+          "supply": 178,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 59486,
+          "rent": 5000,
+          "supply": 178,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 77841,
+          "rent": 8000,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 93206,
+          "rent": 12500,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 103848,
+          "rent": 18500,
+          "supply": 179,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 108581,
+          "rent": 27000,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 10,
+      "policy": "peg",
+      "phase": "won",
+      "day": 10,
+      "cash": 90961,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 210,
+      "build": [
+        "supply_overdrive×1",
+        "overload×1",
+        "nitori_supply×2",
+        "precision_pegs×3",
+        "expand_hopper×4",
+        "chain_impact×3",
+        "mass_production×4",
+        "brass_pegs×4"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 621,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 2990,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 10723,
+          "rent": 900,
+          "supply": 130,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 27464,
+          "rent": 1700,
+          "supply": 165,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 48672,
+          "rent": 3000,
+          "supply": 200,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 68906,
+          "rent": 5000,
+          "supply": 210,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 86823,
+          "rent": 8000,
+          "supply": 210,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 101975,
+          "rent": 12500,
+          "supply": 210,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 112977,
+          "rent": 18500,
+          "supply": 210,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 117961,
+          "rent": 27000,
+          "supply": 210,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 11,
+      "policy": "peg",
+      "phase": "won",
+      "day": 10,
+      "cash": 15958,
+      "rent": 27000,
+      "singleLaunch": 10,
+      "dailySupply": 90,
+      "build": [
+        "resonance×2",
+        "overload×1",
+        "gold_slots×4",
+        "polished_marble×3",
+        "precision_pegs×3",
+        "expand_hopper×4",
+        "chain_impact×3",
+        "brass_pegs×4"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 878,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 6081,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 12326,
+          "rent": 900,
+          "supply": 60,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 20627,
+          "rent": 1700,
+          "supply": 90,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 29950,
+          "rent": 3000,
+          "supply": 90,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 38922,
+          "rent": 5000,
+          "supply": 90,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 45931,
+          "rent": 8000,
+          "supply": 90,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 50135,
+          "rent": 12500,
+          "supply": 90,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 49734,
+          "rent": 18500,
+          "supply": 90,
+          "singleLaunch": 10,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 42958,
+          "rent": 27000,
+          "supply": 90,
+          "singleLaunch": 10,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 12,
+      "policy": "peg",
+      "phase": "won",
+      "day": 10,
+      "cash": 96033,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 160,
+      "build": [
+        "supply_overdrive×1",
+        "overload×1",
+        "recycle_bin×3",
+        "expand_hopper×4",
+        "chain_impact×3",
+        "mass_production×4",
+        "brass_pegs×4",
+        "infinite_breeding×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 623,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 3068,
+          "rent": 450,
+          "supply": 60,
+          "singleLaunch": 10,
+          "upgrades": 4
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 9140,
+          "rent": 900,
+          "supply": 140,
+          "singleLaunch": 30,
+          "upgrades": 7
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 26273,
+          "rent": 1700,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 48784,
+          "rent": 3000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 70011,
+          "rent": 5000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 89631,
+          "rent": 8000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 105982,
+          "rent": 12500,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 117780,
+          "rent": 18500,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 123033,
+          "rent": 27000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 1,
+      "policy": "marble",
+      "phase": "won",
+      "day": 10,
+      "cash": 28609,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 100,
+      "build": [
+        "supply_overdrive×1",
+        "golden_marble×4",
+        "gold_slots×4",
+        "recycle_bin×3",
+        "polished_marble×3",
+        "chain_impact×3",
+        "mass_production×4",
+        "infinite_breeding×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 765,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 4
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 3496,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 7
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 10569,
+          "rent": 900,
+          "supply": 100,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 18250,
+          "rent": 1700,
+          "supply": 100,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 29423,
+          "rent": 3000,
+          "supply": 100,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 41020,
+          "rent": 5000,
+          "supply": 100,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 50778,
+          "rent": 8000,
+          "supply": 100,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 57357,
+          "rent": 12500,
+          "supply": 100,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 59533,
+          "rent": 18500,
+          "supply": 100,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 55609,
+          "rent": 27000,
+          "supply": 100,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 2,
+      "policy": "marble",
+      "phase": "lost",
+      "day": 3,
+      "cash": 586,
+      "rent": 900,
+      "singleLaunch": 45,
+      "dailySupply": 50,
+      "build": [
+        "mass_production×3",
+        "infinite_breeding×1",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 452,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 35,
+          "upgrades": 2
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 621,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 35,
+          "upgrades": 3
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 586,
+          "rent": 900,
+          "supply": 50,
+          "singleLaunch": 45,
+          "upgrades": 3
+        }
+      ]
+    },
+    {
+      "seed": 3,
+      "policy": "marble",
+      "phase": "lost",
+      "day": 9,
+      "cash": 12132,
+      "rent": 18500,
+      "singleLaunch": 30,
+      "dailySupply": 57,
+      "build": [
+        "golden_marble×4",
+        "overload×1",
+        "recycle_bin×3",
+        "polished_marble×3",
+        "mass_production×4",
+        "brass_pegs×4",
+        "infinite_breeding×1",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 613,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 3213,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 7
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 6259,
+          "rent": 900,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 9293,
+          "rent": 1700,
+          "supply": 50,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 12090,
+          "rent": 3000,
+          "supply": 60,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 14102,
+          "rent": 5000,
+          "supply": 58,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 16493,
+          "rent": 8000,
+          "supply": 58,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 16667,
+          "rent": 12500,
+          "supply": 60,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 12132,
+          "rent": 18500,
+          "supply": 57,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 4,
+      "policy": "marble",
+      "phase": "won",
+      "day": 10,
+      "cash": 16181,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 160,
+      "build": [
+        "supply_overdrive×1",
+        "aimed_launch×2",
+        "golden_marble×4",
+        "recycle_bin×3",
+        "expand_hopper×4",
+        "mass_production×4",
+        "brass_pegs×4",
+        "infinite_breeding×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 478,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 4
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 2178,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 5081,
+          "rent": 900,
+          "supply": 100,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 9474,
+          "rent": 1700,
+          "supply": 140,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 19339,
+          "rent": 3000,
+          "supply": 140,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 30463,
+          "rent": 5000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 39650,
+          "rent": 8000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 45625,
+          "rent": 12500,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 47352,
+          "rent": 18500,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 43181,
+          "rent": 27000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 5,
+      "policy": "marble",
+      "phase": "lost",
+      "day": 4,
+      "cash": 1372,
+      "rent": 1700,
+      "singleLaunch": 45,
+      "dailySupply": 90,
+      "build": [
+        "golden_marble×1",
+        "expand_hopper×2",
+        "mass_production×3",
+        "infinite_breeding×1",
+        "perpetual_recycle×1",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 393,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 25,
+          "upgrades": 4
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 836,
+          "rent": 450,
+          "supply": 80,
+          "singleLaunch": 30,
+          "upgrades": 5
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 1281,
+          "rent": 900,
+          "supply": 90,
+          "singleLaunch": 35,
+          "upgrades": 6
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 1372,
+          "rent": 1700,
+          "supply": 90,
+          "singleLaunch": 45,
+          "upgrades": 6
+        }
+      ]
+    },
+    {
+      "seed": 6,
+      "policy": "marble",
+      "phase": "won",
+      "day": 10,
+      "cash": 26288,
+      "rent": 27000,
+      "singleLaunch": 50,
+      "dailySupply": 130,
+      "build": [
+        "golden_marble×4",
+        "marble_compound×1",
+        "polished_marble×3",
+        "expand_hopper×4",
+        "mass_production×4",
+        "brass_pegs×4",
+        "perpetual_recycle×1",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 396,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 816,
+          "rent": 450,
+          "supply": 70,
+          "singleLaunch": 15,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 5222,
+          "rent": 900,
+          "supply": 84,
+          "singleLaunch": 35,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 12169,
+          "rent": 1700,
+          "supply": 111,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 19573,
+          "rent": 3000,
+          "supply": 114,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 26689,
+          "rent": 5000,
+          "supply": 110,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 37968,
+          "rent": 8000,
+          "supply": 124,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 48043,
+          "rent": 12500,
+          "supply": 130,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 53749,
+          "rent": 18500,
+          "supply": 130,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 53288,
+          "rent": 27000,
+          "supply": 130,
+          "singleLaunch": 50,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 7,
+      "policy": "marble",
+      "phase": "lost",
+      "day": 9,
+      "cash": 16086,
+      "rent": 18500,
+      "singleLaunch": 50,
+      "dailySupply": 110,
+      "build": [
+        "aimed_launch×2",
+        "golden_marble×4",
+        "polished_marble×3",
+        "expand_hopper×4",
+        "chain_impact×3",
+        "mass_production×4",
+        "infinite_breeding×1",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 779,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 4
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 1712,
+          "rent": 450,
+          "supply": 60,
+          "singleLaunch": 35,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 4489,
+          "rent": 900,
+          "supply": 90,
+          "singleLaunch": 40,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 8963,
+          "rent": 1700,
+          "supply": 90,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 12625,
+          "rent": 3000,
+          "supply": 90,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 15255,
+          "rent": 5000,
+          "supply": 90,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 16537,
+          "rent": 8000,
+          "supply": 100,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 17506,
+          "rent": 12500,
+          "supply": 110,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 16086,
+          "rent": 18500,
+          "supply": 110,
+          "singleLaunch": 50,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 8,
+      "policy": "marble",
+      "phase": "won",
+      "day": 10,
+      "cash": 20946,
+      "rent": 27000,
+      "singleLaunch": 50,
+      "dailySupply": 120,
+      "build": [
+        "golden_marble×4",
+        "nitori_supply×2",
+        "polished_marble×3",
+        "chain_impact×3",
+        "mass_production×4",
+        "brass_pegs×4",
+        "infinite_breeding×1",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 426,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 752,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 25,
+          "upgrades": 5
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 1774,
+          "rent": 900,
+          "supply": 50,
+          "singleLaunch": 35,
+          "upgrades": 6
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 3690,
+          "rent": 1700,
+          "supply": 50,
+          "singleLaunch": 40,
+          "upgrades": 7
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 9836,
+          "rent": 3000,
+          "supply": 95,
+          "singleLaunch": 40,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 18406,
+          "rent": 5000,
+          "supply": 120,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 25856,
+          "rent": 8000,
+          "supply": 120,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 36342,
+          "rent": 12500,
+          "supply": 120,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 45166,
+          "rent": 18500,
+          "supply": 120,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 47946,
+          "rent": 27000,
+          "supply": 120,
+          "singleLaunch": 50,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 9,
+      "policy": "marble",
+      "phase": "lost",
+      "day": 9,
+      "cash": 13394,
+      "rent": 18500,
+      "singleLaunch": 30,
+      "dailySupply": 90,
+      "build": [
+        "slot_expansion×3",
+        "golden_marble×4",
+        "recycle_bin×3",
+        "precision_pegs×3",
+        "expand_hopper×4",
+        "brass_pegs×4",
+        "infinite_breeding×1",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 491,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 4
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 1191,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 7
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 3518,
+          "rent": 900,
+          "supply": 70,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 5363,
+          "rent": 1700,
+          "supply": 70,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 7693,
+          "rent": 3000,
+          "supply": 70,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 11256,
+          "rent": 5000,
+          "supply": 70,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 15366,
+          "rent": 8000,
+          "supply": 90,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 16502,
+          "rent": 12500,
+          "supply": 90,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 13394,
+          "rent": 18500,
+          "supply": 90,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 10,
+      "policy": "marble",
+      "phase": "lost",
+      "day": 8,
+      "cash": 4875,
+      "rent": 12500,
+      "singleLaunch": 50,
+      "dailySupply": 100,
+      "build": [
+        "golden_marble×4",
+        "recycle_bin×2",
+        "polished_marble×1",
+        "precision_pegs×1",
+        "expand_hopper×3",
+        "mass_production×4",
+        "infinite_breeding×1",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 512,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 2081,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 30,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 4380,
+          "rent": 900,
+          "supply": 80,
+          "singleLaunch": 40,
+          "upgrades": 7
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 7176,
+          "rent": 1700,
+          "supply": 100,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 9121,
+          "rent": 3000,
+          "supply": 100,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 9781,
+          "rent": 5000,
+          "supply": 100,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 8901,
+          "rent": 8000,
+          "supply": 100,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 4875,
+          "rent": 12500,
+          "supply": 100,
+          "singleLaunch": 50,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 11,
+      "policy": "marble",
+      "phase": "won",
+      "day": 10,
+      "cash": 8718,
+      "rent": 27000,
+      "singleLaunch": 50,
+      "dailySupply": 120,
+      "build": [
+        "golden_marble×4",
+        "nitori_supply×2",
+        "recycle_bin×3",
+        "marble_compound×1",
+        "polished_marble×3",
+        "chain_impact×3",
+        "mass_production×4",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 688,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 4
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 2318,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 5
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 5638,
+          "rent": 900,
+          "supply": 50,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 12178,
+          "rent": 1700,
+          "supply": 95,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 17943,
+          "rent": 3000,
+          "supply": 95,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 26104,
+          "rent": 5000,
+          "supply": 120,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 34557,
+          "rent": 8000,
+          "supply": 120,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 39800,
+          "rent": 12500,
+          "supply": 120,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 40979,
+          "rent": 18500,
+          "supply": 120,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 35718,
+          "rent": 27000,
+          "supply": 120,
+          "singleLaunch": 50,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 12,
+      "policy": "marble",
+      "phase": "won",
+      "day": 10,
+      "cash": 48888,
+      "rent": 27000,
+      "singleLaunch": 50,
+      "dailySupply": 160,
+      "build": [
+        "supply_overdrive×1",
+        "golden_marble×4",
+        "polished_marble×3",
+        "expand_hopper×4",
+        "mass_production×4",
+        "brass_pegs×4",
+        "infinite_breeding×1",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 623,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 2279,
+          "rent": 450,
+          "supply": 60,
+          "singleLaunch": 20,
+          "upgrades": 5
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 4903,
+          "rent": 900,
+          "supply": 90,
+          "singleLaunch": 40,
+          "upgrades": 7
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 11317,
+          "rent": 1700,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 21696,
+          "rent": 3000,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 38762,
+          "rent": 5000,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 54130,
+          "rent": 8000,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 66458,
+          "rent": 12500,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 74407,
+          "rent": 18500,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 75888,
+          "rent": 27000,
+          "supply": 160,
+          "singleLaunch": 50,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 1,
+      "policy": "slot",
+      "phase": "lost",
+      "day": 9,
+      "cash": 8080,
+      "rent": 18500,
+      "singleLaunch": 30,
+      "dailySupply": 50,
+      "build": [
+        "slot_expansion×3",
+        "aimed_launch×2",
+        "gold_slots×4",
+        "recycle_bin×3",
+        "polished_marble×3",
+        "mass_production×4",
+        "jackpot_lens×1",
+        "infinite_breeding×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 543,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 5
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 1720,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 7
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 6109,
+          "rent": 900,
+          "supply": 50,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 9591,
+          "rent": 1700,
+          "supply": 50,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 12277,
+          "rent": 3000,
+          "supply": 50,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 14177,
+          "rent": 5000,
+          "supply": 50,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 14616,
+          "rent": 8000,
+          "supply": 50,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 13582,
+          "rent": 12500,
+          "supply": 50,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 8080,
+          "rent": 18500,
+          "supply": 50,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 2,
+      "policy": "slot",
+      "phase": "lost",
+      "day": 9,
+      "cash": 6541,
+      "rent": 18500,
+      "singleLaunch": 30,
+      "dailySupply": 190,
+      "build": [
+        "slot_expansion×3",
+        "supply_overdrive×1",
+        "aimed_launch×2",
+        "nitori_supply×2",
+        "recycle_bin×3",
+        "mass_production×4",
+        "jackpot_lens×1",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 472,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 836,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 25,
+          "upgrades": 5
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 2376,
+          "rent": 900,
+          "supply": 57,
+          "singleLaunch": 30,
+          "upgrades": 7
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 5734,
+          "rent": 1700,
+          "supply": 109,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 10626,
+          "rent": 3000,
+          "supply": 165,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 14005,
+          "rent": 5000,
+          "supply": 190,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 15329,
+          "rent": 8000,
+          "supply": 190,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 13856,
+          "rent": 12500,
+          "supply": 187,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 6541,
+          "rent": 18500,
+          "supply": 190,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 3,
+      "policy": "slot",
+      "phase": "lost",
+      "day": 8,
+      "cash": 12107,
+      "rent": 12500,
+      "singleLaunch": 30,
+      "dailySupply": 59,
+      "build": [
+        "aimed_launch×2",
+        "gold_slots×4",
+        "golden_slots_prime×1",
+        "recycle_bin×3",
+        "mass_production×4",
+        "brass_pegs×4",
+        "jackpot_lens×1",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 419,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 2100,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 5
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 4094,
+          "rent": 900,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 5759,
+          "rent": 1700,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 8795,
+          "rent": 3000,
+          "supply": 57,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 11615,
+          "rent": 5000,
+          "supply": 59,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 13470,
+          "rent": 8000,
+          "supply": 62,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 12107,
+          "rent": 12500,
+          "supply": 59,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 4,
+      "policy": "slot",
+      "phase": "lost",
+      "day": 10,
+      "cash": 24744,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 106,
+      "build": [
+        "slot_expansion×3",
+        "golden_marble×4",
+        "recycle_bin×3",
+        "expand_hopper×4",
+        "mass_production×4",
+        "brass_pegs×4",
+        "jackpot_lens×1",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 439,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 2058,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 7
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 4017,
+          "rent": 900,
+          "supply": 60,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 7636,
+          "rent": 1700,
+          "supply": 80,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 13250,
+          "rent": 3000,
+          "supply": 84,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 19621,
+          "rent": 5000,
+          "supply": 83,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 26616,
+          "rent": 8000,
+          "supply": 105,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 31427,
+          "rent": 12500,
+          "supply": 108,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 31366,
+          "rent": 18500,
+          "supply": 110,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 24744,
+          "rent": 27000,
+          "supply": 106,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 5,
+      "policy": "slot",
+      "phase": "won",
+      "day": 10,
+      "cash": 9299,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 180,
+      "build": [
+        "slot_expansion×3",
+        "nitori_supply×2",
+        "recycle_bin×3",
+        "expand_hopper×4",
+        "chain_impact×3",
+        "mass_production×4",
+        "jackpot_lens×1",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 384,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 4
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 685,
+          "rent": 450,
+          "supply": 60,
+          "singleLaunch": 15,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 2523,
+          "rent": 900,
+          "supply": 66,
+          "singleLaunch": 20,
+          "upgrades": 7
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 7284,
+          "rent": 1700,
+          "supply": 111,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 16890,
+          "rent": 3000,
+          "supply": 160,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 26875,
+          "rent": 5000,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 34829,
+          "rent": 8000,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 40181,
+          "rent": 12500,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 41041,
+          "rent": 18500,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 36299,
+          "rent": 27000,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 6,
+      "policy": "slot",
+      "phase": "lost",
+      "day": 8,
+      "cash": 6011,
+      "rent": 12500,
+      "singleLaunch": 45,
+      "dailySupply": 118,
+      "build": [
+        "aimed_launch×2",
+        "gold_slots×4",
+        "recycle_bin×3",
+        "expand_hopper×3",
+        "mass_production×3",
+        "jackpot_lens×1",
+        "perpetual_recycle×1",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 397,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 623,
+          "rent": 450,
+          "supply": 70,
+          "singleLaunch": 10,
+          "upgrades": 4
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 1853,
+          "rent": 900,
+          "supply": 79,
+          "singleLaunch": 25,
+          "upgrades": 7
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 4656,
+          "rent": 1700,
+          "supply": 97,
+          "singleLaunch": 35,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 7183,
+          "rent": 3000,
+          "supply": 107,
+          "singleLaunch": 40,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 8512,
+          "rent": 5000,
+          "supply": 102,
+          "singleLaunch": 45,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 9058,
+          "rent": 8000,
+          "supply": 120,
+          "singleLaunch": 45,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 6011,
+          "rent": 12500,
+          "supply": 118,
+          "singleLaunch": 45,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 7,
+      "policy": "slot",
+      "phase": "won",
+      "day": 10,
+      "cash": 25061,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 108,
+      "build": [
+        "slot_expansion×3",
+        "aimed_launch×2",
+        "recycle_bin×3",
+        "polished_marble×3",
+        "expand_hopper×4",
+        "mass_production×4",
+        "brass_pegs×4",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 940,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 5
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 3106,
+          "rent": 450,
+          "supply": 60,
+          "singleLaunch": 15,
+          "upgrades": 8
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 6606,
+          "rent": 900,
+          "supply": 73,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 12394,
+          "rent": 1700,
+          "supply": 105,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 23367,
+          "rent": 3000,
+          "supply": 102,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 35740,
+          "rent": 5000,
+          "supply": 110,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 45355,
+          "rent": 8000,
+          "supply": 105,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 52860,
+          "rent": 12500,
+          "supply": 110,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 55186,
+          "rent": 18500,
+          "supply": 105,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 52061,
+          "rent": 27000,
+          "supply": 108,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 8,
+      "policy": "slot",
+      "phase": "won",
+      "day": 10,
+      "cash": 22291,
+      "rent": 27000,
+      "singleLaunch": 30,
+      "dailySupply": 180,
+      "build": [
+        "slot_expansion×3",
+        "aimed_launch×2",
+        "nitori_supply×2",
+        "polished_marble×3",
+        "expand_hopper×4",
+        "mass_production×4",
+        "jackpot_lens×1",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 457,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 755,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 5
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 2891,
+          "rent": 900,
+          "supply": 84,
+          "singleLaunch": 20,
+          "upgrades": 7
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 8617,
+          "rent": 1700,
+          "supply": 130,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 19464,
+          "rent": 3000,
+          "supply": 158,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 32187,
+          "rent": 5000,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 42203,
+          "rent": 8000,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 49749,
+          "rent": 12500,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 52677,
+          "rent": 18500,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 10,
+          "cashBeforeRent": 49291,
+          "rent": 27000,
+          "supply": 180,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 9,
+      "policy": "slot",
+      "phase": "lost",
+      "day": 8,
+      "cash": 11747,
+      "rent": 12500,
+      "singleLaunch": 30,
+      "dailySupply": 90,
+      "build": [
+        "slot_expansion×3",
+        "gold_slots×4",
+        "golden_slots_prime×1",
+        "recycle_bin×3",
+        "expand_hopper×4",
+        "slot_streak×1",
+        "mass_production×4",
+        "jackpot_lens×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 463,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 2064,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 4936,
+          "rent": 900,
+          "supply": 70,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 8472,
+          "rent": 1700,
+          "supply": 90,
+          "singleLaunch": 25,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 11916,
+          "rent": 3000,
+          "supply": 90,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 14410,
+          "rent": 5000,
+          "supply": 90,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 14269,
+          "rent": 8000,
+          "supply": 90,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 11747,
+          "rent": 12500,
+          "supply": 90,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 10,
+      "policy": "slot",
+      "phase": "lost",
+      "day": 9,
+      "cash": 7521,
+      "rent": 18500,
+      "singleLaunch": 30,
+      "dailySupply": 105,
+      "build": [
+        "slot_expansion×3",
+        "golden_marble×4",
+        "recycle_bin×3",
+        "expand_hopper×4",
+        "mass_production×4",
+        "jackpot_lens×1",
+        "infinite_breeding×1",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 439,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 980,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 20,
+          "upgrades": 5
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 2788,
+          "rent": 900,
+          "supply": 60,
+          "singleLaunch": 20,
+          "upgrades": 6
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 5929,
+          "rent": 1700,
+          "supply": 81,
+          "singleLaunch": 20,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 9043,
+          "rent": 3000,
+          "supply": 83,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 11533,
+          "rent": 5000,
+          "supply": 88,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 13608,
+          "rent": 8000,
+          "supply": 109,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 12864,
+          "rent": 12500,
+          "supply": 107,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 7521,
+          "rent": 18500,
+          "supply": 105,
+          "singleLaunch": 30,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 11,
+      "policy": "slot",
+      "phase": "lost",
+      "day": 9,
+      "cash": 8823,
+      "rent": 18500,
+      "singleLaunch": 50,
+      "dailySupply": 50,
+      "build": [
+        "golden_marble×4",
+        "gold_slots×4",
+        "recycle_bin×3",
+        "polished_marble×3",
+        "slot_streak×1",
+        "mass_production×4",
+        "jackpot_lens×1",
+        "auto_line×2"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 401,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 4
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 2967,
+          "rent": 450,
+          "supply": 50,
+          "singleLaunch": 15,
+          "upgrades": 6
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 5576,
+          "rent": 900,
+          "supply": 50,
+          "singleLaunch": 30,
+          "upgrades": 8
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 9237,
+          "rent": 1700,
+          "supply": 50,
+          "singleLaunch": 45,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 12069,
+          "rent": 3000,
+          "supply": 50,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 14402,
+          "rent": 5000,
+          "supply": 50,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 15552,
+          "rent": 8000,
+          "supply": 50,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 8,
+          "cashBeforeRent": 14568,
+          "rent": 12500,
+          "supply": 50,
+          "singleLaunch": 50,
+          "upgrades": 8
+        },
+        {
+          "day": 9,
+          "cashBeforeRent": 8823,
+          "rent": 18500,
+          "supply": 50,
+          "singleLaunch": 50,
+          "upgrades": 8
+        }
+      ]
+    },
+    {
+      "seed": 12,
+      "policy": "slot",
+      "phase": "lost",
+      "day": 7,
+      "cash": 5499,
+      "rent": 8000,
+      "singleLaunch": 15,
+      "dailySupply": 68,
+      "build": [
+        "slot_expansion×3",
+        "aimed_launch×2",
+        "recycle_bin×2",
+        "expand_hopper×1",
+        "mass_production×1",
+        "jackpot_lens×1",
+        "infinite_breeding×1",
+        "perpetual_recycle×1"
+      ],
+      "daily": [
+        {
+          "day": 1,
+          "cashBeforeRent": 417,
+          "rent": 180,
+          "supply": 50,
+          "singleLaunch": 10,
+          "upgrades": 3
+        },
+        {
+          "day": 2,
+          "cashBeforeRent": 608,
+          "rent": 450,
+          "supply": 60,
+          "singleLaunch": 15,
+          "upgrades": 5
+        },
+        {
+          "day": 3,
+          "cashBeforeRent": 1090,
+          "rent": 900,
+          "supply": 68,
+          "singleLaunch": 15,
+          "upgrades": 6
+        },
+        {
+          "day": 4,
+          "cashBeforeRent": 3780,
+          "rent": 1700,
+          "supply": 66,
+          "singleLaunch": 15,
+          "upgrades": 8
+        },
+        {
+          "day": 5,
+          "cashBeforeRent": 5469,
+          "rent": 3000,
+          "supply": 69,
+          "singleLaunch": 15,
+          "upgrades": 8
+        },
+        {
+          "day": 6,
+          "cashBeforeRent": 6347,
+          "rent": 5000,
+          "supply": 70,
+          "singleLaunch": 15,
+          "upgrades": 8
+        },
+        {
+          "day": 7,
+          "cashBeforeRent": 5499,
+          "rent": 8000,
+          "supply": 68,
+          "singleLaunch": 15,
+          "upgrades": 8
+        }
+      ]
+    }
+  ]
+}

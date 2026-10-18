@@ -1,0 +1,204 @@
+{
+  "samples": 60,
+  "results": [
+    {
+      "name": "baseline",
+      "cards": [],
+      "balls": 600,
+      "net": 2495,
+      "pegHits": 12422,
+      "pegIncome": 1464,
+      "slotIncome": 1631,
+      "returns": 0,
+      "outerPrizes": 123,
+      "jackpots": 10,
+      "maxDuration": 9566.666666661098,
+      "netPerBall": 4.158333333333333,
+      "hitsPerBall": 20.703333333333333,
+      "outerRate": 0.205,
+      "jackpotRate": 0.016666666666666666
+    },
+    {
+      "name": "inward",
+      "cards": [
+        [
+          "rail_inward",
+          1
+        ]
+      ],
+      "balls": 600,
+      "net": 2456,
+      "pegHits": 12423,
+      "pegIncome": 1464,
+      "slotIncome": 1592,
+      "returns": 0,
+      "outerPrizes": 106,
+      "jackpots": 16,
+      "maxDuration": 9566.666666661098,
+      "netPerBall": 4.093333333333334,
+      "hitsPerBall": 20.705,
+      "outerRate": 0.17666666666666667,
+      "jackpotRate": 0.02666666666666667
+    },
+    {
+      "name": "outward",
+      "cards": [
+        [
+          "rail_outward",
+          1
+        ]
+      ],
+      "balls": 600,
+      "net": 3457,
+      "pegHits": 12374,
+      "pegIncome": 1464,
+      "slotIncome": 2593,
+      "returns": 0,
+      "outerPrizes": 142,
+      "jackpots": 58,
+      "maxDuration": 9566.666666661098,
+      "netPerBall": 5.761666666666667,
+      "hitsPerBall": 20.623333333333335,
+      "outerRate": 0.23666666666666666,
+      "jackpotRate": 0.09666666666666666
+    },
+    {
+      "name": "extended",
+      "cards": [
+        [
+          "rail_length",
+          3
+        ]
+      ],
+      "balls": 600,
+      "net": 2640,
+      "pegHits": 12383,
+      "pegIncome": 1467,
+      "slotIncome": 1773,
+      "returns": 0,
+      "outerPrizes": 135,
+      "jackpots": 13,
+      "maxDuration": 9566.666666661098,
+      "netPerBall": 4.4,
+      "hitsPerBall": 20.638333333333332,
+      "outerRate": 0.225,
+      "jackpotRate": 0.021666666666666667
+    },
+    {
+      "name": "elastic",
+      "cards": [
+        [
+          "rail_rubber",
+          3
+        ]
+      ],
+      "balls": 600,
+      "net": 2486,
+      "pegHits": 12670,
+      "pegIncome": 1470,
+      "slotIncome": 1616,
+      "returns": 0,
+      "outerPrizes": 120,
+      "jackpots": 10,
+      "maxDuration": 9566.666666661098,
+      "netPerBall": 4.1433333333333335,
+      "hitsPerBall": 21.116666666666667,
+      "outerRate": 0.2,
+      "jackpotRate": 0.016666666666666666
+    },
+    {
+      "name": "spring",
+      "cards": [
+        [
+          "rail_inward",
+          1
+        ],
+        [
+          "rail_spring",
+          2
+        ]
+      ],
+      "balls": 600,
+      "net": 2420,
+      "pegHits": 12844,
+      "pegIncome": 1479,
+      "slotIncome": 1541,
+      "returns": 138,
+      "outerPrizes": 100,
+      "jackpots": 15,
+      "maxDuration": 10916.666666660312,
+      "netPerBall": 4.033333333333333,
+      "hitsPerBall": 21.406666666666666,
+      "outerRate": 0.16666666666666666,
+      "jackpotRate": 0.025
+    },
+    {
+      "name": "return_engine",
+      "cards": [
+        [
+          "rail_inward",
+          1
+        ],
+        [
+          "rail_spring",
+          2
+        ],
+        [
+          "rail_echo",
+          1
+        ],
+        [
+          "rail_energy",
+          2
+        ],
+        [
+          "brass_pegs",
+          3
+        ]
+      ],
+      "balls": 600,
+      "net": 5330,
+      "pegHits": 12844,
+      "pegIncome": 3855,
+      "slotIncome": 2075,
+      "returns": 138,
+      "outerPrizes": 100,
+      "jackpots": 15,
+      "maxDuration": 10916.666666660312,
+      "netPerBall": 8.883333333333333,
+      "hitsPerBall": 21.406666666666666,
+      "outerRate": 0.16666666666666666,
+      "jackpotRate": 0.025
+    },
+    {
+      "name": "slot_core",
+      "cards": [
+        [
+          "gold_slots",
+          3
+        ],
+        [
+          "outer_gild",
+          3
+        ],
+        [
+          "inner_alchemy",
+          3
+        ]
+      ],
+      "balls": 600,
+      "net": 15116,
+      "pegHits": 12422,
+      "pegIncome": 1464,
+      "slotIncome": 14252,
+      "returns": 0,
+      "outerPrizes": 123,
+      "jackpots": 10,
+      "maxDuration": 9566.666666661098,
+      "netPerBall": 25.19333333333333,
+      "hitsPerBall": 20.703333333333333,
+      "outerRate": 0.205,
+      "jackpotRate": 0.016666666666666666
+    }
+  ]
+}

@@ -1,0 +1,455 @@
+{
+  "samples": 60,
+  "ballsPerCard": 600,
+  "baseline": {
+    "netPerBall": 6.443333333333333,
+    "jackpotRate": 0.10833333333333334,
+    "winRate": 0.4916666666666666,
+    "dailyRefund": 0,
+    "dailyBalls": 50,
+    "dailyNet": 322.1666666666667
+  },
+  "slotCounts": [
+    58,
+    29,
+    74,
+    104,
+    65,
+    126,
+    54,
+    39,
+    51
+  ],
+  "cards": [
+    {
+      "id": "mass_production",
+      "name": "批量生产",
+      "pool": "normal",
+      "price": 12,
+      "prerequisites": [],
+      "deltaPerBall": 0,
+      "standardError": 0,
+      "dailyDelta": 0,
+      "paybackDays": null,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    },
+    {
+      "id": "expand_hopper",
+      "name": "扩充弹仓",
+      "pool": "normal",
+      "price": 14,
+      "prerequisites": [],
+      "deltaPerBall": 0,
+      "standardError": 0,
+      "dailyDelta": 0,
+      "paybackDays": null,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    },
+    {
+      "id": "golden_marble",
+      "name": "镀金弹珠",
+      "pool": "normal",
+      "price": 15,
+      "prerequisites": [],
+      "deltaPerBall": 0.4916666666666664,
+      "standardError": 0.019785811652533472,
+      "dailyDelta": 24.583333333333258,
+      "paybackDays": 0.6101694915254257,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    },
+    {
+      "id": "polished_marble",
+      "name": "精工抛光",
+      "pool": "normal",
+      "price": 18,
+      "prerequisites": [],
+      "deltaPerBall": 3.9333333333333327,
+      "standardError": 0.15828649322026778,
+      "dailyDelta": 196.6666666666668,
+      "paybackDays": 0.0915254237288135,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    },
+    {
+      "id": "brass_pegs",
+      "name": "标记撞针",
+      "pool": "normal",
+      "price": 15,
+      "prerequisites": [],
+      "deltaPerBall": 2.5399999999999996,
+      "standardError": 0.07815673084431811,
+      "dailyDelta": 127.00000000000023,
+      "paybackDays": 0.11811023622047223,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    },
+    {
+      "id": "precision_pegs",
+      "name": "精密加工",
+      "pool": "normal",
+      "price": 18,
+      "prerequisites": [],
+      "deltaPerBall": 1.6233333333333335,
+      "standardError": 0.05338098154031224,
+      "dailyDelta": 81.16666666666663,
+      "paybackDays": 0.2217659137577003,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    },
+    {
+      "id": "chain_impact",
+      "name": "连锁撞击",
+      "pool": "normal",
+      "price": 20,
+      "prerequisites": [],
+      "deltaPerBall": 3.1099999999999994,
+      "standardError": 0.15458528445324776,
+      "dailyDelta": 155.49999999999994,
+      "paybackDays": 0.1286173633440515,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    },
+    {
+      "id": "resonance",
+      "name": "共振回路",
+      "pool": "normal",
+      "price": 22,
+      "prerequisites": [
+        [
+          "chain_impact",
+          1
+        ]
+      ],
+      "deltaPerBall": 2.79,
+      "standardError": 0.1552963269125911,
+      "dailyDelta": 139.5,
+      "paybackDays": 0.15770609318996415,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    },
+    {
+      "id": "gold_slots",
+      "name": "黄金槽",
+      "pool": "normal",
+      "price": 20,
+      "prerequisites": [],
+      "deltaPerBall": 0.9249999999999997,
+      "standardError": 0.06804887741553216,
+      "dailyDelta": 46.25,
+      "paybackDays": 0.43243243243243246,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    },
+    {
+      "id": "slot_expansion",
+      "name": "槽位扩容",
+      "pool": "normal",
+      "price": 24,
+      "prerequisites": [],
+      "deltaPerBall": 0.21166666666666673,
+      "standardError": 0.12099147064924938,
+      "dailyDelta": 10.583333333333258,
+      "paybackDays": 2.2677165354330873,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.11999999999999998,
+      "winRate": 0.48999999999999994
+    },
+    {
+      "id": "recycle_bin",
+      "name": "废珠回收",
+      "pool": "normal",
+      "price": 14,
+      "prerequisites": [],
+      "deltaPerBall": 0,
+      "standardError": 0,
+      "dailyDelta": 0,
+      "paybackDays": null,
+      "dailyBalls": 50,
+      "dailyRefund": 14.75,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    },
+    {
+      "id": "aimed_launch",
+      "name": "定向落点",
+      "pool": "normal",
+      "price": 22,
+      "prerequisites": [],
+      "deltaPerBall": -0.12500000000000003,
+      "standardError": 0.4562722016887488,
+      "dailyDelta": -6.249999999999886,
+      "paybackDays": null,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.0983333333333333,
+      "winRate": 0.5183333333333333
+    },
+    {
+      "id": "auto_line",
+      "name": "自动化生产线",
+      "pool": "advanced",
+      "price": 0,
+      "prerequisites": [],
+      "deltaPerBall": 0,
+      "standardError": 0,
+      "dailyDelta": 0,
+      "paybackDays": null,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    },
+    {
+      "id": "nitori_supply",
+      "name": "荷取的补给箱",
+      "pool": "advanced",
+      "price": 0,
+      "prerequisites": [],
+      "deltaPerBall": 0,
+      "standardError": 0,
+      "dailyDelta": 0,
+      "paybackDays": null,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    },
+    {
+      "id": "infinite_breeding",
+      "name": "无限增殖实验",
+      "pool": "advanced",
+      "price": 0,
+      "prerequisites": [],
+      "deltaPerBall": 1.8683333333333332,
+      "standardError": 0.3693289965887875,
+      "dailyDelta": 93.41666666666657,
+      "paybackDays": null,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.15833333333333327,
+      "winRate": 0.828333333333333
+    },
+    {
+      "id": "overload",
+      "name": "过载钉阵",
+      "pool": "advanced",
+      "price": 0,
+      "prerequisites": [
+        [
+          "brass_pegs",
+          1
+        ]
+      ],
+      "deltaPerBall": 3.79,
+      "standardError": 0.2332489758729129,
+      "dailyDelta": 189.50000000000006,
+      "paybackDays": null,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    },
+    {
+      "id": "supply_overdrive",
+      "name": "超载弹仓",
+      "pool": "advanced",
+      "price": 0,
+      "prerequisites": [],
+      "deltaPerBall": 0,
+      "standardError": 0,
+      "dailyDelta": 0,
+      "paybackDays": null,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    },
+    {
+      "id": "jackpot_lens",
+      "name": "头奖增幅",
+      "pool": "advanced",
+      "price": 0,
+      "prerequisites": [],
+      "deltaPerBall": 3.9750000000000014,
+      "standardError": 0.2583588469267324,
+      "dailyDelta": 198.75000000000028,
+      "paybackDays": null,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    },
+    {
+      "id": "golden_slots_prime",
+      "name": "黄金槽・镀层",
+      "pool": "advanced",
+      "price": 0,
+      "prerequisites": [
+        [
+          "gold_slots",
+          1
+        ]
+      ],
+      "deltaPerBall": 2.5583333333333327,
+      "standardError": 0.1766814565816449,
+      "dailyDelta": 127.91666666666652,
+      "paybackDays": null,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    },
+    {
+      "id": "marble_compound",
+      "name": "价值复利",
+      "pool": "advanced",
+      "price": 0,
+      "prerequisites": [
+        [
+          "polished_marble",
+          1
+        ]
+      ],
+      "deltaPerBall": 9.833333333333334,
+      "standardError": 0.3957162330506694,
+      "dailyDelta": 491.6666666666664,
+      "paybackDays": null,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    },
+    {
+      "id": "slot_streak",
+      "name": "连胜槽",
+      "pool": "advanced",
+      "price": 0,
+      "prerequisites": [
+        [
+          "gold_slots",
+          1
+        ]
+      ],
+      "deltaPerBall": 0.23333333333333328,
+      "standardError": 0.03815421181826056,
+      "dailyDelta": 11.666666666666572,
+      "paybackDays": null,
+      "dailyBalls": 50,
+      "dailyRefund": 0,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    },
+    {
+      "id": "perpetual_recycle",
+      "name": "永动回收",
+      "pool": "advanced",
+      "price": 0,
+      "prerequisites": [],
+      "deltaPerBall": 0,
+      "standardError": 0,
+      "dailyDelta": 0,
+      "paybackDays": null,
+      "dailyBalls": 50,
+      "dailyRefund": 20,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "supply_pair",
+      "stacks": {
+        "mass_production": 1,
+        "expand_hopper": 1
+      },
+      "netPerBall": 6.443333333333333,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666,
+      "dailyRefund": 0,
+      "dailyBalls": 60,
+      "dailyNet": 386.6
+    },
+    {
+      "name": "recycle_with_capacity",
+      "stacks": {
+        "mass_production": 2,
+        "recycle_bin": 1
+      },
+      "netPerBall": 6.443333333333333,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666,
+      "dailyRefund": 14.75,
+      "dailyBalls": 64.75,
+      "dailyNet": 417.2058333333333
+    },
+    {
+      "name": "peg_core",
+      "stacks": {
+        "brass_pegs": 1,
+        "precision_pegs": 1,
+        "chain_impact": 1
+      },
+      "netPerBall": 13.720000000000002,
+      "jackpotRate": 0.10833333333333334,
+      "winRate": 0.4916666666666666,
+      "dailyRefund": 0,
+      "dailyBalls": 50,
+      "dailyNet": 686.0000000000001
+    },
+    {
+      "name": "marble_core",
+      "stacks": {
+        "golden_marble": 1,
+        "polished_marble": 1,
+        "infinite_breeding": 1
+      },
+      "netPerBall": 24.550000000000008,
+      "jackpotRate": 0.15833333333333327,
+      "winRate": 0.828333333333333,
+      "dailyRefund": 0,
+      "dailyBalls": 50,
+      "dailyNet": 1227.5000000000005
+    },
+    {
+      "name": "slot_core",
+      "stacks": {
+        "gold_slots": 1,
+        "slot_expansion": 1,
+        "aimed_launch": 1
+      },
+      "netPerBall": 12.026666666666667,
+      "jackpotRate": 0.09999999999999995,
+      "winRate": 0.5133333333333334,
+      "dailyRefund": 0,
+      "dailyBalls": 50,
+      "dailyNet": 601.3333333333334
+    }
+  ],
+  "caveats": [
+    "Independent 10-ball physical batches with paired seeds; geometry effects include sampling error.",
+    "dailyNet is a steady-state throughput estimate, not a full-run win-rate prediction.",
+    "Quantity/recycling cards need compatible launch capacity; prerequisites included, other cards absent."
+  ]
+}

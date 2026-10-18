@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a1520">
+<meta name="description" content="魔理沙的弹珠台：10 天租金 Roguelike。弹珠从顶部中央供球喉落入左右对称钉阵；单次发射与每日弹珠仓分别成长。">
+<title>魔理沙的弹珠台 · 柏青哥：租金生存战 · 霧雨魔法店</title>
+<script src="js/analytics.js"></script>
+<script src="js/page-base.js"></script>
+<link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/pachinko.css?v=pixel-2">
+<link rel="stylesheet" href="css/pachinko-pixel.css?v=5">
+</head>
+<body>
+
+<div id="shopNav"></div>
+<script src="nav.js"></script>
+
+<main class="pachinko-page">
+  <header class="page-head arcade-head">
+    <div><span class="arcade-eyebrow">KIRISAME ARCADE · 01</span><h1>魔理沙的弹珠台</h1></div>
+    <div class="arcade-head-actions"><span id="stageChip" class="stage-chip">物理试验台</span><button id="btnPause" class="icon-btn" type="button">暂停</button></div>
+  </header>
+
+  <section class="rent-roadmap run-only" aria-label="每天的租金结算目标"><div class="roadmap-head"><span id="rentModeLabel">10 天租金目标</span><small>左右滑动查看 →</small></div><div id="rentSchedule" class="rent-schedule"></div></section>
+  <div class="lab-grid">
+    <section class="cabinet-card" aria-label="柏青哥弹珠台">
+      <div class="cabinet-hud">
+        <div class="arcade-metrics">
+          <div class="metric metric-cash"><span id="hudBalanceLabel">现有现金</span><div><strong id="hudBalance">10,000</strong><small>币</small></div><em>YOUR CREDIT</em></div>
+          <div class="metric metric-target run-only"><span>今日租金目标</span><div><strong id="runRent">150</strong><small>币</small></div><em>RENT TARGET</em></div>
+          <div class="metric metric-supply run-only"><span>剩余弹珠</span><div><strong id="runSupply">50</strong><small>颗</small></div><em>MARBLES LEFT</em></div>
+        </div>
+        <div class="hide"><b id="hudBatch">--</b><b id="hudActive">0</b><b id="hudSettled">0</b></div>
+        <div class="hud-sub">
+          <span>球球碰撞 <b id="hudBallHits">0</b></span>
+          <span>FPS <b id="hudFps">--</b></span>
+          <span id="hudStatus" class="hud-status" aria-live="polite">待发射</span>
+        </div>
+        <div id="runStrip" class="run-strip run-only">
+          <span>第 <b id="runDay">1</b> / <span id="runDays">10</span> 天</span>
+
+          <span>投掷 <b id="runThrows">5</b> / <span id="runThrowsMax">5</span></span>
+          <span>今日供给 <b id="runSupplyMax">50</b></span>
+          <span>单次 <b id="runSingle">10</b></span>
+          <span>下日供给 <b id="runPending">+0</b></span>
+        </div>
+        <div class="rent-progress run-only"><progress id="rentProgress" max="150" value="50"></progress><span id="rentGap">距租金还差 100 币</span></div>
+      </div>
+
+      <div id="canvasShell" class="canvas-shell">
+        <canvas id="pachinkoCanvas" width="600" height="820" aria-label="真实物理弹珠台">你的浏览器需要支持 Canvas 2D。</canvas>
+        <div class="canvas-badges" aria-hidden="true">
+          <span id="badgeBodies" class="canvas-badge">弹珠刚体 <b>0</b></span>
+          <span id="badgeSeed" class="canvas-badge">种子 --</span>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side-panel">
+
+
+      <section class="panel control-panel">
+        <div class="panel-head">
+          <h2>发射控制</h2>
+          <span id="controlNote" class="panel-note">每颗 1 试验币</span>
+        </div>
+        <div class="peg-legend"><span><i class="peg-amber"></i>标记钉</span><span><i class="peg-pink"></i>稀有钉</span><span><i style="background:#86d7bb"></i>特殊钉 · 可重复领奖</span><span><i class="peg-grey"></i>普通钉</span></div>
+        <div class="controls">
+          <div class="count-row">
+            <label for="marbleRange">本批弹珠</label>
+            <div class="count-value">
+              <input id="marbleInput" type="number" min="1" max="100" step="1" value="10" inputmode="numeric" aria-label="本批弹珠数量">
+              <span>颗</span>
+            </div>
+          </div>
+          <input id="marbleRange" class="marble-range" type="range" min="1" max="100" step="1" value="10" aria-label="弹珠数量滑杆">
+          <div class="quick-row">
+            <button class="quick-chip" data-count="1" type="button">1</button>
+            <button class="quick-chip on" data-count="10" type="button">10</button>
+            <button class="quick-chip" data-count="50" type="button">50</button>
+            <button class="quick-chip" data-count="100" type="button">100</button>
+            <span id="costPreview" class="cost-preview">本批成本 10 币</span>
+          </div>
+          <div class="launch-row">
+            <button id="btnLaunch" class="launch-btn" type="button">发射 10 颗</button>
+
+
+          </div>
+          <div id="controlHint" class="control-hint">空格发射 · P 暂停 · 每颗 1 试验币；中央顶部供球，100 颗为流水压力档。</div>
+        </div>
+      </section>
+
+      <section class="panel run-only build-panel">
+
+        <div class="panel-head">
+          <h2>本局构筑</h2>
+          <span id="buildSummary" class="panel-note">0 项</span>
+        </div>
+        <div id="buildList" class="build-list"><div class="empty-state">还没有升级。</div></div>
+      </section>
+
+
+
+
+
+
+    </aside>
+  </div>
+
+  <footer class="page-foot">霧雨魔法店 · 10 天租金模式 · 单次发射数量与每日弹珠仓分别成长 · 真实物理、真实落槽、真实账目</footer>
+</main>
+
+<div id="mobileLaunchBar" class="mobile-launch-bar">
+  <button id="mobileLess" class="mobile-step" type="button" aria-label="少发一颗">−</button>
+  <div class="mobile-launch-info">
+    <span><b id="mobileCount">10</b> 颗</span>
+    <em id="mobileCost">成本 10 币</em>
+  </div>
+  <button id="mobileMore" class="mobile-step" type="button" aria-label="多发一颗">+</button>
+  <button id="mobileLaunch" class="launch-btn" type="button">发射</button>
+</div>
+
+<div id="startOverlay" class="overlay title-overlay">
+  <div class="title-screen-card">
+    <div class="title-topline"><span>霧雨魔法店</span><span>ARCADE SYSTEM / 01</span></div>
+    <div class="title-logo-wrap"><span class="title-orbit orbit-one">✦</span><img src="images/logo.png" class="title-logo" alt="霧雨魔法店 logo"><span class="title-orbit orbit-two">✦</span></div>
+    <p class="title-edition">KIRISAME · MAGIC PACHINKO</p>
+    <h1>魔理沙的<br><span>弹珠台</span></h1>
+    <div class="title-subtitle">柏青哥 · 租金生存战</div>
+    <button id="btnStartRun" class="launch-btn title-start" type="button">开始游戏 <span>▶</span></button>
+    <p class="insert-coin">PRESS START · MAKE YOUR MAGIC</p>
+    <div class="title-bottom"><span>1 PLAYER</span><span>© 霧雨魔法店</span><span>10 DAYS</span></div>
+  </div>
+</div>
+
+<div id="pauseOverlay" class="overlay hide" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+  <div class="pause-card">
+    <div class="shop-kicker">KIRISAME ARCADE / PAUSE</div><h2 id="pauseTitle" tabindex="-1">游戏暂停</h2>
+    <p class="pause-note">营业进度已停住，准备好后继续。</p>
+    <button id="btnResume" class="launch-btn" type="button">▶ 继续游戏</button>
+    <div class="pause-actions"><button id="btnReset" class="icon-btn danger" type="button">重置</button><button id="btnHelp" class="ghost-btn" type="button">玩法说明</button><button id="btnSound" class="ghost-btn" type="button" aria-pressed="true">音效：开</button></div>
+    <details class="pause-records"><summary>营业记录与结算</summary><div class="pause-data"><details class="panel run-only launch-monitor-panel"><summary class="panel-toggle">发射详情</summary><div class="panel-content">
+        <div class="panel-head">
+          <h2>发射监控</h2>
+          <span class="panel-note">LIVE</span>
+        </div>
+        <div class="launch-monitor">
+          <div class="lm-main">
+            <span>已发射</span>
+            <b id="lmFed">0</b>
+            <em>/</em>
+            <span id="lmTotal">0</span>
+          </div>
+          <div class="lm-grid">
+            <span>待发 <b id="lmQueued">0</b></span>
+            <span>场内 <b id="lmField">0</b></span>
+            <span>落槽 <b id="lmSettled">0</b></span>
+          </div>
+          <div class="lm-cap">场内上限 <b id="lmCap">24</b></div>
+        </div>
+      </div></details><details class="panel report-panel"><summary class="panel-toggle">结算与逐球账目</summary><div class="panel-content">
+        <div class="panel-head">
+          <h2>批次结算</h2>
+          <button id="btnCsv" class="mini-btn" type="button" disabled>导出逐球 CSV</button>
+        </div>
+        <div id="reportEmpty" class="empty-state">发射一批弹珠后，这里显示成本、撞针、槽位、逐球结果和校验。</div>
+        <div id="reportBody" class="hide">
+          <div class="summary-grid">
+            <div class="summary-item"><span>弹珠</span><b id="repCount">0</b></div>
+            <div class="summary-item"><span>落槽 / 回收</span><b id="repSettled">0 / 0</b></div>
+            <div class="summary-item"><span>成本</span><b id="repCost">0</b></div>
+            <div class="summary-item"><span>撞针</span><b id="repPeg">0</b></div>
+            <div class="summary-item"><span>槽位</span><b id="repSlot">0</b></div>
+            <div class="summary-item"><span>净收益</span><b id="repNet">0</b></div>
+          </div>
+          <div id="repBalanceLine" class="balance-line">余额 --</div>
+          <div class="stat-grid">
+            <div><span>用时</span><b id="repDuration">--</b></div>
+            <div><span>总碰撞</span><b id="repCollisions">0</b></div>
+            <div><span>球球碰撞</span><b id="repBallHits">0</b></div>
+            <div><span>冷却拦截</span><b id="repSuppressed">0</b></div>
+            <div><span>重复落槽</span><b id="repDuplicate">0</b></div>
+            <div><span>残留刚体</span><b id="repResidual">0</b></div>
+            <div><span>物理 ms/步</span><b id="repPhysics">--</b></div>
+            <div><span>渲染 ms/帧</span><b id="repRender">--</b></div>
+          </div>
+          <div class="seed-line">种子 <b id="repSeed">--</b><span>同种子可复现初始发射条件</span></div>
+          <div class="verify-head"><span>批次校验</span><b id="repVerify" class="verify-state">--</b></div>
+          <div id="repVerifyList" class="verify-list"></div>
+          <div class="slot-dist-head">槽位分布</div>
+          <div id="slotDist" class="slot-dist"></div>
+          <details id="marbleDetails" class="marble-details">
+            <summary>逐球明细 <span id="marbleSummary">0 颗</span></summary>
+            <div class="marble-table-wrap">
+              <table class="marble-table">
+                <thead>
+                  <tr><th>#</th><th>撞针</th><th>球撞</th><th>墙撞</th><th>落槽</th><th>收益</th><th>用时</th><th>状态</th></tr>
+                </thead>
+                <tbody id="marbleTableBody"></tbody>
+              </table>
+            </div>
+          </details>
+        </div>
+      </div></details><details class="panel history-panel"><summary class="panel-toggle">往期记录</summary><div class="panel-content">
+        <div class="panel-head">
+          <h2>批次历史</h2>
+          <button id="btnClearHistory" class="mini-btn" type="button" disabled>清空</button>
+        </div>
+        <div id="historyList" class="history-list"><div class="empty-state">还没有批次。</div></div>
+      </div></details></div></details>
+    <details class="pause-records"><summary>自由试验台</summary><div class="pause-data"><button id="btnMode" class="ghost-btn" type="button">开始营业</button><button id="btnStartLab" class="ghost-btn" type="button">进入试验台</button><section class="panel bench-panel lab-only">
+        <div class="panel-head">
+          <h2>性能基准</h2>
+          <button id="btnBench" class="mini-btn" type="button">跑 20–200 颗</button>
+        </div>
+        <p class="bench-copy">固定种子，依次运行 20 / 50 / 100 / 150 / 200 颗。150 和 200 是压力档，正常发射上限仍是 100。</p>
+        <div id="benchStatus" class="bench-status">尚未运行</div>
+        <div class="bench-table-wrap">
+          <table class="bench-table">
+            <thead>
+              <tr><th>弹珠</th><th>峰值</th><th>平均 FPS</th><th>P95 帧</th><th>物理 ms/步</th><th>清场</th><th>球球碰撞</th><th>校验</th></tr>
+            </thead>
+            <tbody id="benchTableBody"></tbody>
+          </table>
+        </div>
+        <div class="bench-actions">
+          <button id="btnBenchCsv" class="mini-btn" type="button" disabled>导出 CSV</button>
+          <button id="btnBenchJson" class="mini-btn" type="button" disabled>导出 JSON</button>
+        </div>
+      </section><div class="hide"><button id="btnEffects" class="icon-btn" type="button">特效</button><button id="btnDebug" class="icon-btn" type="button">线框</button></div></div></details>
+  </div>
+</div>
+
+<div id="helpOverlay" class="overlay hide">
+  <div class="help-card">
+    <div class="panel-head">
+      <h2>玩法与营业规则</h2>
+      <button id="btnCloseHelp" class="mini-btn" type="button">关闭</button>
+    </div>
+    <div class="help-block tutorial-steps">
+      <div><span>01</span><section><h3>赚够今天的租金</h3><p>每天有 5 次投掷，初始共 50 颗弹珠，每颗消耗 1 币。中间小奖 1–2 币，两侧大奖 8 币，最外侧头奖 25 币；灰色槽落空。留够租金才能进入下一天。</p></section></div>
+      <div><span>02</span><section><h3>买卡，组成你的流派</h3><p>每天可免费刷新升级两次，普通与高级共用，次日恢复。普通构筑 8 格，数值卡可持续升阶，满格可替换旧卡；高级改造独立保留。挡板可强弹或安装弹簧回送，积蓄动能要中奖才兑现。</p></section></div>
+      <div><span>03</span><section><h3>撑过十天，再挑战无尽</h3><p>第 4 天起租金加速上涨，单次发射量与每日补给需要搭配。付清第 10 天租金后，可保留现金与构筑进入无尽：租金倍率持续攀升，升级照常继续。琥珀/粉色针每球每钉领奖一次，青色特殊针可重复领奖。落空不兑现价值，回收只返补给。</p></section></div>
+      <p class="tutorial-tip">空格发射 · P / Esc 暂停 · 手机底部 + / − 调整发射数量</p>
+    </div>
+  </div>
+</div>
+
+<div id="shopOverlay" class="overlay hide" role="dialog" aria-modal="true" aria-labelledby="shopTitle">
+  <div class="shop-card">
+    <div id="shopKicker" class="shop-kicker">投掷结算</div>
+    <h2 id="shopTitle" tabindex="-1">普通升级</h2>
+    <div id="settlementSummary" class="settlement-summary hide" aria-live="polite"></div>
+    <p id="shopSub" class="shop-sub">选择一个升级，或者跳过。</p>
+    <div class="shop-tools"><span>每日免费 · 普通/高级共用</span><button id="btnShopRefresh" class="ghost-btn" type="button" title="免费刷新，普通与高级升级共用每日两次机会">刷新 2/2</button></div>
+    <div id="shopCards" class="pick-cards"></div>
+    <div class="shop-footer">
+      <span>现金 <b id="shopCash">0</b></span>
+      <button id="shopSkip" class="ghost-btn" type="button">跳过这次升级</button>
+    </div>
+    <p id="shopHint" class="shop-hint"></p>
+  </div>
+</div>
+
+<div id="dayEndOverlay" class="overlay hide">
+  <div class="shop-card">
+    <div class="shop-kicker">今日流程</div>
+    <h2 id="dayEndTitle">今日弹珠已用尽</h2>
+    <p id="dayEndText" class="shop-sub"></p>
+    <button id="btnDayEnd" class="launch-btn" type="button">进入高级升级</button>
+    <p class="shop-hint">剩余投掷次数和对应普通升级机会作废，高级升级仍保留。</p>
+  </div>
+</div>
+
+<div id="rentOverlay" class="overlay hide">
+  <div class="shop-card rent-card">
+    <div class="shop-kicker">日终结算</div>
+    <h2 id="rentTitle" tabindex="-1">今日租金结算</h2>
+    <p id="rentText" class="shop-sub"></p>
+    <div class="rent-figures">
+      <div><span>应付租金</span><b id="rentDue">0</b></div>
+      <div><span>当前现金</span><b id="rentCash">0</b></div>
+      <div><span>支付后</span><b id="rentAfter">0</b></div>
+    </div>
+    <button id="btnPayRent" class="launch-btn" type="button">支付租金</button>
+    <p class="shop-hint">现金不足会直接结束本局。</p>
+  </div>
+</div>
+
+<div id="runResultOverlay" class="overlay hide">
+  <div class="shop-card">
+    <div id="resultKicker" class="shop-kicker">营业结束</div>
+    <h2 id="resultTitle">通关</h2>
+    <p id="resultText" class="shop-sub"></p>
+    <div id="resultStats" class="summary-grid"></div>
+    <div class="result-actions">
+      <button id="btnEndless" class="launch-btn hide" type="button">保留构筑 · 进入无尽 ∞</button>
+      <button id="btnRestartRun" class="launch-btn" type="button">再来一局</button>
+      <button id="btnBackLab" class="ghost-btn" type="button">回到试验台</button>
+    </div>
+  </div>
+</div>
+
+<div id="fatalError" class="fatal hide"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="js/vendor/matter.min.js"></script>
+<script type="module" src="js/pachinko/main.js?v=balance-5"></script>
+</body>
+</html>

@@ -42,6 +42,7 @@
 - [轮盘赌局](demo_roulette.html) — 双人心理博弈 · 装弹留话 · 三局两胜 · AI 对战 / 真人匹配
 - [合成大BAKA](baka.html) — 合成大西瓜like · ⑨进化大BAKA · 立绘圆形贴图 · 连锁锤子 · 在线排行榜
 - [星之魔弹](stg.html) — 东方风弹幕STG · 擦弹连击 · Boss 符卡战 · 升级三选一构筑 · 三主炮
+- [魔理沙的弹珠台](marisa_pachinko.html) — 10 天租金 Roguelike · 中央供球 · 左右对称钉阵 · 真实物理互撞 · 100 球流水基准 · [交付说明](PACHINKO_README.md)
 - [抽陀螺模拟器](tuoluo.html) — Unity WebGL · 真 3D 陀螺 · 节奏抽打 · 完美一鞭疯狂旋转 · 转速归零倒地
 
 ---

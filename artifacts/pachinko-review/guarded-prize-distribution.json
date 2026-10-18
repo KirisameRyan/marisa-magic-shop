@@ -1,0 +1,62 @@
+{
+  "baseline": {
+    "balls": 1000,
+    "jackpot": 20,
+    "winning": 752,
+    "drain": 248,
+    "zeroTotal": 110,
+    "distribution": [
+      11,
+      102,
+      116,
+      134,
+      284,
+      135,
+      132,
+      77,
+      9
+    ],
+    "jackpotRate": 0.02,
+    "drainRate": 0.248
+  },
+  "expandedJackpots": {
+    "balls": 1000,
+    "jackpot": 41,
+    "winning": 745,
+    "drain": 255,
+    "zeroTotal": 110,
+    "distribution": [
+      22,
+      87,
+      120,
+      134,
+      284,
+      134,
+      135,
+      65,
+      19
+    ],
+    "jackpotRate": 0.041,
+    "drainRate": 0.255
+  },
+  "expandedMajorPrizes": {
+    "balls": 1000,
+    "jackpot": 16,
+    "winning": 835,
+    "drain": 165,
+    "zeroTotal": 71,
+    "distribution": [
+      8,
+      141,
+      79,
+      135,
+      284,
+      135,
+      86,
+      124,
+      8
+    ],
+    "jackpotRate": 0.016,
+    "drainRate": 0.165
+  }
+}

@@ -18,6 +18,7 @@ window.MMS_CATALOG = {
     { href: 'band-story.html',      emoji: '🎸', name: '乐队人生',     tag: '剧情选择游戏',       color: 'purple', desc: '18 岁，高考落榜，你决定把人生押给一把吉他。20 个节点，16 种结局，滚圈黑话浓度预警。' },
     { href: 'baka.html',            emoji: '⑨', name: '合成大BAKA',   tag: '合成大西瓜like',     color: 'blue', desc: '相同的琪露诺碰到一起就会合体进化！从⑨一路合成到大BAKA。连锁 3 连获得小锤子敲掉挡路的笨蛋，立绘大特写等着你。' },
     { href: 'stg.html',             emoji: '🌟', name: '星之魔弹',     tag: '东方风弹幕STG',      color: 'purple', desc: '躲过、擦过、击碎！魔理沙的弹幕就是她的语言：擦弹连击得分，每关道中强敌 + Boss 符卡战，升级三选一构筑，三种主炮由你决定。触屏+键盘双支持。' },
+    { href: 'marisa_pachinko.html', emoji: '✦', name: '魔理沙的弹珠台', tag: '对称钉阵柏青哥', color: 'gold', desc: '10 天租金 Roguelike：弹珠从顶部中央供球喉落入左右对称钉阵；单次发射和每日弹珠仓分别成长，落槽、升级与租金结算。' },
     { href: 'tuoluo.html',          emoji: '🌀', name: '抽陀螺模拟器', tag: '节奏抽打·Unity3D',  color: 'blue', desc: '陀螺自己转,转速会掉!音符落过判定线的瞬间挥鞭抽打——完美一鞭让它疯狂旋转,抽歪了就减速。转速归零,陀螺倒地,游戏结束。真 3D 陀螺 + 130BPM 鼓点。' }
   ],
   // ── 🔥 热门测试 ──
@@ -30,6 +31,7 @@ window.MMS_CATALOG = {
   ],
   // ── 🆕 最新上线 ──
   latest: [
+    { href: 'marisa_pachinko.html', emoji: '✦', name: '魔理沙的弹珠台', tag: '对称钉阵柏青哥', color: 'gold', desc: '10 天租金 Roguelike：弹珠从顶部中央供球喉落入左右对称钉阵；单次发射和每日弹珠仓分别成长，落槽、升级与租金结算。' },
     { href: 'human-stars.html',     emoji: '🛸', name: '类人群星闪耀时', tag: '猎奇小故事',   color: 'green', desc: '外星人落地那天留了个任务：一天一条逆天小故事，不给就抓走。这里全是真的——因为全是编的。所有故事均为完全虚构。' },
     { href: 'tuoluo.html',          emoji: '🌀', name: '抽陀螺模拟器', tag: '节奏抽打·Unity3D', color: 'blue', desc: '真 3D 陀螺!音符落过判定线瞬间挥鞭抽打,完美一鞭让它疯狂旋转,抽歪就减速,转速归零倒地结束。' },
     { href: 'stg.html',           emoji: '🌟', name: '星之魔弹',     tag: '东方风弹幕STG', color: 'purple', desc: '躲过、擦过、击碎！擦弹连击得分，每关道中强敌 + Boss 符卡战，升级三选一构筑你的魔法。' },
