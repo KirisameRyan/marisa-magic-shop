@@ -1,0 +1,20 @@
+name: Source and publication checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python scripts/security-scan.py
+      - run: python scripts/test-publication.py
+      - run: node scripts/check-catalog.mjs
+      - run: find api scripts -name '*.php' -print0 | xargs -0 -n1 php -l
+      - run: php -d extension=pdo_sqlite -d extension=mbstring scripts/test-api.php

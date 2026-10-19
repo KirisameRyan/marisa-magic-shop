@@ -4,11 +4,15 @@
 //  被 auth.php / leaderboard.php / 记账等复用
 // =============================================
 
-define('MMS_DB', __DIR__ . '/../data/site.db');
+require_once __DIR__ . '/bootstrap.php';
+define('MMS_DB', mms_private_dir() . '/site.db');
 
 function mms_db(): PDO {
     static $pdo = null;
     if ($pdo === null) {
+        if (!is_file(MMS_DB) && is_file(__DIR__ . '/../data/site.db')) {
+            throw new RuntimeException('Private storage migration required');
+        }
         $dir = dirname(MMS_DB);
         if (!is_dir($dir)) @mkdir($dir, 0755, true);
         $pdo = new PDO('sqlite:' . MMS_DB);
@@ -99,12 +103,11 @@ function mms_json_ok(array $data = []): void {
     exit;
 }
 
-// ── 取当前请求携带的 token（Authorization 头优先，兼容 GET/POST 参数）──
+// ── 取当前请求携带的 token（只接受 Authorization Bearer 头）──
 function mms_bearer_token(): string {
     $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? ($_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '');
     if (preg_match('/^Bearer\s+(.+)$/i', trim($auth), $m)) return trim($m[1]);
-    $t = $_REQUEST['token'] ?? '';
-    return is_string($t) ? trim($t) : '';
+    return ''; // Session tokens must never travel in URL/query parameters.
 }
 
 // ── 发放会话 token（DB 只存 SHA-256 哈希），30 天有效 ──
@@ -192,13 +195,13 @@ function mms_validate_password(string $password): string {
 
 // ── IP 限速存储（data/auth_rate.json，沿用项目 JSON 模式）──
 function mms_rate_read(): array {
-    $f = __DIR__ . '/../data/auth_rate.json';
+    $f = mms_private_dir() . '/auth_rate.json';
     $d = @json_decode((string)@file_get_contents($f), true);
     return is_array($d) ? $d : [];
 }
 
 function mms_rate_write(array $data): void {
-    $f = __DIR__ . '/../data/auth_rate.json';
+    $f = mms_private_dir() . '/auth_rate.json';
     $tmp = $f . '.tmp';
     @file_put_contents($tmp, json_encode($data, JSON_UNESCAPED_UNICODE));
     @rename($tmp, $f);

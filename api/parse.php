@@ -9,7 +9,7 @@
 require __DIR__ . '/auth-lib.php';
 
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
+mms_cors();
 header('Access-Control-Allow-Headers: Authorization, Content-Type');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 
@@ -20,8 +20,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $user = mms_require_user();
 $action = strtolower(trim($_REQUEST['action'] ?? ''));
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') mms_json_error(405, 'POST required');
+if (!mms_quota('parse', (string)$user['id'], 20, 3600)) mms_json_error(429, '每小时最多解析 20 次，请稍后再试');
 
-$uploadDir = __DIR__ . '/../data/uploads';
+$uploadDir = mms_private_dir() . '/uploads';
 if (!is_dir($uploadDir)) @mkdir($uploadDir, 0755, true);
 
 // ── LLM 调用(智谱 OpenAI 兼容)──
@@ -57,11 +59,11 @@ function mms_llm_chat(array $messages, string $model, bool $jsonMode = false): a
     $err = curl_error($ch);
     $code = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
     curl_close($ch);
-    if ($resp === false) return ['ok' => false, 'error' => '请求失败: ' . $err, 'http_code' => 0];
+    if ($resp === false) return ['ok' => false, 'error' => 'AI 服务暂时不可用', 'http_code' => 0];
     if ($code !== 200) {
         $msg = 'HTTP ' . $code;
         $data = json_decode($resp, true);
-        if (isset($data['error']['message'])) $msg .= ' ' . $data['error']['message'];
+        // Provider response bodies must not be returned to browsers.
         return ['ok' => false, 'error' => $msg, 'http_code' => $code];
     }
     $data = json_decode($resp, true);

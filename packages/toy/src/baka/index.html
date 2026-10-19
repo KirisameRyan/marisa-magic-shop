@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1a1520">
+<title>合成大BAKA · 霧雨魔法店</title>
+<script src="//s1.hdslb.com/bfs/seed/toy/app/sdk/toy-sdk.js"></script>
+<style>
+:root{
+  --bg:#1a1520; --card:#241e2a; --card2:#2d2535; --border:#3a3045;
+  --gold:#f0c060; --gold2:#e8a830; --star:#ffe8b0; --gold-dim:#a08050;
+  --sky:#8fd8ff; --purple:#b89fff; --text:#e0d8ec; --muted:#8a7e9a;
+  --green:#6fcf97; --red:#ef4444;
+  --bs:1;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%;-webkit-text-size-adjust:100%}
+html,body{overscroll-behavior:none}
+body{
+  height:100%;min-height:100dvh;overflow:hidden;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background:var(--bg);
+  background-image:
+    radial-gradient(ellipse at 30% 0%,rgba(184,159,255,.06) 0%,transparent 55%),
+    radial-gradient(ellipse at 70% 100%,rgba(240,192,96,.05) 0%,transparent 55%);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  -webkit-touch-callout:none;user-select:none;-webkit-user-select:none;
+}
+#snow{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ══════ 舞台 ══════ */
+.app{position:relative;z-index:1;width:100%;height:100%;display:grid;
+  grid-template-columns:100%;grid-template-rows:auto minmax(0,1fr);
+  grid-template-areas:"hud" "board";}
+@media (min-aspect-ratio:1/1){
+  .app{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+    grid-template-rows:100%;grid-template-areas:"hud board side";}
+}
+
+/* ══════ HUD ══════ */
+.hud{grid-area:hud;z-index:6;display:flex;align-items:center;gap:12px;padding:8px 14px;
+  background:linear-gradient(180deg,rgba(36,30,42,.96),rgba(26,21,32,.72));
+  border-bottom:1px solid rgba(58,48,69,.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.hud .sc{line-height:1}
+.hud .sc .v{font-size:26px;font-weight:900;color:var(--gold);font-variant-numeric:tabular-nums;
+  text-shadow:0 0 18px rgba(240,192,96,.35);letter-spacing:.5px}
+.hud .sc .k{font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:1px}
+.hud .sc .k b{color:var(--gold-dim);font-weight:700}
+.pv{display:flex;align-items:center;gap:9px;margin-left:auto}
+.pv .pbox{width:42px;height:42px;border-radius:50%;background:radial-gradient(circle at 40% 30%,#2a2336,#15111c);
+  border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none;
+  box-shadow:inset 0 0 12px rgba(0,0,0,.6)}
+.pv .pbox img{width:100%;height:100%;object-fit:contain}
+.pv .pbox span{font-size:20px;color:var(--gold);font-weight:900}
+.pv .cell{display:flex;flex-direction:column;align-items:center;gap:4px}
+.pv .cell .pl{font-size:9px;color:var(--muted);letter-spacing:.5px;white-space:nowrap}
+.pv .cell .pl b{font-style:normal;font-weight:800;color:var(--gold);font-size:10px}
+.pv .cell.n .pl b{color:var(--sky)}
+.tools{display:flex;gap:7px;align-items:center;margin-left:4px}
+.tool{position:relative;width:42px;height:42px;flex:none;border-radius:13px;border:1px solid var(--border);
+  background:rgba(20,16,26,.7);color:var(--gold);font-size:19px;cursor:pointer;
+  font-family:inherit;transition:all .15s;touch-action:manipulation}
+.tool:not(:disabled):hover{border-color:var(--gold);transform:translateY(-1px)}
+.tool:not(:disabled):active{transform:scale(.93)}
+.tool:disabled{opacity:.32;cursor:default}
+.tool .cnt{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:10px;font-weight:800;
+  border-radius:8px;padding:1px 5px;min-width:17px;text-align:center;line-height:1.4}
+.tool.aiming{border-color:var(--red);box-shadow:0 0 14px rgba(239,68,68,.55);animation:aimPulse 1s infinite}
+@keyframes aimPulse{50%{box-shadow:0 0 24px rgba(239,68,68,.95)}}
+#muteBtn{color:var(--muted);font-size:16px}
+#muteBtn.off{color:var(--muted);opacity:.6}
+
+/* ══════ 竖井 ══════ */
+.board{grid-area:board;position:relative;margin:auto;touch-action:none;overflow:hidden;border-radius:16px;
+  box-shadow:0 0 0 1px rgba(58,48,69,.95),0 14px 46px rgba(0,0,0,.62),inset 0 0 40px rgba(0,0,0,.35)}
+.board.shake{animation:shk var(--shk-ms,260ms) cubic-bezier(.36,.07,.19,.97)}
+@keyframes shk{
+  10%,90%{transform:translate(-2px,1px)}20%,80%{transform:translate(4px,-2px)}
+  30%,50%,70%{transform:translate(-6px,2px)}40%,60%{transform:translate(6px,-1px)}}
+.board canvas{position:absolute;inset:0;display:block;width:100%;height:100%;cursor:crosshair}
+#fx{position:absolute;inset:0;pointer-events:none;z-index:5}
+.line{position:absolute;left:0;right:0;top:26.5625%;height:2px;z-index:3;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(239,68,68,.75) 15%,rgba(239,68,68,.75) 85%,transparent);
+  box-shadow:0 0 10px rgba(239,68,68,.45)}
+.line.warn{animation:lineFlash .4s infinite alternate}
+@keyframes lineFlash{from{opacity:.3;box-shadow:0 0 4px rgba(239,68,68,.25)}to{opacity:1;box-shadow:0 0 22px rgba(239,68,68,1)}}
+.line .tag{position:absolute;right:8px;top:4px;font-size:9px;color:var(--red);font-weight:700;letter-spacing:1px}
+.toast{position:absolute;left:50%;top:20%;transform:translateX(-50%);z-index:8;opacity:0;pointer-events:none;
+  background:rgba(26,21,32,.94);border:1px solid var(--gold);color:var(--gold);
+  font-size:13px;font-weight:700;padding:7px 16px;border-radius:20px;white-space:nowrap;
+  transition:opacity .2s;box-shadow:0 4px 18px rgba(0,0,0,.5)}
+.toast.show{opacity:1}
+.toast b{color:var(--star)}
+.floater{position:absolute;transform:translate(-50%,-50%);font-weight:900;color:var(--gold);
+  font-size:calc(16px * var(--bs));text-shadow:0 2px 6px #000;pointer-events:none;
+  animation:floatUp 1s forwards;white-space:nowrap}
+.floater.big{color:var(--star);font-size:calc(26px * var(--bs))}
+@keyframes floatUp{0%{opacity:0;transform:translate(-50%,-40%) scale(.7)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-95%) scale(1)}}
+.ring{position:absolute;aspect-ratio:1/1;width:var(--d,40%);border-radius:50%;pointer-events:none;
+  border:2px solid var(--sky);transform:translate(-50%,-50%) scale(.25);opacity:0;
+  animation:ringOut .6s cubic-bezier(.2,.8,.3,1) forwards;box-shadow:0 0 14px rgba(143,216,255,.5)}
+.ring.gold{border-color:var(--gold);box-shadow:0 0 20px rgba(240,192,96,.7);border-width:3px}
+.ring.red{border-color:var(--red);box-shadow:0 0 20px rgba(239,68,68,.75);border-width:3px}
+@keyframes ringOut{0%{opacity:.95;transform:translate(-50%,-50%) scale(.2)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.7)}}
+#flash{position:fixed;inset:0;z-index:60;background:#fff;opacity:0;pointer-events:none}
+#flash.go{animation:flashA .45s ease-out}
+@keyframes flashA{0%{opacity:.72}100%{opacity:0}}
+
+/* ══════ 横屏侧栏 ══════ */
+.side{display:none}
+@media (min-aspect-ratio:1/1){
+  .side{grid-area:side;display:flex;flex-direction:row;align-items:center;justify-content:center;
+    gap:12px;padding:14px;min-width:0;overflow:hidden;position:relative}
+  .side .art{flex:none;display:flex;align-items:center;justify-content:center;min-width:0}
+  .side .art img{max-height:min(62vh,240px);max-width:min(24vw,200px);width:auto;height:auto;
+    filter:drop-shadow(0 8px 26px rgba(0,0,0,.6)) drop-shadow(0 0 20px rgba(143,216,255,.2))}
+  .side .vtitle{flex:none;white-space:nowrap;writing-mode:vertical-rl;text-orientation:upright;
+    font-size:clamp(15px,4.4vh,28px);font-weight:900;letter-spacing:clamp(2px,.85vh,7px);
+    background:linear-gradient(180deg,var(--star),var(--gold),var(--gold-dim));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 2px 10px rgba(240,192,96,.35))}
+  .side .chip{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);white-space:nowrap}
+  .hud{flex-direction:column;align-items:stretch;justify-content:center;gap:16px;padding:16px 14px;
+    border-bottom:none;border-right:1px solid rgba(58,48,69,.85)}
+  .hud .sc{text-align:center}
+  .hud .sc .v{font-size:30px}
+  .pv{flex-direction:column;margin-left:0;gap:12px}
+  .pv .cell .pl{font-size:10px}
+  .tools{margin-left:0;justify-content:center}
+}
+
+/* ══════ 浮层 ══════ */
+.overlay{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;
+  padding:16px;background:rgba(18,14,24,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  overflow-y:auto;touch-action:pan-y}
+.overlay.hide{display:none}
+.card{position:relative;width:100%;max-width:380px;max-height:100%;overflow-y:auto;text-align:center;
+  background:linear-gradient(170deg,var(--card),#1f1926);border:1px solid var(--border);border-radius:22px;
+  padding:20px 20px 18px;box-shadow:0 20px 60px rgba(0,0,0,.65)}
+.card::before{content:'';position:absolute;top:0;left:14px;right:14px;height:3px;border-radius:0 0 4px 4px;
+  background:linear-gradient(90deg,var(--gold),var(--sky),var(--gold))}
+.brand{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px}
+.brand i{font-style:normal;font-size:9px;letter-spacing:2px;color:var(--muted);
+  border:1px solid var(--border);border-radius:20px;padding:2px 8px}
+.art{width:152px;margin:0 auto 2px}
+.art img{width:100%;display:block;filter:drop-shadow(0 10px 26px rgba(0,0,0,.65)) drop-shadow(0 0 22px rgba(143,216,255,.22))}
+.title{font-size:29px;font-weight:900;letter-spacing:3px;line-height:1.15;
+  background:linear-gradient(135deg,#fff6e2,var(--gold) 45%,var(--gold2));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 2px 12px rgba(240,192,96,.35))}
+.sub{font-size:10px;color:var(--muted);letter-spacing:4px;margin:6px 0 14px}
+.modes{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.mode{display:flex;align-items:center;gap:12px;text-align:left;padding:13px 14px;border-radius:16px;
+  border:1px solid var(--border);background:linear-gradient(140deg,rgba(240,192,96,.1),rgba(255,255,255,.02));
+  color:var(--text);font-family:inherit;cursor:pointer;transition:all .18s;touch-action:manipulation}
+.mode:hover{border-color:var(--gold);box-shadow:0 8px 26px rgba(240,192,96,.16);transform:translateY(-2px)}
+.mode:active{transform:scale(.98)}
+.mode.alt{background:linear-gradient(140deg,rgba(143,216,255,.1),rgba(255,255,255,.02))}
+.mode.alt:hover{border-color:var(--sky);box-shadow:0 8px 26px rgba(143,216,255,.16)}
+.mode .mi{font-size:24px;flex:none}
+.mode .mt{display:block;font-size:16px;font-weight:900;letter-spacing:1px;color:var(--gold)}
+.mode.alt .mt{color:var(--sky)}
+.mode .md{display:block;font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5}
+.mode .md b{color:var(--text)}
+.rules{text-align:left;font-size:11px;color:#b8acc8;line-height:1.95;background:rgba(15,11,20,.7);
+  border:1px solid var(--border);border-radius:14px;padding:11px 13px}
+.rules b{color:var(--gold)}
+.rules .k{display:block;font-size:10px;letter-spacing:2px;color:var(--gold-dim);margin-bottom:3px}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chip{display:inline-block;font-size:11px;color:var(--gold);text-decoration:none;font-weight:700;
+  background:rgba(240,192,96,.1);border:1px solid rgba(240,192,96,.3);border-radius:20px;padding:5px 12px;
+  transition:all .15s}
+.chip:hover{background:rgba(240,192,96,.2)}
+.ver{font-size:10px;color:var(--muted);letter-spacing:1px}
+
+.btn{display:block;width:100%;border:none;border-radius:15px;padding:14px;font-size:16px;font-weight:800;
+  cursor:pointer;font-family:inherit;transition:all .15s;letter-spacing:2px;touch-action:manipulation}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1520;margin-top:12px;
+  box-shadow:0 6px 22px rgba(240,192,96,.26)}
+.btn-gold:hover{filter:brightness(1.08)}
+.btn-gold:active{transform:scale(.98)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);margin-top:8px}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 4px}
+.stat-box{background:rgba(15,11,20,.7);border:1px solid var(--border);border-radius:13px;padding:10px}
+.stat-box .sv{font-size:20px;font-weight:900;color:var(--gold);font-variant-numeric:tabular-nums}
+.stat-box .sl{font-size:10px;color:var(--muted);margin-top:2px}
+.over-head{font-size:24px;font-weight:900;letter-spacing:1px;line-height:1.3}
+.over-sub{font-size:12px;color:var(--muted);margin-top:5px}
+
+/* 排行榜 */
+.lb-wrap{text-align:center;font-size:12px;margin-top:12px}
+.lb-submit{display:flex;gap:8px;justify-content:center;margin:8px 0;flex-wrap:wrap}
+.lb-input{background:rgba(15,11,20,.8);border:1px solid var(--border);border-radius:10px;padding:9px 12px;
+  color:var(--text);font-size:13px;width:130px;outline:none;font-family:inherit}
+.lb-input:focus{border-color:var(--gold)}
+.lb-btn{background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:10px;padding:9px 20px;
+  color:#1a1520;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit}
+.lb-btn:disabled{opacity:.5;cursor:default}
+.lb-btn-ghost{background:transparent;border:1px solid var(--border);border-radius:10px;padding:9px 16px;
+  color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit}
+.lb-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px}
+.lb-table th{color:var(--muted);font-weight:400;padding:5px 4px;border-bottom:1px solid var(--border);text-align:left}
+.lb-table td{padding:5px 4px;color:var(--text);border-bottom:1px solid rgba(58,48,69,.3);text-align:left}
+.lb-table .lb-my td{color:var(--gold);font-weight:700;background:rgba(240,192,96,.07)}
+.lb-table .lb-user{word-break:break-all}
+.lb-av{width:20px;height:20px;border-radius:50%;vertical-align:middle;margin-right:6px;background:var(--border);object-fit:cover}
+.lb-table-wrap{overflow-x:auto}
+.lb-note{font-size:12px;color:var(--muted);margin:6px 0;line-height:1.6}
+.lb-note b{color:var(--gold)}
+.lb-ok{font-size:12px;color:var(--green);margin:8px 0}
+.lb-err{font-size:12px;color:var(--red);margin:8px 0;line-height:1.6}
+
+/* 加载 */
+.loading{display:flex;flex-direction:column;align-items:center;gap:14px}
+.spin{width:46px;height:46px;border:4px solid var(--border);border-top-color:var(--gold);border-radius:50%;
+  animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-txt{font-size:13px;color:var(--muted);letter-spacing:2px}
+.load-bar{width:190px;height:4px;background:var(--border);border-radius:3px;overflow:hidden}
+#loadBar{width:0;height:100%;background:linear-gradient(90deg,var(--gold),var(--sky));transition:width .25s}
+
+/* 大BAKA 演出 */
+.burst{position:fixed;inset:0;z-index:50;background:rgba(10,8,16,.96);
+  backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;pointer-events:none;overflow:hidden;padding:12px}
+.burst.hide{display:none}
+/* 站姿图是 200×314 的竖图，必须按高度约束，否则横屏下会把分数顶出屏幕 */
+.burst .bigpic{height:min(46vh,240px);width:auto;max-width:min(62vw,240px);border-radius:20px;
+  border:3px solid var(--gold);box-shadow:0 0 44px rgba(240,192,96,.6);
+  animation:bigPop .6s cubic-bezier(.2,1.5,.4,1),bigShake 1.2s .5s infinite;z-index:2}
+@keyframes bigPop{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes bigShake{0%,100%{transform:translate(0,0) rotate(0)}20%{transform:translate(-6px,3px) rotate(-2deg)}
+  40%{transform:translate(6px,-3px) rotate(2deg)}60%{transform:translate(-5px,-2px) rotate(-1deg)}80%{transform:translate(5px,2px) rotate(1deg)}}
+.burst .btitle{font-size:clamp(26px,8vh,40px);font-weight:900;color:var(--star);margin-top:12px;letter-spacing:5px;
+  text-shadow:0 0 22px rgba(240,192,96,.85);animation:bigPop .5s .3s both;z-index:2;white-space:nowrap}
+.burst .bscore{font-size:clamp(15px,4.6vh,19px);color:var(--gold);margin-top:6px;
+  animation:bigPop .5s .5s both;z-index:2;white-space:nowrap}
+.burst .baka{position:absolute;font-weight:900;color:var(--gold);opacity:0;
+  animation:bakaFly 1.8s linear forwards;text-shadow:0 0 14px rgba(240,192,96,.6)}
+@keyframes bakaFly{0%{opacity:0;transform:translate(0,60vh) rotate(-10deg)}10%{opacity:1}90%{opacity:1}
+  100%{opacity:0;transform:translate(var(--dx),-80vh) rotate(20deg)}}
+</style>
+</head>
+<body>
+
+<canvas id="snow" aria-hidden="true"></canvas>
+<div id="flash" aria-hidden="true"></div>
+
+<div class="app" id="app">
+
+  <!-- ══ HUD ══ -->
+  <div class="hud" id="hud">
+    <div class="sc">
+      <div class="v" id="score">0</div>
+      <div class="k">SCORE · <b id="bestLine">HI 0</b></div>
+    </div>
+    <div class="pv">
+      <div class="cell">
+        <div class="pbox" id="curPreview"><span>⑨</span></div>
+        <span class="pl">手中 <b id="curLv">⑨</b></span>
+      </div>
+      <div class="cell n">
+        <div class="pbox" id="nextPreview"><span>⑨</span></div>
+        <span class="pl">下一个 <b id="nextLv">⑨</b></span>
+      </div>
+    </div>
+    <div class="tools">
+      <button class="tool" id="hammerBtn" disabled title="小锤子：连锁 3 连获得，点一下选中要敲掉的笨蛋">🔨<span class="cnt" id="hammerCnt">0</span></button>
+      <button class="tool" id="pauseBtn" title="暂停 (Esc)">⏸</button>
+      <button class="tool" id="muteBtn" title="音效开关">🔊</button>
+    </div>
+  </div>
+
+  <!-- ══ 竖井 ══ -->
+  <div class="board" id="board" aria-label="游戏区域">
+    <canvas id="game" width="400" height="640"></canvas>
+    <div class="line" id="lineEl"><span class="tag">危险线</span></div>
+    <div class="toast" id="toast"></div>
+    <div id="fx"></div>
+  </div>
+
+  <!-- ══ 横屏侧栏 ══ -->
+  <aside class="side">
+    <div class="art">
+      <img src="images/cast/logo.png" alt="琪露诺" onerror="this.style.display='none'">
+    </div>
+    <div class="vtitle">合成大BAKA</div>
+    <a class="chip" href="https://space.bilibili.com/1029138222" target="_blank" rel="noopener">📺 B站 · 南彗Nahui</a>
+  </aside>
+</div>
+
+<!-- ══ 加载 ══ -->
+<div class="overlay" id="loading">
+  <div class="loading">
+    <div class="spin"></div>
+    <div class="load-txt">🧊 霧雨魔法店 加载中...</div>
+    <div class="load-bar"><div id="loadBar"></div></div>
+  </div>
+</div>
+
+<!-- ══ 开始 ══ -->
+<div class="overlay hide" id="startOverlay">
+  <div class="card">
+    <div class="brand"><span>霧雨魔法店</span><i>TOY EDITION</i></div>
+    <div class="art"><img src="images/cast/logo.png" alt="琪露诺" onerror="this.style.display='none'"></div>
+    <h1 class="title">合成大BAKA</h1>
+    <div class="sub">CHOOSE YOUR BAKA</div>
+    <div class="modes">
+      <button class="mode" onclick="startGame('big')">
+        <span class="mi">🎮</span>
+        <span><span class="mt">合成大BAKA</span><span class="md">小 → 大 · 合成<b>进化</b>，养出终极大BAKA</span></span>
+      </button>
+      <button class="mode alt" onclick="startGame('small')">
+        <span class="mi">🎀</span>
+        <span><span class="mt">合成小BAKA</span><span class="md">大 → 小 · 合成<b>退化</b>，压回完全体 ⑨</span></span>
+      </button>
+    </div>
+    <div class="rules">
+      <span class="k">HOW TO PLAY</span>
+      🎯 对准落点<b>点击 / 轻触</b>释放；电脑可用 <b>← →</b> 或 <b>A D</b> 移动、<b>空格</b>投放<br>
+      🔗 连续合成累积<b>连锁倍率</b>，3 连奖励<b>小锤子</b>可敲掉挡路的笨蛋<br>
+      🔨 锤子状态下点哪敲哪，敲掉压线球可<b>立即解除预警</b><br>
+      ☠️ 笨蛋堆过<b>危险线</b>并持续 5 秒 = 游戏结束
+    </div>
+    <div class="foot">
+      <a class="chip" href="https://space.bilibili.com/1029138222" target="_blank" rel="noopener">📺 B站 · 南彗Nahui</a>
+      <span class="ver">夷境工作室 · Toy v1.0</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 结算 ══ -->
+<div class="overlay hide" id="overOverlay">
+  <div class="card">
+    <div class="over-head" id="overTitle">💥 笨蛋太多了!</div>
+    <div class="over-sub" id="overSub">灵梦:这么多⑨,还是退治了吧。</div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="sv" id="fsScore">0</div><div class="sl">总分</div></div>
+      <div class="stat-box"><div class="sv" id="fsMax">Lv0</div><div class="sl" id="fsMaxLabel">最高合成</div></div>
+      <div class="stat-box"><div class="sv" id="fsChain">0</div><div class="sl">最大连锁</div></div>
+      <div class="stat-box"><div class="sv" id="fsBest">0</div><div class="sl">历史最佳</div></div>
+    </div>
+    <button class="btn btn-gold" onclick="retryGame()">🔄 再来一次</button>
+    <button class="btn btn-ghost" onclick="showSelect()">🏠 选择模式</button>
+    <div id="lbArea" class="hide"></div>
+  </div>
+</div>
+
+<!-- ══ 暂停 ══ -->
+<div class="overlay hide" id="pauseOverlay">
+  <div class="card">
+    <h1 class="title" style="font-size:26px">⏸ 暂停</h1>
+    <div class="sub">PAUSED</div>
+    <button class="btn btn-gold" onclick="togglePause()">▶ 继续游戏</button>
+    <button class="btn btn-ghost" onclick="showSelect()">🏠 结束并选择模式</button>
+  </div>
+</div>
+
+<!-- ══ 大BAKA 演出 ══ -->
+<div class="burst hide" id="bakaBurst">
+  <div id="bakaBarrage"></div>
+  <img class="bigpic" id="bakaImg" src="images/cast/lihui.png" alt="大BAKA">
+  <div class="btitle" id="bakaTitle">大BAKA!!!</div>
+  <div class="bscore" id="bakaScore"></div>
+</div>
+
+<script src="js/baka.js"></script>
+</body>
+</html>

@@ -1,80 +1,58 @@
-# 霧雨魔法店 🔮
+# 霧雨魔法店
 
-> 一个纯 HTML/CSS/JS 的 Touhou Project 主题趣味测试网站。
+小游戏、趣味测试、虚构故事与创作工具。主站：[www.azureflame.cloud](https://www.azureflame.cloud)。
 
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+## 入口
 
----
+- `index.html`：小店首页与精选作品。
+- `games.html`：游戏室。
+- `tests.html`：测试屋。
+- `stories.html`：故事角。
+- `tools.html`：工具与创作，包含记忆信号工作室和账本。
+- `explore.html`：全站搜索、主题筛选与分页。
 
-## 🏪 本店商品
+目录唯一来源是 `js/catalog.js`。保留已有作品 URL，新增作品按 [页面规范](docs/PAGE-STANDARD.md) 登记。主站复用已有像素角色美术，采用纸色、墨绿和印章橙；图标字体本地提供，记忆信号是可离线使用的单文件页面。
 
-### 🧬 灵魂鉴定
-- [灵魂动物 · 真实版](quiz-animal-real.html) — 12 道题 · 12 种动物 · 五维匹配 · 1% 蛆彩蛋
-- [灵魂动物 · 经典版](quiz-animal.html) — 回答日常问题，匹配灵魂动物
-- [灵魂故乡](quiz-hometown.html) — 20 道题 · 28 个地域 · 8 维画像
-- [二次元灵魂故乡](quiz-anime-world.html) — 16 道题 · 16 个世界
+## 开发与预览
 
-### 🌐 人格鉴定
-- [抽象圈大手子鉴定](quiz-internet.html) — 26 道题 · 隐藏人物
-- [东方人物鉴定](quiz-touhou.html) — 16 位角色 · 16 道题
-- [动漫男主鉴定](quiz-anime-hero.html) — 8 道题匹配主角人格
-- [互联网身份鉴定](quiz-internet-identity.html) — 20 道题 · 7 维雷达图
-- [读心水果](quiz-fruit.html) — 6 道题看穿水果之魂
-
-### 💕 趣味鉴定
-- [二次元老婆测试](waifu-test.html) — 20 道题 · 隐藏金色彩蛋
-- [社会指数宾果](bingo.html) 
-- [高考出分模拟器](gaokao.html) — 查分动画 · 80+ 彩蛋人物 · 分享海报
-
-### 📖 故事会
-- [类人群星闪耀时](human-stars.html) — 外星人给的 KPI：一天一条逆天小故事。所有故事均为完全虚构
-
-### 🍽️ 生活指南
-- [今天吃什么](quiz-food.html) — 转盘抽取 + 智能问答
-- [对症下菜](quiz-food-care.html) — 18 道题食疗开方
-
-### 🎮 小游戏
-- [魔理沙快跑](marisa_dash.html) — 三通道飞行跑酷 · 擦弹连击 · DASH 冲刺
-- [魔理沙幸存者](marisa_survivor.html) — 幸存者like · 自动攻击 · 17 种强化卡三选一 · 在线排行榜
-- [魔理沙的赛钱危机](marisa_landlord.html) — 幸运房东like · 58 符号构筑 · 灵梦收租 · 断点续玩 · 在线排行榜
-- [流浪模拟器](street_survival.html) — 街头生存 · 双条拉扯 · 突发遭遇多分支 · 成就徽章 · 无尽模式
-- [鹿管大作战](deer_battle.html) — 60 秒点硬币 · 五种鹿币 · 陷阱/加时 · 在线排行榜
-- [轮盘赌局](demo_roulette.html) — 双人心理博弈 · 装弹留话 · 三局两胜 · AI 对战 / 真人匹配
-- [合成大BAKA](baka.html) — 合成大西瓜like · ⑨进化大BAKA · 立绘圆形贴图 · 连锁锤子 · 在线排行榜
-- [星之魔弹](stg.html) — 东方风弹幕STG · 擦弹连击 · Boss 符卡战 · 升级三选一构筑 · 三主炮
-- [魔理沙的弹珠台](marisa_pachinko.html) — 10 天租金 Roguelike · 中央供球 · 左右对称钉阵 · 真实物理互撞 · 100 球流水基准 · [交付说明](PACHINKO_README.md)
-- [抽陀螺模拟器](tuoluo.html) — Unity WebGL · 真 3D 陀螺 · 节奏抽打 · 完美一鞭疯狂旋转 · 转速归零倒地
-
----
-
-## 🛠 技术栈
-
-纯静态 — HTML + CSS + JavaScript，无框架，无构建工具。
-
-| 目录 | 内容 |
-|------|------|
-| `css/` | 公共样式表(设计系统:变量、组件、标准 keyframes、reduced-motion) |
-| `js/` | 共享模块:`quiz-engine.js` 测验引擎、`radar.js` 雷达图、`poster.js` 海报、`particles.js` 粒子、`sky.js` 全站星空、`quiz-stats.js` 统计、`quiz-storage.js` 续答、`reveal-screen.js` 揭示屏等 |
-| `images/` | 角色立绘 & 二维码 |
-| `model.html` | 新测试页模板(基于 `MQ.engine`,复制即用) |
-
----
-
-## 🚀 部署
-
-```bash
-git clone https://github.com/KirisameRyan/marisa-magic-shop.git
+```powershell
+python scripts/build-site-pages.py
+python zyms/build.py
+python scripts/serve.py 8098
 ```
 
-扔进任意静态服务器即可（Apache / Nginx / OSS / GitHub Pages）。
+本地服务器只公开允许发布的文件。不要把仓库根目录作为未经限制的静态站点公开。
 
----
+## 验证
 
-## 🔗 链接
+```powershell
+python scripts/security-scan.py
+python scripts/test-publication.py
+node scripts/check-catalog.mjs
+php scripts/test-api.php
+node scripts/test-site.mjs
+node scripts/test-zyms.mjs
+```
 
-- **主页**：[www.azureflame.cloud](https://www.azureflame.cloud)
-- **B站**：[霧雨魔法店](https://space.bilibili.com/1029138222)
+PHP 功能测试需要 PDO SQLite 与 mbstring；浏览器测试需要本机 Chrome。生产接口还需要相应 PHP 扩展。提交钩子可通过 `git config core.hooksPath .githooks` 启用；CI 也会检查凭证与发布边界。
 
----
+## 发布与仓库边界
 
-<p align="center">🧹 魔法之森边缘 · 营业时间不定 · 账号仅用于排行榜与密码找回 · 数据只存本站服务器 · 不追踪 · 不贩卖</p>
+```powershell
+python scripts/release.py manifest
+python scripts/release.py web --include-api
+python scripts/release.py android
+python scripts/release.py toy --game baka
+```
+
+发布物只生成到忽略的 `dist/`。Android 源码在 `apps/android/`，Toy 专用源码在 `packages/toy/`；ZIP、APK、签名文件、数据库不再提交。QQ Bot 已移除。详见 [仓库与构建规范](docs/REPOSITORY-LAYOUT.md)。
+
+## 服务器配置与安全交接
+
+- 密钥只从服务器环境读取，变量名见 `.env.example`。该文件是说明，不会自动加载。
+- 账本截图识别和异常 CSV 辅助解析使用智谱；其他功能不依赖智谱。旧 Key 必须在平台撤销。
+- 数据库使用 `MMS_PRIVATE_DIR`，应位于站点根目录之外。升级前停写并执行 `php scripts/migrate-private-data.php`。
+- Apache 使用 `.htaccess`；Nginx 需单独安装 `deploy/nginx-security.conf`。
+- 当前源码清理不等于 Git 历史清理，历史凭证与旧包仍需单独处置。
+
+部署前必须阅读 [安全审查与交接](docs/SECURITY-REVIEW.md)。纯静态托管不会执行 PHP，账号、在线存档和账本 AI 需要独立后端。

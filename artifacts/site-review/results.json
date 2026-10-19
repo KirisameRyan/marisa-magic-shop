@@ -1,0 +1,28 @@
+{
+  "homeLinks": 21,
+  "responsiveWidths": [
+    320,
+    390,
+    768,
+    1024,
+    1440
+  ],
+  "pagination": true,
+  "search": true,
+  "history": true,
+  "sharedNavigation": true,
+  "memoryIntegration": true,
+  "protectedPaths": {
+    ".git/config": 404,
+    ".env": 404,
+    "api/llm-config.php": 404,
+    "api/bot.php": 404,
+    "data/site.db": 404,
+    "var/private/site.db": 404,
+    "_local/legacy-android-www.zip": 404,
+    "apps/android/app/build.gradle": 404,
+    "scripts/security-scan.py": 404,
+    "zyms/studio.js": 404
+  },
+  "errors": []
+}

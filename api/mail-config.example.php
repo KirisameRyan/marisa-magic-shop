@@ -1,13 +1,9 @@
 <?php
-// =============================================
-//  SMTP 发信配置模板 —— 复制本文件为 mail-config.php 后填写
-//  mail-config.php 已被 gitignore，不会上传仓库（含邮箱授权码，等同密码）
-//  QQ 邮箱: 设置 → 账号 → 开启 SMTP 服务 → 生成授权码
-// =============================================
+// SMTP is configured through server environment variables; see .env.example.
 return [
-    'host' => 'smtp.qq.com',
-    'port' => 465,
-    'ssl'  => true,
-    'user' => '你的邮箱@qq.com',
-    'pass' => '你的授权码'
+    'host' => getenv('MMS_SMTP_HOST') ?: '',
+    'port' => (int)(getenv('MMS_SMTP_PORT') ?: 465),
+    'ssl' => true,
+    'user' => getenv('MMS_SMTP_USER') ?: '',
+    'pass' => getenv('MMS_SMTP_PASS') ?: '',
 ];

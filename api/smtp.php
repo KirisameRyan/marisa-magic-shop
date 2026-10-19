@@ -5,11 +5,13 @@
 //  未配置 mail-config.php 时静默返回 false
 // =============================================
 
+require_once __DIR__ . '/bootstrap.php';
 function mms_smtp_config(): ?array {
-    $f = __DIR__ . '/mail-config.php';
-    if (!file_exists($f)) return null;
-    $cfg = require $f;
-    return is_array($cfg) && !empty($cfg['host']) ? $cfg : null;
+    $host = mms_env('MMS_SMTP_HOST');
+    if ($host === '') return null;
+    return ['host' => $host, 'port' => (int)mms_env('MMS_SMTP_PORT', '465'),
+        'ssl' => true, 'user' => mms_env('MMS_SMTP_USER'), 'pass' => mms_env('MMS_SMTP_PASS'),
+        'from' => mms_env('MMS_SMTP_FROM', mms_env('MMS_SMTP_USER')), 'name' => '霧雨魔法店'];
 }
 
 function mms_smtp_read_line($fp): string {
@@ -48,7 +50,7 @@ function mms_send_mail(string $to, string $subject, string $body): bool {
     $user = $cfg['user'];
     $pass = $cfg['pass'];
 
-    $ctx = stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false]]);
+    $ctx = stream_context_create(['ssl' => ['verify_peer' => true, 'verify_peer_name' => true]]);
     $fp = @stream_socket_client(
         ($ssl ? 'ssl://' : '') . $host . ':' . $port,
         $errno, $errstr, 15, STREAM_CLIENT_CONNECT, $ctx

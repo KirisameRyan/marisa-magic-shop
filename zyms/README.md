@@ -1,6 +1,6 @@
 # 记忆信号 MEMORY SIGNAL
 
-打开 `DREAMCORE __ 旧核·梦核·怪核图片滤镜实验室.html` 即可使用。CSS、渲染代码和四个程序绘制场景均内置于 HTML；Font Awesome 图标使用 CDN，离线时文字操作和滤镜仍可用。
+打开 `DREAMCORE __ 旧核·梦核·怪核图片滤镜实验室.html` 即可使用。CSS、渲染代码和四个程序绘制场景均内置于 HTML；Font Awesome 图标与 WOFF2 字体也已嵌入，单文件可离线使用。
 
 ## 使用
 

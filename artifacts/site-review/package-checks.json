@@ -1,0 +1,26 @@
+[
+  {
+    "target": "android/www",
+    "files": 507,
+    "privateEntries": 0,
+    "bytes": 143402958
+  },
+  {
+    "target": "toy/tuoluo",
+    "files": 28,
+    "privateEntries": 0,
+    "bytes": 31268336
+  },
+  {
+    "target": "toy/marisa_survivor",
+    "files": 35,
+    "privateEntries": 0,
+    "bytes": 15844688
+  },
+  {
+    "target": "toy/baka",
+    "files": 14,
+    "privateEntries": 0,
+    "bytes": 393989
+  }
+]

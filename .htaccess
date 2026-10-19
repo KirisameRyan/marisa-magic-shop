@@ -1,12 +1,18 @@
-# 阻止外部直接访问敏感词库和彩蛋数据
-<FilesMatch "^(sensitive-words|easter-eggs)\.js$">
-    RewriteEngine On
-    RewriteCond %{HTTP_REFERER} !^https?://(www\.)?azureflame\.cloud [NC]
-    RewriteCond %{HTTP_REFERER} !^https?://(www\.)?azureflame\.cloud/ [NC]
-    RewriteRule .* - [F,L]
+Options -Indexes
+RewriteEngine On
+RewriteRule ^api/bot(?:_token)?\.php$ - [G,L]
+RewriteRule (^|/)\.(?!well-known(?:/|$)) - [F,L]
+RewriteRule ^(?:apps|packages|services|scripts|docs|deploy|artifacts|var|_local|proxy_cache_dir|toy-build|android-app)(?:/|$) - [F,L,NC]
+RewriteRule ^api/(?:.*-config(?:\.example|\.local)?|llm-settings|bootstrap|auth-lib|smtp)\.php$ - [F,L,NC]
+RewriteRule ^data/(?!waifu-db-zh\.(?:js|json)$|waifu-tags\.json$|cache/posters/[a-zA-Z0-9_-]+\.png$) - [F,L]
+<FilesMatch "(?i)\.(?:db|sqlite|sqlite3|db-wal|db-shm|env|log|bak|zip|apk|aab|jks|keystore|alf)$">
+    Require all denied
 </FilesMatch>
-
-# ── Unity WebGL 支持(抽陀螺模拟器)──
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Content-Security-Policy "object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
+</IfModule>
 AddType application/wasm .wasm
 AddType application/octet-stream .data
 AddEncoding br .br

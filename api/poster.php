@@ -93,7 +93,7 @@ $avatarImg = null;
 if ($imageUrl && !file_exists($avatarFile)) {
     $imgData = @file_get_contents($imageUrl, false, stream_context_create([
         'http' => ['timeout' => 8, 'user_agent' => 'MarisaBot/1.0'],
-        'ssl'  => ['verify_peer' => false],
+        'ssl'  => ['verify_peer' => true],
     ]));
     if ($imgData && strlen($imgData) > 1024) {
         file_put_contents($avatarFile, $imgData);

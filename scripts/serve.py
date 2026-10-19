@@ -11,11 +11,37 @@
 import http.server
 import mimetypes
 import sys
+import importlib.util
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+spec = importlib.util.spec_from_file_location('public_files', ROOT / 'scripts/public-files.py')
+policy = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(policy)
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8090
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        from urllib.parse import unquote, urlsplit
+        request_path = unquote(urlsplit(self.path).path)
+        name = request_path.lstrip('/') or 'index.html'
+        if name.endswith('/'): name += 'index.html'
+        resolved = (ROOT / name).resolve()
+        if not resolved.is_relative_to(ROOT) or not policy.public_file(name):
+            self.send_error(404)
+            return
+        self.path = '/' + name
+        super().do_GET()
+
+    def do_HEAD(self):
+        # Apply the same publication policy without streaming the response body.
+        from urllib.parse import unquote, urlsplit
+        name = unquote(urlsplit(self.path).path).lstrip('/') or 'index.html'
+        if not policy.public_file(name): self.send_error(404); return
+        super().do_HEAD()
+
     def end_headers(self):
         path = self.path.split("?")[0].lower()
         if path.endswith(".br"):
@@ -38,6 +64,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    server = http.server.ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
+    import os
+    os.chdir(ROOT)
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
     print("serve.py running on http://127.0.0.1:%d" % PORT)
     server.serve_forever()

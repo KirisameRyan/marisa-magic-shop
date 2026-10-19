@@ -11,6 +11,9 @@ bdunion.txt
 # 彩蛋计数器数据（运行时生成）
 data/*
 !data/.gitkeep
+!data/waifu-db-zh.js
+!data/waifu-db-zh.json
+!data/waifu-tags.json
 
 # SMTP 发信凭据（勿上传）
 api/mail-config.php
@@ -21,3 +24,31 @@ api/mail-config.php
 # 记忆信号浏览器验证的临时数据
 artifacts/zyms-review/chrome-profile/
 artifacts/zyms-review/downloads/
+
+# Private configuration, signing material, runtime state and release output
+.env
+.env.*
+!.env.example
+**/*-config.local.php
+**/keystore.properties
+**/local.properties
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+*.apk
+*.aab
+*.alf
+*.db
+*.db-wal
+*.db-shm
+*.sqlite*
+**/__pycache__/
+dist/
+var/
+_local/
+apps/android/app/src/main/assets/www.zip
+apps/android/app/src/main/assets/www/
+artifacts/site-review/chrome-profile/
+artifacts/site-review/downloads/

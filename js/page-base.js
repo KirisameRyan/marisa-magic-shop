@@ -4,6 +4,8 @@
 //  每个页面只需在 head 引入 js/page-base.js
 // =============================================
 (function() {
+  // Set the public base synchronously; page scripts may run before dynamic resources arrive.
+  window.API_BASE = window.API_BASE || (location.hostname === 'appassets.androidapp.net' ? 'https://www.azureflame.cloud/' : '');
   // ── favicon ──
   var fav = document.createElement('link');
   fav.rel = 'icon';
@@ -15,7 +17,7 @@
   var skyScript = document.createElement('script');
   skyScript.src = 'js/sky.js';
   skyScript.defer = true;
-  document.head.appendChild(skyScript);
+  if (document.documentElement.dataset.sky === 'true') document.head.appendChild(skyScript);
 
   // ── API 基址(同步优先加载, 供 fetch(API_BASE+...) 使用)──
   var apiScript = document.createElement('script');
@@ -124,10 +126,8 @@
   function injectNav() {
     var page = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
     if (!TAB[page]) return; // 游戏/测试/工具页: 不显示
-    var isApp = /mmsapp/i.test(navigator.userAgent);
-    var isMobile = window.matchMedia('(max-width: 767px)').matches;
-    if (isApp || isMobile) injectTabBar(page);
-    else injectSidebar(page);
+    // One shared top navigation replaces the duplicated sidebar/tab navigation.
+    return;
   }
 
   // 恐怖内容警告: 仅在点击"开始"类按钮时弹出
