@@ -1,0 +1,2356 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DREAMCORE // 旧核·梦核·怪核图片滤镜实验室</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=VT323&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-retro: 'VT323', monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background-color: #0b0a10;
+      color: #e4e2f0;
+      overflow-x: hidden;
+    }
+    .font-retro {
+      font-family: var(--font-retro);
+    }
+    .font-mono-code {
+      font-family: var(--font-mono);
+    }
+    /* Custom styling for range sliders */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      background: #232033;
+      border-radius: 999px;
+      outline: none;
+      border: 1px solid #35304d;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #c084fc;
+      cursor: pointer;
+      border: 2px solid #f3e8ff;
+      box-shadow: 0 0 8px rgba(192, 132, 252, 0.7);
+      transition: transform 0.12s ease, background-color 0.12s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      background: #d8b4fe;
+    }
+    .checkerboard-bg {
+      background-color: #110f1a;
+      background-image:
+        linear-gradient(45deg, #191626 25%, transparent 25%),
+        linear-gradient(-45deg, #191626 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #191626 75%),
+        linear-gradient(-45deg, transparent 75%, #191626 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    }
+    .retro-border {
+      border: 1px solid rgba(168, 85, 247, 0.28);
+      box-shadow: 0 0 24px rgba(139, 92, 246, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #12101b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #352f4b;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #4c436b;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#0b0a10] text-slate-100 selection:bg-purple-500 selection:text-white">
+
+  <!-- Top Navigation / Header -->
+  <header class="border-b border-purple-900/40 bg-[#110e1a]/90 backdrop-blur-md sticky top-0 z-30">
+    <div class="max-w-[1440px] mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-600 via-pink-500 to-amber-400 p-[1px] shadow-lg shadow-purple-900/30">
+          <div class="w-full h-full bg-[#110e1a] rounded-[7px] flex items-center justify-center">
+            <span class="font-retro text-2xl text-purple-300 tracking-wider">👁️</span>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-base sm:text-lg tracking-tight bg-gradient-to-r from-purple-200 via-pink-200 to-amber-200 bg-clip-text text-transparent">
+              DREAMCORE // 旧核·梦核·怪核滤镜实验室
+            </h1>
+            <span class="text-[11px] font-mono-code uppercase px-2 py-0.5 rounded bg-purple-950/80 text-purple-300 border border-purple-700/40">
+              v3.0 SEED-LAB
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">
+            像素级 Canvas 旧核 / 梦核 / 怪核 / 模拟恐怖 / VHS 信号退化渲染器
+          </p>
+        </div>
+      </div>
+
+      <!-- Top Action Controls -->
+      <div class="flex flex-wrap items-center gap-2">
+        <label for="fileUploadInput" class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-600 hover:bg-purple-500 text-white shadow-sm shadow-purple-950 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          <span>上传图片</span>
+        </label>
+        <input id="fileUploadInput" type="file" accept="image/*" class="hidden" />
+
+        <button id="btnCompare" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1d192b] hover:bg-[#28223b] text-slate-200 border border-purple-800/40 transition select-none" title="按住或点击切换原图对比">
+          <svg class="w-4 h-4 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          <span id="compareBtnText">按住看原图</span>
+        </button>
+
+        <button id="btnRandomize" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1d192b] hover:bg-[#28223b] text-purple-200 border border-purple-800/40 transition">
+          <svg class="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span>随机梦境</span>
+        </button>
+
+        <button id="btnReset" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1d192b] hover:bg-[#28223b] text-slate-300 border border-slate-700/60 transition">
+          <span>重置</span>
+        </button>
+
+        <button id="btnExport" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-amber-500 to-pink-500 hover:from-amber-400 hover:to-pink-400 text-slate-950 shadow-md shadow-pink-950/30 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span>导出 PNG</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="flex-1 max-w-[1440px] w-full mx-auto px-4 py-4 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+    <!-- Left Column: Scene Bar + Clean Unobstructed Canvas Preview + External Tips Bar (7 cols on lg) -->
+    <section class="lg:col-span-7 flex flex-col gap-3">
+
+      <!-- Built-in Procedural Base Image Selector & Status -->
+      <div class="bg-[#14111f] retro-border rounded-xl p-3 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-xs font-medium text-slate-400">内置测试底图：</span>
+          <button type="button" data-scene="corridor" class="scene-btn px-2.5 py-1 rounded-md text-xs font-medium bg-purple-600/30 text-purple-200 border border-purple-500/50 transition">
+            🚪 阈限走廊
+          </button>
+          <button type="button" data-scene="meadow" class="scene-btn px-2.5 py-1 rounded-md text-xs font-medium bg-[#1e1a2e] text-slate-300 border border-transparent hover:border-purple-700/40 transition">
+            ☁️ 千禧晴空
+          </button>
+          <button type="button" data-scene="poolrooms" class="scene-btn px-2.5 py-1 rounded-md text-xs font-medium bg-[#1e1a2e] text-slate-300 border border-transparent hover:border-purple-700/40 transition">
+            🌊 泳池空间
+          </button>
+          <button type="button" data-scene="arcade" class="scene-btn px-2.5 py-1 rounded-md text-xs font-medium bg-[#1e1a2e] text-slate-300 border border-transparent hover:border-purple-700/40 transition">
+            🎡 午夜游园
+          </button>
+        </div>
+        <div class="flex items-center gap-2 text-[11px] font-mono-code text-slate-400">
+          <span id="canvasResolutionBadge" class="px-2 py-0.5 rounded bg-[#1d182b] text-amber-300/90 border border-amber-500/20">800 × 600</span>
+          <span id="renderModeBadge" class="px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-300 border border-emerald-600/30">LIVE PIXEL</span>
+        </div>
+      </div>
+
+      <!-- Interactive Canvas Container (Clean! No overlapping hint inside the image area) -->
+      <div id="canvasDropZone" class="relative checkerboard-bg retro-border rounded-xl overflow-hidden flex items-center justify-center min-h-[380px] sm:min-h-[500px] p-3 select-none">
+        <canvas id="mainCanvas" width="800" height="600" class="max-w-full max-h-[70vh] w-auto h-auto rounded shadow-2xl cursor-crosshair transition-transform duration-150"></canvas>
+
+        <!-- Drag & Drop Overlay Prompt (only visible when dragging a file over) -->
+        <div id="dropOverlay" class="pointer-events-none opacity-0 transition-opacity duration-200 absolute inset-0 bg-purple-950/80 backdrop-blur-sm flex flex-col items-center justify-center border-2 border-dashed border-purple-400 rounded-xl m-2">
+          <p class="text-lg font-semibold text-purple-100">释放鼠标以上传图片</p>
+          <p class="text-xs text-purple-300 mt-1">支持 JPG / PNG / WebP 本地文件，全程浏览器本地渲染</p>
+        </div>
+
+        <!-- Original Image Indicator Pill (only visible while holding Compare button) -->
+        <div id="originalBadge" class="hidden pointer-events-none absolute top-5 left-5 px-3 py-1 rounded-full bg-amber-500 text-slate-950 font-bold text-xs shadow-lg">
+          原图预览中 (ORIGINAL)
+        </div>
+      </div>
+
+      <!-- External Hint & Current Status Bar (Moved completely outside the image container!) -->
+      <div class="bg-[#14111f] retro-border rounded-xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-purple-950/90 text-purple-300 border border-purple-700/40 font-medium">操作提示</span>
+          <span class="text-slate-300">可拖拽本地图片到上方画布 · 开启「怪核标签」后可直接在画面中拖动文字/遮挡条位置</span>
+        </div>
+        <span id="activePresetLabel" class="font-mono-code text-amber-300">当前预设：千禧午后 (Y2K Sunny)</span>
+      </div>
+
+    </section>
+
+    <!-- Right Column: Default Preset + Intensity Panel & Collapsible Advanced Mode + Seed System (5 cols on lg) -->
+    <aside class="lg:col-span-5 bg-[#14111f] retro-border rounded-xl overflow-hidden flex flex-col">
+
+      <!-- Mode Switch Header Bar (Default = Quick Preset Mode; Click to enter Advanced Fine-Tuning Mode) -->
+      <div class="p-3.5 border-b border-purple-900/40 bg-[#100d19] flex items-center justify-between gap-2">
+        <div>
+          <span id="rightPanelModeTitle" class="text-xs sm:text-sm font-bold text-purple-200 flex items-center gap-1.5">
+            <span>✨ 一键预设与强度调校</span>
+          </span>
+          <p id="rightPanelModeSub" class="text-[11px] text-slate-400 mt-0.5">
+            选好预设与总强度后，可随时进入高级模式以当下效果为准微调
+          </p>
+        </div>
+        <button id="btnToggleAdvanced" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-sm transition shrink-0">
+          🛠️ 打开高级细调模式
+        </button>
+      </div>
+
+      <!-- Seed / Style Reproduction Bar (Always accessible for Random & Custom Style Sharing) -->
+      <div class="px-4 py-3 bg-[#171324] border-b border-purple-900/40 space-y-2">
+        <div class="flex items-center justify-between">
+          <label for="inpStyleSeed" class="text-xs font-semibold text-amber-300 flex items-center gap-1.5">
+            <span>🧬 风格 Seed / 复刻码</span>
+            <span class="text-[10px] font-normal text-slate-400">(随机与手动微调均可凭此码复刻)</span>
+          </label>
+          <span id="seedBadgeStatus" class="text-[11px] font-mono-code text-purple-300">可复刻状态</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <input id="inpStyleSeed" type="text" value="" placeholder="输入数字种子(如 849201)或粘贴 DC1:... 复刻码" class="flex-1 px-2.5 py-1.5 rounded-lg bg-[#0e0b16] border border-purple-800/60 text-xs font-mono-code text-emerald-300 focus:outline-none focus:border-purple-400" />
+          <button id="btnCopySeed" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-[#252038] hover:bg-purple-700/50 text-purple-200 border border-purple-700/40 transition shrink-0">
+            复制 Seed
+          </button>
+          <button id="btnApplySeed" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/90 hover:bg-amber-400 text-slate-950 transition shrink-0">
+            应用复刻
+          </button>
+        </div>
+      </div>
+
+      <!-- ======================================================================= -->
+      <!-- VIEW 1 (DEFAULT): QUICK PRESET & INTENSITY PANEL                        -->
+      <!-- ======================================================================= -->
+      <div id="presetModeContainer" class="p-4 space-y-4 max-h-[68vh] overflow-y-auto">
+
+        <!-- Master Preset Intensity Slider -->
+        <div class="p-3.5 rounded-xl bg-[#1b162a] border border-purple-500/30 space-y-2">
+          <div class="flex items-center justify-between">
+            <label for="CtrlPresetIntensity" class="text-xs font-bold text-purple-200">
+              🎚️ 当前预设滤镜总强度 (Preset Intensity)
+            </label>
+            <span id="val-presetIntensity" class="text-xs font-mono-code font-bold text-amber-300 px-2 py-0.5 rounded bg-purple-950/90 border border-purple-700/40">
+              100% (标准)
+            </span>
+          </div>
+          <input id="CtrlPresetIntensity" type="range" min="0" max="150" value="100" />
+          <div class="flex justify-between text-[10px] text-slate-400 font-mono-code">
+            <span>0% (原图无滤镜)</span>
+            <span>100% (预设标准值)</span>
+            <span>150% (过载崩坏)</span>
+          </div>
+        </div>
+
+        <!-- Category A: 梦核 (Dreamcore) -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-purple-300">✨ 梦核系列 (Dreamcore · 阈限与迷幻梦境)</h2>
+            <span class="text-[11px] text-slate-400">4 款预设</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" data-preset="y2k" class="preset-btn flex flex-col items-start p-2.5 rounded-lg bg-purple-600/25 border border-purple-400 text-left transition hover:bg-purple-600/35">
+              <span class="text-xs font-bold text-white">☀️ 千禧午后</span>
+              <span class="text-[11px] text-purple-200/80 mt-0.5">高饱和暖光·柔焦·DV戳</span>
+            </button>
+            <button type="button" data-preset="liminal" class="preset-btn flex flex-col items-start p-2.5 rounded-lg bg-[#1c182b] border border-purple-900/40 text-left transition hover:bg-[#252038]">
+              <span class="text-xs font-bold text-amber-200">🚪 阈限走廊</span>
+              <span class="text-[11px] text-slate-400 mt-0.5">荧光偏黄绿·高噪点·暗角</span>
+            </button>
+            <button type="button" data-preset="vapor" class="preset-btn flex flex-col items-start p-2.5 rounded-lg bg-[#1c182b] border border-purple-900/40 text-left transition hover:bg-[#252038]">
+              <span class="text-xs font-bold text-cyan-300">🌊 深海残梦</span>
+              <span class="text-[11px] text-slate-400 mt-0.5">青紫迷幻·重影·白雾晕影</span>
+            </button>
+            <button type="button" data-preset="carousel" class="preset-btn flex flex-col items-start p-2.5 rounded-lg bg-[#1c182b] border border-purple-900/40 text-left transition hover:bg-[#252038]">
+              <span class="text-xs font-bold text-pink-200">🎠 游乐园残影</span>
+              <span class="text-[11px] text-slate-400 mt-0.5">糖果粉紫过曝·双层重影</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Category B: 旧核 (Oldcore) -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-amber-300">📼 旧核系列 (Oldcore · 千禧数码与怀旧介质)</h2>
+            <span class="text-[11px] text-slate-400">4 款预设</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" data-preset="old_ccd" class="preset-btn flex flex-col items-start p-2.5 rounded-lg bg-[#1c182b] border border-purple-900/40 text-left transition hover:bg-[#252038]">
+              <span class="text-xs font-bold text-amber-200">📷 千禧数码机</span>
+              <span class="text-[11px] text-slate-400 mt-0.5">2002低清CCD·暖黄颗粒</span>
+            </button>
+            <button type="button" data-preset="old_crt" class="preset-btn flex flex-col items-start p-2.5 rounded-lg bg-[#1c182b] border border-purple-900/40 text-left transition hover:bg-[#252038]">
+              <span class="text-xs font-bold text-emerald-300">📺 90s 显像管电视</span>
+              <span class="text-[11px] text-slate-400 mt-0.5">浓重扫描线·OSD播放码</span>
+            </button>
+            <button type="button" data-preset="vhs" class="preset-btn flex flex-col items-start p-2.5 rounded-lg bg-[#1c182b] border border-purple-900/40 text-left transition hover:bg-[#252038]">
+              <span class="text-xs font-bold text-pink-300">📼 损坏磁带</span>
+              <span class="text-[11px] text-slate-400 mt-0.5">强RGB色差·扫描线·撕裂</span>
+            </button>
+            <button type="button" data-preset="old_album" class="preset-btn flex flex-col items-start p-2.5 rounded-lg bg-[#1c182b] border border-purple-900/40 text-left transition hover:bg-[#252038]">
+              <span class="text-xs font-bold text-yellow-200">🎞️ 泛黄旧相册</span>
+              <span class="text-[11px] text-slate-400 mt-0.5">怀旧褪色褐调·拍立得相纸</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Category C: 怪核与重度恐怖 (Weirdcore & Heavy Horror) -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-red-400">👁️ 怪核与高能恐怖 (Weirdcore & Analog Horror)</h2>
+            <span class="text-[11px] text-red-300/80">含 3 款重度恐怖预设</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" data-preset="weirdcore" class="preset-btn flex flex-col items-start p-2.5 rounded-lg bg-[#1c182b] border border-purple-900/40 text-left transition hover:bg-[#252038]">
+              <span class="text-xs font-bold text-red-300">👁️ 怪核凝视</span>
+              <span class="text-[11px] text-slate-400 mt-0.5">低清像素化·高反差·文字框</span>
+            </button>
+            <button type="button" data-preset="horror_analog" class="preset-btn flex flex-col items-start p-2.5 rounded-lg bg-[#241219] border border-red-900/60 text-left transition hover:bg-[#331722]">
+              <span class="text-xs font-bold text-red-400">🩸 模拟恐怖档案</span>
+              <span class="text-[11px] text-red-200/70 mt-0.5">【重度】死寂黑红·断层撕裂</span>
+            </button>
+            <button type="button" data-preset="horror_abyss" class="preset-btn flex flex-col items-start p-2.5 rounded-lg bg-[#241219] border border-red-900/60 text-left transition hover:bg-[#331722]">
+              <span class="text-xs font-bold text-rose-400">🕳️ 深渊精神污染</span>
+              <span class="text-[11px] text-red-200/70 mt-0.5">【重度】阈值崩坏·镜像黑条</span>
+            </button>
+            <button type="button" data-preset="horror_eas" class="preset-btn flex flex-col items-start p-2.5 rounded-lg bg-[#241219] border border-red-900/60 text-left transition hover:bg-[#331722]">
+              <span class="text-xs font-bold text-orange-400">🚨 午夜紧急广播</span>
+              <span class="text-[11px] text-red-200/70 mt-0.5">【重度】高压血色·系统崩溃框</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Callout to enter Advanced Mode -->
+        <div class="p-3 rounded-xl bg-[#181426] border border-purple-800/30 flex items-center justify-between gap-3">
+          <div class="text-xs text-slate-300">
+            想基于当前预设效果单独改文字、旋转遮挡条或微调色差？
+          </div>
+          <button id="btnEnterAdvBottom" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/40 shrink-0 transition">
+            进入细调 →
+          </button>
+        </div>
+
+      </div>
+
+      <!-- ======================================================================= -->
+      <!-- VIEW 2: ADVANCED PARAMETER FINE-TUNING CONTAINER (Hidden by default)    -->
+      <!-- ======================================================================= -->
+      <div id="advancedModeContainer" class="hidden flex-col">
+        <!-- Category Tabs -->
+        <div class="grid grid-cols-3 border-b border-purple-900/40 bg-[#100d19]">
+          <button type="button" data-tab="optics" class="tab-btn py-3 px-2 text-xs sm:text-sm font-semibold text-purple-300 border-b-2 border-purple-400 bg-purple-950/30 transition">
+            1. 光学与色彩
+          </button>
+          <button type="button" data-tab="signal" class="tab-btn py-3 px-2 text-xs sm:text-sm font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 transition">
+            2. 信号与退化
+          </button>
+          <button type="button" data-tab="overlays" class="tab-btn py-3 px-2 text-xs sm:text-sm font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 transition">
+            3. 梦核符号层
+          </button>
+        </div>
+
+        <!-- Tab Panels Container -->
+        <div class="p-4 space-y-4 max-h-[62vh] overflow-y-auto">
+
+          <!-- TAB 1: Optics & Color -->
+          <div id="tab-optics" class="tab-panel space-y-4">
+            <div class="p-3 rounded-lg bg-[#1a1628] border border-purple-800/30 space-y-3.5">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-purple-300">梦境柔焦与重影 (Bloom & Ghosting)</h2>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="CtrlBloom" class="text-slate-300">高光柔焦溢出 (Soft Bloom)</label>
+                  <span id="val-bloom" class="font-mono-code text-purple-300">72%</span>
+                </div>
+                <input id="CtrlBloom" type="range" min="0" max="100" value="72" data-param="bloom" class="param-slider" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="CtrlGhost" class="text-slate-300">迷离重影偏移 (Dream Ghosting)</label>
+                  <span id="val-ghost" class="font-mono-code text-purple-300">8px</span>
+                </div>
+                <input id="CtrlGhost" type="range" min="0" max="35" value="8" data-param="ghost" class="param-slider" />
+              </div>
+            </div>
+
+            <div class="p-3 rounded-lg bg-[#1a1628] border border-purple-800/30 space-y-3.5">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-amber-300">色彩畸变与曝光 (Color & Exposure)</h2>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="CtrlBrightness" class="text-slate-300">曝光补偿 (Brightness)</label>
+                  <span id="val-brightness" class="font-mono-code text-amber-300">+12</span>
+                </div>
+                <input id="CtrlBrightness" type="range" min="-60" max="60" value="12" data-param="brightness" class="param-slider" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="CtrlContrast" class="text-slate-300">对比反差 (Contrast)</label>
+                  <span id="val-contrast" class="font-mono-code text-amber-300">+6</span>
+                </div>
+                <input id="CtrlContrast" type="range" min="-50" max="85" value="6" data-param="contrast" class="param-slider" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="CtrlSaturation" class="text-slate-300">色彩饱和度 (Saturation)</label>
+                  <span id="val-saturation" class="font-mono-code text-amber-300">+42%</span>
+                </div>
+                <input id="CtrlSaturation" type="range" min="-100" max="90" value="42" data-param="saturation" class="param-slider" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="CtrlWarmth" class="text-slate-300">怀旧冷暖偏色 (Cyan ← → Amber)</label>
+                  <span id="val-warmth" class="font-mono-code text-amber-300">+24</span>
+                </div>
+                <input id="CtrlWarmth" type="range" min="-70" max="70" value="24" data-param="warmth" class="param-slider" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="CtrlTint" class="text-slate-300">阈限品绿偏移 (Green ← → Magenta)</label>
+                  <span id="val-tint" class="font-mono-code text-amber-300">+6</span>
+                </div>
+                <input id="CtrlTint" type="range" min="-70" max="70" value="6" data-param="tint" class="param-slider" />
+              </div>
+            </div>
+
+            <div class="p-3 rounded-lg bg-[#1a1628] border border-purple-800/30 space-y-3.5">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-pink-300">边缘晕影 (Vignette & Edge Halo)</h2>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="CtrlVignette" class="text-slate-300">边缘晕影强度 (Vignette)</label>
+                  <span id="val-vignette" class="font-mono-code text-pink-300">32%</span>
+                </div>
+                <input id="CtrlVignette" type="range" min="0" max="100" value="32" data-param="vignette" class="param-slider" />
+              </div>
+
+              <div class="flex items-center justify-between pt-1">
+                <span class="text-xs text-slate-300">晕影模式：</span>
+                <div class="flex gap-2">
+                  <button type="button" id="btnVigDark" class="px-2.5 py-1 rounded text-xs font-medium bg-purple-600 text-white">深邃暗角</button>
+                  <button type="button" id="btnVigWhite" class="px-2.5 py-1 rounded text-xs font-medium bg-[#252038] text-slate-300 hover:bg-[#312b49]">白雾梦境</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: Signal & Degradation -->
+          <div id="tab-signal" class="tab-panel hidden space-y-4">
+            <div class="p-3 rounded-lg bg-[#1a1628] border border-purple-800/30 space-y-3.5">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-pink-300">光学色散与低清降采样 (CCD & Glitch)</h2>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="CtrlRgbShift" class="text-slate-300">RGB 通道分离色差 (Chromatic Shift)</label>
+                  <span id="val-rgbShift" class="font-mono-code text-pink-300">4px</span>
+                </div>
+                <input id="CtrlRgbShift" type="range" min="0" max="28" value="4" data-param="rgbShift" class="param-slider" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="CtrlPixelate" class="text-slate-300">低清像素降采样 (CCD Pixelation)</label>
+                  <span id="val-pixelate" class="font-mono-code text-pink-300">1x</span>
+                </div>
+                <input id="CtrlPixelate" type="range" min="1" max="14" value="1" data-param="pixelate" class="param-slider" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="CtrlHorrorCrush" class="text-red-300 font-medium">恐怖色阶断层与深渊暗化 (Abyss Crush)</label>
+                  <span id="val-horrorCrush" class="font-mono-code text-red-400">0%</span>
+                </div>
+                <input id="CtrlHorrorCrush" type="range" min="0" max="100" value="0" data-param="horrorCrush" class="param-slider" />
+              </div>
+            </div>
+
+            <div class="p-3 rounded-lg bg-[#1a1628] border border-purple-800/30 space-y-3.5">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-cyan-300">VHS 录像带与 CRT 信号退化</h2>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="CtrlScanlines" class="text-slate-300">CRT 扫描线浓度 (Scanlines)</label>
+                  <span id="val-scanlines" class="font-mono-code text-cyan-300">15%</span>
+                </div>
+                <input id="CtrlScanlines" type="range" min="0" max="100" value="15" data-param="scanlines" class="param-slider" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="CtrlNoise" class="text-slate-300">磁带雪花噪点 (Static Grain)</label>
+                  <span id="val-noise" class="font-mono-code text-cyan-300">14%</span>
+                </div>
+                <input id="CtrlNoise" type="range" min="0" max="100" value="14" data-param="noise" class="param-slider" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="CtrlVhsTear" class="text-slate-300">VHS 水平撕裂抖动 (Tape Glitch)</label>
+                  <span id="val-vhsTear" class="font-mono-code text-cyan-300">0%</span>
+                </div>
+                <input id="CtrlVhsTear" type="range" min="0" max="100" value="0" data-param="vhsTear" class="param-slider" />
+              </div>
+
+              <div class="pt-1 flex justify-end">
+                <button type="button" id="btnReseedGlitch" class="px-3 py-1 rounded text-xs font-medium bg-[#26203a] hover:bg-purple-700/40 text-purple-200 border border-purple-600/30 transition">
+                  ⚡ 刷新噪点与撕裂随机帧
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: Dreamcore Overlays (With Independent Size Controls + Tag Rotation & Mirroring!) -->
+          <div id="tab-overlays" class="tab-panel hidden space-y-4">
+
+            <!-- Symbol 1: DV Date Stamp + Size Control -->
+            <div class="p-3 rounded-lg bg-[#1a1628] border border-purple-800/30 space-y-3">
+              <div class="flex items-center justify-between">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-amber-300">符号 1 · 复古 DV / 相机日期戳</h2>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input id="chkTimestamp" type="checkbox" checked class="rounded bg-slate-800 border-purple-600 text-purple-600 focus:ring-0" />
+                  <span class="text-xs text-slate-200">显示日期戳</span>
+                </label>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label for="inpTimestampText" class="block text-[11px] text-slate-400 mb-1">自定义时间戳文本</label>
+                  <input id="inpTimestampText" type="text" value="1999.08.14  15:42" class="w-full px-2.5 py-1.5 rounded bg-[#100d19] border border-purple-800/50 text-xs font-mono-code text-amber-300 focus:outline-none focus:border-purple-400" />
+                </div>
+                <div>
+                  <label for="selTimestampPos" class="block text-[11px] text-slate-400 mb-1">显示位置</label>
+                  <select id="selTimestampPos" class="w-full px-2.5 py-1.5 rounded bg-[#100d19] border border-purple-800/50 text-xs text-slate-200 focus:outline-none focus:border-purple-400">
+                    <option value="br">右下角 (经典相机)</option>
+                    <option value="bl">左下角 (VHS 磁带)</option>
+                    <option value="tl">左上角 (REC 监控)</option>
+                    <option value="tr">右上角</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="CtrlTimestampScale" class="text-slate-300">日期戳大小调节 (Stamp Size)</label>
+                  <span id="val-timestampScale" class="font-mono-code text-amber-300">100%</span>
+                </div>
+                <input id="CtrlTimestampScale" type="range" min="50" max="220" value="100" data-param="timestampScale" class="param-slider" />
+              </div>
+            </div>
+
+            <!-- Symbol 2: VHS OSD Status Code + Size Control -->
+            <div class="p-3 rounded-lg bg-[#1a1628] border border-purple-800/30 space-y-3">
+              <div class="flex items-center justify-between">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-emerald-300">符号 2 · VHS 磁带 OSD 状态码</h2>
+                <label class="inline-flex items-center gap-1.5 text-xs text-slate-200 cursor-pointer">
+                  <input id="chkVhsOsd" type="checkbox" class="rounded bg-slate-800 border-purple-600 text-purple-600" />
+                  <span>显示 `PLAY ▶ SLP 00:04:19`</span>
+                </label>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="CtrlOsdScale" class="text-slate-300">OSD 状态码大小调节 (OSD Size)</label>
+                  <span id="val-osdScale" class="font-mono-code text-emerald-300">100%</span>
+                </div>
+                <input id="CtrlOsdScale" type="range" min="50" max="220" value="100" data-param="osdScale" class="param-slider" />
+              </div>
+            </div>
+
+            <!-- Symbol 3: Weirdcore Text Box & Censor Bar + Size, Rotation & Mirroring -->
+            <div class="p-3 rounded-lg bg-[#1a1628] border border-purple-800/30 space-y-3">
+              <div class="flex items-center justify-between">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-red-300">符号 3 · 怪核标签与遮挡条 (可拖拽/旋转/镜像)</h2>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input id="chkWeirdTag" type="checkbox" class="rounded bg-slate-800 border-purple-600 text-purple-600 focus:ring-0" />
+                  <span class="text-xs text-slate-200">启用怪核标签</span>
+                </label>
+              </div>
+
+              <div>
+                <label for="inpWeirdText" class="block text-[11px] text-slate-400 mb-1">标签文字内容（可在左侧画布直接拖动位置）</label>
+                <input id="inpWeirdText" type="text" value="你来过这里吗？ / HAVE YOU BEEN HERE?" class="w-full px-2.5 py-1.5 rounded bg-[#100d19] border border-purple-800/50 text-xs text-slate-100 focus:outline-none focus:border-purple-400" />
+              </div>
+
+              <!-- Quick phrase chips -->
+              <div class="flex flex-wrap gap-1.5">
+                <button type="button" data-phrase="你来过这里吗？" class="phrase-chip px-2 py-0.5 rounded bg-[#252038] hover:bg-purple-800/50 text-[11px] text-slate-200 transition">你来过这里吗？</button>
+                <button type="button" data-phrase="WHERE AM I?" class="phrase-chip px-2 py-0.5 rounded bg-[#252038] hover:bg-purple-800/50 text-[11px] text-slate-200 transition">WHERE AM I?</button>
+                <button type="button" data-phrase="DON'T WAKE UP" class="phrase-chip px-2 py-0.5 rounded bg-[#252038] hover:bg-purple-800/50 text-[11px] text-slate-200 transition">DON'T WAKE UP</button>
+                <button type="button" data-phrase="IT FEELS SO FAMILIAR" class="phrase-chip px-2 py-0.5 rounded bg-[#252038] hover:bg-purple-800/50 text-[11px] text-slate-200 transition">IT FEELS SO FAMILIAR</button>
+                <button type="button" data-phrase="███ 记忆已损坏 ███" class="phrase-chip px-2 py-0.5 rounded bg-[#252038] hover:bg-purple-800/50 text-[11px] text-slate-200 transition">███ 记忆已损坏 ███</button>
+                <button type="button" data-phrase="DO NOT LOOK BEHIND YOU" class="phrase-chip px-2 py-0.5 rounded bg-red-950/70 hover:bg-red-800/60 text-[11px] text-red-200 border border-red-800/40 transition">DO NOT LOOK BEHIND YOU</button>
+                <button type="button" data-phrase="███ 祂在看着你 ███" class="phrase-chip px-2 py-0.5 rounded bg-red-950/70 hover:bg-red-800/60 text-[11px] text-red-200 border border-red-800/40 transition">███ 祂在看着你 ███</button>
+              </div>
+
+              <!-- Size & Rotation Sliders for Weirdcore Tag -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <div class="flex justify-between text-xs mb-1">
+                    <label for="CtrlWeirdScale" class="text-slate-300">标签/遮挡条大小</label>
+                    <span id="val-weirdScale" class="font-mono-code text-red-300">100%</span>
+                  </div>
+                  <input id="CtrlWeirdScale" type="range" min="50" max="240" value="100" data-param="weirdScale" class="param-slider" />
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-xs mb-1">
+                    <label for="CtrlWeirdRotate" class="text-slate-300">旋转角度 (Rotation)</label>
+                    <span id="val-weirdRotate" class="font-mono-code text-red-300">0°</span>
+                  </div>
+                  <input id="CtrlWeirdRotate" type="range" min="-180" max="180" value="0" data-param="weirdRotate" class="param-slider" />
+                </div>
+              </div>
+
+              <!-- Mirroring & Reset Angle Controls -->
+              <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+                <span class="text-xs text-slate-300">镜像与姿态：</span>
+                <div class="flex flex-wrap gap-1.5">
+                  <button id="btnFlipX" type="button" class="px-2.5 py-1 rounded text-xs font-medium bg-[#252038] text-slate-300 hover:bg-purple-700/40 border border-purple-800/40 transition">
+                    ↔ 水平镜像
+                  </button>
+                  <button id="btnFlipY" type="button" class="px-2.5 py-1 rounded text-xs font-medium bg-[#252038] text-slate-300 hover:bg-purple-700/40 border border-purple-800/40 transition">
+                    ↕ 垂直镜像
+                  </button>
+                  <button id="btnResetTagTransform" type="button" class="px-2 py-1 rounded text-xs text-slate-400 hover:text-white bg-[#1a1626] border border-slate-700/50 transition">
+                    归零角度
+                  </button>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 pt-1">
+                <div>
+                  <label for="selWeirdStyle" class="block text-[11px] text-slate-400 mb-1">标签视觉样式</label>
+                  <select id="selWeirdStyle" class="w-full px-2.5 py-1.5 rounded bg-[#100d19] border border-purple-800/50 text-xs text-slate-200 focus:outline-none">
+                    <option value="whitebox">白底黑字档案框 (Classic)</option>
+                    <option value="blackred">黑底红字警告条 (Censor)</option>
+                    <option value="censorbar">纯黑眼部遮挡条 (Redacted)</option>
+                    <option value="yellowglitch">千禧黄发光字幕 (Subtitles)</option>
+                    <option value="win98">Win98 复古提示框 (Dialog)</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="selFrameStyle" class="block text-[11px] text-slate-400 mb-1">画幅边框装饰</label>
+                  <select id="selFrameStyle" class="w-full px-2.5 py-1.5 rounded bg-[#100d19] border border-purple-800/50 text-xs text-slate-200 focus:outline-none">
+                    <option value="none">无边框 (Full Bleed)</option>
+                    <option value="crt">CRT 显像管暗角圆框</option>
+                    <option value="polaroid">千禧相纸留白边框</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="CtrlFrameScale" class="text-slate-300">画幅边框粗细调节 (Frame Size)</label>
+                  <span id="val-frameScale" class="font-mono-code text-purple-300">100%</span>
+                </div>
+                <input id="CtrlFrameScale" type="range" min="50" max="200" value="100" data-param="frameScale" class="param-slider" />
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Bottom Quick Telemetry / Parameter Summary Footer -->
+      <div class="mt-auto border-t border-purple-900/40 bg-[#0f0c18] px-4 py-2.5 flex items-center justify-between text-[11px] text-slate-400">
+        <span id="statusToast" class="text-purple-300 font-medium truncate">就绪 · 默认右侧选预设与强度，支持 Seed 一键复刻</span>
+        <span class="font-mono-code text-slate-500">HTML5 Canvas 2D</span>
+      </div>
+    </aside>
+
+  </main>
+
+  <script>
+    (function () {
+      // --- DOM Elements ---
+      const mainCanvas = document.getElementById('mainCanvas');
+      const ctx = mainCanvas.getContext('2d');
+      const fileUploadInput = document.getElementById('fileUploadInput');
+      const canvasDropZone = document.getElementById('canvasDropZone');
+      const dropOverlay = document.getElementById('dropOverlay');
+      const originalBadge = document.getElementById('originalBadge');
+      const compareBtnText = document.getElementById('compareBtnText');
+      const activePresetLabel = document.getElementById('activePresetLabel');
+      const canvasResolutionBadge = document.getElementById('canvasResolutionBadge');
+      const statusToast = document.getElementById('statusToast');
+
+      const presetModeContainer = document.getElementById('presetModeContainer');
+      const advancedModeContainer = document.getElementById('advancedModeContainer');
+      const btnToggleAdvanced = document.getElementById('btnToggleAdvanced');
+      const btnEnterAdvBottom = document.getElementById('btnEnterAdvBottom');
+      const rightPanelModeTitle = document.getElementById('rightPanelModeTitle');
+      const rightPanelModeSub = document.getElementById('rightPanelModeSub');
+
+      const ctrlPresetIntensity = document.getElementById('CtrlPresetIntensity');
+      const valPresetIntensity = document.getElementById('val-presetIntensity');
+
+      const inpStyleSeed = document.getElementById('inpStyleSeed');
+      const btnCopySeed = document.getElementById('btnCopySeed');
+      const btnApplySeed = document.getElementById('btnApplySeed');
+      const seedBadgeStatus = document.getElementById('seedBadgeStatus');
+
+      // Offscreen buffers for real pixel pipeline
+      const sourceCanvas = document.createElement('canvas');
+      const sourceCtx = sourceCanvas.getContext('2d');
+      const workCanvas = document.createElement('canvas');
+      const workCtx = workCanvas.getContext('2d');
+      const lowResCanvas = document.createElement('canvas');
+      const lowResCtx = lowResCanvas.getContext('2d');
+      const bloomCanvas = document.createElement('canvas');
+      const bloomCtx = bloomCanvas.getContext('2d');
+
+      // --- State ---
+      let currentScene = 'corridor';
+      let isUploadedImage = false;
+      let showingOriginal = false;
+      let isAdvancedMode = false;
+      let activePresetKey = 'y2k';
+      let presetIntensity = 100;
+      let glitchSeed = 199908;
+      let rafPending = false;
+
+      // Draggable weirdcore tag normalized coordinates (0..1)
+      let tagPos = { x: 0.5, y: 0.78 };
+      let isDraggingTag = false;
+
+      const state = {
+        bloom: 72,
+        ghost: 8,
+        brightness: 12,
+        contrast: 6,
+        saturation: 42,
+        warmth: 24,
+        tint: 6,
+        vignette: 32,
+        vignetteWhite: false,
+        rgbShift: 4,
+        pixelate: 1,
+        horrorCrush: 0,
+        scanlines: 15,
+        noise: 14,
+        vhsTear: 0,
+        showTimestamp: true,
+        timestampText: '1999.08.14  15:42',
+        timestampPos: 'br',
+        timestampScale: 100,
+        showVhsOsd: false,
+        osdScale: 100,
+        showWeirdTag: false,
+        weirdText: '你来过这里吗？ / HAVE YOU BEEN HERE?',
+        weirdStyle: 'whitebox',
+        weirdScale: 100,
+        weirdRotate: 0,
+        weirdFlipX: false,
+        weirdFlipY: false,
+        frameStyle: 'none',
+        frameScale: 100
+      };
+
+      // 12 Rich Presets across Dreamcore, Oldcore, and Weirdcore / Heavy Horror
+      const PRESETS = {
+        // --- 梦核 Dreamcore ---
+        y2k: {
+          label: '☀️ 千禧午后 (Y2K Sunny)',
+          bloom: 72, ghost: 8, brightness: 12, contrast: 6, saturation: 42, warmth: 24, tint: 6,
+          vignette: 32, vignetteWhite: false, rgbShift: 4, pixelate: 1, horrorCrush: 0, scanlines: 15, noise: 14, vhsTear: 0,
+          showTimestamp: true, timestampText: '1999.08.14  15:42', timestampPos: 'br', timestampScale: 100,
+          showVhsOsd: false, osdScale: 100, showWeirdTag: false, weirdScale: 100, weirdRotate: 0, weirdFlipX: false, weirdFlipY: false,
+          frameStyle: 'none', frameScale: 100
+        },
+        liminal: {
+          label: '🚪 阈限走廊 (Liminal Space)',
+          bloom: 45, ghost: 4, brightness: -6, contrast: 22, saturation: -28, warmth: 16, tint: -28,
+          vignette: 68, vignetteWhite: false, rgbShift: 3, pixelate: 2, horrorCrush: 0, scanlines: 25, noise: 45, vhsTear: 12,
+          showTimestamp: true, timestampText: '2003.11.02  03:17', timestampPos: 'br', timestampScale: 100,
+          showVhsOsd: false, osdScale: 100, showWeirdTag: true, weirdText: '你来过这里吗？ / LEVEL 0', weirdStyle: 'whitebox',
+          weirdScale: 105, weirdRotate: 0, weirdFlipX: false, weirdFlipY: false, frameStyle: 'crt', frameScale: 100
+        },
+        vapor: {
+          label: '🌊 深海残梦 (Vapor Haze)',
+          bloom: 85, ghost: 16, brightness: 8, contrast: -12, saturation: 30, warmth: -38, tint: 36,
+          vignette: 55, vignetteWhite: true, rgbShift: 6, pixelate: 1, horrorCrush: 0, scanlines: 22, noise: 16, vhsTear: 8,
+          showTimestamp: true, timestampText: '2001.07.29  22:08', timestampPos: 'br', timestampScale: 100,
+          showVhsOsd: false, osdScale: 100, showWeirdTag: true, weirdText: 'IT FEELS SO FAMILIAR...', weirdStyle: 'yellowglitch',
+          weirdScale: 110, weirdRotate: 0, weirdFlipX: false, weirdFlipY: false, frameStyle: 'polaroid', frameScale: 100
+        },
+        carousel: {
+          label: '🎠 游乐园残影 (Carousel Fever)',
+          bloom: 88, ghost: 22, brightness: 16, contrast: -8, saturation: 55, warmth: 18, tint: 32,
+          vignette: 48, vignetteWhite: true, rgbShift: 5, pixelate: 1, horrorCrush: 0, scanlines: 10, noise: 20, vhsTear: 0,
+          showTimestamp: true, timestampText: '2000.06.01  16:10', timestampPos: 'bl', timestampScale: 110,
+          showVhsOsd: false, osdScale: 100, showWeirdTag: true, weirdText: '童年还没有结束', weirdStyle: 'yellowglitch',
+          weirdScale: 105, weirdRotate: -3, weirdFlipX: false, weirdFlipY: false, frameStyle: 'polaroid', frameScale: 100
+        },
+
+        // --- 旧核 Oldcore ---
+        old_ccd: {
+          label: '📷 千禧数码机 (2002 CCD)',
+          bloom: 38, ghost: 2, brightness: 6, contrast: 16, saturation: -8, warmth: 28, tint: -10,
+          vignette: 42, vignetteWhite: false, rgbShift: 3, pixelate: 3, horrorCrush: 0, scanlines: 8, noise: 32, vhsTear: 0,
+          showTimestamp: true, timestampText: "'02 09 15  17:28", timestampPos: 'br', timestampScale: 125,
+          showVhsOsd: false, osdScale: 100, showWeirdTag: false, weirdScale: 100, weirdRotate: 0, weirdFlipX: false, weirdFlipY: false,
+          frameStyle: 'none', frameScale: 100
+        },
+        old_crt: {
+          label: '📺 90s 显像管电视 (CRT TV)',
+          bloom: 50, ghost: 5, brightness: -4, contrast: 20, saturation: -18, warmth: -12, tint: -8,
+          vignette: 62, vignetteWhite: false, rgbShift: 5, pixelate: 2, horrorCrush: 0, scanlines: 78, noise: 28, vhsTear: 15,
+          showTimestamp: true, timestampText: 'CH-03  1996', timestampPos: 'tr', timestampScale: 115,
+          showVhsOsd: true, osdScale: 115, showWeirdTag: false, weirdScale: 100, weirdRotate: 0, weirdFlipX: false, weirdFlipY: false,
+          frameStyle: 'crt', frameScale: 120
+        },
+        vhs: {
+          label: '📼 损坏磁带 (Corrupted VHS)',
+          bloom: 55, ghost: 12, brightness: 4, contrast: 18, saturation: 15, warmth: -8, tint: 18,
+          vignette: 52, vignetteWhite: false, rgbShift: 12, pixelate: 2, horrorCrush: 0, scanlines: 65, noise: 38, vhsTear: 62,
+          showTimestamp: true, timestampText: 'AUG 19 1997', timestampPos: 'bl', timestampScale: 110,
+          showVhsOsd: true, osdScale: 105, showWeirdTag: false, weirdScale: 100, weirdRotate: 0, weirdFlipX: false, weirdFlipY: false,
+          frameStyle: 'crt', frameScale: 100
+        },
+        old_album: {
+          label: '🎞️ 泛黄旧相册 (Faded Album)',
+          bloom: 62, ghost: 4, brightness: 10, contrast: -14, saturation: -38, warmth: 46, tint: 8,
+          vignette: 50, vignetteWhite: false, rgbShift: 2, pixelate: 1, horrorCrush: 0, scanlines: 0, noise: 26, vhsTear: 0,
+          showTimestamp: true, timestampText: '1995.05.20', timestampPos: 'br', timestampScale: 95,
+          showVhsOsd: false, osdScale: 100, showWeirdTag: false, weirdScale: 100, weirdRotate: 0, weirdFlipX: false, weirdFlipY: false,
+          frameStyle: 'polaroid', frameScale: 115
+        },
+
+        // --- 怪核 & 重度恐怖 Weirdcore & Analog Horror ---
+        weirdcore: {
+          label: '👁️ 怪核凝视 (Weirdcore Glitch)',
+          bloom: 35, ghost: 3, brightness: -4, contrast: 45, saturation: -15, warmth: -5, tint: 12,
+          vignette: 58, vignetteWhite: false, rgbShift: 7, pixelate: 4, horrorCrush: 18, scanlines: 30, noise: 35, vhsTear: 25,
+          showTimestamp: true, timestampText: 'ERR // 99.99.99', timestampPos: 'br', timestampScale: 110,
+          showVhsOsd: false, osdScale: 100, showWeirdTag: true, weirdText: "DON'T WAKE UP // 别回头", weirdStyle: 'blackred',
+          weirdScale: 115, weirdRotate: -4, weirdFlipX: false, weirdFlipY: false, frameStyle: 'none', frameScale: 100
+        },
+        horror_analog: {
+          label: '🩸 模拟恐怖档案 (Analog Horror)',
+          bloom: 20, ghost: 6, brightness: -24, contrast: 72, saturation: -65, warmth: 38, tint: 45,
+          vignette: 88, vignetteWhite: false, rgbShift: 15, pixelate: 3, horrorCrush: 68, scanlines: 82, noise: 62, vhsTear: 75,
+          showTimestamp: true, timestampText: 'TAPE #04 // 03:33:33', timestampPos: 'bl', timestampScale: 120,
+          showVhsOsd: true, osdScale: 115, showWeirdTag: true, weirdText: 'DO NOT LOOK BEHIND YOU', weirdStyle: 'blackred',
+          weirdScale: 130, weirdRotate: 5, weirdFlipX: false, weirdFlipY: false, frameStyle: 'crt', frameScale: 135
+        },
+        horror_abyss: {
+          label: '🕳️ 深渊精神污染 (Abyssal Corruption)',
+          bloom: 15, ghost: 14, brightness: -30, contrast: 82, saturation: -45, warmth: -35, tint: 55,
+          vignette: 94, vignetteWhite: false, rgbShift: 22, pixelate: 6, horrorCrush: 88, scanlines: 70, noise: 75, vhsTear: 88,
+          showTimestamp: true, timestampText: 'NULL // 00.00.00', timestampPos: 'tl', timestampScale: 135,
+          showVhsOsd: false, osdScale: 100, showWeirdTag: true, weirdText: '███ 祂在看着你 ███', weirdStyle: 'censorbar',
+          weirdScale: 145, weirdRotate: -12, weirdFlipX: true, weirdFlipY: false, frameStyle: 'crt', frameScale: 140
+        },
+        horror_eas: {
+          label: '🚨 午夜紧急广播 (EAS Alert 1998)',
+          bloom: 42, ghost: 10, brightness: -16, contrast: 65, saturation: 35, warmth: 52, tint: 58,
+          vignette: 82, vignetteWhite: false, rgbShift: 18, pixelate: 3, horrorCrush: 58, scanlines: 90, noise: 54, vhsTear: 68,
+          showTimestamp: true, timestampText: 'EAS-ALERT // LOCK DOORS', timestampPos: 'br', timestampScale: 120,
+          showVhsOsd: true, osdScale: 125, showWeirdTag: true, weirdText: 'FATAL: REALITY_CORRUPTED', weirdStyle: 'win98',
+          weirdScale: 125, weirdRotate: 3, weirdFlipX: false, weirdFlipY: false, frameStyle: 'crt', frameScale: 120
+        }
+      };
+
+      // Deterministic PRNG (Mulberry32)
+      function mulberry32(a) {
+        return function () {
+          let t = (a += 0x6D2B79F5);
+          t = Math.imul(t ^ (t >>> 15), t | 1);
+          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      // Hash arbitrary string to 32-bit integer seed
+      function hashStringToInt(str) {
+        let h = 2166136261 >>> 0;
+        for (let i = 0; i < str.length; i++) {
+          h ^= str.charCodeAt(i);
+          h = Math.imul(h, 16777619);
+        }
+        return h >>> 0;
+      }
+
+      function showToast(msg) {
+        statusToast.textContent = msg;
+      }
+
+      // --- Style Seed / Recipe Code System (Supports both short numeric seeds & full custom parameter encoding) ---
+      const WEIRD_STYLES = ['whitebox', 'blackred', 'censorbar', 'yellowglitch', 'win98'];
+      const FRAME_STYLES = ['none', 'crt', 'polaroid'];
+      const TS_POSITIONS = ['br', 'bl', 'tl', 'tr'];
+
+      // Encode current `state` + `glitchSeed` + `tagPos` into a compact, deterministic Style Seed code
+      function encodeStateToSeed() {
+        const pack = [
+          Math.round(state.bloom),
+          Math.round(state.ghost),
+          Math.round(state.brightness),
+          Math.round(state.contrast),
+          Math.round(state.saturation),
+          Math.round(state.warmth),
+          Math.round(state.tint),
+          Math.round(state.vignette),
+          state.vignetteWhite ? 1 : 0,
+          Math.round(state.rgbShift),
+          Math.round(state.pixelate),
+          Math.round(state.horrorCrush),
+          Math.round(state.scanlines),
+          Math.round(state.noise),
+          Math.round(state.vhsTear),
+          state.showTimestamp ? 1 : 0,
+          TS_POSITIONS.indexOf(state.timestampPos),
+          Math.round(state.timestampScale),
+          state.showVhsOsd ? 1 : 0,
+          Math.round(state.osdScale),
+          state.showWeirdTag ? 1 : 0,
+          WEIRD_STYLES.indexOf(state.weirdStyle),
+          Math.round(state.weirdScale),
+          Math.round(state.weirdRotate),
+          state.weirdFlipX ? 1 : 0,
+          state.weirdFlipY ? 1 : 0,
+          FRAME_STYLES.indexOf(state.frameStyle),
+          Math.round(state.frameScale),
+          Math.round(tagPos.x * 100),
+          Math.round(tagPos.y * 100),
+          glitchSeed % 1000000
+        ].join(',');
+        // Encode custom text safely in Base64 UTF-8
+        const textPayload = encodeURIComponent(state.timestampText + '||' + state.weirdText);
+        const b64 = btoa(pack + '|' + textPayload).replace(/=+$/, '');
+        return 'DC1-' + b64;
+      }
+
+      // Decode a `DC1-...` recipe code OR generate deterministically from any numeric/text seed (e.g. `849201`)
+      function applySeedString(rawInput) {
+        const clean = (rawInput || '').trim();
+        if (!clean) {
+          showToast('请输入有效的风格 Seed 或复刻码');
+          return false;
+        }
+
+        // Case 1: Full custom state recipe code `DC1-...`
+        if (clean.startsWith('DC1-')) {
+          try {
+            const b64 = clean.slice(4);
+            const decoded = atob(b64);
+            const sepIdx = decoded.indexOf('|');
+            const numPart = sepIdx >= 0 ? decoded.slice(0, sepIdx) : decoded;
+            const txtPart = sepIdx >= 0 ? decodeURIComponent(decoded.slice(sepIdx + 1)) : '';
+            const nums = numPart.split(',').map(Number);
+            if (nums.length >= 30 && !nums.some(isNaN)) {
+              state.bloom = nums[0];
+              state.ghost = nums[1];
+              state.brightness = nums[2];
+              state.contrast = nums[3];
+              state.saturation = nums[4];
+              state.warmth = nums[5];
+              state.tint = nums[6];
+              state.vignette = nums[7];
+              state.vignetteWhite = Boolean(nums[8]);
+              state.rgbShift = nums[9];
+              state.pixelate = Math.max(1, nums[10]);
+              state.horrorCrush = nums[11];
+              state.scanlines = nums[12];
+              state.noise = nums[13];
+              state.vhsTear = nums[14];
+              state.showTimestamp = Boolean(nums[15]);
+              state.timestampPos = TS_POSITIONS[nums[16]] || 'br';
+              state.timestampScale = nums[17] || 100;
+              state.showVhsOsd = Boolean(nums[18]);
+              state.osdScale = nums[19] || 100;
+              state.showWeirdTag = Boolean(nums[20]);
+              state.weirdStyle = WEIRD_STYLES[nums[21]] || 'whitebox';
+              state.weirdScale = nums[22] || 100;
+              state.weirdRotate = nums[23] || 0;
+              state.weirdFlipX = Boolean(nums[24]);
+              state.weirdFlipY = Boolean(nums[25]);
+              state.frameStyle = FRAME_STYLES[nums[26]] || 'none';
+              state.frameScale = nums[27] || 100;
+              tagPos.x = Math.min(0.92, Math.max(0.08, (nums[28] || 50) / 100));
+              tagPos.y = Math.min(0.92, Math.max(0.08, (nums[29] || 78) / 100));
+              glitchSeed = nums[30] || 1337;
+
+              if (txtPart.includes('||')) {
+                const [tsTxt, wTxt] = txtPart.split('||');
+                if (tsTxt !== undefined) state.timestampText = tsTxt;
+                if (wTxt !== undefined) state.weirdText = wTxt;
+              }
+              activePresetLabel.textContent = '当前预设：Seed 精确复刻模式';
+              seedBadgeStatus.textContent = '已精确还原复刻码';
+              syncUIFromState(false);
+              requestRender();
+              showToast('已成功从 DC1 复刻码还原全部参数与图层姿态');
+              return true;
+            }
+          } catch (err) {
+            // Fall through to deterministic seed generator if malformed
+          }
+        }
+
+        // Case 2: Short Seed (e.g. "849201" or "SEED-849201" or any custom keyword)
+        const normalizedSeed = clean.replace(/^SEED-/i, '');
+        const numericSeed = /^\d+$/.test(normalizedSeed)
+          ? parseInt(normalizedSeed, 10)
+          : hashStringToInt(normalizedSeed);
+
+        generateStateFromNumericSeed(numericSeed, normalizedSeed);
+        return true;
+      }
+
+      function generateStateFromNumericSeed(seedInt, displayLabel) {
+        const rng = mulberry32(seedInt);
+        const randInt = (min, max) => Math.floor(min + rng() * (max - min + 1));
+
+        // Decide archetype: 0 = Dreamcore, 1 = Oldcore, 2 = Weirdcore / Heavy Horror
+        const modeRoll = rng();
+        const isHorror = modeRoll > 0.68;
+
+        state.bloom = isHorror ? randInt(15, 55) : randInt(35, 95);
+        state.ghost = randInt(0, 22);
+        state.brightness = isHorror ? randInt(-30, 5) : randInt(-12, 20);
+        state.contrast = isHorror ? randInt(35, 80) : randInt(-15, 40);
+        state.saturation = isHorror ? randInt(-70, 35) : randInt(-35, 65);
+        state.warmth = randInt(-45, 50);
+        state.tint = randInt(-45, 55);
+        state.vignette = isHorror ? randInt(60, 95) : randInt(25, 75);
+        state.vignetteWhite = !isHorror && rng() < 0.28;
+        state.rgbShift = isHorror ? randInt(8, 22) : randInt(2, 12);
+        state.pixelate = rng() < 0.55 ? randInt(2, 6) : 1;
+        state.horrorCrush = isHorror ? randInt(35, 85) : (rng() < 0.2 ? randInt(10, 30) : 0);
+        state.scanlines = randInt(12, 85);
+        state.noise = randInt(14, 65);
+        state.vhsTear = rng() < 0.65 ? randInt(12, 80) : 0;
+
+        state.showTimestamp = rng() < 0.85;
+        state.timestampPos = TS_POSITIONS[randInt(0, TS_POSITIONS.length - 1)];
+        state.timestampScale = randInt(85, 145);
+        state.showVhsOsd = rng() < 0.4;
+        state.osdScale = randInt(90, 135);
+
+        state.showWeirdTag = rng() < 0.72;
+        const phrases = [
+          '你来过这里吗？ / LEVEL 0',
+          'WHERE AM I?',
+          "DON'T WAKE UP",
+          'IT FEELS SO FAMILIAR',
+          '███ 记忆已损坏 ███',
+          'DO NOT LOOK BEHIND YOU',
+          '███ 祂在看着你 ███',
+          'FATAL: REALITY_CORRUPTED'
+        ];
+        state.weirdText = phrases[randInt(0, phrases.length - 1)];
+        state.weirdStyle = WEIRD_STYLES[randInt(0, WEIRD_STYLES.length - 1)];
+        state.weirdScale = randInt(85, 150);
+        state.weirdRotate = rng() < 0.55 ? randInt(-18, 18) : 0;
+        state.weirdFlipX = rng() < 0.28;
+        state.weirdFlipY = rng() < 0.15;
+
+        state.frameStyle = FRAME_STYLES[randInt(0, FRAME_STYLES.length - 1)];
+        state.frameScale = randInt(85, 135);
+        glitchSeed = seedInt % 1000000;
+
+        const seedTag = 'SEED-' + (displayLabel || String(seedInt));
+        inpStyleSeed.value = seedTag;
+        seedBadgeStatus.textContent = '随机种子: ' + seedTag;
+        activePresetLabel.textContent = '当前预设：随机风格 (' + seedTag + ')';
+
+        syncUIFromState(false);
+        requestRender();
+        showToast('🎲 已生成随机风格！专属复刻码: ' + seedTag + ' (下次输入此码即可复刻)');
+      }
+
+      // Apply a preset scaled by `presetIntensity` (0%..150%)
+      function applyPresetWithIntensity(presetKey, intensityPct) {
+        const p = PRESETS[presetKey];
+        if (!p) return;
+        const k = intensityPct / 100;
+
+        state.bloom = Math.min(100, Math.round(p.bloom * k));
+        state.ghost = Math.min(35, Math.round(p.ghost * k));
+        state.brightness = Math.max(-60, Math.min(60, Math.round(p.brightness * k)));
+        state.contrast = Math.max(-50, Math.min(85, Math.round(p.contrast * k)));
+        state.saturation = Math.max(-100, Math.min(90, Math.round(p.saturation * k)));
+        state.warmth = Math.max(-70, Math.min(70, Math.round(p.warmth * k)));
+        state.tint = Math.max(-70, Math.min(70, Math.round(p.tint * k)));
+        state.vignette = Math.min(100, Math.round(p.vignette * k));
+        state.vignetteWhite = p.vignetteWhite;
+        state.rgbShift = Math.min(28, Math.round(p.rgbShift * k));
+        state.pixelate = k === 0 ? 1 : Math.max(1, Math.min(14, Math.round(1 + (p.pixelate - 1) * k)));
+        state.horrorCrush = Math.min(100, Math.round((p.horrorCrush || 0) * k));
+        state.scanlines = Math.min(100, Math.round(p.scanlines * k));
+        state.noise = Math.min(100, Math.round(p.noise * k));
+        state.vhsTear = Math.min(100, Math.round(p.vhsTear * k));
+
+        state.showTimestamp = k > 0 ? p.showTimestamp : false;
+        state.timestampText = p.timestampText;
+        state.timestampPos = p.timestampPos;
+        state.timestampScale = p.timestampScale || 100;
+
+        state.showVhsOsd = k > 0 ? p.showVhsOsd : false;
+        state.osdScale = p.osdScale || 100;
+
+        state.showWeirdTag = k > 0 ? p.showWeirdTag : false;
+        if (p.weirdText) state.weirdText = p.weirdText;
+        if (p.weirdStyle) state.weirdStyle = p.weirdStyle;
+        state.weirdScale = p.weirdScale || 100;
+        state.weirdRotate = p.weirdRotate || 0;
+        state.weirdFlipX = Boolean(p.weirdFlipX);
+        state.weirdFlipY = Boolean(p.weirdFlipY);
+
+        state.frameStyle = k > 0 ? p.frameStyle : 'none';
+        state.frameScale = p.frameScale || 100;
+
+        activePresetLabel.textContent = `当前预设：${p.label} · 强度 ${intensityPct}%`;
+        syncUIFromState(true);
+        requestRender();
+      }
+
+      // --- Procedural Base Image Generators (CORS-Free & Instant) ---
+      function generateProceduralScene(sceneName) {
+        const w = 800;
+        const h = 600;
+        sourceCanvas.width = w;
+        sourceCanvas.height = h;
+        mainCanvas.width = w;
+        mainCanvas.height = h;
+        canvasResolutionBadge.textContent = w + ' × ' + h;
+
+        const c = sourceCtx;
+        c.save();
+
+        if (sceneName === 'corridor') {
+          const ceilGrad = c.createLinearGradient(0, 0, 0, h * 0.45);
+          ceilGrad.addColorStop(0, '#a39660');
+          ceilGrad.addColorStop(1, '#6f6538');
+          c.fillStyle = ceilGrad;
+          c.fillRect(0, 0, w, h * 0.5);
+
+          const floorGrad = c.createLinearGradient(0, h * 0.5, 0, h);
+          floorGrad.addColorStop(0, '#5e522d');
+          floorGrad.addColorStop(1, '#9c8b52');
+          c.fillStyle = floorGrad;
+          c.fillRect(0, h * 0.5, w, h * 0.5);
+
+          c.fillStyle = '#c9b871';
+          c.beginPath();
+          c.moveTo(0, 0);
+          c.lineTo(310, 210);
+          c.lineTo(310, 390);
+          c.lineTo(0, h);
+          c.closePath();
+          c.fill();
+
+          c.fillStyle = '#bca963';
+          c.beginPath();
+          c.moveTo(w, 0);
+          c.lineTo(490, 210);
+          c.lineTo(490, 390);
+          c.lineTo(w, h);
+          c.closePath();
+          c.fill();
+
+          c.strokeStyle = 'rgba(110, 95, 45, 0.25)';
+          c.lineWidth = 2;
+          for (let i = 20; i < 305; i += 22) {
+            const topY = (i / 310) * 210;
+            const botY = h - (i / 310) * (h - 390);
+            c.beginPath();
+            c.moveTo(i, topY);
+            c.lineTo(i, botY);
+            c.stroke();
+
+            const rx = w - i;
+            c.beginPath();
+            c.moveTo(rx, topY);
+            c.lineTo(rx, botY);
+            c.stroke();
+          }
+
+          c.fillStyle = '#2d2712';
+          c.fillRect(310, 210, 180, 180);
+          c.fillStyle = '#120f06';
+          c.fillRect(355, 240, 90, 120);
+
+          c.fillStyle = '#5c3c20';
+          c.beginPath();
+          c.moveTo(110, 130);
+          c.lineTo(185, 168);
+          c.lineTo(185, 462);
+          c.lineTo(110, 515);
+          c.closePath();
+          c.fill();
+
+          c.fillStyle = '#4e3119';
+          c.beginPath();
+          c.moveTo(690, 130);
+          c.lineTo(615, 168);
+          c.lineTo(615, 462);
+          c.lineTo(690, 515);
+          c.closePath();
+          c.fill();
+
+          const lights = [
+            { y1: 30, y2: 75, w1: 220, w2: 170 },
+            { y1: 115, y2: 145, w1: 130, w2: 100 },
+            { y1: 170, y2: 190, w1: 75, w2: 58 }
+          ];
+          lights.forEach(l => {
+            c.fillStyle = '#fffde8';
+            c.beginPath();
+            c.moveTo(w / 2 - l.w1 / 2, l.y1);
+            c.lineTo(w / 2 + l.w1 / 2, l.y1);
+            c.lineTo(w / 2 + l.w2 / 2, l.y2);
+            c.lineTo(w / 2 - l.w2 / 2, l.y2);
+            c.closePath();
+            c.fill();
+          });
+
+          c.fillStyle = '#ff2a2a';
+          c.fillRect(378, 216, 44, 16);
+          c.fillStyle = '#ffffff';
+          c.font = 'bold 11px monospace';
+          c.textAlign = 'center';
+          c.fillText('EXIT', 400, 228);
+
+        } else if (sceneName === 'meadow') {
+          const skyGrad = c.createLinearGradient(0, 0, 0, h * 0.58);
+          skyGrad.addColorStop(0, '#0051ff');
+          skyGrad.addColorStop(0.55, '#38bdf8');
+          skyGrad.addColorStop(1, '#bae6fd');
+          c.fillStyle = skyGrad;
+          c.fillRect(0, 0, w, h * 0.6);
+
+          const sunGrad = c.createRadialGradient(640, 110, 10, 640, 110, 110);
+          sunGrad.addColorStop(0, '#ffffff');
+          sunGrad.addColorStop(0.3, '#fef08a');
+          sunGrad.addColorStop(1, 'rgba(254, 240, 138, 0)');
+          c.fillStyle = sunGrad;
+          c.beginPath();
+          c.arc(640, 110, 110, 0, Math.PI * 2);
+          c.fill();
+
+          c.fillStyle = 'rgba(255, 255, 255, 0.92)';
+          const drawCloud = (cx, cy, s) => {
+            c.beginPath();
+            c.arc(cx, cy, 32 * s, 0, Math.PI * 2);
+            c.arc(cx + 28 * s, cy - 10 * s, 26 * s, 0, Math.PI * 2);
+            c.arc(cx + 56 * s, cy, 30 * s, 0, Math.PI * 2);
+            c.arc(cx - 26 * s, cy + 4 * s, 22 * s, 0, Math.PI * 2);
+            c.fill();
+          };
+          drawCloud(150, 120, 1.2);
+          drawCloud(420, 165, 0.95);
+          drawCloud(260, 230, 0.75);
+
+          const hillGrad1 = c.createLinearGradient(0, h * 0.48, 0, h);
+          hillGrad1.addColorStop(0, '#65a30d');
+          hillGrad1.addColorStop(1, '#15803d');
+          c.fillStyle = hillGrad1;
+          c.beginPath();
+          c.moveTo(0, 340);
+          c.quadraticCurveTo(220, 265, 480, 345);
+          c.quadraticCurveTo(660, 390, w, 320);
+          c.lineTo(w, h);
+          c.lineTo(0, h);
+          c.closePath();
+          c.fill();
+
+          const hillGrad2 = c.createLinearGradient(0, h * 0.56, 0, h);
+          hillGrad2.addColorStop(0, '#84cc16');
+          hillGrad2.addColorStop(1, '#3f6212');
+          c.fillStyle = hillGrad2;
+          c.beginPath();
+          c.moveTo(0, 390);
+          c.quadraticCurveTo(380, 320, w, 400);
+          c.lineTo(w, h);
+          c.lineTo(0, h);
+          c.closePath();
+          c.fill();
+
+          const horizonY = 355;
+          const rows = 10;
+          const cols = 6;
+          for (let r = 0; r < rows; r++) {
+            const t1 = Math.pow(r / rows, 1.6);
+            const t2 = Math.pow((r + 1) / rows, 1.6);
+            const y1 = horizonY + t1 * (h - horizonY);
+            const y2 = horizonY + t2 * (h - horizonY);
+            const span1 = 36 + t1 * 340;
+            const span2 = 36 + t2 * 340;
+            for (let col = 0; col < cols; col++) {
+              const x1a = w / 2 - span1 / 2 + (col / cols) * span1;
+              const x1b = w / 2 - span1 / 2 + ((col + 1) / cols) * span1;
+              const x2a = w / 2 - span2 / 2 + (col / cols) * span2;
+              const x2b = w / 2 - span2 / 2 + ((col + 1) / cols) * span2;
+              c.fillStyle = (r + col) % 2 === 0 ? '#f8fafc' : '#9333ea';
+              c.beginPath();
+              c.moveTo(x1a, y1);
+              c.lineTo(x1b, y1);
+              c.lineTo(x2b, y2);
+              c.lineTo(x2a, y2);
+              c.closePath();
+              c.fill();
+            }
+          }
+
+          c.fillStyle = '#ffffff';
+          c.beginPath();
+          c.ellipse(400, 175, 58, 32, 0, 0, Math.PI * 2);
+          c.fill();
+          c.lineWidth = 3;
+          c.strokeStyle = '#1e1b4b';
+          c.stroke();
+
+          c.fillStyle = '#3b82f6';
+          c.beginPath();
+          c.arc(400, 175, 22, 0, Math.PI * 2);
+          c.fill();
+          c.fillStyle = '#09090b';
+          c.beginPath();
+          c.arc(400, 175, 10, 0, Math.PI * 2);
+          c.fill();
+          c.fillStyle = '#ffffff';
+          c.beginPath();
+          c.arc(394, 169, 4, 0, Math.PI * 2);
+          c.fill();
+
+        } else if (sceneName === 'poolrooms') {
+          const wallGrad = c.createLinearGradient(0, 0, w, h * 0.65);
+          wallGrad.addColorStop(0, '#cffafe');
+          wallGrad.addColorStop(0.5, '#67e8f9');
+          wallGrad.addColorStop(1, '#0891b2');
+          c.fillStyle = wallGrad;
+          c.fillRect(0, 0, w, h * 0.65);
+
+          c.strokeStyle = 'rgba(14, 116, 144, 0.35)';
+          c.lineWidth = 1.5;
+          for (let x = 0; x <= w; x += 32) {
+            c.beginPath();
+            c.moveTo(x, 0);
+            c.lineTo(x, h * 0.65);
+            c.stroke();
+          }
+          for (let y = 0; y <= h * 0.65; y += 32) {
+            c.beginPath();
+            c.moveTo(0, y);
+            c.lineTo(w, y);
+            c.stroke();
+          }
+
+          const drawArch = (ax, ay, aw, ah) => {
+            c.fillStyle = '#042f2e';
+            c.beginPath();
+            c.arc(ax + aw / 2, ay + aw / 2, aw / 2, Math.PI, 0, false);
+            c.lineTo(ax + aw, ay + ah);
+            c.lineTo(ax, ay + ah);
+            c.closePath();
+            c.fill();
+          };
+          drawArch(170, 170, 110, 220);
+          drawArch(520, 170, 110, 220);
+
+          c.fillStyle = '#e0f2fe';
+          c.fillRect(60, 0, 74, 390);
+          c.fillRect(363, 0, 74, 390);
+          c.fillRect(666, 0, 74, 390);
+
+          const waterGrad = c.createLinearGradient(0, h * 0.65, 0, h);
+          waterGrad.addColorStop(0, '#06b6d4');
+          waterGrad.addColorStop(0.5, '#22d3ee');
+          waterGrad.addColorStop(1, '#0e7490');
+          c.fillStyle = waterGrad;
+          c.fillRect(0, h * 0.65, w, h * 0.35);
+
+          c.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+          c.lineWidth = 2;
+          for (let r = 0; r < 24; r++) {
+            const ry = h * 0.67 + (r / 24) * (h * 0.32);
+            c.beginPath();
+            for (let x = 0; x <= w; x += 20) {
+              const wy = ry + Math.sin(x * 0.04 + r * 1.3) * 4;
+              if (x === 0) c.moveTo(x, wy);
+              else c.lineTo(x, wy);
+            }
+            c.stroke();
+          }
+
+        } else if (sceneName === 'arcade') {
+          const nightGrad = c.createLinearGradient(0, 0, 0, h);
+          nightGrad.addColorStop(0, '#090514');
+          nightGrad.addColorStop(0.65, '#1e1035');
+          nightGrad.addColorStop(1, '#120d1d');
+          c.fillStyle = nightGrad;
+          c.fillRect(0, 0, w, h);
+
+          const fx = 560, fy = 250, fr = 120;
+          c.strokeStyle = '#f472b6';
+          c.lineWidth = 3;
+          c.beginPath();
+          c.arc(fx, fy, fr, 0, Math.PI * 2);
+          c.stroke();
+          c.strokeStyle = '#38bdf8';
+          c.beginPath();
+          c.arc(fx, fy, fr * 0.7, 0, Math.PI * 2);
+          c.stroke();
+
+          for (let a = 0; a < 12; a++) {
+            const ang = (a / 12) * Math.PI * 2;
+            const gx = fx + Math.cos(ang) * fr;
+            const gy = fy + Math.sin(ang) * fr;
+            c.strokeStyle = 'rgba(244, 114, 182, 0.5)';
+            c.beginPath();
+            c.moveTo(fx, fy);
+            c.lineTo(gx, gy);
+            c.stroke();
+            c.fillStyle = a % 2 === 0 ? '#fde047' : '#c084fc';
+            c.beginPath();
+            c.arc(gx, gy, 6, 0, Math.PI * 2);
+            c.fill();
+          }
+
+          c.fillStyle = '#1f2937';
+          c.fillRect(210, 150, 8, 330);
+          const lampGlow = c.createRadialGradient(230, 150, 5, 230, 150, 140);
+          lampGlow.addColorStop(0, '#ffffff');
+          lampGlow.addColorStop(0.25, '#fde047');
+          lampGlow.addColorStop(1, 'rgba(253, 224, 71, 0)');
+          c.fillStyle = lampGlow;
+          c.beginPath();
+          c.arc(230, 150, 140, 0, Math.PI * 2);
+          c.fill();
+
+          c.fillStyle = '#0d0914';
+          c.fillRect(0, 450, w, 150);
+          c.fillStyle = 'rgba(253, 224, 71, 0.22)';
+          c.beginPath();
+          c.ellipse(230, 510, 65, 18, 0, 0, Math.PI * 2);
+          c.fill();
+          c.fillStyle = 'rgba(244, 114, 182, 0.2)';
+          c.beginPath();
+          c.ellipse(560, 520, 95, 24, 0, 0, Math.PI * 2);
+          c.fill();
+        }
+
+        c.restore();
+        requestRender();
+      }
+
+      // --- Real Pixel-Level Dreamcore / Oldcore / Horror Pipeline ---
+      function requestRender() {
+        if (rafPending) return;
+        rafPending = true;
+        requestAnimationFrame(() => {
+          rafPending = false;
+          renderPipeline();
+        });
+      }
+
+      function clampByte(v) {
+        return v < 0 ? 0 : v > 255 ? 255 : v | 0;
+      }
+
+      function renderPipeline() {
+        const w = sourceCanvas.width;
+        const h = sourceCanvas.height;
+        if (!w || !h) return;
+
+        if (mainCanvas.width !== w || mainCanvas.height !== h) {
+          mainCanvas.width = w;
+          mainCanvas.height = h;
+        }
+        workCanvas.width = w;
+        workCanvas.height = h;
+
+        if (showingOriginal) {
+          ctx.clearRect(0, 0, w, h);
+          ctx.drawImage(sourceCanvas, 0, 0, w, h);
+          return;
+        }
+
+        // STEP 1: Pixelation / Downsampling
+        const pix = Math.max(1, Number(state.pixelate) || 1);
+        if (pix > 1) {
+          const lw = Math.max(32, Math.floor(w / pix));
+          const lh = Math.max(24, Math.floor(h / pix));
+          lowResCanvas.width = lw;
+          lowResCanvas.height = lh;
+          lowResCtx.imageSmoothingEnabled = true;
+          lowResCtx.clearRect(0, 0, lw, lh);
+          lowResCtx.drawImage(sourceCanvas, 0, 0, lw, lh);
+
+          workCtx.imageSmoothingEnabled = false;
+          workCtx.clearRect(0, 0, w, h);
+          workCtx.drawImage(lowResCanvas, 0, 0, lw, lh, 0, 0, w, h);
+        } else {
+          workCtx.imageSmoothingEnabled = true;
+          workCtx.clearRect(0, 0, w, h);
+          workCtx.drawImage(sourceCanvas, 0, 0, w, h);
+        }
+
+        // STEP 2: Direct ImageData Manipulation
+        const srcImgData = workCtx.getImageData(0, 0, w, h);
+        const src = srcImgData.data;
+        const outImgData = workCtx.createImageData(w, h);
+        const dst = outImgData.data;
+
+        const brightOffset = (Number(state.brightness) || 0) * 2.2;
+        const contrastVal = Number(state.contrast) || 0;
+        const contrastFactor = (259 * (contrastVal + 255)) / (255 * (259 - contrastVal));
+        const satFactor = 1 + (Number(state.saturation) || 0) / 100;
+        const warmthVal = (Number(state.warmth) || 0) * 0.9;
+        const tintVal = (Number(state.tint) || 0) * 0.85;
+
+        const rgbShift = Math.round(Number(state.rgbShift) || 0);
+        const horrorCrush = Number(state.horrorCrush) || 0;
+        const noiseAmt = (Number(state.noise) || 0) * 1.15;
+        const vhsTear = Number(state.vhsTear) || 0;
+
+        // Posterize step for heavy Weirdcore / Analog Horror mode
+        const posterizeLevels = horrorCrush > 0 ? Math.max(2, Math.round(14 - (horrorCrush / 100) * 11)) : 256;
+        const posterizeStep = 255 / (posterizeLevels - 1);
+        const crushThreshold = (horrorCrush / 100) * 78;
+
+        const rng = mulberry32(glitchSeed);
+
+        const rowShift = new Int16Array(h);
+        if (vhsTear > 0) {
+          let currentTear = 0;
+          let tearRowsRemaining = 0;
+          for (let y = 0; y < h; y++) {
+            if (tearRowsRemaining > 0) {
+              rowShift[y] = currentTear;
+              tearRowsRemaining--;
+            } else if (rng() < (vhsTear / 100) * 0.085) {
+              tearRowsRemaining = Math.floor(4 + rng() * 26);
+              currentTear = Math.floor((rng() - 0.5) * (vhsTear * 0.95));
+              rowShift[y] = currentTear;
+            }
+          }
+        }
+
+        for (let y = 0; y < h; y++) {
+          const tearX = rowShift[y];
+          const rowBase = y * w;
+          for (let x = 0; x < w; x++) {
+            const dstIdx = (rowBase + x) * 4;
+
+            const rx = Math.min(w - 1, Math.max(0, x + tearX - rgbShift));
+            const gx = Math.min(w - 1, Math.max(0, x + tearX));
+            const bx = Math.min(w - 1, Math.max(0, x + tearX + rgbShift));
+
+            let r = src[(rowBase + rx) * 4];
+            let g = src[(rowBase + gx) * 4 + 1];
+            let b = src[(rowBase + bx) * 4 + 2];
+
+            // Exposure & Contrast
+            r = contrastFactor * (r - 128) + 128 + brightOffset;
+            g = contrastFactor * (g - 128) + 128 + brightOffset;
+            b = contrastFactor * (b - 128) + 128 + brightOffset;
+
+            // Saturation
+            const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+            r = luma + (r - luma) * satFactor;
+            g = luma + (g - luma) * satFactor;
+            b = luma + (b - luma) * satFactor;
+
+            // Warmth & Tint
+            r += warmthVal + tintVal * 0.5;
+            g -= tintVal * 0.7;
+            b -= warmthVal - tintVal * 0.5;
+
+            // Heavy Horror Abyss Crush & Posterize
+            if (horrorCrush > 0) {
+              const curLuma = 0.299 * r + 0.587 * g + 0.114 * b;
+              if (curLuma < crushThreshold) {
+                const darkScale = Math.max(0, (curLuma / crushThreshold) * 0.35);
+                r *= darkScale;
+                g *= darkScale * 0.6;
+                b *= darkScale * 0.7;
+              } else {
+                // Eerie crimson boost in mid-highs
+                r += (horrorCrush / 100) * 32;
+                g -= (horrorCrush / 100) * 24;
+              }
+              r = Math.round(clampByte(r) / posterizeStep) * posterizeStep;
+              g = Math.round(clampByte(g) / posterizeStep) * posterizeStep;
+              b = Math.round(clampByte(b) / posterizeStep) * posterizeStep;
+            }
+
+            // Static Grain
+            if (noiseAmt > 0) {
+              const n = (rng() - 0.5) * noiseAmt * 2;
+              r += n;
+              g += n;
+              b += n * 1.1;
+            }
+
+            dst[dstIdx] = clampByte(r);
+            dst[dstIdx + 1] = clampByte(g);
+            dst[dstIdx + 2] = clampByte(b);
+            dst[dstIdx + 3] = 255;
+          }
+        }
+
+        workCtx.putImageData(outImgData, 0, 0);
+
+        ctx.save();
+        ctx.clearRect(0, 0, w, h);
+        ctx.drawImage(workCanvas, 0, 0);
+
+        // STEP 3: Dream Ghosting
+        const ghostPx = Number(state.ghost) || 0;
+        if (ghostPx > 0) {
+          ctx.save();
+          ctx.globalAlpha = Math.min(0.45, 0.12 + ghostPx * 0.01);
+          ctx.globalCompositeOperation = 'screen';
+          ctx.drawImage(workCanvas, ghostPx, -Math.round(ghostPx * 0.4));
+          ctx.restore();
+        }
+
+        // STEP 4: Soft Bloom / Halation
+        const bloomAmt = Number(state.bloom) || 0;
+        if (bloomAmt > 0) {
+          const bw = Math.max(64, Math.floor(w / 4));
+          const bh = Math.max(48, Math.floor(h / 4));
+          bloomCanvas.width = bw;
+          bloomCanvas.height = bh;
+          bloomCtx.save();
+          bloomCtx.filter = 'blur(6px) brightness(115%) contrast(125%)';
+          bloomCtx.drawImage(workCanvas, 0, 0, bw, bh);
+          bloomCtx.restore();
+
+          ctx.save();
+          ctx.globalCompositeOperation = 'screen';
+          ctx.globalAlpha = (bloomAmt / 100) * 0.78;
+          ctx.imageSmoothingEnabled = true;
+          ctx.drawImage(bloomCanvas, 0, 0, bw, bh, 0, 0, w, h);
+          ctx.restore();
+        }
+
+        // STEP 5: CRT Scanlines & VHS Tracking Bar
+        const scanlinesAmt = Number(state.scanlines) || 0;
+        if (scanlinesAmt > 0) {
+          ctx.save();
+          ctx.fillStyle = `rgba(8, 5, 16, ${(scanlinesAmt / 100) * 0.52})`;
+          for (let y = 0; y < h; y += 4) {
+            ctx.fillRect(0, y, w, 2);
+          }
+          ctx.restore();
+        }
+
+        if (vhsTear > 20) {
+          ctx.save();
+          const barY = ((glitchSeed * 37) % Math.max(1, h - 40));
+          const barGrad = ctx.createLinearGradient(0, barY, 0, barY + 28);
+          barGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+          barGrad.addColorStop(0.5, `rgba(216, 180, 254, ${(vhsTear / 100) * 0.3})`);
+          barGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          ctx.fillStyle = barGrad;
+          ctx.fillRect(0, barY, w, 28);
+          ctx.restore();
+        }
+
+        // STEP 6: Vignette
+        const vigAmt = Number(state.vignette) || 0;
+        if (vigAmt > 0) {
+          ctx.save();
+          const rad = Math.max(w, h) * 0.72;
+          const grad = ctx.createRadialGradient(w / 2, h / 2, rad * 0.32, w / 2, h / 2, rad);
+          const alpha = (vigAmt / 100) * 0.92;
+          if (state.vignetteWhite) {
+            grad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+            grad.addColorStop(1, `rgba(245, 240, 255, ${alpha})`);
+          } else {
+            grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+            grad.addColorStop(1, `rgba(5, 3, 10, ${alpha})`);
+          }
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, w, h);
+          ctx.restore();
+        }
+
+        // STEP 7: Weirdcore Text Box / Censor Bar Overlay (With Size, Rotation & Mirroring!)
+        if (state.showWeirdTag && state.weirdText.trim()) {
+          drawWeirdcoreTag(ctx, w, h);
+        }
+
+        // STEP 8: VHS OSD & Camcorder Date Stamp (With Independent Size Controls!)
+        if (state.showVhsOsd) {
+          drawVhsOsd(ctx, w, h);
+        }
+        if (state.showTimestamp && state.timestampText.trim()) {
+          drawDateStamp(ctx, w, h);
+        }
+
+        // STEP 9: Decorative Frame (With Frame Scale Control!)
+        if (state.frameStyle !== 'none') {
+          drawDecorativeFrame(ctx, w, h, state.frameStyle);
+        }
+
+        ctx.restore();
+      }
+
+      function drawDateStamp(c, w, h) {
+        c.save();
+        const scale = (Number(state.timestampScale) || 100) / 100;
+        const fontSize = Math.max(14, Math.round(w * 0.036 * scale));
+        c.font = `${fontSize}px "VT323", "JetBrains Mono", monospace`;
+        c.textBaseline = 'bottom';
+
+        const padX = Math.round(w * 0.04);
+        const padY = Math.round(h * 0.045);
+        let x = w - padX;
+        let y = h - padY;
+
+        if (state.timestampPos === 'br') {
+          c.textAlign = 'right';
+          x = w - padX;
+          y = h - padY;
+        } else if (state.timestampPos === 'bl') {
+          c.textAlign = 'left';
+          x = padX;
+          y = h - padY;
+        } else if (state.timestampPos === 'tl') {
+          c.textAlign = 'left';
+          c.textBaseline = 'top';
+          x = padX;
+          y = padY;
+        } else if (state.timestampPos === 'tr') {
+          c.textAlign = 'right';
+          c.textBaseline = 'top';
+          x = w - padX;
+          y = padY;
+        }
+
+        c.shadowColor = 'rgba(255, 90, 0, 0.9)';
+        c.shadowBlur = Math.round(8 * scale);
+        c.fillStyle = '#ff9e2c';
+        c.fillText(state.timestampText, x, y);
+
+        c.shadowBlur = 0;
+        c.fillStyle = '#ffd88a';
+        c.fillText(state.timestampText, x - 1, y - 1);
+        c.restore();
+      }
+
+      function drawVhsOsd(c, w, h) {
+        c.save();
+        const scale = (Number(state.osdScale) || 100) / 100;
+        const fontSize = Math.max(14, Math.round(w * 0.034 * scale));
+        c.font = `${fontSize}px "VT323", monospace`;
+        c.textAlign = 'left';
+        c.textBaseline = 'top';
+        c.shadowColor = 'rgba(0, 0, 0, 0.85)';
+        c.shadowBlur = 4;
+        c.fillStyle = '#f8fafc';
+        const padX = Math.round(w * 0.04);
+        const padY = Math.round(h * 0.04);
+        c.fillText('PLAY ▶', padX, padY);
+        c.fillText('SLP  00:04:19', padX, padY + fontSize * 1.05);
+        c.restore();
+      }
+
+      function drawWeirdcoreTag(c, w, h) {
+        c.save();
+        const text = state.weirdText;
+        const cx = tagPos.x * w;
+        const cy = tagPos.y * h;
+        const scale = (Number(state.weirdScale) || 100) / 100;
+        const rotRad = ((Number(state.weirdRotate) || 0) * Math.PI) / 180;
+        const flipX = state.weirdFlipX ? -1 : 1;
+        const flipY = state.weirdFlipY ? -1 : 1;
+
+        // Apply translation to tag center, then rotation, then mirror flip + scale
+        c.translate(cx, cy);
+        c.rotate(rotRad);
+        c.scale(flipX * scale, flipY * scale);
+
+        const fontSize = Math.max(15, Math.round(w * 0.025));
+        c.font = `bold ${fontSize}px "Inter", "JetBrains Mono", sans-serif`;
+        const metrics = c.measureText(text);
+        const boxW = metrics.width + 28;
+        const boxH = fontSize + 20;
+        const bx = -boxW / 2;
+        const by = -boxH / 2;
+
+        if (state.weirdStyle === 'whitebox') {
+          c.fillStyle = '#f8fafc';
+          c.fillRect(bx, by, boxW, boxH);
+          c.lineWidth = 2;
+          c.strokeStyle = '#09090b';
+          c.strokeRect(bx, by, boxW, boxH);
+          c.fillStyle = '#09090b';
+          c.textAlign = 'center';
+          c.textBaseline = 'middle';
+          c.fillText(text, 0, 1);
+        } else if (state.weirdStyle === 'blackred') {
+          c.fillStyle = '#050505';
+          c.fillRect(bx - 6, by - 2, boxW + 12, boxH + 4);
+          c.strokeStyle = '#dc2626';
+          c.lineWidth = 1.5;
+          c.strokeRect(bx - 6, by - 2, boxW + 12, boxH + 4);
+          c.fillStyle = '#ef4444';
+          c.textAlign = 'center';
+          c.textBaseline = 'middle';
+          c.fillText(text, 0, 1);
+        } else if (state.weirdStyle === 'censorbar') {
+          // Heavy solid black eye-censor bar with subtle eerie red/white micro-caption
+          const barW = Math.max(180, boxW + 30);
+          const barH = Math.max(36, boxH + 6);
+          c.fillStyle = '#020202';
+          c.fillRect(-barW / 2, -barH / 2, barW, barH);
+          c.fillStyle = 'rgba(239, 68, 68, 0.88)';
+          c.font = `bold ${Math.round(fontSize * 0.82)}px "JetBrains Mono", monospace`;
+          c.textAlign = 'center';
+          c.textBaseline = 'middle';
+          c.fillText(text, 0, 1);
+        } else if (state.weirdStyle === 'yellowglitch') {
+          c.textAlign = 'center';
+          c.textBaseline = 'middle';
+          c.fillStyle = 'rgba(0, 0, 0, 0.75)';
+          c.fillText(text, 2, 2);
+          c.fillStyle = '#ff0055';
+          c.fillText(text, -2, 0);
+          c.fillStyle = '#fde047';
+          c.fillText(text, 0, 0);
+        } else if (state.weirdStyle === 'win98') {
+          const winH = boxH + 22;
+          const winY = -winH / 2;
+          c.fillStyle = '#c0c0c0';
+          c.fillRect(bx, winY, boxW, winH);
+          c.strokeStyle = '#ffffff';
+          c.lineWidth = 2;
+          c.strokeRect(bx + 1, winY + 1, boxW - 2, winH - 2);
+          c.fillStyle = '#000080';
+          c.fillRect(bx + 3, winY + 3, boxW - 6, 18);
+          c.fillStyle = '#ffffff';
+          c.font = 'bold 11px monospace';
+          c.textAlign = 'left';
+          c.textBaseline = 'middle';
+          c.fillText('SYSTEM_MEMORY.EXE', bx + 8, winY + 12);
+          c.fillStyle = '#000000';
+          c.font = `bold ${fontSize - 2}px sans-serif`;
+          c.textAlign = 'center';
+          c.fillText(text, 0, winY + 22 + boxH / 2);
+        }
+        c.restore();
+      }
+
+      function drawDecorativeFrame(c, w, h, style) {
+        c.save();
+        const scale = (Number(state.frameScale) || 100) / 100;
+        if (style === 'crt') {
+          c.strokeStyle = '#09070e';
+          const borderW = Math.max(10, Math.round(w * 0.028 * scale));
+          c.lineWidth = borderW;
+          c.strokeRect(0, 0, w, h);
+          c.lineWidth = Math.max(2, Math.round(4 * scale));
+          c.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+          const inset = Math.round(borderW * 0.45);
+          c.strokeRect(inset, inset, w - inset * 2, h - inset * 2);
+        } else if (style === 'polaroid') {
+          const b = Math.max(10, Math.round(w * 0.03 * scale));
+          const bot = Math.max(32, Math.round(h * 0.1 * scale));
+          c.fillStyle = '#f5f3ef';
+          c.fillRect(0, 0, w, b);
+          c.fillRect(0, 0, b, h);
+          c.fillRect(w - b, 0, b, h);
+          c.fillRect(0, h - bot, w, bot);
+          c.fillStyle = '#475569';
+          c.font = `italic ${Math.max(12, Math.round(16 * scale))}px Georgia, serif`;
+          c.textAlign = 'center';
+          c.fillText('do you remember this place?', w / 2, h - bot / 2 + 5);
+        }
+        c.restore();
+      }
+
+      // --- UI Synchronization ---
+      function syncUIFromState(updateSeedBox = true) {
+        document.querySelectorAll('.param-slider').forEach(slider => {
+          const key = slider.getAttribute('data-param');
+          if (key in state) {
+            slider.value = state[key];
+            updateSliderLabel(key, state[key]);
+          }
+        });
+
+        document.getElementById('chkTimestamp').checked = state.showTimestamp;
+        document.getElementById('inpTimestampText').value = state.timestampText;
+        document.getElementById('selTimestampPos').value = state.timestampPos;
+        document.getElementById('chkVhsOsd').checked = state.showVhsOsd;
+        document.getElementById('chkWeirdTag').checked = state.showWeirdTag;
+        document.getElementById('inpWeirdText').value = state.weirdText;
+        document.getElementById('selWeirdStyle').value = state.weirdStyle;
+        document.getElementById('selFrameStyle').value = state.frameStyle;
+
+        // Vignette dark/white buttons
+        const btnDark = document.getElementById('btnVigDark');
+        const btnWhite = document.getElementById('btnVigWhite');
+        if (state.vignetteWhite) {
+          btnWhite.className = 'px-2.5 py-1 rounded text-xs font-medium bg-purple-600 text-white';
+          btnDark.className = 'px-2.5 py-1 rounded text-xs font-medium bg-[#252038] text-slate-300 hover:bg-[#312b49]';
+        } else {
+          btnDark.className = 'px-2.5 py-1 rounded text-xs font-medium bg-purple-600 text-white';
+          btnWhite.className = 'px-2.5 py-1 rounded text-xs font-medium bg-[#252038] text-slate-300 hover:bg-[#312b49]';
+        }
+
+        // Mirror Flip buttons active state
+        const btnFlipX = document.getElementById('btnFlipX');
+        const btnFlipY = document.getElementById('btnFlipY');
+        btnFlipX.className = state.weirdFlipX
+          ? 'px-2.5 py-1 rounded text-xs font-medium bg-purple-600 text-white border border-purple-400 transition'
+          : 'px-2.5 py-1 rounded text-xs font-medium bg-[#252038] text-slate-300 hover:bg-purple-700/40 border border-purple-800/40 transition';
+        btnFlipY.className = state.weirdFlipY
+          ? 'px-2.5 py-1 rounded text-xs font-medium bg-purple-600 text-white border border-purple-400 transition'
+          : 'px-2.5 py-1 rounded text-xs font-medium bg-[#252038] text-slate-300 hover:bg-purple-700/40 border border-purple-800/40 transition';
+
+        if (updateSeedBox) {
+          inpStyleSeed.value = encodeStateToSeed();
+          seedBadgeStatus.textContent = '当前参数复刻码已同步';
+        }
+      }
+
+      function updateSliderLabel(key, val) {
+        const el = document.getElementById('val-' + key);
+        if (!el) return;
+        const num = Number(val);
+        const pctKeys = ['bloom', 'vignette', 'scanlines', 'noise', 'vhsTear', 'horrorCrush', 'timestampScale', 'osdScale', 'weirdScale', 'frameScale'];
+        if (pctKeys.includes(key)) {
+          el.textContent = num + '%';
+        } else if (key === 'ghost' || key === 'rgbShift') {
+          el.textContent = num + 'px';
+        } else if (key === 'pixelate') {
+          el.textContent = num + 'x';
+        } else if (key === 'weirdRotate') {
+          el.textContent = (num > 0 ? '+' + num : num) + '°';
+        } else if (key === 'saturation') {
+          el.textContent = (num > 0 ? '+' + num : num) + '%';
+        } else {
+          el.textContent = num > 0 ? '+' + num : String(num);
+        }
+      }
+
+      // --- Toggle Between Default Preset Mode & Advanced Fine-Tuning Mode ---
+      function setRightPanelMode(advanced) {
+        isAdvancedMode = advanced;
+        if (isAdvancedMode) {
+          presetModeContainer.classList.add('hidden');
+          advancedModeContainer.classList.remove('hidden');
+          advancedModeContainer.classList.add('flex');
+          btnToggleAdvanced.textContent = '⬅ 返回一键预设面板';
+          rightPanelModeTitle.innerHTML = '<span>🎛️ 高级参数细调模式</span>';
+          rightPanelModeSub.textContent = '已承接当下画面参数，可对光学、信号、符号尺寸与旋转镜像精细调节';
+          syncUIFromState(false);
+        } else {
+          advancedModeContainer.classList.add('hidden');
+          advancedModeContainer.classList.remove('flex');
+          presetModeContainer.classList.remove('hidden');
+          btnToggleAdvanced.textContent = '🛠️ 打开高级细调模式';
+          rightPanelModeTitle.innerHTML = '<span>✨ 一键预设与强度调校</span>';
+          rightPanelModeSub.textContent = '选好预设与总强度后，可随时进入高级模式以当下效果为准微调';
+        }
+      }
+
+      btnToggleAdvanced.addEventListener('click', () => {
+        setRightPanelMode(!isAdvancedMode);
+      });
+      btnEnterAdvBottom.addEventListener('click', () => {
+        setRightPanelMode(true);
+      });
+
+      // --- Preset Intensity Slider ---
+      ctrlPresetIntensity.addEventListener('input', e => {
+        presetIntensity = Number(e.target.value);
+        let tag = '标准';
+        if (presetIntensity === 0) tag = '原图';
+        else if (presetIntensity < 80) tag = '轻度';
+        else if (presetIntensity > 115) tag = '过载';
+        valPresetIntensity.textContent = `${presetIntensity}% (${tag})`;
+        applyPresetWithIntensity(activePresetKey, presetIntensity);
+      });
+
+      // --- Event Listeners for Advanced Controls ---
+      document.querySelectorAll('.param-slider').forEach(slider => {
+        slider.addEventListener('input', e => {
+          const key = e.target.getAttribute('data-param');
+          const val = Number(e.target.value);
+          state[key] = val;
+          updateSliderLabel(key, val);
+          activePresetLabel.textContent = '当前预设：高级细调模式 (Custom)';
+          inpStyleSeed.value = encodeStateToSeed();
+          seedBadgeStatus.textContent = '自定义复刻码已更新';
+          requestRender();
+        });
+      });
+
+      document.getElementById('btnVigDark').addEventListener('click', () => {
+        state.vignetteWhite = false;
+        syncUIFromState(true);
+        requestRender();
+      });
+      document.getElementById('btnVigWhite').addEventListener('click', () => {
+        state.vignetteWhite = true;
+        syncUIFromState(true);
+        requestRender();
+      });
+
+      document.getElementById('btnReseedGlitch').addEventListener('click', () => {
+        glitchSeed = Math.floor(Math.random() * 900000) + 100000;
+        syncUIFromState(true);
+        showToast('已刷新 VHS 撕裂与雪花噪点随机帧');
+        requestRender();
+      });
+
+      // Overlays Controls
+      document.getElementById('chkTimestamp').addEventListener('change', e => {
+        state.showTimestamp = e.target.checked;
+        syncUIFromState(true);
+        requestRender();
+      });
+      document.getElementById('inpTimestampText').addEventListener('input', e => {
+        state.timestampText = e.target.value;
+        syncUIFromState(true);
+        requestRender();
+      });
+      document.getElementById('selTimestampPos').addEventListener('change', e => {
+        state.timestampPos = e.target.value;
+        syncUIFromState(true);
+        requestRender();
+      });
+      document.getElementById('chkVhsOsd').addEventListener('change', e => {
+        state.showVhsOsd = e.target.checked;
+        syncUIFromState(true);
+        requestRender();
+      });
+      document.getElementById('chkWeirdTag').addEventListener('change', e => {
+        state.showWeirdTag = e.target.checked;
+        syncUIFromState(true);
+        requestRender();
+      });
+      document.getElementById('inpWeirdText').addEventListener('input', e => {
+        state.weirdText = e.target.value;
+        state.showWeirdTag = true;
+        document.getElementById('chkWeirdTag').checked = true;
+        syncUIFromState(true);
+        requestRender();
+      });
+      document.querySelectorAll('.phrase-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const phrase = btn.getAttribute('data-phrase');
+          state.weirdText = phrase;
+          state.showWeirdTag = true;
+          syncUIFromState(true);
+          showToast('已应用怪核文字标签，可在画布上拖动位置');
+          requestRender();
+        });
+      });
+      document.getElementById('selWeirdStyle').addEventListener('change', e => {
+        state.weirdStyle = e.target.value;
+        state.showWeirdTag = true;
+        document.getElementById('chkWeirdTag').checked = true;
+        syncUIFromState(true);
+        requestRender();
+      });
+      document.getElementById('selFrameStyle').addEventListener('change', e => {
+        state.frameStyle = e.target.value;
+        syncUIFromState(true);
+        requestRender();
+      });
+
+      // Mirror & Rotation Reset Buttons for Weirdcore Tag
+      document.getElementById('btnFlipX').addEventListener('click', () => {
+        state.weirdFlipX = !state.weirdFlipX;
+        state.showWeirdTag = true;
+        syncUIFromState(true);
+        showToast(state.weirdFlipX ? '已开启怪核标签水平镜像' : '已关闭怪核标签水平镜像');
+        requestRender();
+      });
+      document.getElementById('btnFlipY').addEventListener('click', () => {
+        state.weirdFlipY = !state.weirdFlipY;
+        state.showWeirdTag = true;
+        syncUIFromState(true);
+        showToast(state.weirdFlipY ? '已开启怪核标签垂直镜像' : '已关闭怪核标签垂直镜像');
+        requestRender();
+      });
+      document.getElementById('btnResetTagTransform').addEventListener('click', () => {
+        state.weirdRotate = 0;
+        state.weirdFlipX = false;
+        state.weirdFlipY = false;
+        state.weirdScale = 100;
+        syncUIFromState(true);
+        showToast('已归零怪核标签旋转角度与镜像状态');
+        requestRender();
+      });
+
+      // Category Tabs in Advanced Mode
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = btn.getAttribute('data-tab');
+          document.querySelectorAll('.tab-btn').forEach(b => {
+            const active = b.getAttribute('data-tab') === target;
+            b.className = active
+              ? 'tab-btn py-3 px-2 text-xs sm:text-sm font-semibold text-purple-300 border-b-2 border-purple-400 bg-purple-950/30 transition'
+              : 'tab-btn py-3 px-2 text-xs sm:text-sm font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 transition';
+          });
+          document.querySelectorAll('.tab-panel').forEach(panel => {
+            panel.classList.toggle('hidden', panel.id !== 'tab-' + target);
+          });
+        });
+      });
+
+      // Scene Selector Buttons
+      document.querySelectorAll('.scene-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          currentScene = btn.getAttribute('data-scene');
+          isUploadedImage = false;
+          document.querySelectorAll('.scene-btn').forEach(b => {
+            const active = b.getAttribute('data-scene') === currentScene;
+            b.className = active
+              ? 'scene-btn px-2.5 py-1 rounded-md text-xs font-medium bg-purple-600/30 text-purple-200 border border-purple-500/50 transition'
+              : 'scene-btn px-2.5 py-1 rounded-md text-xs font-medium bg-[#1e1a2e] text-slate-300 border border-transparent hover:border-purple-700/40 transition';
+          });
+          generateProceduralScene(currentScene);
+          showToast('已切换内置测试场景底图');
+        });
+      });
+
+      // Preset Buttons
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const key = btn.getAttribute('data-preset');
+          if (!PRESETS[key]) return;
+          activePresetKey = key;
+          presetIntensity = 100;
+          ctrlPresetIntensity.value = 100;
+          valPresetIntensity.textContent = '100% (标准)';
+          glitchSeed = Math.floor(Math.random() * 900000) + 100000;
+
+          document.querySelectorAll('.preset-btn').forEach(b => {
+            const active = b.getAttribute('data-preset') === key;
+            const isHorrorBtn = key.startsWith('horror_') && b === btn;
+            if (active) {
+              b.className = isHorrorBtn
+                ? 'preset-btn flex flex-col items-start p-2.5 rounded-lg bg-red-600/30 border border-red-400 text-left transition'
+                : 'preset-btn flex flex-col items-start p-2.5 rounded-lg bg-purple-600/25 border border-purple-400 text-left transition hover:bg-purple-600/35';
+            } else {
+              const bKey = b.getAttribute('data-preset') || '';
+              b.className = bKey.startsWith('horror_')
+                ? 'preset-btn flex flex-col items-start p-2.5 rounded-lg bg-[#241219] border border-red-900/60 text-left transition hover:bg-[#331722]'
+                : 'preset-btn flex flex-col items-start p-2.5 rounded-lg bg-[#1c182b] border border-purple-900/40 text-left transition hover:bg-[#252038]';
+            }
+          });
+
+          applyPresetWithIntensity(key, 100);
+          showToast('已应用预设：' + PRESETS[key].label);
+        });
+      });
+
+      // Seed Copy & Apply Buttons
+      btnCopySeed.addEventListener('click', () => {
+        const val = inpStyleSeed.value.trim();
+        if (!val) return;
+        inpStyleSeed.select();
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(val);
+          } else {
+            document.execCommand('copy');
+          }
+        } catch (e) {
+          document.execCommand('copy');
+        }
+        seedBadgeStatus.textContent = '✅ 已复制到剪贴板';
+        showToast('已复制风格 Seed: ' + val.slice(0, 24) + (val.length > 24 ? '...' : ''));
+      });
+
+      btnApplySeed.addEventListener('click', () => {
+        applySeedString(inpStyleSeed.value);
+      });
+      inpStyleSeed.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          applySeedString(inpStyleSeed.value);
+        }
+      });
+
+      // Top Bar Buttons: Compare, Randomize, Reset, Export
+      const btnCompare = document.getElementById('btnCompare');
+      const startCompare = () => {
+        showingOriginal = true;
+        originalBadge.classList.remove('hidden');
+        compareBtnText.textContent = '正在看原图';
+        requestRender();
+      };
+      const endCompare = () => {
+        if (!showingOriginal) return;
+        showingOriginal = false;
+        originalBadge.classList.add('hidden');
+        compareBtnText.textContent = '按住看原图';
+        requestRender();
+      };
+      btnCompare.addEventListener('mousedown', startCompare);
+      btnCompare.addEventListener('touchstart', e => { e.preventDefault(); startCompare(); });
+      window.addEventListener('mouseup', endCompare);
+      window.addEventListener('touchend', endCompare);
+
+      document.getElementById('btnRandomize').addEventListener('click', () => {
+        const randomSeedNum = Math.floor(100000 + Math.random() * 900000);
+        generateStateFromNumericSeed(randomSeedNum, String(randomSeedNum));
+      });
+
+      document.getElementById('btnReset').addEventListener('click', () => {
+        Object.assign(state, {
+          bloom: 0, ghost: 0, brightness: 0, contrast: 0, saturation: 0, warmth: 0, tint: 0,
+          vignette: 0, vignetteWhite: false, rgbShift: 0, pixelate: 1, horrorCrush: 0, scanlines: 0, noise: 0, vhsTear: 0,
+          showTimestamp: false, timestampScale: 100, showVhsOsd: false, osdScale: 100,
+          showWeirdTag: false, weirdScale: 100, weirdRotate: 0, weirdFlipX: false, weirdFlipY: false,
+          frameStyle: 'none', frameScale: 100
+        });
+        presetIntensity = 0;
+        ctrlPresetIntensity.value = 0;
+        valPresetIntensity.textContent = '0% (原图)';
+        activePresetLabel.textContent = '当前预设：未加滤镜 (Neutral)';
+        syncUIFromState(true);
+        showToast('已重置全部滤镜参数');
+        requestRender();
+      });
+
+      document.getElementById('btnExport').addEventListener('click', () => {
+        showingOriginal = false;
+        originalBadge.classList.add('hidden');
+        renderPipeline();
+        const dataUrl = mainCanvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `dreamcore_${Date.now()}.png`;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('已导出包含全部像素滤镜的 PNG 图片');
+      });
+
+      // Image Upload
+      function loadUserImageFile(file) {
+        if (!file || !file.type.startsWith('image/')) {
+          showToast('请选择有效的图片文件 (JPG/PNG/WebP)');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const img = new Image();
+          img.onload = () => {
+            const maxDim = 1024;
+            let w = img.naturalWidth || 800;
+            let h = img.naturalHeight || 600;
+            if (w > maxDim || h > maxDim) {
+              const scale = maxDim / Math.max(w, h);
+              w = Math.round(w * scale);
+              h = Math.round(h * scale);
+            }
+            sourceCanvas.width = w;
+            sourceCanvas.height = h;
+            sourceCtx.clearRect(0, 0, w, h);
+            sourceCtx.drawImage(img, 0, 0, w, h);
+
+            isUploadedImage = true;
+            canvasResolutionBadge.textContent = w + ' × ' + h;
+            document.querySelectorAll('.scene-btn').forEach(b => {
+              b.className = 'scene-btn px-2.5 py-1 rounded-md text-xs font-medium bg-[#1e1a2e] text-slate-300 border border-transparent hover:border-purple-700/40 transition';
+            });
+            showToast('已加载本地图片：' + file.name);
+            requestRender();
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      fileUploadInput.addEventListener('change', e => {
+        if (e.target.files && e.target.files[0]) {
+          loadUserImageFile(e.target.files[0]);
+        }
+      });
+
+      canvasDropZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        dropOverlay.classList.remove('opacity-0');
+      });
+      canvasDropZone.addEventListener('dragleave', () => {
+        dropOverlay.classList.add('opacity-0');
+      });
+      canvasDropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropOverlay.classList.add('opacity-0');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          loadUserImageFile(e.dataTransfer.files[0]);
+        }
+      });
+
+      // Dragging Weirdcore Text Tag on Canvas
+      function getCanvasNormalizedCoords(evt) {
+        const rect = mainCanvas.getBoundingClientRect();
+        const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+        const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+        return {
+          x: Math.min(0.92, Math.max(0.08, (clientX - rect.left) / rect.width)),
+          y: Math.min(0.92, Math.max(0.08, (clientY - rect.top) / rect.height))
+        };
+      }
+
+      mainCanvas.addEventListener('mousedown', e => {
+        if (!state.showWeirdTag) return;
+        isDraggingTag = true;
+        tagPos = getCanvasNormalizedCoords(e);
+        syncUIFromState(true);
+        requestRender();
+      });
+      mainCanvas.addEventListener('mousemove', e => {
+        if (!isDraggingTag) return;
+        tagPos = getCanvasNormalizedCoords(e);
+        syncUIFromState(true);
+        requestRender();
+      });
+      window.addEventListener('mouseup', () => {
+        isDraggingTag = false;
+      });
+      mainCanvas.addEventListener('touchstart', e => {
+        if (!state.showWeirdTag) return;
+        isDraggingTag = true;
+        tagPos = getCanvasNormalizedCoords(e);
+        syncUIFromState(true);
+        requestRender();
+      }, { passive: true });
+      mainCanvas.addEventListener('touchmove', e => {
+        if (!isDraggingTag) return;
+        tagPos = getCanvasNormalizedCoords(e);
+        syncUIFromState(true);
+        requestRender();
+      }, { passive: true });
+
+      // --- Initial Boot ---
+      applyPresetWithIntensity('y2k', 100);
+      generateProceduralScene('corridor');
+    })();
+  </script>
+</body>
+</html>

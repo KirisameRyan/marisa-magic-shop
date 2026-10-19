@@ -1,0 +1,34 @@
+{
+  "initial": {
+    "title": "记忆信号 MEMORY SIGNAL · 梦核影像工作室",
+    "presets": 4,
+    "ready": true,
+    "width": 1424,
+    "viewport": 1424
+  },
+  "tests": {
+    "uniquePresets": 12,
+    "uniqueScenes": 4,
+    "seedDeterministic": true,
+    "recipeExact": true,
+    "zeroMixExact": true,
+    "history": true,
+    "layers": true,
+    "variants": true,
+    "highResolution": true
+  },
+  "guide": true,
+  "touchDrag": true,
+  "responsiveWidths": [
+    320,
+    390,
+    768,
+    1024,
+    1424
+  ],
+  "downloadedPng": [
+    2200,
+    1400
+  ],
+  "errors": []
+}

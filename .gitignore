@@ -14,3 +14,10 @@ data/*
 
 # SMTP 发信凭据（勿上传）
 api/mail-config.php
+
+# 网页技能的本地部署凭据
+.agents/skills/web-design/scripts/config.json
+
+# 记忆信号浏览器验证的临时数据
+artifacts/zyms-review/chrome-profile/
+artifacts/zyms-review/downloads/
