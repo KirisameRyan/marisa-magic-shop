@@ -26,19 +26,19 @@
 
 ## Git 历史仍需单独处理
 
-本次常规提交会清理当前分支文件，**不会抹除历史提交、旧远程分支、Fork、缓存或他人的克隆**。已定位的历史路径包括：
+初始源码修复后，店主额外授权了 GitHub 历史清理。隔离清理与验证结果见 [历史清理记录](HISTORY-CLEANUP.md)。Gitee、Fork、平台缓存与他人的旧克隆仍不能视为已清除。以下历史路径与旧提交 ID 用于审计定位：
 
 - `api/llm-config.php`：历史提交 `af074d4`、`bd34d18`。
 - `api/bot_token.php`：历史提交 `84abbff`。
 - `android-app/app/src/main/assets/www.zip`：多个历史版本。
 
-建议在确认凭证轮换后，在单独的镜像克隆中用 `git-filter-repo` 移除旧 Bot、配置文件、旧 Android 离线包、Toy 生成物和许可证文件，再恢复当前环境配置入口。先检查所有远程分支和标签，核对新提交后再对指定分支执行 `--force-with-lease`。此操作改变提交 ID，需明确授权，并通知协作者重新克隆；不能把旧历史合并回来。不要在当前有工作改动的目录直接运行历史重写。
+已在隔离副本使用 `git-filter-repo` 替换已知凭证、移除上述旧文件，并保持当前源码树不变。只授权更新 GitHub master；Gitee 需恢复写入权限后再处理。协作者应重新克隆，不得把旧历史合并回来。凭证撤销和服务器部署仍须完成。
 
 参考：[GitHub 敏感数据清理说明](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository)、[OWASP Secrets Management](https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html)。
 
 ## 防止再次混入
 
-- `python scripts/security-scan.py`：扫描当前 Git 跟踪文本；输出只有文件、行号、规则和 `[REDACTED]`。
+- `python scripts/security-scan.py`：扫描当前 Git 跟踪及未忽略的新文本；输出只有文件、行号、规则和 `[REDACTED]`。
 - `python scripts/security-scan.py --staged`：扫描暂存内容。启用仓库 Hook：`git config core.hooksPath .githooks`。
 - GitHub CI 执行扫描、发布边界、目录唯一性、PHP 语法和后端回归检查。扫描器是启发式检查，不是“没有其他漏洞”的证明。
 - `.gitignore` 屏蔽私有配置、数据库、签名文件、安装包、构建输出与本地旧包。版本控制只收源码和必要运行资源。

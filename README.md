@@ -53,6 +53,6 @@ python scripts/release.py toy --game baka
 - 账本截图识别和异常 CSV 辅助解析使用智谱；其他功能不依赖智谱。旧 Key 必须在平台撤销。
 - 数据库使用 `MMS_PRIVATE_DIR`，应位于站点根目录之外。升级前停写并执行 `php scripts/migrate-private-data.php`。
 - Apache 使用 `.htaccess`；Nginx 需单独安装 `deploy/nginx-security.conf`。
-- 当前源码清理不等于 Git 历史清理，历史凭证与旧包仍需单独处置。
+- 已按授权清理 GitHub 分支历史中的已知凭证与旧包；Gitee、Fork、旧克隆与缓存另行处理，见 [历史清理记录](docs/HISTORY-CLEANUP.md)。
 
 部署前必须阅读 [安全审查与交接](docs/SECURITY-REVIEW.md)。纯静态托管不会执行 PHP，账号、在线存档和账本 AI 需要独立后端。
