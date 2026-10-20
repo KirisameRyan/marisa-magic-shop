@@ -28,6 +28,15 @@ window.MMS_LIBRARY = {
   },
   "items": [
     {
+      "href": "quiz-heartprint.html",
+      "name": "二次元心动说明书",
+      "category": "tests",
+      "tag": "角色二选一",
+      "desc": "50 次角色二选一，分别记录外观与综合偏好。不认识也能玩，没看清的特征先留白。",
+      "featured": true,
+      "badge": "试玩"
+    },
+    {
       "href": "zyms/DREAMCORE __ 旧核·梦核·怪核图片滤镜实验室.html",
       "name": "记忆信号工作室",
       "category": "tools",

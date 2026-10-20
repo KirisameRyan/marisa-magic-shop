@@ -3,7 +3,12 @@ from pathlib import Path
 import json
 ROOT = Path(__file__).resolve().parents[1]
 ASSET_EXT = {'.css','.js','.mjs','.png','.jpg','.jpeg','.webp','.gif','.svg','.ico','.woff','.woff2','.ttf','.otf','.mp3','.ogg','.wav','.mp4','.webm','.wasm','.data','.unityweb','.br','.gz','.json'}
-DATA_FILES = {'data/waifu-db-zh.js','data/waifu-db-zh.json','data/waifu-tags.json'}
+DATA_FILES = {
+    'data/waifu-db-zh.js','data/waifu-db-zh.json','data/waifu-tags.json',
+    'data/waifu-db-male-zh.js','data/waifu-db-male-zh.json',
+    'data/waifu-db-all-zh.js','data/waifu-db-all-zh.json',
+    'data/waifu-tags-v2.json','data/heartprint-db.js',
+}
 library=json.loads((ROOT/'js/catalog.js').read_text(encoding='utf-8').split('window.MMS_LIBRARY = ',1)[1].split(';\nwindow.MMS_CATALOG',1)[0])
 ROOT_PAGES={item['href'] for item in library['items'] if '/' not in item['href']} | {
     'index.html','games.html','tests.html','stories.html','tools.html','explore.html',

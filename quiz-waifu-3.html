@@ -110,7 +110,7 @@ var STORAGE_KEY = 'quiz_waifu3_v1';
 var TRACK_KEY = 'waifu3_take';
 
 var QUIZ_TITLE = '测测你的二次元老婆 · 正式鉴定';
-var QUIZ_SUBTITLE = '14 维标签体系 × 500 角色数据库 × 4 层渐进筛选\n基于 AniList 热门角色 — 真正的灵魂匹配';
+var QUIZ_SUBTITLE = '19 维标签体系 × 600+ 女性角色数据库 × 4 层渐进筛选\n基于 AniList 热门角色 — 真正的灵魂匹配';
 var BADGE_TEXT = '霧雨魔法店 · 正式鉴定';
 var SITE_URL = 'www.azureflame.cloud';
 var QR_IMG = 'images/qr-code.png';
@@ -228,14 +228,14 @@ var QUESTIONS = [
 ];
 
 var LOADING_STEPS = [
-  '正在加载 500 角色数据库…',
+  '正在加载 600+ 角色数据库…',
   '第 1 层筛选：性格 + 年龄 + 世界观…',
   '第 2 层筛选：身份 + 相处模式 + 沟通…',
   '第 3 层细筛：外貌匹配度计算…',
   '第 4 层精排：加权排序中…',
   '鉴定完成！'
 ];
-var SHARE_TEXT = '我在霧雨魔法店测出的二次元老婆 TOP 1 是【{name}】！500 角色数据库 + 4 层精准筛选，你也来测：';
+var SHARE_TEXT = '我在霧雨魔法店测出的二次元老婆 TOP 1 是【{name}】！600+ 角色数据库 + 4 层精准筛选，你也来测：';
 
 // ── 渲染 ──
 function render() {
@@ -448,8 +448,24 @@ function matchAndScore(hardFilters, softFilters, q12, q13, pool) {
   });
 }
 
+var WAIFU_DIM_MAP = {
+  hair: ['hair_color', 'hair_length', 'hair_style'],
+  body: ['body_type', 'skin'],
+  eye: ['eye_color', 'eye_shape']
+};
+
 function getTagIds(char, dim) {
-  return (char.tags && char.tags[dim]) ? char.tags[dim].map(function(t) { return t.id; }) : [];
+  var dims = WAIFU_DIM_MAP[dim] || [dim];
+  var out = [];
+  if (!char.tags) return out;
+  for (var i = 0; i < dims.length; i++) {
+    var arr = char.tags[dims[i]];
+    if (!arr) continue;
+    for (var j = 0; j < arr.length; j++) {
+      if (out.indexOf(arr[j].id) === -1) out.push(arr[j].id);
+    }
+  }
+  return out;
 }
 
 function fmtChar(char, match) {

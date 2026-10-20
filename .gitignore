@@ -13,7 +13,19 @@ data/*
 !data/.gitkeep
 !data/waifu-db-zh.js
 !data/waifu-db-zh.json
+!data/waifu-db-male-zh.js
+!data/waifu-db-male-zh.json
+!data/waifu-db-all-zh.js
+!data/waifu-db-all-zh.json
 !data/waifu-tags.json
+!data/waifu-tags-v2.json
+!data/manual-tag-overrides.json
+!data/source-name-map.json
+!data/waifu-db-report.md
+!data/heartprint-db.js
+
+# 本地打标脚本（不入库）
+scripts/tag-characters-v2.py
 
 # SMTP 发信凭据（勿上传）
 api/mail-config.php
@@ -52,3 +64,4 @@ apps/android/app/src/main/assets/www.zip
 apps/android/app/src/main/assets/www/
 artifacts/site-review/chrome-profile/
 artifacts/site-review/downloads/
+artifacts/quiz-waifu-smoke/

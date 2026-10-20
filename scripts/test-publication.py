@@ -11,7 +11,7 @@ class PublicationTests(unittest.TestCase):
             self.assertFalse(policy.public_file(name),name)
         self.assertFalse(policy.public_file('unregistered-private-draft.html'))
     def test_public_paths_are_included(self):
-        for name in ['index.html','tools.html','nav.js','data/waifu-db-zh.js','images/logo.png','js/catalog.js','unity/tuoluo/index.html','unity/tuoluo/Build/file.wasm','zyms/DREAMCORE __ 旧核·梦核·怪核图片滤镜实验室.html']:
+        for name in ['index.html','tools.html','nav.js','quiz-heartprint.html','data/heartprint-db.js','data/waifu-db-all-zh.js','data/waifu-db-male-zh.js','data/waifu-tags-v2.json','data/waifu-db-zh.js','images/logo.png','js/catalog.js','unity/tuoluo/index.html','unity/tuoluo/Build/file.wasm','zyms/DREAMCORE __ 旧核·梦核·怪核图片滤镜实验室.html']:
             self.assertTrue(policy.public_file(name),name)
     def test_credentials_are_redacted(self):
         secret='a'*32+'.'+'b'*16

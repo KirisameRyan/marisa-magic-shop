@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#eef0e7">
+  <meta name="description" content="50次角色二选一，发现你的二次元偏好。外观与综合偏好分别记录，不熟悉也可以玩。">
+  <title>二次元心动说明书 · 霧雨魔法店</title>
+  <link rel="stylesheet" href="css/heartprint.css">
+  <link rel="icon" href="images/logo.png">
+  <script>
+    if (!['localhost','127.0.0.1',''].includes(location.hostname)) {
+      const script=document.createElement('script');script.src='js/analytics.js';document.head.appendChild(script);
+    }
+  </script>
+  <script defer src="data/heartprint-db.js"></script>
+  <script defer src="js/heartprint-engine.js"></script>
+  <script defer src="js/heartprint.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <a href="index.html" class="brand">霧雨魔法店<span>MARISA’S MAGIC SHOP</span></a>
+    <a class="back-link" href="tests.html">返回测试屋 <span aria-hidden="true">↗</span></a>
+  </header>
+  <main id="heartprint-app" aria-busy="true">
+    <section class="loading-state"><p class="eyebrow">THE HEARTPRINT FILE</p><h1>正在整理角色卡片…</h1><p>稍等一下，你的心动档案即将开启。</p></section>
+  </main>
+  <noscript><p class="loading-state">请启用 JavaScript 后重试。</p></noscript>
+  <footer class="site-footer"><span>一份关于虚构角色的偏好记录。</span><span>不是心理诊断，也不推断现实性取向。</span></footer>
+  <p id="notice" role="status" aria-live="polite"></p>
+</body>
+</html>

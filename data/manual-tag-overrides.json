@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "description": "人工校订：修正 LLM 在头部角色上的明显误标；构建时优先应用。",
+  "names": {
+    "90231": "艾特",
+    "42779": "广濑康穗",
+    "32800": "潘蒂",
+    "162228": "乔瑟",
+    "305": "山治",
+    "284158": "大卫·马丁内斯",
+    "122189": "二藤宏嵩",
+    "24595": "平和岛静雄",
+    "135385": "乔克"
+  },
+  "overrides": {
+    "73935": {
+      "name": "Saitama",
+      "reason": "琦玉是光头，模型误标黑发短发；同时补健壮体型。",
+      "remove": {
+        "hair_color": ["hair_black"],
+        "hair_length": ["hair_short"]
+      },
+      "add": {
+        "special": ["sp_bald"],
+        "body_type": ["body_muscular"]
+      }
+    },
+    "71": {
+      "name": "L Lawliet",
+      "reason": "L 没有眼罩，模型把黑眼圈误标成眼罩。",
+      "remove": {
+        "special": ["sp_eyepatch"]
+      }
+    },
+    "89334": {
+      "name": "Arataka Reigen",
+      "reason": "男性角色，office_lady 为女性向标签，改为性别中立的 worker。",
+      "remove": {
+        "role": ["office_lady"]
+      },
+      "add": {
+        "role": ["worker"]
+      }
+    },
+    "127518": {
+      "name": "灶门祢豆子",
+      "reason": "祢豆子的标志是竹筒口塞，不是角。",
+      "remove": {
+        "special": ["sp_horn"]
+      },
+      "add": {
+        "special": ["sp_muzzle"]
+      }
+    },
+    "90169": {
+      "name": "薇尔莉特·伊芙加登",
+      "reason": "自动记忆人偶/前士兵，office_lady 不准确，改为 worker。",
+      "remove": {
+        "role": ["office_lady"]
+      },
+      "add": {
+        "role": ["worker"]
+      }
+    },
+    "45627": {
+      "name": "Levi",
+      "reason": "成年男性，去掉娇小标签，保留纤细。",
+      "remove": {
+        "body_type": ["body_petite"]
+      }
+    }
+  }
+}

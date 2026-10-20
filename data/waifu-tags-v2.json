@@ -1,0 +1,421 @@
+{
+  "version": "2.0",
+  "description": "二次元角色标签体系 v2：外观拆分、性别中立年龄档、扩展性格与关系维度。旧页面通过兼容层读取 hair/body/eye。",
+  "scope_notes": {
+    "series_tone": "作品基调，属于作品层线索，不应直接解释为角色本人的性格。",
+    "unknown": "没有标注不等于没有该特征；资料不足时留空，不猜测。",
+    "levels": "personality 可带 level 0-1；其他维度不需要 level。",
+    "safety": "外表年龄为儿童/少年的角色，不标注性化身体标签。"
+  },
+  "dimensions": [
+    {
+      "id": "personality",
+      "name": "性格",
+      "weight": 1.0,
+      "multi": true,
+      "max": 4,
+      "description": "角色的核心性格与行为气质。选择最具体的 1-3 个，避免同义词堆叠。",
+      "tags": [
+        { "id": "gentle", "name": "温柔治愈", "desc": "待人温和、有包容感，愿意照顾他人。" },
+        { "id": "tsundere", "name": "傲娇嘴硬", "desc": "表面冷淡或嘴硬，实际在意；不要和单纯的高冷混用。" },
+        { "id": "genki", "name": "元气活泼", "desc": "精力充沛、外向、行动力强。" },
+        { "id": "airhead", "name": "天然呆", "desc": "迟钝、冒失、天真，容易闹笑话。" },
+        { "id": "kuudere", "name": "冷傲无口", "desc": "外表冷静寡言，情感表达克制。" },
+        { "id": "yandere", "name": "病娇执着", "desc": "对特定对象有极端占有欲或危险执念。" },
+        { "id": "mature", "name": "成熟稳重", "desc": "可靠、理性、能承担责任。" },
+        { "id": "mysterious", "name": "神秘深沉", "desc": "有隐藏过去、目的或信息不透明。" },
+        { "id": "comedic", "name": "乐子搞事", "desc": "爱玩、爱恶作剧、擅长制造笑点。" },
+        { "id": "cold", "name": "冷酷强大", "desc": "情感冷硬、行事果断；不等同于无口。" },
+        { "id": "fukuro", "name": "腹黑", "desc": "表面温和或无害，实际善于算计。" },
+        { "id": "chuunibyou", "name": "中二病", "desc": "沉浸在自我设定或幻想中。" },
+        { "id": "queen", "name": "女王/强势", "desc": "习惯掌控局面、气场强、有命令感。" },
+        { "id": "imouto", "name": "妹系", "desc": "妹妹感、被照顾或黏人；女性向。" },
+        { "id": "otouto", "name": "弟系", "desc": "弟弟感、被照顾或黏人；男性向。" },
+        { "id": "no_expression", "name": "三无", "desc": "缺乏表情和情绪波动。" },
+        { "id": "hotblooded", "name": "热血", "desc": "冲动、热情、不服输，行动常先于思考。" },
+        { "id": "stoic", "name": "冷峻", "desc": "克制、沉着、不轻易表露情绪，偏行动派。" },
+        { "id": "loyal", "name": "忠诚", "desc": "对某人或某组织有强烈忠诚和责任感。" },
+        { "id": "playful", "name": "痞气/玩世不恭", "desc": "爱开玩笑、不守规矩、轻松随性。" },
+        { "id": "gentleman", "name": "绅士", "desc": "有礼、体贴、守分寸，尊重他人。" },
+        { "id": "brooding", "name": "阴郁", "desc": "背负创伤或黑暗过去，情绪低沉。" },
+        { "id": "ambitious", "name": "野心", "desc": "有强烈目标、权力欲或改变世界的欲望。" },
+        { "id": "eccentric", "name": "怪人", "desc": "行为或思维异于常人，难以预测。" },
+        { "id": "deadpan", "name": "面瘫/冷幽默", "desc": "表情少、语气平，常出冷幽默。" },
+        { "id": "protective", "name": "守护", "desc": "强烈保护欲，愿意为重要之人承担风险。" },
+        { "id": "revengeful", "name": "复仇", "desc": "被复仇或雪耻驱动。" },
+        { "id": "ruthless", "name": "狠辣", "desc": "为达目的不择手段，能下狠手。" },
+        { "id": "manipulative", "name": "操纵", "desc": "善于操控人心、布局、利用信息差。" },
+        { "id": "honorable", "name": "荣誉", "desc": "重视原则、承诺、武士道或骑士精神。" },
+        { "id": "proud", "name": "自尊/骄傲", "desc": "自尊心强，不愿低头。" },
+        { "id": "lazy", "name": "懒散", "desc": "怕麻烦、能躺就躺，但关键时刻可能可靠。" },
+        { "id": "hardworking", "name": "努力", "desc": "勤奋、自律、为目标持续付出。" },
+        { "id": "curious", "name": "好奇", "desc": "求知欲强、喜欢探索。" },
+        { "id": "shy", "name": "害羞", "desc": "内向、容易紧张、不擅长表达。" },
+        { "id": "flirty", "name": "轻浮/撩人", "desc": "爱调情、嘴甜、社交游刃有余。" },
+        { "id": "serious", "name": "严肃", "desc": "认真、严格、按规则办事。" }
+      ]
+    },
+    {
+      "id": "age_visual",
+      "name": "外表年龄",
+      "weight": 1.0,
+      "multi": true,
+      "max": 2,
+      "description": "视觉上的年龄感，不按设定年龄硬算。",
+      "tags": [
+        { "id": "age_v_loli", "name": "萝莉型", "desc": "外表幼小、童颜；女性向。" },
+        { "id": "age_v_shota", "name": "正太型", "desc": "外表幼小、童颜；男性向。" },
+        { "id": "age_v_teen", "name": "少年少女", "desc": "青春期、高中生感。" },
+        { "id": "age_v_young_adult", "name": "青年", "desc": "大学生到二十多岁的外观。" },
+        { "id": "age_v_mature", "name": "御姐/熟男", "desc": "成熟、气场成熟。" },
+        { "id": "age_v_elder", "name": "年长", "desc": "大叔、老年或明显年长。" }
+      ]
+    },
+    {
+      "id": "age_aura",
+      "name": "年龄气质",
+      "weight": 0.7,
+      "multi": true,
+      "max": 2,
+      "description": "相处时呈现出的年上年下感。",
+      "tags": [
+        { "id": "age_a_kouhai", "name": "年下感", "desc": "像后辈、需要被带。" },
+        { "id": "age_a_douki", "name": "同龄感", "desc": "像同学、同辈。" },
+        { "id": "age_a_senpai", "name": "年上感", "desc": "像前辈、姐姐/哥哥。" }
+      ]
+    },
+    {
+      "id": "age_paradox",
+      "name": "年龄悖论",
+      "weight": 0.5,
+      "multi": true,
+      "max": 2,
+      "description": "外表与设定年龄明显不一致的特殊情况。",
+      "tags": [
+        { "id": "age_p_loli_baba", "name": "千年BBA", "desc": "外表幼小但实际年龄极大。" },
+        { "id": "age_p_legal_loli", "name": "合法萝莉", "desc": "外表幼小但设定已成年。" },
+        { "id": "age_p_reverse", "name": "外表成熟实际年幼", "desc": "外表成熟但设定年龄很小。" }
+      ]
+    },
+    {
+      "id": "role",
+      "name": "身份定位",
+      "weight": 0.9,
+      "multi": true,
+      "max": 3,
+      "description": "角色在故事中的身份、职业或定位。",
+      "tags": [
+        { "id": "student", "name": "学生", "desc": "在校学生。" },
+        { "id": "transfer", "name": "转学生", "desc": "转学进入新学校。" },
+        { "id": "class_officer", "name": "班级干部/会长", "desc": "班长、学生会长等。" },
+        { "id": "warrior", "name": "战士/骑士", "desc": "以战斗为主要职责。" },
+        { "id": "idol", "name": "偶像/艺人", "desc": "歌手、演员、偶像。" },
+        { "id": "mage", "name": "魔法使/术师", "desc": "使用魔法或异能。" },
+        { "id": "noble", "name": "贵族/大小姐", "desc": "贵族、王室、富家出身。" },
+        { "id": "godly", "name": "神明/非人/精灵", "desc": "神、精灵、妖怪等超自然存在。" },
+        { "id": "assassin", "name": "刺客/杀手", "desc": "以暗杀、潜伏为业。" },
+        { "id": "healer", "name": "巫女/修女/治疗者", "desc": "治疗、祈祷、守护类身份。" },
+        { "id": "isekai_resident", "name": "异世界住民", "desc": "来自或生活在异世界。" },
+        { "id": "scientist", "name": "科学家/研究员", "desc": "研究、实验、技术专家。" },
+        { "id": "detective", "name": "侦探/调查员", "desc": "调查案件、寻找真相。" },
+        { "id": "office_lady", "name": "职场女性/OL", "desc": "公司女职员、OL、女社畜。" },
+        { "id": "worker", "name": "职场人/社会人", "desc": "公司职员、上班族或社会人，性别中立。" },
+        { "id": "maid", "name": "女仆/侍从", "desc": "侍奉他人的职业。" },
+        { "id": "non_human_race", "name": "异种族", "desc": "精灵、恶魔、兽人等非人类种族。" },
+        { "id": "wanderer", "name": "流浪者/旅人", "desc": "旅行、漂泊、冒险者。" },
+        { "id": "housewife", "name": "主妇/家庭型", "desc": "擅长家务、照顾家庭。" },
+        { "id": "mentor", "name": "导师/老师", "desc": "指导、教育主角或后辈。" },
+        { "id": "leader", "name": "领袖/队长", "desc": "带领团队、掌握决策权。" },
+        { "id": "antihero", "name": "反英雄", "desc": "手段不正但目标复杂的主角。" },
+        { "id": "villain", "name": "反派", "desc": "站在主角对立面的主要敌人。" },
+        { "id": "rival", "name": "宿敌/对手", "desc": "长期竞争或互相追逐的对手。" },
+        { "id": "hunter", "name": "猎人/赏金猎人", "desc": "以追捕、狩猎、接委托为业。" },
+        { "id": "chef", "name": "厨师", "desc": "以料理为核心身份。" },
+        { "id": "doctor", "name": "医生/医护", "desc": "医疗、救治相关身份。" },
+        { "id": "athlete", "name": "运动员", "desc": "以竞技体育为核心。" }
+      ]
+    },
+    {
+      "id": "series_tone",
+      "name": "作品基调",
+      "weight": 0.8,
+      "multi": true,
+      "max": 3,
+      "scope": "work",
+      "description": "角色所属作品的基调。属于作品层线索，不是角色本人的性格。",
+      "tags": [
+        { "id": "tone_battle", "name": "热血战斗", "desc": "以战斗、成长、热血为主线。" },
+        { "id": "tone_romance", "name": "恋爱日常", "desc": "以恋爱关系为核心。" },
+        { "id": "tone_dark", "name": "黑暗致郁", "desc": "黑暗、残酷、心理压力大。" },
+        { "id": "tone_healing", "name": "治愈温情", "desc": "温暖、慢节奏、治愈。" },
+        { "id": "tone_mystery", "name": "悬疑推理", "desc": "谜题、调查、反转。" },
+        { "id": "tone_comedy", "name": "搞笑日常", "desc": "以喜剧、吐槽、日常为主。" },
+        { "id": "tone_scifi", "name": "科幻/奇幻", "desc": "科幻、奇幻、超现实设定。" },
+        { "id": "tone_historical", "name": "历史古风", "desc": "历史、古风、架空古代。" },
+        { "id": "tone_yuri", "name": "百合/GL", "desc": "女性之间的恋爱或强烈羁绊。" },
+        { "id": "tone_harem", "name": "后宫/逆后宫", "desc": "多角色围绕同一对象的恋爱喜剧。" },
+        { "id": "tone_sports", "name": "竞技/体育", "desc": "体育竞技、比赛成长。" },
+        { "id": "tone_music", "name": "音乐/偶像", "desc": "音乐、乐队、偶像活动。" },
+        { "id": "tone_survival", "name": "生存游戏/大逃杀", "desc": "生存、死亡游戏、极限环境。" }
+      ]
+    },
+    {
+      "id": "relationship",
+      "name": "相处模式",
+      "weight": 0.9,
+      "multi": true,
+      "max": 2,
+      "description": "和这样的人相处时，关系更像哪一种。",
+      "tags": [
+        { "id": "rel_dependent", "name": "依赖型", "desc": "她/他依赖你，你是她的港湾。" },
+        { "id": "rel_equal", "name": "平等并肩", "desc": "恋人也是战友，彼此对等。" },
+        { "id": "rel_leader", "name": "引领型", "desc": "她/他引领你，给你方向或力量。" },
+        { "id": "rel_healer", "name": "治愈型", "desc": "温暖、安抚、治愈你的情绪。" },
+        { "id": "rel_buddy", "name": "搭子型", "desc": "轻松、默契、各自安好。" },
+        { "id": "rel_rival", "name": "竞争/宿敌", "desc": "互相较劲、彼此刺激。" },
+        { "id": "rel_mentor", "name": "师徒/指导", "desc": "一方教导、一方成长。" },
+        { "id": "rel_comrade", "name": "战友/同伴", "desc": "共同目标下的并肩伙伴。" },
+        { "id": "rel_family", "name": "家人/亲情", "desc": "家人般的照顾与羁绊。" }
+      ]
+    },
+    {
+      "id": "communication",
+      "name": "说话方式",
+      "weight": 0.7,
+      "multi": true,
+      "max": 2,
+      "description": "角色表达、沟通和回应的习惯。",
+      "tags": [
+        { "id": "comm_frank", "name": "直率外放", "desc": "有什么说什么，情绪外露。" },
+        { "id": "comm_reserved", "name": "含蓄内敛", "desc": "话不多，但表达走心。" },
+        { "id": "comm_snarky", "name": "毒舌吐槽", "desc": "犀利、幽默、爱吐槽。" },
+        { "id": "comm_silent", "name": "寡言少语", "desc": "很少说话，安静陪伴。" },
+        { "id": "comm_sweet", "name": "甜美可爱", "desc": "语气甜、表达可爱。" },
+        { "id": "comm_rational", "name": "成熟理性", "desc": "逻辑清晰、沟通高效。" },
+        { "id": "comm_volatile", "name": "多变起伏", "desc": "情绪和语气变化大。" },
+        { "id": "comm_boastful", "name": "自信爱吹", "desc": "爱夸自己、口气大。" },
+        { "id": "comm_philosophical", "name": "哲思/说教", "desc": "爱讲道理、谈人生或世界观。" },
+        { "id": "comm_teasing", "name": "爱逗弄", "desc": "喜欢开玩笑逗人、看反应。" },
+        { "id": "comm_formal", "name": "礼貌正式", "desc": "措辞礼貌、守礼、正式。" }
+      ]
+    },
+    {
+      "id": "values",
+      "name": "价值观",
+      "weight": 0.8,
+      "multi": true,
+      "max": 3,
+      "description": "角色行动时最看重的东西。",
+      "tags": [
+        { "id": "val_justice", "name": "秩序/正义", "desc": "是非分明，重视规则与正义。" },
+        { "id": "val_freedom", "name": "自由/不羁", "desc": "不愿被束缚，重视自由意志。" },
+        { "id": "val_kindness", "name": "善良/利他", "desc": "愿意为他人付出，重视善意。" },
+        { "id": "val_utilitarian", "name": "理性/功利", "desc": "以效率和结果为先。" },
+        { "id": "val_protective", "name": "守护/牺牲", "desc": "愿为重要之人牺牲。" },
+        { "id": "val_independent", "name": "自我/独立", "desc": "坚持自我，不依赖他人。" },
+        { "id": "val_honor", "name": "荣誉/原则", "desc": "重视承诺、尊严和原则。" },
+        { "id": "val_revenge", "name": "复仇/雪耻", "desc": "以复仇或洗刷耻辱为动力。" },
+        { "id": "val_ambition", "name": "野心/权力", "desc": "追求权力、地位或宏大目标。" },
+        { "id": "val_family", "name": "家人/羁绊", "desc": "把家人和羁绊放在首位。" },
+        { "id": "val_loyalty", "name": "忠诚/归属", "desc": "重视所属群体和忠诚。" },
+        { "id": "val_knowledge", "name": "求知/真理", "desc": "追求知识、真相和理解。" }
+      ]
+    },
+    {
+      "id": "hair_color",
+      "name": "发色",
+      "weight": 0.6,
+      "multi": true,
+      "max": 2,
+      "description": "头发的主要颜色。",
+      "tags": [
+        { "id": "hair_black", "name": "黑发" },
+        { "id": "hair_white", "name": "白毛/银发" },
+        { "id": "hair_blonde", "name": "金发" },
+        { "id": "hair_red", "name": "红发/粉发" },
+        { "id": "hair_blue", "name": "蓝发/青发" },
+        { "id": "hair_purple", "name": "紫发" },
+        { "id": "hair_green", "name": "绿发/灰发" },
+        { "id": "hair_brown", "name": "棕发/茶发" },
+        { "id": "hair_gradient", "name": "渐变/异色发" }
+      ]
+    },
+    {
+      "id": "hair_length",
+      "name": "发长",
+      "weight": 0.6,
+      "multi": true,
+      "max": 1,
+      "description": "头发长度。",
+      "tags": [
+        { "id": "hair_long", "name": "长发(过肩)" },
+        { "id": "hair_medium", "name": "中发/披肩" },
+        { "id": "hair_short", "name": "短发" },
+        { "id": "hair_bob", "name": "BOB/齐耳短发" }
+      ]
+    },
+    {
+      "id": "hair_style",
+      "name": "发型",
+      "weight": 0.5,
+      "multi": true,
+      "max": 2,
+      "description": "标志性的发型或扎法。",
+      "tags": [
+        { "id": "hair_twintail", "name": "双马尾" },
+        { "id": "hair_ponytail", "name": "单马尾/侧马尾" },
+        { "id": "hair_braid", "name": "麻花辫/编发" },
+        { "id": "hair_bun", "name": "丸子头/盘发" },
+        { "id": "hair_curl", "name": "卷发/波浪" },
+        { "id": "hair_hime", "name": "姬发式/遮眼刘海" }
+      ]
+    },
+    {
+      "id": "body_type",
+      "name": "体型",
+      "weight": 0.5,
+      "multi": true,
+      "max": 2,
+      "description": "整体体型与身材印象；不要对外表儿童/少年角色使用性化标签。",
+      "tags": [
+        { "id": "body_petite", "name": "娇小" },
+        { "id": "body_slim", "name": "纤细/瘦弱" },
+        { "id": "body_average", "name": "普通/适中" },
+        { "id": "body_muscular", "name": "健壮/肌肉" },
+        { "id": "body_broad", "name": "宽肩/魁梧" },
+        { "id": "body_busty", "name": "丰满/巨乳" },
+        { "id": "body_tall", "name": "高挑修长" },
+        { "id": "body_chubby", "name": "肉感/微胖" },
+        { "id": "body_loli_height", "name": "矮小" }
+      ]
+    },
+    {
+      "id": "skin",
+      "name": "肤色",
+      "weight": 0.4,
+      "multi": true,
+      "max": 1,
+      "description": "皮肤色调。",
+      "tags": [
+        { "id": "skin_pale", "name": "白皙/白皮" },
+        { "id": "skin_normal", "name": "普通肤色" },
+        { "id": "skin_tanned", "name": "小麦色/黑皮" },
+        { "id": "skin_ghostly", "name": "苍白/病态白" }
+      ]
+    },
+    {
+      "id": "eye_color",
+      "name": "瞳色",
+      "weight": 0.5,
+      "multi": true,
+      "max": 2,
+      "description": "眼睛的主要颜色。",
+      "tags": [
+        { "id": "eye_red", "name": "红瞳" },
+        { "id": "eye_blue", "name": "蓝瞳/青瞳" },
+        { "id": "eye_green", "name": "绿瞳" },
+        { "id": "eye_purple", "name": "紫瞳" },
+        { "id": "eye_gold", "name": "金瞳/黄瞳" },
+        { "id": "eye_brown", "name": "棕瞳/黑瞳" },
+        { "id": "eye_black", "name": "黑瞳" },
+        { "id": "eye_heterochromia", "name": "异色瞳" }
+      ]
+    },
+    {
+      "id": "eye_shape",
+      "name": "眼型/眼神",
+      "weight": 0.4,
+      "multi": true,
+      "max": 2,
+      "description": "眼睛形状与眼神气质。",
+      "tags": [
+        { "id": "eye_sharp", "name": "锐利/吊眼梢" },
+        { "id": "eye_gentle", "name": "温柔下垂眼" },
+        { "id": "eye_empty", "name": "空洞/无光" },
+        { "id": "eye_round", "name": "圆眼/大眼" }
+      ]
+    },
+    {
+      "id": "wardrobe",
+      "name": "服装风格",
+      "weight": 0.4,
+      "multi": true,
+      "max": 3,
+      "description": "常见的服装风格或标志性穿着。",
+      "tags": [
+        { "id": "cloth_uniform", "name": "校服/制服" },
+        { "id": "cloth_armor", "name": "战斗装/铠甲" },
+        { "id": "cloth_kimono", "name": "和服/巫女服" },
+        { "id": "cloth_maid", "name": "女仆装" },
+        { "id": "cloth_sexy", "name": "暴露/性感" },
+        { "id": "cloth_elegant", "name": "优雅礼服" },
+        { "id": "cloth_casual", "name": "休闲便服" },
+        { "id": "cloth_gothic", "name": "哥特/暗黑风" },
+        { "id": "cloth_scifi_outfit", "name": "未来科技装" },
+        { "id": "cloth_barefoot", "name": "裸足/丝袜" },
+        { "id": "cloth_suit", "name": "西装/正装" },
+        { "id": "cloth_military", "name": "军装/战术装" },
+        { "id": "cloth_traditional", "name": "传统/古风服饰" },
+        { "id": "cloth_sportswear", "name": "运动服" }
+      ]
+    },
+    {
+      "id": "expression",
+      "name": "表情气质",
+      "weight": 0.6,
+      "multi": true,
+      "max": 2,
+      "description": "第一眼的表情和气质。",
+      "tags": [
+        { "id": "expr_gentle", "name": "温柔下垂眼" },
+        { "id": "expr_sharp", "name": "锐利吊眼梢" },
+        { "id": "expr_empty", "name": "空洞/死鱼眼" },
+        { "id": "expr_crazy", "name": "病态狂热" },
+        { "id": "expr_lazy", "name": "慵懒半睁" },
+        { "id": "expr_bright", "name": "开朗闪亮" }
+      ]
+    },
+    {
+      "id": "special",
+      "name": "特殊特征",
+      "weight": 0.4,
+      "multi": true,
+      "max": 3,
+      "description": "标志性的非普通外观特征或配饰。",
+      "tags": [
+        { "id": "sp_nekomimi", "name": "兽耳(猫/狐/犬/兔)" },
+        { "id": "sp_tail", "name": "尾巴" },
+        { "id": "sp_horn", "name": "角(鬼/龙/独角)" },
+        { "id": "sp_wings", "name": "翅膀(天使/恶魔/机械)" },
+        { "id": "sp_elf_ear", "name": "精灵耳" },
+        { "id": "sp_mecha", "name": "机械/义体" },
+        { "id": "sp_scar", "name": "绷带/伤痕" },
+        { "id": "sp_tattoo", "name": "纹身/刺青/印记" },
+        { "id": "sp_glasses", "name": "眼镜" },
+        { "id": "sp_heterochromia", "name": "异色瞳" },
+        { "id": "sp_ahoge", "name": "呆毛" },
+        { "id": "sp_vampire_fangs", "name": "吸血鬼牙/虎牙" },
+        { "id": "sp_inhuman", "name": "人外/非人形态" },
+        { "id": "sp_hime_cut", "name": "姬发式/遮眼刘海" },
+        { "id": "sp_maid_headband", "name": "女仆头饰/喀秋莎" },
+        { "id": "sp_eyepatch", "name": "眼罩" },
+        { "id": "sp_mask", "name": "面具/面罩" },
+        { "id": "sp_mecha_ear", "name": "机械侧耳" },
+        { "id": "sp_blindfold", "name": "遮眼/绷带覆眼" },
+        { "id": "sp_hat", "name": "标志性帽子" },
+        { "id": "sp_weapon", "name": "常携武器" },
+        { "id": "sp_bald", "name": "光头/无发" },
+        { "id": "sp_muzzle", "name": "口塞/口罩/竹筒" }
+      ]
+    }
+  ],
+  "tagging_rules": [
+    "只根据提供的角色资料和作品资料标注；资料不足的维度留空，不猜测。",
+    "personality 选 1-3 个最具体的标签，最多 4 个；不要同时选同义词。",
+    "age_visual 选 1-2 个；外表儿童/少年的角色禁止使用 body_busty、cloth_sexy 等性化标签。",
+    "hair_color、hair_length、eye_color、eye_shape、skin 各选 0-2 个，避免互相矛盾。",
+    "series_tone 是作品层线索，按作品类型/题材判断，不要当角色性格。",
+    "已有 legacy_tags 的角色：把 legacy_tags 当作已确认信息保留，只补充缺失标签，不要删除或改写。",
+    "输出必须是纯 JSON，不要 markdown，不要解释。"
+  ]
+}
