@@ -24,7 +24,7 @@ def public_file(name):
     if parts[0]=='unity' and path.name=='index.html':return True
     if parts[0] in {'css','js','images','audio','unity'}:
         return path.suffix.lower() in ASSET_EXT and not any(p in {'node_modules','src','Editor','Library','Temp'} for p in parts) and path.name!='package.json'
-    if parts[0]=='zyms':return len(parts)==2 and path.name=='DREAMCORE __ 旧核·梦核·怪核图片滤镜实验室.html'
+    if parts[0]=='zyms':return len(parts)==2 and path.name=='memory-signal.html'
     return False
 def public_paths():
     for root_name in ['css','js','images','audio','unity','data','zyms']:

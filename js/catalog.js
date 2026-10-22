@@ -37,7 +37,7 @@ window.MMS_LIBRARY = {
       "badge": "试玩"
     },
     {
-      "href": "zyms/DREAMCORE __ 旧核·梦核·怪核图片滤镜实验室.html",
+      "href": "zyms/memory-signal.html",
       "name": "记忆信号工作室",
       "category": "tools",
       "tag": "影像创作",

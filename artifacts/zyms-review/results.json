@@ -1,13 +1,13 @@
 {
   "initial": {
-    "title": "记忆信号 MEMORY SIGNAL · 梦核影像工作室",
-    "presets": 4,
+    "title": "记忆信号 MEMORY SIGNAL · 复古影像与像素工具",
+    "presets": 11,
     "ready": true,
     "width": 1424,
     "viewport": 1424
   },
   "tests": {
-    "uniquePresets": 12,
+    "uniquePresets": 42,
     "uniqueScenes": 4,
     "seedDeterministic": true,
     "recipeExact": true,

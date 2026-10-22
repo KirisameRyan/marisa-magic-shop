@@ -36,6 +36,8 @@ api/mail-config.php
 # 记忆信号浏览器验证的临时数据
 artifacts/zyms-review/chrome-profile/
 artifacts/zyms-review/downloads/
+artifacts/zyms-retro-review/chrome-profile/
+artifacts/zyms-retro-review/downloads/
 
 # Private configuration, signing material, runtime state and release output
 .env
@@ -65,3 +67,12 @@ apps/android/app/src/main/assets/www/
 artifacts/site-review/chrome-profile/
 artifacts/site-review/downloads/
 artifacts/quiz-waifu-smoke/
+
+artifacts/zyms-tools-review/chrome-profile/
+artifacts/zyms-tools-review/downloads/
+
+# 本地安装的辅助技能，不随网站源码提交
+.agents/skills/interview-skills/
+.agents/skills/kami/
+.agents/skills/sn-image-resume/
+.agents/skills/tailored-resume-generator/

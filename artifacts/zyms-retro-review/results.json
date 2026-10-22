@@ -1,0 +1,39 @@
+{
+  "merged": {
+    "presets": 42,
+    "filmPresets": 9,
+    "sameCanvas": true,
+    "layersPreserved": true,
+    "maskAndRecipeExact": true,
+    "numericFilmControls": true,
+    "undoRestoresFilm": true,
+    "zeroMixExact": true,
+    "upstreamRecipeMigrated": true
+  },
+  "twoPrimaryTools": true,
+  "noPhotoIframe": true,
+  "photoEditsSurvivePixelSwitch": true,
+  "nonDestructiveSendToPixel": true,
+  "pixelInfo": {
+    "frames": 16,
+    "processed": 16,
+    "decoder": "function"
+  },
+  "gifRoundtrip": {
+    "frames": 16,
+    "loaded": 16
+  },
+  "png": [
+    600,
+    400
+  ],
+  "responsiveWidths": [
+    320,
+    390,
+    768,
+    1024,
+    1424
+  ],
+  "remoteRequests": [],
+  "errors": []
+}

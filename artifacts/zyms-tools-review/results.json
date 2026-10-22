@@ -1,0 +1,66 @@
+{
+  "defaultPhotoTutorial": true,
+  "photoTutorialSteps": 5,
+  "pixelTutorialSteps": 5,
+  "staticPixelSteps": 4,
+  "perModeRemember": true,
+  "singleOpenPanel": true,
+  "latestPhotoShared": true,
+  "fullFrameRenderReminder": true,
+  "canvasFirst": {
+    "x": 98,
+    "y": 90,
+    "width": 1304,
+    "height": 849,
+    "top": 90,
+    "right": 1402,
+    "bottom": 939,
+    "left": 98
+  },
+  "desktopSideRail": true,
+  "mobileBottomRail": true,
+  "responsive": [
+    {
+      "width": 320,
+      "mode": "film"
+    },
+    {
+      "width": 320,
+      "mode": "pixel"
+    },
+    {
+      "width": 390,
+      "mode": "film"
+    },
+    {
+      "width": 390,
+      "mode": "pixel"
+    },
+    {
+      "width": 768,
+      "mode": "film"
+    },
+    {
+      "width": 768,
+      "mode": "pixel"
+    },
+    {
+      "width": 1024,
+      "mode": "film"
+    },
+    {
+      "width": 1024,
+      "mode": "pixel"
+    },
+    {
+      "width": 1424,
+      "mode": "film"
+    },
+    {
+      "width": 1424,
+      "mode": "pixel"
+    }
+  ],
+  "remoteRequests": [],
+  "errors": []
+}

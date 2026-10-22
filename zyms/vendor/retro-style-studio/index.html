@@ -1,0 +1,4015 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>8-Bit Retro Hardware Studio — 真实硬件级像素与GIF转换器</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/omggif@1.0.10/omggif.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+            pixel: ['"Press Start 2P"', 'monospace']
+          },
+          colors: {
+            retro: {
+              bg: 'var(--retro-bg)',
+              panel: 'var(--retro-panel)',
+              card: 'var(--retro-card)',
+              border: 'var(--retro-border)',
+              accent: '#10b981',
+              amber: '#f59e0b',
+              cyan: '#06b6d4',
+              rose: '#f43f5e'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      --retro-bg: #f1f5f9;
+      --retro-panel: #ffffff;
+      --retro-card: #f8fafc;
+      --retro-border: #cbd5e1;
+      --retro-text: #0f172a;
+      --retro-muted: #475569;
+      --checker-a: #e2e8f0;
+      --checker-b: #f8fafc;
+      --range-track: #cbd5e1;
+    }
+    html.dark {
+      --retro-bg: #0b0e14;
+      --retro-panel: #131822;
+      --retro-card: #1a2130;
+      --retro-border: #283246;
+      --retro-text: #e2e8f0;
+      --retro-muted: #94a3b8;
+      --checker-a: #0f131a;
+      --checker-b: #181f2c;
+      --range-track: #252f42;
+    }
+    * { box-sizing: border-box; }
+    body {
+      background-color: var(--retro-bg);
+      color: var(--retro-text);
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow-x: hidden;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    /* Light mode adaptive text overrides for utility classes */
+    html:not(.dark) .text-white { color: #0f172a !important; }
+    html:not(.dark) .text-slate-200 { color: #1e293b !important; }
+    html:not(.dark) .text-slate-300 { color: #334155 !important; }
+    html:not(.dark) .text-slate-400 { color: #64748b !important; }
+    html:not(.dark) .text-emerald-300 { color: #047857 !important; }
+    html:not(.dark) .text-emerald-400 { color: #059669 !important; }
+    html:not(.dark) .text-amber-300 { color: #b45309 !important; }
+    html:not(.dark) .bg-slate-800 { background-color: #e2e8f0 !important; }
+    html:not(.dark) .bg-slate-700 { background-color: #cbd5e1 !important; }
+    html:not(.dark) .hover\:bg-slate-700:hover { background-color: #e2e8f0 !important; }
+    html:not(.dark) .hover\:bg-slate-800:hover { background-color: #e2e8f0 !important; }
+
+    .pixelated {
+      image-rendering: -moz-crisp-edges;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+      image-rendering: pixelated;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--retro-bg); }
+    ::-webkit-scrollbar-thumb { background: var(--retro-border); border-radius: 3px; }
+
+    .checkerboard {
+      background-color: var(--checker-a);
+      background-image:
+        linear-gradient(45deg, var(--checker-b) 25%, transparent 25%),
+        linear-gradient(-45deg, var(--checker-b) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, var(--checker-b) 75%),
+        linear-gradient(-45deg, transparent 75%, var(--checker-b) 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    }
+
+    .crt-overlay {
+      background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%,
+        rgba(0, 0, 0, 0.42) 50%
+      ), linear-gradient(
+        90deg,
+        rgba(255, 0, 0, 0.04),
+        rgba(0, 255, 0, 0.015),
+        rgba(0, 0, 255, 0.04)
+      );
+      background-size: 100% 3px, 6px 100%;
+      box-shadow: inset 0 0 28px rgba(0,0,0,0.65);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--range-track);
+      height: 6px;
+      border-radius: 4px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #10b981;
+      cursor: pointer;
+      border: 2px solid #0b0e14;
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #10b981;
+      cursor: pointer;
+      border: 2px solid #0b0e14;
+    }
+
+    body.mobile-ui input[type="range"] { height: 8px; }
+    body.mobile-ui input[type="range"]::-webkit-slider-thumb { width: 22px; height: 22px; }
+    body.mobile-ui select, body.mobile-ui button { min-height: 38px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-emerald-500 selection:text-slate-950">
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-30 bg-retro-panel/95 backdrop-blur border-b border-retro-border px-3 sm:px-4 py-2.5">
+    <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-2.5">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-lg bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-pixel text-xs shadow-inner shrink-0">
+          8B
+        </div>
+        <div>
+          <div class="flex flex-wrap items-center gap-1.5">
+            <h1 class="font-bold text-sm sm:text-base tracking-tight text-white" data-i18n="appTitle">8-Bit Retro Hardware Studio</h1>
+            <span class="px-1.5 py-0.5 text-[10px] font-mono font-semibold uppercase rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">v2.5</span>
+            <span id="deviceDetectedBadge" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">🖥️ Desktop UI</span>
+          </div>
+          <p class="text-xs text-slate-400 hidden xl:block" data-i18n="appSubtitle">硬件级分辨率 · 真实主机色盘 · 瓦片属性冲突 (Attribute Clash) · GIF 动图防卡顿引擎</p>
+        </div>
+      </div>
+
+      <!-- Top Right Controls -->
+      <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+
+        <!-- UI Complexity Switcher: Simple Mode vs Pro Studio Mode -->
+        <div class="inline-flex items-center bg-retro-bg border border-retro-border rounded-lg p-0.5 text-xs" title="切换界面复杂度">
+          <button id="btnUiModeSimple" class="px-2.5 py-1 rounded-md text-slate-300 hover:text-white transition" data-i18n="modeSimple">✨ 极简模式</button>
+          <button id="btnUiModePro" class="px-2.5 py-1 rounded-md bg-emerald-500 text-slate-950 font-semibold transition" data-i18n="modePro">🛠️ 专业模式</button>
+        </div>
+
+        <!-- Quick Preset Demo Bar -->
+        <div id="demoBarContainer" class="flex items-center bg-retro-bg border border-retro-border rounded-lg p-0.5 text-xs overflow-x-auto max-w-full">
+          <span class="px-2 py-1 text-slate-400 font-medium hidden 2xl:inline" data-i18n="demoLabel">内置演示:</span>
+          <button id="demoBtnSynth" class="px-2 py-1 rounded-md bg-emerald-500/20 text-emerald-300 font-medium transition hover:bg-emerald-500/30 whitespace-nowrap" data-i18n="demoSynth">🌅 落日飞车 (GIF动图)</button>
+          <button id="demoBtnSlime" class="px-2 py-1 rounded-md text-slate-300 hover:bg-slate-800 transition whitespace-nowrap" data-i18n="demoSlime">👾 勇者战史莱姆 (GIF动图)</button>
+          <button id="demoBtnCyber" class="px-2 py-1 rounded-md text-slate-300 hover:bg-slate-800 transition whitespace-nowrap" data-i18n="demoCyber">🏙️ 霓虹街景 (静态图)</button>
+          <button id="demoBtnPortrait" class="px-2 py-1 rounded-md text-slate-300 hover:bg-slate-800 transition whitespace-nowrap" data-i18n="demoPortrait">🎨 色阶测试卡</button>
+        </div>
+
+        <!-- Theme Selector -->
+        <select id="selectThemeMode" aria-label="Theme Mode" class="bg-retro-card hover:bg-slate-700 border border-retro-border rounded-lg px-2 py-1.5 text-xs font-medium text-slate-200 outline-none cursor-pointer">
+          <option value="system" data-i18n="themeSystem">🌗 主题: 跟随系统</option>
+          <option value="dark" selected data-i18n="themeDark">🌙 主题: 黑夜模式</option>
+          <option value="light" data-i18n="themeLight">☀️ 主题: 白天模式</option>
+        </select>
+
+        <!-- Device UI Override Selector -->
+        <select id="selectDeviceMode" aria-label="Device UI Mode" class="bg-retro-card hover:bg-slate-700 border border-retro-border rounded-lg px-2 py-1.5 text-xs font-medium text-slate-200 outline-none cursor-pointer">
+          <option value="auto" selected data-i18n="devAuto">📱/🖥️ 自动识别终端</option>
+          <option value="desktop" data-i18n="devDesktop">🖥️ 桌面端工作台 UI</option>
+          <option value="mobile" data-i18n="devMobile">📱 移动端触控 UI</option>
+        </select>
+
+        <button id="btnArchitectureModal" class="px-2.5 py-1.5 rounded-lg bg-retro-card hover:bg-slate-700 border border-retro-border text-xs font-medium text-slate-200 flex items-center gap-1 transition">
+          <span>⚙️</span>
+          <span class="hidden sm:inline" data-i18n="btnSpecInfo">硬件原理说明</span>
+        </button>
+
+        <button id="btnToggleLang" class="px-2.5 py-1.5 rounded-lg bg-retro-card hover:bg-slate-700 border border-retro-border text-xs font-mono text-emerald-400 transition">
+          中 / EN
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile UI Quick Step Navigation Bar -->
+  <nav id="mobileStepNav" class="hidden sticky top-[57px] z-20 bg-retro-panel border-b border-retro-border px-2 py-1.5">
+    <div class="grid grid-cols-4 gap-1 text-xs">
+      <button data-mobtab="input" class="mob-tab-btn py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-semibold text-center">1. 选图</button>
+      <button data-mobtab="hardware" class="mob-tab-btn py-1.5 rounded-lg text-slate-300 bg-retro-bg text-center">2. 主机/比例</button>
+      <button data-mobtab="dither" class="mob-tab-btn py-1.5 rounded-lg text-slate-300 bg-retro-bg text-center">3. 细节调优</button>
+      <button data-mobtab="export" class="mob-tab-btn py-1.5 rounded-lg text-slate-300 bg-retro-bg text-center">4. 导出成品</button>
+    </div>
+  </nav>
+
+  <!-- Main Workspace Container -->
+  <main id="mainWorkspace" class="flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-4 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+
+    <!-- LEFT COLUMN: Hardware Specs, Dithering & Image Controls (4 cols on lg) -->
+    <aside id="leftSidebar" class="lg:col-span-4 xl:col-span-3 flex flex-col gap-3.5">
+
+      <!-- NEW: Anti-Lag Render Trigger Mode & Static Reference Frame Card -->
+      <section id="secRenderControlCard" class="bg-retro-panel border border-emerald-500/40 rounded-xl p-3.5 shadow-lg space-y-2.5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+            <span>⚡</span>
+            <span data-i18n="secRenderMode">防卡顿渲染与静帧调参</span>
+          </h2>
+          <span id="renderStateBadge" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">已同步</span>
+        </div>
+
+        <div>
+          <label for="selectRenderTriggerMode" class="block text-[11px] text-slate-300 mb-1" data-i18n="lblRenderTrigger">参数调节响应模式 (防卡顿核心设置)</label>
+          <select id="selectRenderTriggerMode" class="w-full bg-retro-bg border border-retro-border focus:border-emerald-500 rounded-lg px-2.5 py-1.5 text-xs text-white font-medium outline-none">
+            <option value="single_preview" selected>🎯 静帧实时调参 + 按钮渲染全帧 (推荐 · 丝滑不卡)</option>
+            <option value="manual_button">🖱️ 纯手动按钮渲染 (改完所有参数后按按钮再算)</option>
+            <option value="auto_realtime">🔄 全帧自动重算 (仅建议小尺寸或静态图使用)</option>
+          </select>
+        </div>
+
+        <!-- Reference Frame Picker for single_preview mode when multi-frame GIF is loaded -->
+        <div id="refFrameSelectorBox" class="bg-retro-bg/80 border border-retro-border rounded-lg p-2 space-y-1.5">
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="text-slate-300" data-i18n="lblRefFrame">当前调参基准静帧:</span>
+            <span id="lblRefFrameVal" class="font-mono text-emerald-400 font-semibold">第 1 帧 / 共 16 帧</span>
+          </div>
+          <input id="rangeRefFrame" type="range" min="0" max="15" value="0" class="w-full">
+          <p class="text-[10px] text-slate-400 leading-tight" data-i18n="refFrameTip">改参数时仅实时计算该静帧（毫秒级响应）；调满意后点下方按钮合成全部动图帧。</p>
+        </div>
+
+        <!-- Action Buttons: Render Current Frame / Render All Frames -->
+        <div class="flex flex-col gap-1.5 pt-0.5">
+          <button id="btnApplyRenderNow" class="w-full py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/15 transition">
+            <span>🚀</span>
+            <span id="txtBtnApplyRender" data-i18n="btnRenderAllNow">应用参数并渲染全部 GIF 帧</span>
+          </button>
+
+          <!-- Inline Progress Bar (Shown during multi-frame or high-res rendering) -->
+          <div id="inlineProgressBox" class="hidden bg-retro-bg border border-retro-border rounded-lg p-2 space-y-1">
+            <div class="flex items-center justify-between text-[11px] font-mono">
+              <span id="inlineProgressText" class="text-emerald-400">正在渲染帧 4/16...</span>
+              <span id="inlineProgressPct" class="text-white font-bold">25%</span>
+            </div>
+            <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div id="inlineProgressBar" class="h-full bg-emerald-500 transition-all duration-75" style="width: 25%;"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 1. File Upload / Input Card -->
+      <section id="secInputCard" class="bg-retro-panel border border-retro-border rounded-xl p-3.5 shadow-lg">
+        <div class="flex items-center justify-between mb-2.5">
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+            <span>01</span>
+            <span data-i18n="secInput">输入图像 / GIF 动图</span>
+          </h2>
+          <span id="inputBadgeInfo" class="text-[11px] font-mono text-slate-400 bg-retro-bg px-2 py-0.5 rounded border border-retro-border">16 Frames GIF</span>
+        </div>
+
+        <label id="dropZone" for="fileInput" class="group cursor-pointer border-2 border-dashed border-retro-border hover:border-emerald-500/60 bg-retro-bg/60 hover:bg-emerald-950/15 rounded-xl p-4 flex flex-col items-center justify-center text-center transition">
+          <div class="w-9 h-9 rounded-full bg-slate-800 group-hover:bg-emerald-500/20 flex items-center justify-center text-lg mb-1.5 transition">
+            📁
+          </div>
+          <p class="text-xs font-medium text-slate-200 group-hover:text-emerald-300" data-i18n="dropPrompt">点击或拖拽上传 PNG / JPG / WebP / GIF</p>
+          <p class="text-[11px] text-slate-400 mt-0.5" data-i18n="dropSub">支持多帧动画 GIF 自动拆帧与硬件级重编码</p>
+          <input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden">
+        </label>
+      </section>
+
+      <!-- 2. Target 8-Bit Hardware Architecture & Multi-Mode Aspect Ratio / Resolution -->
+      <section id="secHardwareCard" class="bg-retro-panel border border-retro-border rounded-xl p-3.5 shadow-lg space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+            <span>02</span>
+            <span data-i18n="secHardware">目标 8-Bit 硬件平台</span>
+          </h2>
+          <span id="hwYearBadge" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">1983 · Ricoh 2C02</span>
+        </div>
+
+        <div>
+          <label for="selectSystem" class="block text-xs text-slate-300 mb-1" data-i18n="lblSystem">选择游戏主机 / 视频芯片规格</label>
+          <select id="selectSystem" class="w-full bg-retro-bg border border-retro-border focus:border-emerald-500 rounded-lg px-2.5 py-2 text-xs text-white font-medium outline-none">
+            <option value="nes">Nintendo FC / NES (256×240 · 54色 · 16×16属性块)</option>
+            <option value="gb">Game Boy DMG-01 (160×144 · 经典4阶橄榄绿)</option>
+            <option value="gb_pocket">Game Boy Pocket (160×144 · 4阶纯灰阶)</option>
+            <option value="gbc">Game Boy Color (160×144 · 8×8瓦片 · 8组4色板)</option>
+            <option value="zx">ZX Spectrum (256×192 · 15色 · 8×8限2色属性冲突)</option>
+            <option value="c64_multi">Commodore 64 Multicolor (160×200宽像素 · 4×8限4色)</option>
+            <option value="c64_hires">Commodore 64 Hi-Res (320×200 · 16色 · 8×8限2色)</option>
+            <option value="msx">MSX / ColecoVision TMS9918A (256×192 · 8×1行限2色)</option>
+            <option value="sms">Sega Master System (256×192 · 64色RGB222 · 双16色板)</option>
+            <option value="apple2">Apple II Hi-Res (140×192宽像素 · 6色NTSC组限制)</option>
+            <option value="pico8">PICO-8 Fantasy Console (128×128 · 16色标准色盘)</option>
+          </select>
+        </div>
+
+        <!-- Aspect Ratio & Resolution Mode Selector -->
+        <div class="space-y-2 pt-1 border-t border-retro-border/60">
+          <div class="flex items-center justify-between">
+            <label for="selectAspectMode" class="text-xs text-slate-300 font-medium" data-i18n="lblAspectMode">生成画幅横纵比 (Aspect Ratio)</label>
+            <span id="origRatioHint" class="text-[10px] font-mono text-cyan-400">原图 16:15</span>
+          </div>
+          <select id="selectAspectMode" class="w-full bg-retro-bg border border-retro-border focus:border-emerald-500 rounded-lg px-2.5 py-2 text-xs text-white outline-none">
+            <optgroup label="经典与原图比例 (Native & Original)">
+              <option value="native" selected>🕹️ 对标主机原生横纵比 (Console Native)</option>
+              <option value="original">🖼️ 按照原图横纵比生成 (Keep Original Ratio)</option>
+            </optgroup>
+            <optgroup label="流媒体与社媒横纵比 (Streaming & Social)">
+              <option value="16:9">📺 16:9 横屏流媒体 (B站 / YouTube / 宽屏复古)</option>
+              <option value="9:16">📱 9:16 竖屏短视频 (抖音 / TikTok / Shorts / 壁纸)</option>
+              <option value="4:3">🖥️ 4:3 经典复古电视 / CRT 标准画幅</option>
+              <option value="1:1">🟩 1:1 正方形 (表情包 / 头像 / INS)</option>
+              <option value="3:4">📕 3:4 竖版图文 (小红书 / 复古海报)</option>
+              <option value="21:9">🎬 21:9 超宽电影画幅 (Ultrawide Cinema)</option>
+            </optgroup>
+            <optgroup label="自由定制 (Custom Ratio & Resolution)">
+              <option value="custom_ratio">📐 输入自定义横纵比 (Custom W : H)</option>
+              <option value="custom_px">🔢 输入自定义横纵像素分辨率 (Custom W × H px)</option>
+            </optgroup>
+          </select>
+
+          <!-- Custom Aspect Ratio Inputs -->
+          <div id="customRatioInputs" class="hidden bg-retro-bg/80 border border-retro-border rounded-lg p-2.5 space-y-1.5">
+            <div class="text-[11px] text-slate-400" data-i18n="lblCustomRatioInput">输入自定义宽高比 (W : H)</div>
+            <div class="flex items-center gap-2">
+              <input id="inputRatioW" type="number" min="1" max="100" step="0.1" value="16" aria-label="Custom Ratio Width" class="w-full bg-retro-panel border border-retro-border rounded px-2 py-1 text-xs font-mono text-white">
+              <span class="font-mono text-slate-400 font-bold">:</span>
+              <input id="inputRatioH" type="number" min="1" max="100" step="0.1" value="10" aria-label="Custom Ratio Height" class="w-full bg-retro-panel border border-retro-border rounded px-2 py-1 text-xs font-mono text-white">
+            </div>
+          </div>
+
+          <!-- Custom Exact Pixel Resolution Inputs -->
+          <div id="customPxInputs" class="hidden bg-retro-bg/80 border border-retro-border rounded-lg p-2.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] text-slate-400" data-i18n="lblCustomPxInput">自定义横纵分辨率 (16 ~ 2560 px)</span>
+              <label class="inline-flex items-center gap-1 text-[10px] text-emerald-400 cursor-pointer">
+                <input id="chkLockCustomPxRatio" type="checkbox" checked class="accent-emerald-500">
+                <span data-i18n="lblLockRatio">锁定原图比例</span>
+              </label>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="flex-1">
+                <span class="text-[10px] text-slate-400 block mb-0.5">宽 Width (px)</span>
+                <input id="inputCustomW" type="number" min="16" max="2560" step="1" value="320" class="w-full bg-retro-panel border border-retro-border rounded px-2 py-1 text-xs font-mono text-white">
+              </div>
+              <span class="font-mono text-slate-400 pt-4">×</span>
+              <div class="flex-1">
+                <span class="text-[10px] text-slate-400 block mb-0.5">高 Height (px)</span>
+                <input id="inputCustomH" type="number" min="16" max="2560" step="1" value="180" class="w-full bg-retro-panel border border-retro-border rounded px-2 py-1 text-xs font-mono text-white">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- UPGRADED: Resolution Multiplier (Preset Dropdown + Direct Manual Number Input!) -->
+        <div id="resScaleAndFitRow" class="space-y-2 pt-1">
+          <div class="grid grid-cols-12 gap-2 items-end">
+            <div class="col-span-7">
+              <label for="selectResScale" class="block text-[11px] text-slate-400 mb-1" data-i18n="lblResMode">分辨率倍数 (快捷档位)</label>
+              <select id="selectResScale" class="w-full bg-retro-bg border border-retro-border rounded-lg px-2 py-1.5 text-xs text-slate-200 outline-none">
+                <option value="0.25">0.25x 极低像素 (Micro)</option>
+                <option value="0.5">0.5x 超低像素风格</option>
+                <option value="0.75">0.75x 紧凑低分风格</option>
+                <option value="1" selected>1.0x 原生硬件基准</option>
+                <option value="1.5">1.5x 高清精细瓦片</option>
+                <option value="2">2.0x 双倍高密像素 (HD)</option>
+                <option value="3">3.0x 三倍超清瓦片</option>
+                <option value="4">4.0x 四倍高分瓦片</option>
+                <option value="6">6.0x 六倍超密像素</option>
+                <option value="8">8.0x 八倍巨幅像素</option>
+                <option value="custom">✏️ 手动输入任意倍数...</option>
+              </select>
+            </div>
+            <div class="col-span-5">
+              <label for="inputManualResScale" class="block text-[11px] text-emerald-400 font-medium mb-1" data-i18n="lblManualScaleInput">手动输入倍数 (x)</label>
+              <div class="relative flex items-center">
+                <input id="inputManualResScale" type="number" min="0.1" max="12" step="0.1" value="1.0" class="w-full bg-retro-bg border border-emerald-500/50 focus:border-emerald-400 rounded-lg pl-2.5 pr-6 py-1.5 text-xs font-mono text-white font-semibold outline-none">
+                <span class="absolute right-2 text-xs font-mono text-emerald-400 pointer-events-none">×</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Custom Resolution Scale Slider (Optional fine-tuning companion) -->
+          <div id="customScaleSliderBox" class="hidden bg-retro-bg/80 border border-retro-border rounded-lg p-2.5">
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-300" data-i18n="lblCustomScale">拖动滑块微调倍数 (0.2x ~ 10.0x)</span>
+              <span id="valCustomResScale" class="font-mono text-emerald-400">1.00x</span>
+            </div>
+            <input id="rangeCustomResScale" type="range" min="0.2" max="10.0" step="0.05" value="1.0" class="w-full">
+          </div>
+
+          <div>
+            <label for="selectFitMode" class="block text-[11px] text-slate-400 mb-1" data-i18n="lblFitMode">画面裁切/适配方式</label>
+            <select id="selectFitMode" class="w-full bg-retro-bg border border-retro-border rounded-lg px-2 py-1.5 text-xs text-slate-200 outline-none">
+              <option value="cover">居中裁切铺满 (Cover)</option>
+              <option value="contain">完整保留加黑边 (Contain)</option>
+              <option value="stretch">强制拉伸适配 (Stretch)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Hardware Specification Summary Pill Box -->
+        <div class="bg-retro-bg/90 border border-retro-border rounded-lg p-2.5 text-[11px] space-y-1.5">
+          <div class="flex justify-between">
+            <span class="text-slate-400" data-i18n="specRes">实际生成分辨率:</span>
+            <span id="specResVal" class="font-mono text-emerald-300 font-bold">256 × 240 (PAR 1:1)</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400" data-i18n="specPal">系统总色盘:</span>
+            <span id="specPalVal" class="font-mono text-slate-200">54 Colors (NTSC 2C02)</span>
+          </div>
+          <div class="flex justify-between items-start gap-2">
+            <span class="text-slate-400 shrink-0" data-i18n="specClash">硬件色块限制:</span>
+            <span id="specClashVal" class="font-mono text-amber-300 text-right">16×16 块选 1 组子色板 (1背景+3色)</span>
+          </div>
+        </div>
+
+        <!-- Hardware Constraint Strictness Mode (Pro Detail) -->
+        <div id="proClashContainer" class="space-y-2 pt-1">
+          <div class="flex items-center justify-between">
+            <label for="selectClashMode" class="text-xs text-slate-300 font-medium" data-i18n="lblClashMode">硬件属性块限制等级</label>
+            <span class="text-[10px] font-mono text-emerald-400" id="clashModeHint">Authentic Tile Clash</span>
+          </div>
+          <select id="selectClashMode" class="w-full bg-retro-bg border border-retro-border rounded-lg px-2.5 py-1.5 text-xs text-slate-200 outline-none">
+            <option value="strict">严格硬件级约束 (模拟真实 Attribute Clash 瓦片限制)</option>
+            <option value="fine_tile">增强芯片级 (如 NES MMC5 8×8 细粒度瓦片属性)</option>
+            <option value="global_palette">仅限制硬件分辨率与全局色盘 (无网格颜色冲突)</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- 3. Dithering & Temporal Stability Engine -->
+      <section id="secDitherCard" class="bg-retro-panel border border-retro-border rounded-xl p-3.5 shadow-lg space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+            <span>03</span>
+            <span data-i18n="secDither">抖动算法与色彩匹配</span>
+          </h2>
+          <span id="ditherStabilityBadge" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">GIF 防闪烁推荐</span>
+        </div>
+
+        <div>
+          <label for="selectDither" class="block text-xs text-slate-300 mb-1" data-i18n="lblDitherAlgo">抖动矩阵 / 误差扩散算法</label>
+          <select id="selectDither" class="w-full bg-retro-bg border border-retro-border rounded-lg px-2.5 py-2 text-xs text-white outline-none">
+            <option value="bayer4">Bayer 4×4 有序矩阵抖动 (经典8-Bit · 动图零噪点闪烁)</option>
+            <option value="bayer2">Bayer 2×2 棋盘格抖动 (FC/GB 最常用纹理)</option>
+            <option value="bayer8">Bayer 8×8 细腻有序抖动 (丰富过渡)</option>
+            <option value="cluster4">Cluster 4×4 网点抖动 (复古印刷感)</option>
+            <option value="scanline">水平扫描线抖动 (CRT 行交错纹理)</option>
+            <option value="floyd">Floyd-Steinberg 误差扩散 (静态图最细腻)</option>
+            <option value="atkinson">Atkinson 误差扩散 (高对比度经典 Mac 风格)</option>
+            <option value="sierra">Sierra Lite 误差扩散 (快速自然扩散)</option>
+            <option value="none">无抖动 (纯色块硬边量化)</option>
+          </select>
+        </div>
+
+        <!-- Dither Strength Slider -->
+        <div>
+          <div class="flex justify-between text-xs mb-1">
+            <span class="text-slate-300" data-i18n="lblDitherStrength">抖动强度 (Dither Spread)</span>
+            <span id="valDitherStrength" class="font-mono text-emerald-400">65%</span>
+          </div>
+          <input id="rangeDitherStrength" type="range" min="0" max="100" value="65" class="w-full">
+        </div>
+
+        <!-- Color Distance Metric -->
+        <div>
+          <label for="selectColorMetric" class="block text-xs text-slate-300 mb-1" data-i18n="lblColorMetric">色彩匹配距离模型</label>
+          <select id="selectColorMetric" class="w-full bg-retro-bg border border-retro-border rounded-lg px-2.5 py-1.5 text-xs text-slate-200 outline-none">
+            <option value="perceptual">人眼感知加权 (Redmean Perceptual RGB)</option>
+            <option value="luma">明度优先匹配 (BT.601 Luma Priority)</option>
+            <option value="euclidean">标准欧氏距离 (Linear sRGB Euclidean)</option>
+          </select>
+        </div>
+
+        <!-- Temporal Palette Lock for GIFs -->
+        <label class="flex items-center justify-between gap-2 pt-1 cursor-pointer select-none bg-retro-bg/60 p-2 rounded-lg border border-retro-border/70">
+          <div>
+            <div class="text-xs font-medium text-slate-200" data-i18n="lblTemporalLock">GIF 跨帧子色板锁定 (防色彩跳变)</div>
+            <div class="text-[10px] text-slate-400" data-i18n="lblTemporalLockSub">基于首帧锁定 NES/C64/GBC 全局硬件子色板，避免动图闪烁</div>
+          </div>
+          <input id="chkTemporalLock" type="checkbox" checked class="w-4 h-4 accent-emerald-500 rounded cursor-pointer">
+        </label>
+      </section>
+
+      <!-- 4. Pre-processing Color Adjustments -->
+      <section id="secAdjustCard" class="bg-retro-panel border border-retro-border rounded-xl p-3.5 shadow-lg space-y-2.5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+            <span>04</span>
+            <span data-i18n="secAdjust">画面预处理调节</span>
+          </h2>
+          <button id="btnResetAdjust" class="text-[11px] text-slate-400 hover:text-emerald-400 transition" data-i18n="btnReset">重置参数</button>
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs mb-1">
+            <span class="text-slate-300" data-i18n="lblBrightness">亮度 (Brightness)</span>
+            <span id="valBrightness" class="font-mono text-slate-300">0</span>
+          </div>
+          <input id="rangeBrightness" type="range" min="-60" max="60" value="0" class="w-full">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs mb-1">
+            <span class="text-slate-300" data-i18n="lblContrast">对比度 (Contrast)</span>
+            <span id="valContrast" class="font-mono text-slate-300">+10</span>
+          </div>
+          <input id="rangeContrast" type="range" min="-50" max="80" value="10" class="w-full">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs mb-1">
+            <span class="text-slate-300" data-i18n="lblSaturation">饱和度 (Saturation)</span>
+            <span id="valSaturation" class="font-mono text-slate-300">+15%</span>
+          </div>
+          <input id="rangeSaturation" type="range" min="-100" max="100" value="15" class="w-full">
+        </div>
+      </section>
+
+      <!-- Simple Mode Hint Banner -->
+      <div id="simpleModeBanner" class="hidden bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-xs flex items-center justify-between gap-2">
+        <span class="text-slate-300" data-i18n="simpleBannerText">当前为极简模式，已自动配置最优防闪烁抖动与调色参数。</span>
+        <button id="btnExpandProFromBanner" class="px-2.5 py-1 rounded-lg bg-emerald-500 text-slate-950 font-semibold shrink-0" data-i18n="btnSwitchPro">展开高级调节</button>
+      </div>
+
+    </aside>
+
+    <!-- RIGHT COLUMN: Interactive Viewport, Timeline, Tile Inspector & Export (8 cols on lg) -->
+    <section id="rightViewportCol" class="lg:col-span-8 xl:col-span-9 flex flex-col gap-4">
+
+      <!-- Canvas Viewport Card -->
+      <div class="bg-retro-panel border border-retro-border rounded-xl p-3.5 sm:p-4 shadow-lg flex flex-col gap-3">
+
+        <!-- Viewport Toolbar -->
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-retro-border">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <div class="inline-flex rounded-lg bg-retro-bg p-0.5 border border-retro-border text-xs">
+              <button id="viewModeOutput" class="px-2.5 py-1 rounded-md bg-emerald-500 text-slate-950 font-semibold transition" data-i18n="viewSingle">8-Bit 硬件画面</button>
+              <button id="viewModeSide" class="px-2.5 py-1 rounded-md text-slate-300 hover:text-white transition" data-i18n="viewSide">双栏对比</button>
+              <button id="viewModeSplit" class="px-2.5 py-1 rounded-md text-slate-300 hover:text-white transition" data-i18n="viewSplit">滑动对比</button>
+            </div>
+
+            <div class="inline-flex items-center rounded-lg bg-retro-bg px-2 py-1 border border-retro-border text-xs gap-1.5">
+              <span class="text-slate-400" data-i18n="lblZoom">视图缩放:</span>
+              <button data-zoom="fit" class="zoom-btn px-1.5 py-0.5 rounded bg-slate-700 text-white font-mono">Fit</button>
+              <button data-zoom="1" class="zoom-btn px-1.5 py-0.5 rounded text-slate-400 hover:text-white font-mono">1x</button>
+              <button data-zoom="2" class="zoom-btn px-1.5 py-0.5 rounded text-slate-400 hover:text-white font-mono">2x</button>
+              <button data-zoom="3" class="zoom-btn px-1.5 py-0.5 rounded text-slate-400 hover:text-white font-mono">3x</button>
+            </div>
+          </div>
+
+          <!-- Visual Overlays: Tile Grid & CRT -->
+          <div class="flex flex-wrap items-center gap-2">
+            <label class="inline-flex items-center gap-1.5 text-xs bg-retro-bg px-2.5 py-1 rounded-lg border border-retro-border cursor-pointer select-none">
+              <input id="chkShowGrid" type="checkbox" class="accent-emerald-500 rounded cursor-pointer">
+              <span class="text-slate-200" data-i18n="lblShowGrid">显示硬件属性网格</span>
+            </label>
+
+            <label class="inline-flex items-center gap-1.5 text-xs bg-retro-bg px-2.5 py-1 rounded-lg border border-retro-border cursor-pointer select-none">
+              <input id="chkCRT" type="checkbox" class="accent-emerald-500 rounded cursor-pointer">
+              <span class="text-slate-200" data-i18n="lblCRT">CRT 扫描线滤镜</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Pending Full-GIF Render Notice Bar (Shown when user adjusted params on a single preview frame) -->
+        <div id="pendingFramesBanner" class="hidden bg-amber-500/15 border border-amber-500/40 rounded-lg px-3 py-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div class="flex items-center gap-2 text-amber-300">
+            <span>⚡</span>
+            <span id="pendingBannerMsg" data-i18n="msgPendingFrames">当前仅实时预览了调参静帧（防卡顿模式），其余动画帧待渲染。</span>
+          </div>
+          <button id="btnRenderAllFromBanner" class="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition shrink-0" data-i18n="btnRenderAllBanner">立即渲染全部动画帧</button>
+        </div>
+
+        <!-- Main Canvas Stage -->
+        <div id="canvasStage" class="relative checkerboard rounded-xl border border-retro-border min-h-[280px] sm:min-h-[420px] flex items-center justify-center p-3 overflow-auto select-none">
+
+          <!-- Side-by-Side Original Container -->
+          <div id="origContainer" class="hidden flex-col items-center gap-1.5 mr-4">
+            <span class="text-[11px] font-mono uppercase tracking-wider text-slate-400 bg-retro-panel/90 px-2 py-0.5 rounded border border-retro-border" data-i18n="lblOrigPreview">原始输入画面</span>
+            <canvas id="canvasOriginal" class="rounded border border-slate-700 shadow-lg max-w-full h-auto"></canvas>
+          </div>
+
+          <!-- 8-Bit Hardware Output Wrapper -->
+          <div id="outputWrapper" class="relative inline-flex flex-col items-center gap-1.5">
+            <span id="outputTopLabel" class="hidden text-[11px] font-mono uppercase tracking-wider text-emerald-400 bg-retro-panel/90 px-2 py-0.5 rounded border border-emerald-500/30" data-i18n="lblRetroPreview">8-Bit 硬件渲染输出</span>
+
+            <div id="canvasStack" class="relative inline-block shadow-2xl rounded overflow-hidden border border-slate-700/80">
+              <canvas id="canvasOutput" class="pixelated block"></canvas>
+              <canvas id="canvasSplitOrig" class="hidden absolute top-0 left-0 pointer-events-none"></canvas>
+              <div id="splitHandle" class="hidden absolute top-0 bottom-0 w-0.5 bg-emerald-400 shadow-[0_0_8px_#10b981] cursor-ew-resize z-20" style="left: 50%;">
+                <div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-xs font-bold shadow-md">⇄</div>
+              </div>
+              <canvas id="canvasOverlay" class="pixelated absolute top-0 left-0 pointer-events-none"></canvas>
+              <div id="crtOverlayDiv" class="hidden crt-overlay absolute inset-0 pointer-events-none z-10"></div>
+            </div>
+          </div>
+
+          <!-- UPGRADED: Interactive Progress Bar Overlay with Percentage & Cancel Button -->
+          <div id="loadingOverlay" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-6">
+            <div class="bg-retro-panel border border-retro-border rounded-2xl p-5 max-w-sm w-full shadow-2xl space-y-3 text-center">
+              <div class="flex items-center justify-between text-xs font-mono">
+                <span id="loadingText" class="text-emerald-400 font-semibold truncate">正在量化 GIF 帧...</span>
+                <span id="loadingPercent" class="text-white font-bold text-sm">0%</span>
+              </div>
+              <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                <div id="loadingProgressBarFill" class="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 transition-all duration-100" style="width: 0%;"></div>
+              </div>
+              <div class="flex items-center justify-between pt-1">
+                <span id="loadingSubDetail" class="text-[11px] font-mono text-slate-400">异步非阻塞管线运行中</span>
+                <button id="btnCancelTask" class="px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-medium transition">⏹ 取消</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Hardware Tile Inspector & Stats Footer Bar -->
+        <div class="bg-retro-bg border border-retro-border rounded-lg p-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="flex flex-wrap items-center gap-4">
+            <div>
+              <span class="text-slate-400" data-i18n="statOutputRes">当前生成尺寸:</span>
+              <span id="statResText" class="font-mono text-white font-semibold ml-1">256 × 240</span>
+            </div>
+            <div>
+              <span class="text-slate-400" data-i18n="statUsedColors">当前帧实际用色:</span>
+              <span id="statColorsText" class="font-mono text-emerald-400 font-semibold ml-1">13 Colors</span>
+            </div>
+            <div>
+              <span class="text-slate-400" data-i18n="statBlockRule">属性块规格:</span>
+              <span id="statBlockText" class="font-mono text-amber-300 ml-1">16×16 px (Max 4 Colors/Block)</span>
+            </div>
+          </div>
+
+          <div id="tileInspectorPill" class="flex items-center gap-2 bg-retro-panel px-2.5 py-1 rounded border border-retro-border">
+            <span class="text-slate-400 font-mono text-[11px]" id="inspectorCoords">Tile: --</span>
+            <div id="inspectorSwatches" class="flex items-center gap-1">
+              <span class="text-[11px] text-slate-400" data-i18n="inspectorHint">鼠标悬停画布查看瓦片属性色板</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- GIF Animation Timeline Controller -->
+        <div id="gifTimelineBar" class="bg-retro-bg border border-retro-border rounded-lg p-2.5 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-1.5">
+            <button id="btnPlayPause" class="px-3 py-1 rounded-md bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs flex items-center gap-1 transition">
+              <span id="iconPlayPause">⏸</span>
+              <span id="txtPlayPause" data-i18n="btnPause">暂停</span>
+            </button>
+            <button id="btnPrevFrame" class="px-2 py-1 rounded-md bg-retro-card hover:bg-slate-700 text-slate-200 text-xs font-mono border border-retro-border" title="Previous Frame">⏮</button>
+            <button id="btnNextFrame" class="px-2 py-1 rounded-md bg-retro-card hover:bg-slate-700 text-slate-200 text-xs font-mono border border-retro-border" title="Next Frame">⏭</button>
+            <span id="lblFrameCounter" class="text-xs font-mono text-emerald-400 ml-1.5">Frame 1 / 16</span>
+          </div>
+
+          <div class="flex-1 min-w-[140px] max-w-md flex items-center gap-2">
+            <input id="rangeFrameScrub" type="range" min="0" max="15" value="0" class="w-full">
+          </div>
+
+          <div class="flex items-center gap-2 text-xs">
+            <label for="selectGifSpeed" class="text-slate-400" data-i18n="lblSpeed">速率:</label>
+            <select id="selectGifSpeed" class="bg-retro-panel border border-retro-border rounded px-2 py-1 text-xs font-mono text-slate-200 outline-none">
+              <option value="0.5">0.5x</option>
+              <option value="1" selected>1.0x</option>
+              <option value="1.5">1.5x</option>
+              <option value="2">2.0x</option>
+            </select>
+
+            <label for="selectFrameStep" class="text-slate-400 ml-1" data-i18n="lblFrameStep">抽帧:</label>
+            <select id="selectFrameStep" class="bg-retro-panel border border-retro-border rounded px-2 py-1 text-xs font-mono text-slate-200 outline-none">
+              <option value="1" selected>全帧 (1x)</option>
+              <option value="2">每2帧取1 (复古帧率)</option>
+              <option value="3">每3帧取1 (低帧率8-Bit)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Grid: Active Hardware Palettes & Export Studio -->
+      <div id="bottomStudioGrid" class="grid grid-cols-1 xl:grid-cols-12 gap-4">
+
+        <!-- Hardware Sub-Palettes & System Master Palette Visualizer (7 cols) -->
+        <div id="secPalInspectorCard" class="xl:col-span-7 bg-retro-panel border border-retro-border rounded-xl p-3.5 shadow-lg flex flex-col justify-between gap-3">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-emerald-400" data-i18n="secPalInspector">当前激活硬件子色板与系统色盘</h3>
+              <button id="btnCopyPaletteHex" class="text-[11px] font-mono text-slate-300 hover:text-emerald-400 bg-retro-bg px-2 py-0.5 rounded border border-retro-border transition" data-i18n="btnCopyHex">📋 复制当前色板 HEX</button>
+            </div>
+
+            <div id="subPalettesContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3"></div>
+          </div>
+
+          <div class="border-t border-retro-border pt-2.5">
+            <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1.5">
+              <span data-i18n="lblMasterPalette">硬件全局系统色盘 (Master Hardware ROM Palette)</span>
+              <span id="masterPaletteCount" class="font-mono">54 Colors</span>
+            </div>
+            <div id="masterPaletteStrip" class="flex flex-wrap gap-1"></div>
+          </div>
+        </div>
+
+        <!-- UPGRADED: Export & Download Center (Supports 1:1 Match with Configured Res + Custom Export Scale!) -->
+        <div id="secExportCard" class="xl:col-span-5 bg-retro-panel border border-retro-border rounded-xl p-3.5 shadow-lg flex flex-col justify-between gap-3">
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-emerald-400" data-i18n="secExport">导出 8-Bit 图像与动画成品</h3>
+              <span id="exportFinalResPreview" class="text-[11px] font-mono font-bold text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">最终导出: 256 × 240 px</span>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-end">
+              <div class="col-span-7">
+                <label for="selectExportScale" class="block text-[11px] text-slate-400 mb-1" data-i18n="lblExportScale">导出尺寸与放大倍数</label>
+                <select id="selectExportScale" class="w-full bg-retro-bg border border-retro-border rounded-lg px-2 py-1.5 text-xs text-white font-mono outline-none">
+                  <option value="1" selected>🎯 1x (1:1 严格匹配设定分辨率)</option>
+                  <option value="2">2x (在设定分辨率上放大2倍)</option>
+                  <option value="3">3x (在设定分辨率上放大3倍)</option>
+                  <option value="4">4x (在设定分辨率上放大4倍)</option>
+                  <option value="6">6x (6倍超清像素锐利放大)</option>
+                  <option value="8">8x (8倍巨幅海报像素放大)</option>
+                  <option value="10">10x (10倍极限锐利放大)</option>
+                  <option value="custom">✏️ 手动输入导出放大倍数...</option>
+                </select>
+              </div>
+              <div class="col-span-5">
+                <label for="inputCustomExportScale" class="block text-[11px] text-emerald-400 font-medium mb-1" data-i18n="lblCustomExportMult">手动导出倍数</label>
+                <div class="relative flex items-center">
+                  <input id="inputCustomExportScale" type="number" min="1" max="20" step="1" value="1" class="w-full bg-retro-bg border border-emerald-500/50 rounded-lg pl-2.5 pr-6 py-1.5 text-xs font-mono text-white font-semibold outline-none">
+                  <span class="absolute right-2 text-xs font-mono text-emerald-400 pointer-events-none">×</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label for="selectExportCrt" class="block text-[11px] text-slate-400 mb-1" data-i18n="lblExportCrt">扫描线效果导出</label>
+              <select id="selectExportCrt" class="w-full bg-retro-bg border border-retro-border rounded-lg px-2.5 py-1.5 text-xs text-white outline-none">
+                <option value="clean" selected>纯净像素块 (不带扫描线)</option>
+                <option value="crt">嵌入 CRT 扫描线质感 (需导出倍数 ≥ 2x)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+            <button id="btnExportGif" class="px-3 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/15 transition">
+              <span>🎞️</span>
+              <span data-i18n="btnExportGif">导出 8-Bit GIF 动图</span>
+            </button>
+
+            <button id="btnExportPng" class="px-3 py-2.5 rounded-xl bg-retro-card hover:bg-slate-700 text-white font-semibold text-xs border border-retro-border flex items-center justify-center gap-1.5 transition">
+              <span>🖼️</span>
+              <span data-i18n="btnExportPng">导出当前帧 PNG</span>
+            </button>
+
+            <button id="btnExportSheet" class="pro-export-btn px-3 py-2 rounded-xl bg-retro-bg hover:bg-slate-800 text-slate-200 text-xs border border-retro-border flex items-center justify-center gap-1.5 transition">
+              <span>🧩</span>
+              <span data-i18n="btnExportSheet">导出序列帧精灵表 (Sprite Sheet)</span>
+            </button>
+
+            <button id="btnExportJson" class="pro-export-btn px-3 py-2 rounded-xl bg-retro-bg hover:bg-slate-800 text-slate-200 text-xs border border-retro-border flex items-center justify-center gap-1.5 transition">
+              <span>📄</span>
+              <span data-i18n="btnExportJson">导出硬件色板与瓦片数据 JSON</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Hardware Architecture Reference Modal -->
+  <div id="modalSpec" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-retro-panel border border-retro-border rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-retro-border flex items-center justify-between">
+        <h3 class="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+          <span>🕹️</span>
+          <span data-i18n="modalTitle">为什么真正的 8-Bit 风格不只是“打马赛克”？</span>
+        </h3>
+        <button id="btnCloseModal" class="w-7 h-7 rounded-lg bg-retro-card hover:bg-slate-700 text-slate-300 flex items-center justify-center text-sm">✕</button>
+      </div>
+      <div class="p-5 overflow-y-auto space-y-4 text-xs sm:text-sm text-slate-300 leading-relaxed">
+        <p>
+          市面上大多数“像素化工具”仅仅是将图片缩小后再放大，或者做一次全图 256 色转换。但当年真正的 8-Bit 游戏主机受限于显存（VRAM 往往只有 2KB~16KB），采用了极其严苛的<strong>基于瓦片属性表（Attribute Table / Color Clash）</strong>的渲染架构：
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="bg-retro-bg p-3 rounded-xl border border-retro-border">
+            <div class="font-bold text-emerald-400 mb-1">1. 任天堂 FC / NES (Ricoh 2C02)</div>
+            <p class="text-xs text-slate-400">原生 256×240 分辨率。硬件虽然内置 54 种颜色，但背景被划分为 <strong>16×16 像素的属性块（Attribute Block）</strong>。全屏只能定义 4 组背景子色板，每个 16×16 区域只能选择其中 1 组（即 1 个全屏共享底色 + 3 种区域私有色）。</p>
+          </div>
+          <div class="bg-retro-bg p-3 rounded-xl border border-retro-border">
+            <div class="font-bold text-amber-400 mb-1">2. ZX Spectrum (8×8 属性冲突)</div>
+            <p class="text-xs text-slate-400">原生 256×192。为了把整屏显存压缩到 6.75KB，每个 <strong>8×8 像素网格</strong>只分配了 1 个字节的颜色属性——意味着每个 8×8 方格内严格只能出现 2 种颜色（INK 前景色与 PAPER 背景色）。</p>
+          </div>
+          <div class="bg-retro-bg p-3 rounded-xl border border-retro-border">
+            <div class="font-bold text-cyan-400 mb-1">3. Commodore 64 (VIC-II 芯片)</div>
+            <p class="text-xs text-slate-400">Multicolor 模式下分辨率为 160×200（2:1 宽像素），每个 <strong>4×8 宽像素块</strong>最多包含 4 种颜色（3 种全屏共享寄存器色 + 1 种块独立 Color RAM 色）。</p>
+          </div>
+          <div class="bg-retro-bg p-3 rounded-xl border border-retro-border">
+            <div class="font-bold text-rose-400 mb-1">4. 静帧调参 + 异步进度管线</div>
+            <p class="text-xs text-slate-400">针对多帧 GIF 或高倍分辨率大图，支持先锁定单张静帧进行毫秒级丝滑调参，满意后通过异步分片进度条渲染全部帧，彻底消除浏览器卡顿。</p>
+          </div>
+        </div>
+      </div>
+      <div class="px-5 py-3 border-t border-retro-border bg-retro-bg flex justify-end">
+        <button id="btnCloseModalBottom" class="px-4 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-semibold text-xs hover:bg-emerald-400 transition">我知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastBox" class="fixed bottom-4 right-4 z-50 pointer-events-none opacity-0 translate-y-2 transition-all duration-200 bg-emerald-500 text-slate-950 font-semibold text-xs px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2">
+    <span>✓</span>
+    <span id="toastMsg">操作成功</span>
+  </div>
+
+  <script>
+    /*************************************************************************
+     * 1. HARDWARE SYSTEMS DATABASE (Exact Palettes, Resolutions & Tile Rules)
+     *************************************************************************/
+    const HARDWARE_SYSTEMS = {
+      nes: {
+        id: 'nes',
+        name: 'Nintendo FC / NES (Ricoh 2C02)',
+        year: '1983 · Ricoh 2C02 PPU',
+        width: 256,
+        height: 240,
+        par: 1,
+        blockW: 16,
+        blockH: 16,
+        fineBlockW: 8,
+        fineBlockH: 8,
+        ruleDescZh: '16×16 属性块选 1 组子色板 (1共享背景色 + 4×3色)',
+        ruleDescEn: '16×16 Attribute Block picks 1 of 4 Sub-Palettes (1 shared BG + 3 colors)',
+        palDesc: '54 Colors (NTSC 2C02 Hardware ROM)',
+        clashType: 'nes_subpalettes',
+        palette: [
+          [84,84,84], [0,30,116], [8,16,144], [48,0,136], [68,0,100], [92,0,48], [84,4,0], [60,24,0],
+          [32,42,0], [8,58,0], [0,64,0], [0,60,0], [0,50,60], [0,0,0],
+          [152,150,152], [8,76,196], [48,50,236], [92,30,228], [136,20,176], [160,20,100], [152,34,32], [120,60,0],
+          [84,90,0], [40,114,0], [8,124,0], [0,118,40], [0,102,120],
+          [236,238,236], [76,154,236], [120,124,236], [176,98,236], [228,84,236], [236,88,180], [236,106,100], [212,136,32],
+          [160,170,0], [116,196,0], [76,208,32], [56,204,108], [56,180,204], [60,60,60],
+          [168,204,236], [188,188,236], [212,178,236], [236,174,236], [236,174,212], [236,180,176], [228,196,144],
+          [204,210,120], [180,222,120], [168,226,144], [152,226,180], [160,214,228], [160,162,160]
+        ]
+      },
+      gb: {
+        id: 'gb',
+        name: 'Game Boy Classic (DMG-01)',
+        year: '1989 · Sharp LR35902',
+        width: 160,
+        height: 144,
+        par: 1,
+        blockW: 8,
+        blockH: 8,
+        fineBlockW: 8,
+        fineBlockH: 8,
+        ruleDescZh: '8×8 瓦片 · 全屏固定 4 阶 DMG 橄榄绿',
+        ruleDescEn: '8×8 Tiles · Fixed 4-Shade DMG Olive Green',
+        palDesc: '4 Shades (2-bit Monochrome LCD)',
+        clashType: 'fixed_4',
+        palette: [
+          [15, 56, 15],
+          [48, 98, 48],
+          [139, 172, 15],
+          [155, 188, 15]
+        ]
+      },
+      gb_pocket: {
+        id: 'gb_pocket',
+        name: 'Game Boy Pocket (MGB-001)',
+        year: '1996 · Sharp LR35902',
+        width: 160,
+        height: 144,
+        par: 1,
+        blockW: 8,
+        blockH: 8,
+        fineBlockW: 8,
+        fineBlockH: 8,
+        ruleDescZh: '8×8 瓦片 · 全屏固定 4 阶黑白灰阶',
+        ruleDescEn: '8×8 Tiles · Fixed 4-Shade Grayscale',
+        palDesc: '4 Shades (2-bit Neutral Grayscale)',
+        clashType: 'fixed_4',
+        palette: [
+          [20, 24, 20],
+          [86, 94, 86],
+          [162, 170, 162],
+          [232, 238, 232]
+        ]
+      },
+      gbc: {
+        id: 'gbc',
+        name: 'Game Boy Color (CGB)',
+        year: '1998 · CGB RGB555',
+        width: 160,
+        height: 144,
+        par: 1,
+        blockW: 8,
+        blockH: 8,
+        fineBlockW: 8,
+        fineBlockH: 8,
+        ruleDescZh: '8×8 瓦片 · 8 组 4 色背景子色板 (RGB555 量化)',
+        ruleDescEn: '8×8 Tiles · 8 Sub-Palettes of 4 Colors (15-bit RGB555)',
+        palDesc: '32 Active out of 32,768 (RGB555)',
+        clashType: 'gbc_subpalettes',
+        palette: (function() {
+          const pal = [];
+          const levels = [0, 82, 173, 255];
+          for (let r of levels) {
+            for (let g of levels) {
+              for (let b of levels) {
+                pal.push([r, g, b]);
+              }
+            }
+          }
+          return pal;
+        })()
+      },
+      zx: {
+        id: 'zx',
+        name: 'Sinclair ZX Spectrum',
+        year: '1982 · Ferranti ULA',
+        width: 256,
+        height: 192,
+        par: 1,
+        blockW: 8,
+        blockH: 8,
+        fineBlockW: 8,
+        fineBlockH: 4,
+        ruleDescZh: '8×8 属性网格内严格限 2 色 (INK + PAPER 同亮度位)',
+        ruleDescEn: '8×8 Attribute Clash: Max 2 Colors (INK + PAPER) per 8×8 cell',
+        palDesc: '15 Colors (7 Hues × Normal/Bright + Black)',
+        clashType: 'zx_clash',
+        palette: [
+          [0, 0, 0], [0, 0, 215], [215, 0, 0], [215, 0, 215],
+          [0, 215, 0], [0, 215, 215], [215, 215, 0], [215, 215, 215],
+          [0, 0, 0], [0, 0, 255], [255, 0, 0], [255, 0, 255],
+          [0, 255, 0], [0, 255, 255], [255, 255, 0], [255, 255, 255]
+        ]
+      },
+      c64_multi: {
+        id: 'c64_multi',
+        name: 'Commodore 64 (Multicolor)',
+        year: '1982 · MOS VIC-II',
+        width: 160,
+        height: 200,
+        par: 2,
+        blockW: 4,
+        blockH: 8,
+        fineBlockW: 4,
+        fineBlockH: 4,
+        ruleDescZh: '4×8 宽像素块限 4 色 (3 全屏共享色 + 1 块独立色)',
+        ruleDescEn: '4×8 Wide-Pixel Block: 3 Global Shared Colors + 1 Color RAM per block',
+        palDesc: '16 Colors (Pepto/Colodore VIC-II)',
+        clashType: 'c64_multicolor',
+        palette: [
+          [0, 0, 0], [255, 255, 255], [136, 0, 0], [170, 255, 238],
+          [204, 68, 204], [0, 204, 85], [0, 0, 170], [238, 238, 119],
+          [221, 136, 85], [102, 68, 0], [255, 119, 119], [51, 51, 51],
+          [119, 119, 119], [170, 255, 102], [0, 136, 255], [187, 187, 187]
+        ]
+      },
+      c64_hires: {
+        id: 'c64_hires',
+        name: 'Commodore 64 (Hi-Res Mode)',
+        year: '1982 · MOS VIC-II',
+        width: 320,
+        height: 200,
+        par: 1,
+        blockW: 8,
+        blockH: 8,
+        fineBlockW: 8,
+        fineBlockH: 4,
+        ruleDescZh: '8×8 像素块严格限 2 色 (从 16 色 VIC-II 色盘任选 2 色)',
+        ruleDescEn: '8×8 Pixel Block: Max 2 Colors per 8×8 cell out of 16 VIC-II colors',
+        palDesc: '16 Colors (Pepto/Colodore VIC-II)',
+        clashType: 'two_color_block',
+        palette: [
+          [0, 0, 0], [255, 255, 255], [136, 0, 0], [170, 255, 238],
+          [204, 68, 204], [0, 204, 85], [0, 0, 170], [238, 238, 119],
+          [221, 136, 85], [102, 68, 0], [255, 119, 119], [51, 51, 51],
+          [119, 119, 119], [170, 255, 102], [0, 136, 255], [187, 187, 187]
+        ]
+      },
+      msx: {
+        id: 'msx',
+        name: 'MSX / ColecoVision (TMS9918A)',
+        year: '1982 · TI TMS9918A Mode 2',
+        width: 256,
+        height: 192,
+        par: 1,
+        blockW: 8,
+        blockH: 1,
+        fineBlockW: 8,
+        fineBlockH: 1,
+        ruleDescZh: '8×1 水平扫描线段内严格限 2 色 (经典行属性冲突)',
+        ruleDescEn: '8×1 Horizontal Strip: Max 2 Colors per 8×1 pixel byte',
+        palDesc: '15 Colors (TMS9918A VDP)',
+        clashType: 'two_color_block',
+        palette: [
+          [0, 0, 0], [33, 200, 66], [94, 220, 120], [84, 85, 237],
+          [125, 118, 252], [212, 82, 77], [66, 235, 245], [252, 85, 84],
+          [255, 121, 120], [212, 193, 84], [230, 206, 128], [33, 176, 59],
+          [201, 91, 186], [204, 204, 204], [255, 255, 255]
+        ]
+      },
+      sms: {
+        id: 'sms',
+        name: 'Sega Master System (Mark III)',
+        year: '1985 · Sega VDP',
+        width: 256,
+        height: 192,
+        par: 1,
+        blockW: 8,
+        blockH: 8,
+        fineBlockW: 8,
+        fineBlockH: 8,
+        ruleDescZh: '8×8 瓦片 · 从 64 色主色盘提取 2 组 16 色硬件调色板',
+        ruleDescEn: '8×8 Tiles · 2 Sub-Palettes of 16 Colors from 64-color RGB222',
+        palDesc: '64 Master Colors (6-bit RGB222)',
+        clashType: 'sms_subpalettes',
+        palette: (function() {
+          const pal = [];
+          const lv = [0, 85, 170, 255];
+          for (let r of lv) for (let g of lv) for (let b of lv) pal.push([r, g, b]);
+          return pal;
+        })()
+      },
+      apple2: {
+        id: 'apple2',
+        name: 'Apple II (Hi-Res NTSC Artifact)',
+        year: '1977 · Wozniak Hi-Res Circuit',
+        width: 140,
+        height: 192,
+        par: 2,
+        blockW: 7,
+        blockH: 1,
+        fineBlockW: 7,
+        fineBlockH: 1,
+        ruleDescZh: '7×1 像素组必须从 [黑/白/绿/紫] 或 [黑/白/橙/蓝] 二选一',
+        ruleDescEn: '7×1 Byte Group: Cannot mix Green/Violet with Orange/Blue in same 7×1 block',
+        palDesc: '6 Colors (NTSC Phase Artifact)',
+        clashType: 'apple2_clash',
+        palette: [
+          [0, 0, 0],
+          [255, 255, 255],
+          [32, 192, 32],
+          [160, 48, 240],
+          [240, 96, 16],
+          [16, 128, 240]
+        ]
+      },
+      pico8: {
+        id: 'pico8',
+        name: 'PICO-8 Fantasy Console',
+        year: '2015 · Lexaloffle 8-Bit Spec',
+        width: 128,
+        height: 128,
+        par: 1,
+        blockW: 8,
+        blockH: 8,
+        fineBlockW: 8,
+        fineBlockH: 8,
+        ruleDescZh: '128×128 方屏 · 16 色经典固定色盘 (每 8×8 块限 4 色)',
+        ruleDescEn: '128×128 Square · 16 Fixed Colors (Max 4 colors per 8×8 tile in strict mode)',
+        palDesc: '16 Iconic PICO-8 Colors',
+        clashType: 'pico8_tiles',
+        palette: [
+          [0, 0, 0], [29, 43, 83], [126, 37, 83], [0, 135, 81],
+          [171, 82, 54], [95, 87, 79], [194, 195, 199], [255, 241, 232],
+          [255, 0, 77], [255, 163, 0], [255, 236, 39], [0, 228, 54],
+          [41, 173, 255], [131, 118, 156], [255, 119, 168], [255, 204, 170]
+        ]
+      }
+    };
+
+    /*************************************************************************
+     * 2. ORDERED DITHERING MATRICES
+     *************************************************************************/
+    const BAYER_2X2 = [
+      [0, 2],
+      [3, 1]
+    ];
+    const BAYER_4X4 = [
+      [ 0,  8,  2, 10],
+      [12,  4, 14,  6],
+      [ 3, 11,  1,  9],
+      [15,  7, 13,  5]
+    ];
+    const BAYER_8X8 = [
+      [ 0, 32,  8, 40,  2, 34, 10, 42],
+      [48, 16, 56, 24, 50, 18, 58, 26],
+      [12, 44,  4, 36, 14, 46,  6, 38],
+      [60, 28, 52, 20, 62, 30, 54, 22],
+      [ 3, 35, 11, 43,  1, 33,  9, 41],
+      [51, 19, 59, 27, 49, 17, 57, 25],
+      [15, 47,  7, 39, 13, 45,  5, 37],
+      [63, 31, 55, 23, 61, 29, 53, 21]
+    ];
+    const CLUSTER_4X4 = [
+      [12,  5,  6, 13],
+      [ 4,  0,  1,  7],
+      [11,  3,  2,  8],
+      [15, 10,  9, 14]
+    ];
+
+    /*************************************************************************
+     * 3. PURE-JS BINARY GIF89a ENCODER (LZW Compression + Looping Extension)
+     *************************************************************************/
+    class Gif89Encoder {
+      constructor(width, height, globalPaletteRgb) {
+        this.width = width;
+        this.height = height;
+        this.bytes = [];
+        let pow2 = 2;
+        while (pow2 < globalPaletteRgb.length && pow2 < 256) pow2 <<= 1;
+        this.paletteSize = pow2;
+        this.colorDepth = Math.max(2, Math.log2(pow2));
+        this.palette = [];
+        for (let i = 0; i < pow2; i++) {
+          const c = globalPaletteRgb[i] || [0, 0, 0];
+          this.palette.push(c[0], c[1], c[2]);
+        }
+        this.writeHeader();
+      }
+
+      writeByte(b) { this.bytes.push(b & 0xff); }
+      writeShort(v) { this.writeByte(v & 0xff); this.writeByte((v >> 8) & 0xff); }
+      writeString(s) { for (let i = 0; i < s.length; i++) this.writeByte(s.charCodeAt(i)); }
+
+      writeHeader() {
+        this.writeString('GIF89a');
+        this.writeShort(this.width);
+        this.writeShort(this.height);
+        const gctFlag = 0x80 | ((this.colorDepth - 1) << 4) | (this.colorDepth - 1);
+        this.writeByte(gctFlag);
+        this.writeByte(0);
+        this.writeByte(0);
+        for (let i = 0; i < this.palette.length; i++) {
+          this.writeByte(this.palette[i]);
+        }
+        this.writeByte(0x21);
+        this.writeByte(0xff);
+        this.writeByte(11);
+        this.writeString('NETSCAPE2.0');
+        this.writeByte(3);
+        this.writeByte(1);
+        this.writeShort(0);
+        this.writeByte(0);
+      }
+
+      addFrame(indexedPixels, delayMs = 80) {
+        this.writeByte(0x21);
+        this.writeByte(0xf9);
+        this.writeByte(4);
+        this.writeByte(0x04);
+        this.writeShort(Math.max(2, Math.round(delayMs / 10)));
+        this.writeByte(0);
+        this.writeByte(0);
+
+        this.writeByte(0x2c);
+        this.writeShort(0);
+        this.writeShort(0);
+        this.writeShort(this.width);
+        this.writeShort(this.height);
+        this.writeByte(0);
+
+        const minCodeSize = Math.max(2, this.colorDepth);
+        this.writeByte(minCodeSize);
+        this.lzwEncode(indexedPixels, minCodeSize);
+        this.writeByte(0);
+      }
+
+      lzwEncode(indexStream, minCodeSize) {
+        const clearCode = 1 << minCodeSize;
+        const eoiCode = clearCode + 1;
+        let codeSize = minCodeSize + 1;
+        let nextCode = eoiCode + 1;
+        const maxCodeLimit = 4096;
+
+        const dict = new Int32Array(4096 * 256);
+        dict.fill(-1);
+
+        let bitBuffer = 0;
+        let bitCount = 0;
+        const subBlock = [];
+
+        const flushByte = (b) => {
+          subBlock.push(b);
+          if (subBlock.length === 255) {
+            this.writeByte(255);
+            for (let i = 0; i < 255; i++) this.writeByte(subBlock[i]);
+            subBlock.length = 0;
+          }
+        };
+
+        const emitCode = (code) => {
+          bitBuffer |= (code << bitCount);
+          bitCount += codeSize;
+          while (bitCount >= 8) {
+            flushByte(bitBuffer & 0xff);
+            bitBuffer >>= 8;
+            bitCount -= 8;
+          }
+        };
+
+        emitCode(clearCode);
+        if (indexStream.length === 0) {
+          emitCode(eoiCode);
+        } else {
+          let prefix = indexStream[0] & ((1 << minCodeSize) - 1);
+          for (let i = 1; i < indexStream.length; i++) {
+            const k = indexStream[i] & ((1 << minCodeSize) - 1);
+            const key = (prefix << 8) | k;
+            const found = dict[key];
+            if (found !== -1) {
+              prefix = found;
+            } else {
+              emitCode(prefix);
+              if (nextCode < maxCodeLimit) {
+                dict[key] = nextCode++;
+                if (nextCode > (1 << codeSize) && codeSize < 12) {
+                  codeSize++;
+                }
+              } else {
+                emitCode(clearCode);
+                dict.fill(-1);
+                codeSize = minCodeSize + 1;
+                nextCode = eoiCode + 1;
+              }
+              prefix = k;
+            }
+          }
+          emitCode(prefix);
+          emitCode(eoiCode);
+        }
+
+        if (bitCount > 0) {
+          flushByte(bitBuffer & 0xff);
+        }
+        if (subBlock.length > 0) {
+          this.writeByte(subBlock.length);
+          for (let i = 0; i < subBlock.length; i++) this.writeByte(subBlock[i]);
+        }
+      }
+
+      finish() {
+        this.writeByte(0x3b);
+        return new Uint8Array(this.bytes);
+      }
+    }
+
+    /*************************************************************************
+     * 4. APPLICATION STATE & CORE COLOR/QUANTIZATION ENGINE
+     *************************************************************************/
+    const state = {
+      lang: 'zh',
+      uiComplexity: 'pro',                // 'simple' | 'pro'
+      themeMode: 'dark',                  // 'system' | 'dark' | 'light'
+      deviceMode: 'auto',                 // 'auto' | 'desktop' | 'mobile'
+      activeMobileTab: 'input',           // 'input' | 'hardware' | 'dither' | 'export'
+      isMobileEffective: false,
+
+      // Anti-lag Render Trigger Mode
+      renderTriggerMode: 'single_preview', // 'single_preview' | 'manual_button' | 'auto_realtime'
+      previewRefFrameIdx: 0,
+      allFramesSynced: true,
+      hasUnrenderedManualChanges: false,
+      activeTaskToken: 0,
+
+      sourceFrames: [],
+      processedFrames: [],
+      currentFrameIdx: 0,
+      isPlaying: true,
+      playTimer: null,
+      viewMode: 'output',
+      splitPos: 0.5,
+      zoomMode: 'fit',
+      showGrid: false,
+      crtEnabled: false,
+      activeDemo: 'synth',
+
+      // Conversion & Aspect Ratio / Resolution parameters
+      systemId: 'nes',
+      aspectMode: 'native',               // 'native' | 'original' | '16:9' | '9:16' | '4:3' | '1:1' | '3:4' | '21:9' | 'custom_ratio' | 'custom_px'
+      customRatioW: 16,
+      customRatioH: 10,
+      customPxW: 320,
+      customPxH: 180,
+      lockCustomPxRatio: true,
+      clashMode: 'strict',
+      resScale: 1.0,
+      exportScaleMult: 1,                 // Default 1x = 1:1 exact match with configured generation resolution!
+      fitMode: 'cover',
+      ditherAlgo: 'bayer4',
+      ditherStrength: 65,
+      colorMetric: 'perceptual',
+      temporalLock: true,
+      brightness: 0,
+      contrast: 10,
+      saturation: 15,
+      gifSpeed: 1,
+      frameStep: 1
+    };
+
+    function gcd(a, b) {
+      a = Math.abs(Math.round(a));
+      b = Math.abs(Math.round(b));
+      while (b) {
+        const t = b;
+        b = a % b;
+        a = t;
+      }
+      return a || 1;
+    }
+
+    // Compute exact target width & height based on aspectMode, console spec, and resScale
+    function computeTargetDimensions(sys) {
+      const srcFrame = state.sourceFrames[0];
+      const srcW = srcFrame ? srcFrame.imageData.width : sys.width;
+      const srcH = srcFrame ? srcFrame.imageData.height : sys.height;
+      const scale = Math.max(0.1, Math.min(12, Number(state.resScale) || 1));
+
+      if (state.aspectMode === 'custom_px') {
+        const w = Math.max(16, Math.min(2560, Math.round(state.customPxW)));
+        const h = Math.max(16, Math.min(2560, Math.round(state.customPxH)));
+        return { targetW: w, targetH: h };
+      }
+
+      if (state.aspectMode === 'native') {
+        return {
+          targetW: Math.max(16, Math.min(2560, Math.round(sys.width * scale))),
+          targetH: Math.max(16, Math.min(2560, Math.round(sys.height * scale)))
+        };
+      }
+
+      let desiredVisualRatio = (sys.width * sys.par) / sys.height;
+      if (state.aspectMode === 'original') {
+        desiredVisualRatio = srcW / srcH;
+      } else if (state.aspectMode === 'custom_ratio') {
+        desiredVisualRatio = Math.max(0.1, state.customRatioW) / Math.max(0.1, state.customRatioH);
+      } else if (state.aspectMode.includes(':')) {
+        const parts = state.aspectMode.split(':').map(Number);
+        if (parts[0] > 0 && parts[1] > 0) {
+          desiredVisualRatio = parts[0] / parts[1];
+        }
+      }
+
+      const baseVisualArea = (sys.width * sys.par) * sys.height;
+      const scaledVisualArea = baseVisualArea * (scale * scale);
+      const visualH = Math.sqrt(scaledVisualArea / desiredVisualRatio);
+      const visualW = visualH * desiredVisualRatio;
+
+      const targetW = Math.max(16, Math.min(2560, Math.round(visualW / sys.par)));
+      const targetH = Math.max(16, Math.min(2560, Math.round(visualH)));
+      return { targetW, targetH };
+    }
+
+    function colorDistanceSq(r1, g1, b1, r2, g2, b2, metric) {
+      const dr = r1 - r2;
+      const dg = g1 - g2;
+      const db = b1 - b2;
+      if (metric === 'euclidean') {
+        return dr * dr + dg * dg + db * db;
+      }
+      if (metric === 'luma') {
+        const y1 = 0.299 * r1 + 0.587 * g1 + 0.114 * b1;
+        const y2 = 0.299 * r2 + 0.587 * g2 + 0.114 * b2;
+        const dy = y1 - y2;
+        return dy * dy * 4 + dr * dr * 0.3 + dg * dg * 0.5 + db * db * 0.2;
+      }
+      const rmean = (r1 + r2) >> 1;
+      return (((512 + rmean) * dr * dr) >> 8) + 4 * dg * dg + (((767 - rmean) * db * db) >> 8);
+    }
+
+    function findNearestInPalette(r, g, b, pal, metric) {
+      let bestIdx = 0;
+      let bestDist = Infinity;
+      for (let i = 0; i < pal.length; i++) {
+        const c = pal[i];
+        const d = colorDistanceSq(r, g, b, c[0], c[1], c[2], metric);
+        if (d < bestDist) {
+          bestDist = d;
+          bestIdx = i;
+        }
+      }
+      return bestIdx;
+    }
+
+    function clampByte(v) {
+      return v < 0 ? 0 : (v > 255 ? 255 : (v | 0));
+    }
+
+    function applyColorAdjustments(srcData, brightness, contrast, saturation) {
+      const out = new Uint8ClampedArray(srcData.length);
+      const cFactor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+      const sFactor = 1 + saturation / 100;
+      for (let i = 0; i < srcData.length; i += 4) {
+        let r = srcData[i] + brightness;
+        let g = srcData[i + 1] + brightness;
+        let b = srcData[i + 2] + brightness;
+
+        r = cFactor * (r - 128) + 128;
+        g = cFactor * (g - 128) + 128;
+        b = cFactor * (b - 128) + 128;
+
+        const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+        r = luma + (r - luma) * sFactor;
+        g = luma + (g - luma) * sFactor;
+        b = luma + (b - luma) * sFactor;
+
+        out[i] = clampByte(r);
+        out[i + 1] = clampByte(g);
+        out[i + 2] = clampByte(b);
+        out[i + 3] = 255;
+      }
+      return out;
+    }
+
+    /*************************************************************************
+     * 5. HARDWARE ATTRIBUTE BLOCK & SUB-PALETTE SOLVER
+     *************************************************************************/
+    function buildGlobalHardwareConfig(pixels, width, height, sys, clashMode, metric) {
+      const masterPal = sys.palette;
+      const nMaster = masterPal.length;
+
+      const freq = new Int32Array(nMaster);
+      // Sample stride for very large resolutions so config extraction remains fast (<15ms)
+      const totalPx = width * height;
+      const sampleStride = totalPx > 250000 ? 4 : (totalPx > 100000 ? 2 : 1);
+      const nearestMap = new Uint8Array(totalPx);
+
+      for (let p = 0; p < totalPx; p += sampleStride) {
+        const i = p * 4;
+        const idx = findNearestInPalette(pixels[i], pixels[i + 1], pixels[i + 2], masterPal, metric);
+        nearestMap[p] = idx;
+        freq[idx]++;
+      }
+
+      if (clashMode === 'global_palette' || sys.clashType === 'fixed_4') {
+        return {
+          mode: 'global',
+          subPalettes: [{ name: 'System Palette', colors: masterPal.slice(0, 16) }]
+        };
+      }
+
+      const bw = clashMode === 'fine_tile' ? sys.fineBlockW : sys.blockW;
+      const bh = clashMode === 'fine_tile' ? sys.fineBlockH : sys.blockH;
+      const cols = Math.ceil(width / bw);
+      const rows = Math.ceil(height / bh);
+
+      if (sys.clashType === 'nes_subpalettes') {
+        let backdropIdx = 13;
+        let maxScore = -1;
+        for (let c = 0; c < nMaster; c++) {
+          const luma = 0.299 * masterPal[c][0] + 0.587 * masterPal[c][1] + 0.114 * masterPal[c][2];
+          const score = freq[c] * (luma < 80 ? 1.35 : 1.0);
+          if (score > maxScore) {
+            maxScore = score;
+            backdropIdx = c;
+          }
+        }
+
+        const candidates = [];
+        const used = new Uint8Array(nMaster);
+        used[backdropIdx] = 1;
+
+        for (let k = 0; k < 12; k++) {
+          let bestC = -1;
+          let bestVal = -1;
+          for (let c = 0; c < nMaster; c++) {
+            if (used[c] || freq[c] === 0) continue;
+            let minDist = 100000;
+            for (const prev of candidates) {
+              const d = colorDistanceSq(
+                masterPal[c][0], masterPal[c][1], masterPal[c][2],
+                masterPal[prev][0], masterPal[prev][1], masterPal[prev][2],
+                metric
+              );
+              if (d < minDist) minDist = d;
+            }
+            const val = Math.pow(freq[c], 0.75) * (candidates.length === 0 ? 1 : Math.sqrt(minDist));
+            if (val > bestVal) {
+              bestVal = val;
+              bestC = c;
+            }
+          }
+          if (bestC !== -1) {
+            used[bestC] = 1;
+            candidates.push(bestC);
+          }
+        }
+        while (candidates.length < 12) {
+          candidates.push(candidates[candidates.length - 1] || 0);
+        }
+
+        const subPals = [];
+        for (let p = 0; p < 4; p++) {
+          const c1 = candidates[p * 3] ?? 0;
+          const c2 = candidates[p * 3 + 1] ?? 14;
+          const c3 = candidates[p * 3 + 2] ?? 27;
+          subPals.push({
+            name: `BG Palette ${p}`,
+            indices: [backdropIdx, c1, c2, c3],
+            colors: [masterPal[backdropIdx], masterPal[c1], masterPal[c2], masterPal[c3]]
+          });
+        }
+
+        // Fast block sampling refinement
+        const blockStep = (rows * cols > 1200) ? 2 : 1;
+        const buckets = [new Int32Array(nMaster), new Int32Array(nMaster), new Int32Array(nMaster), new Int32Array(nMaster)];
+        for (let by = 0; by < rows; by += blockStep) {
+          for (let bx = 0; bx < cols; bx += blockStep) {
+            let bestP = 0;
+            let bestErr = Infinity;
+            for (let p = 0; p < 4; p++) {
+              const palColors = subPals[p].colors;
+              let err = 0;
+              for (let y = by * bh; y < Math.min(height, (by + 1) * bh); y += 4) {
+                for (let x = bx * bw; x < Math.min(width, (bx + 1) * bw); x += 4) {
+                  const off = (y * width + x) * 4;
+                  const idx = findNearestInPalette(pixels[off], pixels[off + 1], pixels[off + 2], palColors, metric);
+                  const c = palColors[idx];
+                  err += colorDistanceSq(pixels[off], pixels[off + 1], pixels[off + 2], c[0], c[1], c[2], metric);
+                }
+              }
+              if (err < bestErr) {
+                bestErr = err;
+                bestP = p;
+              }
+            }
+            for (let y = by * bh; y < Math.min(height, (by + 1) * bh); y += 2) {
+              for (let x = bx * bw; x < Math.min(width, (bx + 1) * bw); x += 2) {
+                const off = (y * width + x) * 4;
+                const mIdx = findNearestInPalette(pixels[off], pixels[off + 1], pixels[off + 2], masterPal, metric);
+                if (mIdx !== backdropIdx) buckets[bestP][mIdx]++;
+              }
+            }
+          }
+        }
+        for (let p = 0; p < 4; p++) {
+          const bFreq = buckets[p];
+          const picked = [backdropIdx];
+          for (let slot = 0; slot < 3; slot++) {
+            let bestC = -1;
+            let bestScore = -1;
+            for (let c = 0; c < nMaster; c++) {
+              if (picked.includes(c) || bFreq[c] === 0) continue;
+              let minD = 100000;
+              for (const prev of picked) {
+                const d = colorDistanceSq(
+                  masterPal[c][0], masterPal[c][1], masterPal[c][2],
+                  masterPal[prev][0], masterPal[prev][1], masterPal[prev][2],
+                  metric
+                );
+                if (d < minD) minD = d;
+              }
+              const sc = Math.pow(bFreq[c], 0.8) * Math.sqrt(minD + 100);
+              if (sc > bestScore) {
+                bestScore = sc;
+                bestC = c;
+              }
+            }
+            if (bestC !== -1) picked.push(bestC);
+            else picked.push(subPals[p].indices[slot + 1]);
+          }
+          subPals[p].indices = picked;
+          subPals[p].colors = picked.map(i => masterPal[i]);
+        }
+
+        return { mode: 'subpalettes', bw, bh, subPalettes: subPals };
+      }
+
+      if (sys.clashType === 'c64_multicolor') {
+        const sharedIndices = [];
+        for (let k = 0; k < 3; k++) {
+          let bestC = 0;
+          let bestScore = -1;
+          for (let c = 0; c < nMaster; c++) {
+            if (sharedIndices.includes(c)) continue;
+            let minD = 100000;
+            for (const prev of sharedIndices) {
+              const d = colorDistanceSq(
+                masterPal[c][0], masterPal[c][1], masterPal[c][2],
+                masterPal[prev][0], masterPal[prev][1], masterPal[prev][2],
+                metric
+              );
+              if (d < minD) minD = d;
+            }
+            const sc = Math.pow(freq[c] + 1, 0.8) * (sharedIndices.length === 0 ? 1 : Math.sqrt(minD));
+            if (sc > bestScore) {
+              bestScore = sc;
+              bestC = c;
+            }
+          }
+          sharedIndices.push(bestC);
+        }
+        return {
+          mode: 'c64_multicolor',
+          bw,
+          bh,
+          sharedIndices,
+          sharedColors: sharedIndices.map(i => masterPal[i]),
+          subPalettes: [
+            {
+              name: 'VIC-II Global Registers (BG + MC1 + MC2)',
+              colors: sharedIndices.map(i => masterPal[i])
+            }
+          ]
+        };
+      }
+
+      if (sys.clashType === 'gbc_subpalettes' || sys.clashType === 'pico8_tiles' || sys.clashType === 'sms_subpalettes') {
+        const numPals = sys.clashType === 'sms_subpalettes' ? 2 : (sys.clashType === 'gbc_subpalettes' ? 6 : 4);
+        const colorsPerPal = sys.clashType === 'sms_subpalettes' ? 8 : 4;
+        const subPals = [];
+
+        const ranked = [];
+        for (let c = 0; c < nMaster; c++) {
+          if (freq[c] > 0) ranked.push({ c, count: freq[c] });
+        }
+        ranked.sort((a, b) => b.count - a.count);
+        if (ranked.length === 0) ranked.push({ c: 0, count: 1 });
+
+        for (let p = 0; p < numPals; p++) {
+          const palCols = [];
+          for (let k = 0; k < colorsPerPal; k++) {
+            const pick = ranked[(p * colorsPerPal + k) % ranked.length].c;
+            palCols.push(masterPal[pick]);
+          }
+          subPals.push({
+            name: `Tile Palette ${p}`,
+            colors: palCols
+          });
+        }
+        return { mode: 'subpalettes', bw, bh, subPalettes: subPals };
+      }
+
+      return {
+        mode: sys.clashType,
+        bw,
+        bh,
+        subPalettes: [
+          {
+            name: sys.clashType === 'zx_clash' ? 'ULA 8×8 INK/PAPER Rule' : 'Dynamic Block Attributes',
+            colors: masterPal.slice(0, 8)
+          }
+        ]
+      };
+    }
+
+    function buildBlockPalettesForFrame(pixels, width, height, sys, hwConfig, metric) {
+      const masterPal = sys.palette;
+      if (hwConfig.mode === 'global') {
+        return {
+          bw: sys.blockW,
+          bh: sys.blockH,
+          cols: Math.ceil(width / sys.blockW),
+          rows: Math.ceil(height / sys.blockH),
+          getBlockPalette: () => ({ id: 'Global', colors: masterPal })
+        };
+      }
+
+      const bw = hwConfig.bw;
+      const bh = hwConfig.bh;
+      const cols = Math.ceil(width / bw);
+      const rows = Math.ceil(height / bh);
+      const grid = new Array(cols * rows);
+      const pxStep = (bw >= 8 && bh >= 8) ? 2 : 1;
+
+      for (let by = 0; by < rows; by++) {
+        for (let bx = 0; bx < cols; bx++) {
+          const x0 = bx * bw;
+          const y0 = by * bh;
+          const x1 = Math.min(width, x0 + bw);
+          const y1 = Math.min(height, y0 + bh);
+
+          if (hwConfig.mode === 'subpalettes') {
+            let bestP = 0;
+            let bestErr = Infinity;
+            for (let p = 0; p < hwConfig.subPalettes.length; p++) {
+              const pal = hwConfig.subPalettes[p].colors;
+              let err = 0;
+              for (let y = y0; y < y1; y += pxStep) {
+                for (let x = x0; x < x1; x += pxStep) {
+                  const off = (y * width + x) * 4;
+                  const idx = findNearestInPalette(pixels[off], pixels[off + 1], pixels[off + 2], pal, metric);
+                  const c = pal[idx];
+                  err += colorDistanceSq(pixels[off], pixels[off + 1], pixels[off + 2], c[0], c[1], c[2], metric);
+                }
+              }
+              if (err < bestErr) {
+                bestErr = err;
+                bestP = p;
+              }
+            }
+            grid[by * cols + bx] = {
+              id: `Pal #${bestP}`,
+              colors: hwConfig.subPalettes[bestP].colors
+            };
+          } else if (hwConfig.mode === 'c64_multicolor') {
+            const baseCols = hwConfig.sharedColors;
+            let bestRamColor = masterPal[0];
+            let bestErr = Infinity;
+            for (let c = 0; c < masterPal.length; c++) {
+              const candidatePal = [baseCols[0], baseCols[1], baseCols[2], masterPal[c]];
+              let err = 0;
+              for (let y = y0; y < y1; y += pxStep) {
+                for (let x = x0; x < x1; x += pxStep) {
+                  const off = (y * width + x) * 4;
+                  const idx = findNearestInPalette(pixels[off], pixels[off + 1], pixels[off + 2], candidatePal, metric);
+                  const col = candidatePal[idx];
+                  err += colorDistanceSq(pixels[off], pixels[off + 1], pixels[off + 2], col[0], col[1], col[2], metric);
+                }
+              }
+              if (err < bestErr) {
+                bestErr = err;
+                bestRamColor = masterPal[c];
+              }
+            }
+            grid[by * cols + bx] = {
+              id: '3 Shared + 1 RAM',
+              colors: [baseCols[0], baseCols[1], baseCols[2], bestRamColor]
+            };
+          } else if (hwConfig.mode === 'zx_clash' || hwConfig.mode === 'two_color_block') {
+            const localCounts = new Int32Array(masterPal.length);
+            for (let y = y0; y < y1; y++) {
+              for (let x = x0; x < x1; x++) {
+                const off = (y * width + x) * 4;
+                const mIdx = findNearestInPalette(pixels[off], pixels[off + 1], pixels[off + 2], masterPal, metric);
+                localCounts[mIdx]++;
+              }
+            }
+
+            let c1 = 0, c2 = 1;
+            if (hwConfig.mode === 'zx_clash') {
+              let normalScore = 0, brightScore = 0;
+              for (let i = 0; i < 8; i++) normalScore += localCounts[i];
+              for (let i = 8; i < 16; i++) brightScore += localCounts[i];
+              const bankOffset = brightScore > normalScore ? 8 : 0;
+
+              let first = bankOffset, second = bankOffset + 7;
+              let max1 = -1, max2 = -1;
+              for (let i = bankOffset; i < bankOffset + 8; i++) {
+                if (localCounts[i] > max1) {
+                  max2 = max1; second = first;
+                  max1 = localCounts[i]; first = i;
+                } else if (localCounts[i] > max2) {
+                  max2 = localCounts[i]; second = i;
+                }
+              }
+              c1 = first;
+              c2 = second;
+            } else {
+              let max1 = -1, max2 = -1;
+              for (let i = 0; i < masterPal.length; i++) {
+                if (localCounts[i] > max1) {
+                  max2 = max1; c2 = c1;
+                  max1 = localCounts[i]; c1 = i;
+                } else if (localCounts[i] > max2) {
+                  max2 = localCounts[i]; c2 = i;
+                }
+              }
+            }
+            grid[by * cols + bx] = {
+              id: 'INK / PAPER (2-Color)',
+              colors: [masterPal[c1], masterPal[c2]]
+            };
+          } else if (hwConfig.mode === 'apple2_clash') {
+            const groupA = [masterPal[0], masterPal[1], masterPal[2], masterPal[3]];
+            const groupB = [masterPal[0], masterPal[1], masterPal[4], masterPal[5]];
+            let errA = 0, errB = 0;
+            for (let y = y0; y < y1; y++) {
+              for (let x = x0; x < x1; x++) {
+                const off = (y * width + x) * 4;
+                const ia = findNearestInPalette(pixels[off], pixels[off + 1], pixels[off + 2], groupA, metric);
+                const ib = findNearestInPalette(pixels[off], pixels[off + 1], pixels[off + 2], groupB, metric);
+                errA += colorDistanceSq(pixels[off], pixels[off + 1], pixels[off + 2], groupA[ia][0], groupA[ia][1], groupA[ia][2], metric);
+                errB += colorDistanceSq(pixels[off], pixels[off + 1], pixels[off + 2], groupB[ib][0], groupB[ib][1], groupB[ib][2], metric);
+              }
+            }
+            grid[by * cols + bx] = {
+              id: errA <= errB ? 'NTSC Group A (Grn/Vio)' : 'NTSC Group B (Org/Blu)',
+              colors: errA <= errB ? groupA : groupB
+            };
+          }
+        }
+      }
+
+      return {
+        bw,
+        bh,
+        cols,
+        rows,
+        getBlockPalette: (bx, by) => grid[by * cols + bx] || { id: 'Default', colors: masterPal }
+      };
+    }
+
+    /*************************************************************************
+     * 6. FRAME QUANTIZATION + DITHERING PIPELINE
+     *************************************************************************/
+    function quantizeAndDitherFrame(srcAdjusted, width, height, blockMap, ditherAlgo, ditherStrength, metric) {
+      const outData = new Uint8ClampedArray(width * height * 4);
+      const strength = ditherStrength / 100;
+      const usedColorKeys = new Set();
+
+      const isOrdered = ['bayer2', 'bayer4', 'bayer8', 'cluster4', 'scanline', 'none'].includes(ditherAlgo);
+
+      if (isOrdered) {
+        const spread = 96 * strength;
+        for (let y = 0; y < height; y++) {
+          const by = Math.floor(y / blockMap.bh);
+          for (let x = 0; x < width; x++) {
+            const bx = Math.floor(x / blockMap.bw);
+            const allowedPal = blockMap.getBlockPalette(bx, by).colors;
+            const off = (y * width + x) * 4;
+
+            let bias = 0;
+            if (ditherAlgo === 'bayer2') {
+              bias = ((BAYER_2X2[y & 1][x & 1] / 4) - 0.375) * spread;
+            } else if (ditherAlgo === 'bayer4') {
+              bias = ((BAYER_4X4[y & 3][x & 3] / 16) - 0.46875) * spread;
+            } else if (ditherAlgo === 'bayer8') {
+              bias = ((BAYER_8X8[y & 7][x & 7] / 64) - 0.492) * spread;
+            } else if (ditherAlgo === 'cluster4') {
+              bias = ((CLUSTER_4X4[y & 3][x & 3] / 16) - 0.46875) * spread;
+            } else if (ditherAlgo === 'scanline') {
+              bias = ((y & 1) ? 0.35 : -0.35) * spread;
+            }
+
+            const r = clampByte(srcAdjusted[off] + bias);
+            const g = clampByte(srcAdjusted[off + 1] + bias);
+            const b = clampByte(srcAdjusted[off + 2] + bias);
+
+            const cIdx = findNearestInPalette(r, g, b, allowedPal, metric);
+            const chosen = allowedPal[cIdx];
+
+            outData[off] = chosen[0];
+            outData[off + 1] = chosen[1];
+            outData[off + 2] = chosen[2];
+            outData[off + 3] = 255;
+            usedColorKeys.add((chosen[0] << 16) | (chosen[1] << 8) | chosen[2]);
+          }
+        }
+      } else {
+        const work = new Float32Array(srcAdjusted.length);
+        for (let i = 0; i < srcAdjusted.length; i++) work[i] = srcAdjusted[i];
+
+        const addErr = (nx, ny, er, eg, eb, weight) => {
+          if (nx < 0 || nx >= width || ny < 0 || ny >= height) return;
+          const nOff = (ny * width + nx) * 4;
+          work[nOff] = clampByte(work[nOff] + er * weight);
+          work[nOff + 1] = clampByte(work[nOff + 1] + eg * weight);
+          work[nOff + 2] = clampByte(work[nOff + 2] + eb * weight);
+        };
+
+        for (let y = 0; y < height; y++) {
+          const by = Math.floor(y / blockMap.bh);
+          for (let x = 0; x < width; x++) {
+            const bx = Math.floor(x / blockMap.bw);
+            const allowedPal = blockMap.getBlockPalette(bx, by).colors;
+            const off = (y * width + x) * 4;
+
+            const oldR = clampByte(work[off]);
+            const oldG = clampByte(work[off + 1]);
+            const oldB = clampByte(work[off + 2]);
+
+            const cIdx = findNearestInPalette(oldR, oldG, oldB, allowedPal, metric);
+            const chosen = allowedPal[cIdx];
+
+            outData[off] = chosen[0];
+            outData[off + 1] = chosen[1];
+            outData[off + 2] = chosen[2];
+            outData[off + 3] = 255;
+            usedColorKeys.add((chosen[0] << 16) | (chosen[1] << 8) | chosen[2]);
+
+            const er = (oldR - chosen[0]) * strength;
+            const eg = (oldG - chosen[1]) * strength;
+            const eb = (oldB - chosen[2]) * strength;
+
+            if (ditherAlgo === 'floyd') {
+              addErr(x + 1, y,     er, eg, eb, 7 / 16);
+              addErr(x - 1, y + 1, er, eg, eb, 3 / 16);
+              addErr(x,     y + 1, er, eg, eb, 5 / 16);
+              addErr(x + 1, y + 1, er, eg, eb, 1 / 16);
+            } else if (ditherAlgo === 'atkinson') {
+              const w = 1 / 8;
+              addErr(x + 1, y,     er, eg, eb, w);
+              addErr(x + 2, y,     er, eg, eb, w);
+              addErr(x - 1, y + 1, er, eg, eb, w);
+              addErr(x,     y + 1, er, eg, eb, w);
+              addErr(x + 1, y + 1, er, eg, eb, w);
+              addErr(x,     y + 2, er, eg, eb, w);
+            } else if (ditherAlgo === 'sierra') {
+              addErr(x + 1, y,     er, eg, eb, 2 / 4);
+              addErr(x - 1, y + 1, er, eg, eb, 1 / 4);
+              addErr(x,     y + 1, er, eg, eb, 1 / 4);
+            }
+          }
+        }
+      }
+
+      return {
+        imageData: new ImageData(outData, width, height),
+        usedColorsCount: usedColorKeys.size
+      };
+    }
+
+    /*************************************************************************
+     * 7. NON-BLOCKING ASYNC PIPELINE & SINGLE-FRAME PREVIEW ENGINE
+     *************************************************************************/
+    const offscreenScaleCanvas = document.createElement('canvas');
+    const offscreenScaleCtx = offscreenScaleCanvas.getContext('2d', { willReadFrequently: true });
+    const srcWorkCanvas = document.createElement('canvas');
+    const srcWorkCtx = srcWorkCanvas.getContext('2d');
+
+    function fitAndDownsampleFrame(sourceImageData, targetW, targetH, par, fitMode) {
+      offscreenScaleCanvas.width = targetW;
+      offscreenScaleCanvas.height = targetH;
+      offscreenScaleCtx.fillStyle = '#000000';
+      offscreenScaleCtx.fillRect(0, 0, targetW, targetH);
+
+      srcWorkCanvas.width = sourceImageData.width;
+      srcWorkCanvas.height = sourceImageData.height;
+      srcWorkCtx.putImageData(sourceImageData, 0, 0);
+
+      const displayTargetW = targetW * par;
+      const srcRatio = sourceImageData.width / sourceImageData.height;
+      const dstRatio = displayTargetW / targetH;
+
+      let drawW = targetW;
+      let drawH = targetH;
+      let dx = 0;
+      let dy = 0;
+
+      if (fitMode === 'contain') {
+        if (srcRatio > dstRatio) {
+          drawW = targetW;
+          drawH = Math.round(targetH * (dstRatio / srcRatio));
+          dy = Math.round((targetH - drawH) / 2);
+        } else {
+          drawH = targetH;
+          drawW = Math.round(targetW * (srcRatio / dstRatio));
+          dx = Math.round((targetW - drawW) / 2);
+        }
+      } else if (fitMode === 'cover') {
+        if (srcRatio > dstRatio) {
+          drawH = targetH;
+          drawW = Math.round(targetW * (srcRatio / dstRatio));
+          dx = Math.round((targetW - drawW) / 2);
+        } else {
+          drawW = targetW;
+          drawH = Math.round(targetH * (dstRatio / srcRatio));
+          dy = Math.round((targetH - drawH) / 2);
+        }
+      }
+
+      offscreenScaleCtx.imageSmoothingEnabled = true;
+      offscreenScaleCtx.imageSmoothingQuality = 'medium';
+      offscreenScaleCtx.drawImage(srcWorkCanvas, dx, dy, drawW, drawH);
+      return offscreenScaleCtx.getImageData(0, 0, targetW, targetH);
+    }
+
+    function processSingleFrameSync(srcFrameObj, targetW, targetH, sys, lockedHwConfig = null) {
+      const downsampled = fitAndDownsampleFrame(
+        srcFrameObj.imageData,
+        targetW,
+        targetH,
+        sys.par,
+        state.fitMode
+      );
+
+      const adjusted = applyColorAdjustments(
+        downsampled.data,
+        state.brightness,
+        state.contrast,
+        state.saturation
+      );
+
+      const hwConfig = lockedHwConfig || buildGlobalHardwareConfig(
+        adjusted,
+        targetW,
+        targetH,
+        sys,
+        state.clashMode,
+        state.colorMetric
+      );
+
+      const blockMap = buildBlockPalettesForFrame(
+        adjusted,
+        targetW,
+        targetH,
+        sys,
+        hwConfig,
+        state.colorMetric
+      );
+
+      const result = quantizeAndDitherFrame(
+        adjusted,
+        targetW,
+        targetH,
+        blockMap,
+        state.ditherAlgo,
+        state.ditherStrength,
+        state.colorMetric
+      );
+
+      return {
+        origDownsampled: downsampled,
+        imageData: result.imageData,
+        width: targetW,
+        height: targetH,
+        par: sys.par,
+        delay: srcFrameObj.delay,
+        hwConfig,
+        blockMap,
+        usedColorsCount: result.usedColorsCount
+      };
+    }
+
+    function getActiveSourceFrames() {
+      const step = state.sourceFrames.length > 1 ? state.frameStep : 1;
+      const list = [];
+      for (let i = 0; i < state.sourceFrames.length; i += step) {
+        list.push({
+          imageData: state.sourceFrames[i].imageData,
+          delay: state.sourceFrames[i].delay * step
+        });
+      }
+      return list;
+    }
+
+    function updateRenderStatusUI() {
+      const badge = document.getElementById('renderStateBadge');
+      const pendingBanner = document.getElementById('pendingFramesBanner');
+      const btnApply = document.getElementById('btnApplyRenderNow');
+      const txtBtn = document.getElementById('txtBtnApplyRender');
+      const isMulti = state.sourceFrames.length > 1;
+
+      document.getElementById('refFrameSelectorBox').classList.toggle(
+        'hidden',
+        !isMulti || state.renderTriggerMode !== 'single_preview'
+      );
+
+      if (state.hasUnrenderedManualChanges) {
+        badge.textContent = state.lang === 'zh' ? '参数已改 · 待点击渲染' : 'Pending Render';
+        badge.className = 'text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 animate-pulse';
+        pendingBanner.classList.remove('hidden');
+        document.getElementById('pendingBannerMsg').textContent =
+          state.lang === 'zh' ? '已修改参数（手动渲染模式），请点击按钮执行硬件渲染。' : 'Parameters changed. Click button to render.';
+        txtBtn.textContent = state.lang === 'zh' ? '🚀 立即执行硬件渲染' : '🚀 Render Now';
+        btnApply.className = 'w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/20 transition';
+      } else if (!state.allFramesSynced && isMulti) {
+        badge.textContent = state.lang === 'zh' ? '静帧已预览 · 全帧待同步' : 'Preview Ready · GIF Pending';
+        badge.className = 'text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40';
+        pendingBanner.classList.remove('hidden');
+        document.getElementById('pendingBannerMsg').textContent =
+          state.lang === 'zh' ? '当前已实时预览调参静帧（零卡顿模式），点击右侧按钮可渲染整套 GIF 动画帧。' : 'Single frame previewed. Click to render all GIF frames.';
+        txtBtn.textContent = state.lang === 'zh' ? `⚡ 渲染全部 ${getActiveSourceFrames().length} 帧 GIF 动画` : `⚡ Render All ${getActiveSourceFrames().length} GIF Frames`;
+        btnApply.className = 'w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/20 transition';
+      } else {
+        badge.textContent = state.lang === 'zh' ? '✓ 全部帧已同步' : '✓ All Synced';
+        badge.className = 'text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+        pendingBanner.classList.add('hidden');
+        txtBtn.textContent = isMulti
+          ? (state.lang === 'zh' ? '🚀 重新渲染全部 GIF 帧' : '🚀 Re-render All GIF Frames')
+          : (state.lang === 'zh' ? '🚀 立即执行硬件渲染' : '🚀 Apply & Render Now');
+        btnApply.className = 'w-full py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/15 transition';
+      }
+    }
+
+    // Fast instant render of ONLY the reference preview frame (used during parameter tweaking)
+    function renderSinglePreviewFrameOnly() {
+      if (state.sourceFrames.length === 0) return;
+      state.activeTaskToken++; // Cancel any running background batch
+
+      const sys = HARDWARE_SYSTEMS[state.systemId];
+      const { targetW, targetH } = computeTargetDimensions(sys);
+      const activeList = getActiveSourceFrames();
+      const refIdx = Math.min(activeList.length - 1, Math.max(0, state.previewRefFrameIdx));
+
+      // Pause animation while tweaking single preview frame
+      state.isPlaying = false;
+      if (state.playTimer) {
+        clearTimeout(state.playTimer);
+        state.playTimer = null;
+      }
+
+      const singleProcessed = processSingleFrameSync(activeList[refIdx], targetW, targetH, sys, null);
+
+      if (state.processedFrames.length !== activeList.length) {
+        state.processedFrames = new Array(activeList.length).fill(singleProcessed);
+      } else {
+        state.processedFrames[refIdx] = singleProcessed;
+      }
+
+      state.currentFrameIdx = refIdx;
+      state.allFramesSynced = activeList.length === 1;
+      state.hasUnrenderedManualChanges = false;
+
+      updateHardwareSpecUI();
+      updateRenderStatusUI();
+      renderCurrentFrameToViewport();
+      renderPalettesInspector();
+      syncTimelineControls();
+    }
+
+    // Full non-blocking chunked rendering across all frames with live Progress Bar!
+    async function runFullAsyncConversionPipeline(autoPlayAfter = true) {
+      if (state.sourceFrames.length === 0) return false;
+      const myToken = ++state.activeTaskToken;
+
+      const sys = HARDWARE_SYSTEMS[state.systemId];
+      const { targetW, targetH } = computeTargetDimensions(sys);
+      const activeList = getActiveSourceFrames();
+      const total = activeList.length;
+
+      const showModalProgress = total > 1 || (targetW * targetH > 180000);
+      if (showModalProgress) {
+        updateProgressUI(
+          true,
+          0,
+          state.lang === 'zh' ? `正在渲染 8-Bit 画面 (1/${total})...` : `Rendering Frame 1/${total}...`,
+          `${targetW} × ${targetH} px · ${sys.name}`
+        );
+      }
+
+      // Yield a frame so browser paints the progress bar immediately
+      await new Promise(r => setTimeout(r, 16));
+      if (myToken !== state.activeTaskToken) return false;
+
+      const processed = [];
+      let lockedHwConfig = null;
+
+      for (let f = 0; f < total; f++) {
+        if (myToken !== state.activeTaskToken) {
+          updateProgressUI(false);
+          return false;
+        }
+
+        const pct = Math.round(((f) / total) * 100);
+        if (showModalProgress) {
+          updateProgressUI(
+            true,
+            pct,
+            state.lang === 'zh' ? `正在硬件量化第 ${f + 1} / ${total} 帧...` : `Quantizing Frame ${f + 1} / ${total}...`,
+            `${targetW} × ${targetH} px`
+          );
+        }
+
+        const useLock = (f > 0 && state.temporalLock) ? lockedHwConfig : null;
+        const pf = processSingleFrameSync(activeList[f], targetW, targetH, sys, useLock);
+        if (f === 0) lockedHwConfig = pf.hwConfig;
+        processed.push(pf);
+
+        // Yield every frame so UI & progress bar stay 60fps responsive
+        await new Promise(r => setTimeout(r, 8));
+      }
+
+      if (myToken !== state.activeTaskToken) {
+        updateProgressUI(false);
+        return false;
+      }
+
+      updateProgressUI(true, 100, state.lang === 'zh' ? '渲染完成！' : 'Render Complete!', `${targetW} × ${targetH} px`);
+      state.processedFrames = processed;
+      if (state.currentFrameIdx >= processed.length) {
+        state.currentFrameIdx = 0;
+      }
+      state.allFramesSynced = true;
+      state.hasUnrenderedManualChanges = false;
+      if (autoPlayAfter && processed.length > 1) {
+        state.isPlaying = true;
+      }
+
+      updateHardwareSpecUI();
+      updateRenderStatusUI();
+      renderCurrentFrameToViewport();
+      renderPalettesInspector();
+      syncTimelineControls();
+      restartPlaybackLoop();
+
+      setTimeout(() => {
+        if (myToken === state.activeTaskToken) updateProgressUI(false);
+      }, 160);
+      return true;
+    }
+
+    // Smart dispatcher called when user changes any parameter
+    let debounceTimer = null;
+    function onParameterChanged(isSliderDrag = false) {
+      updateHardwareSpecUI();
+
+      // Mode 1: Pure Manual Button mode -> only mark dirty, never lag while changing inputs
+      if (state.renderTriggerMode === 'manual_button') {
+        state.hasUnrenderedManualChanges = true;
+        updateRenderStatusUI();
+        return;
+      }
+
+      // Mode 2: Single Reference Frame Preview mode (or while dragging slider on multi-frame GIF)
+      const isMulti = getActiveSourceFrames().length > 1;
+      if (state.renderTriggerMode === 'single_preview' && isMulti) {
+        if (isSliderDrag) {
+          if (debounceTimer) clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => renderSinglePreviewFrameOnly(), 16);
+        } else {
+          renderSinglePreviewFrameOnly();
+        }
+        return;
+      }
+
+      // Mode 3: Auto Realtime (or single static image)
+      const { targetW, targetH } = computeTargetDimensions(HARDWARE_SYSTEMS[state.systemId]);
+      const isHeavy = (targetW * targetH > 200000) || isMulti;
+      if (isSliderDrag && isHeavy) {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          if (isMulti) renderSinglePreviewFrameOnly();
+          else runFullAsyncConversionPipeline(false);
+        }, 60);
+      } else {
+        runFullAsyncConversionPipeline(true);
+      }
+    }
+
+    // Legacy compatibility alias
+    function runConversionPipeline() {
+      onParameterChanged(false);
+    }
+
+    /*************************************************************************
+     * 8. VIEWPORT RENDERING, SPLIT SLIDER & HARDWARE TILE INSPECTOR
+     *************************************************************************/
+    const canvasOutput = document.getElementById('canvasOutput');
+    const ctxOutput = canvasOutput.getContext('2d');
+    const canvasOriginal = document.getElementById('canvasOriginal');
+    const ctxOriginal = canvasOriginal.getContext('2d');
+    const canvasSplitOrig = document.getElementById('canvasSplitOrig');
+    const ctxSplitOrig = canvasSplitOrig.getContext('2d');
+    const canvasOverlay = document.getElementById('canvasOverlay');
+    const ctxOverlay = canvasOverlay.getContext('2d');
+
+    function getDisplayDimensions(frame) {
+      const baseW = frame.width * frame.par;
+      const baseH = frame.height;
+      let scale = 2;
+      if (state.zoomMode === 'fit') {
+        const stage = document.getElementById('canvasStage');
+        const availW = Math.max(220, (stage.clientWidth || 640) - (state.viewMode === 'side' ? 60 : 32));
+        const maxW = state.viewMode === 'side' ? availW / 2 : availW;
+        const maxH = state.isMobileEffective ? 300 : 440;
+        scale = Math.min(maxW / baseW, maxH / baseH);
+        if (scale >= 1.5) scale = Math.floor(scale);
+        scale = Math.max(0.2, Math.min(4, scale));
+      } else {
+        scale = Number(state.zoomMode) || 2;
+      }
+      return {
+        dispW: Math.max(32, Math.round(baseW * scale)),
+        dispH: Math.max(32, Math.round(baseH * scale)),
+        scale
+      };
+    }
+
+    function renderCurrentFrameToViewport(hoverTile = null) {
+      if (state.processedFrames.length === 0) return;
+      const frame = state.processedFrames[state.currentFrameIdx] || state.processedFrames[0];
+      const { dispW, dispH } = getDisplayDimensions(frame);
+
+      canvasOutput.width = frame.width;
+      canvasOutput.height = frame.height;
+      canvasOutput.style.width = `${dispW}px`;
+      canvasOutput.style.height = `${dispH}px`;
+      ctxOutput.putImageData(frame.imageData, 0, 0);
+
+      const origContainer = document.getElementById('origContainer');
+      const outputTopLabel = document.getElementById('outputTopLabel');
+      const splitHandle = document.getElementById('splitHandle');
+
+      if (state.viewMode === 'side') {
+        origContainer.classList.remove('hidden');
+        origContainer.classList.add('flex');
+        outputTopLabel.classList.remove('hidden');
+        canvasSplitOrig.classList.add('hidden');
+        splitHandle.classList.add('hidden');
+
+        canvasOriginal.width = frame.origDownsampled.width;
+        canvasOriginal.height = frame.origDownsampled.height;
+        canvasOriginal.style.width = `${dispW}px`;
+        canvasOriginal.style.height = `${dispH}px`;
+        ctxOriginal.putImageData(frame.origDownsampled, 0, 0);
+      } else if (state.viewMode === 'split') {
+        origContainer.classList.add('hidden');
+        origContainer.classList.remove('flex');
+        outputTopLabel.classList.add('hidden');
+        canvasSplitOrig.classList.remove('hidden');
+        splitHandle.classList.remove('hidden');
+
+        canvasSplitOrig.width = frame.origDownsampled.width;
+        canvasSplitOrig.height = frame.origDownsampled.height;
+        canvasSplitOrig.style.width = `${dispW}px`;
+        canvasSplitOrig.style.height = `${dispH}px`;
+        ctxSplitOrig.clearRect(0, 0, canvasSplitOrig.width, canvasSplitOrig.height);
+        const splitX = Math.round(frame.origDownsampled.width * state.splitPos);
+        if (splitX > 0) {
+          ctxSplitOrig.putImageData(frame.origDownsampled, 0, 0, 0, 0, splitX, frame.origDownsampled.height);
+        }
+        splitHandle.style.left = `${state.splitPos * 100}%`;
+      } else {
+        origContainer.classList.add('hidden');
+        origContainer.classList.remove('flex');
+        outputTopLabel.classList.add('hidden');
+        canvasSplitOrig.classList.add('hidden');
+        splitHandle.classList.add('hidden');
+      }
+
+      canvasOverlay.width = dispW;
+      canvasOverlay.height = dispH;
+      canvasOverlay.style.width = `${dispW}px`;
+      canvasOverlay.style.height = `${dispH}px`;
+      ctxOverlay.clearRect(0, 0, dispW, dispH);
+
+      const scaleX = dispW / frame.width;
+      const scaleY = dispH / frame.height;
+      const bw = frame.blockMap.bw;
+      const bh = frame.blockMap.bh;
+
+      if (state.showGrid) {
+        ctxOverlay.strokeStyle = 'rgba(16, 185, 129, 0.35)';
+        ctxOverlay.lineWidth = 1;
+        ctxOverlay.beginPath();
+        for (let x = 0; x <= frame.width; x += bw) {
+          const sx = Math.round(x * scaleX) + 0.5;
+          ctxOverlay.moveTo(sx, 0);
+          ctxOverlay.lineTo(sx, dispH);
+        }
+        for (let y = 0; y <= frame.height; y += bh) {
+          const sy = Math.round(y * scaleY) + 0.5;
+          ctxOverlay.moveTo(0, sy);
+          ctxOverlay.lineTo(dispW, sy);
+        }
+        ctxOverlay.stroke();
+      }
+
+      if (hoverTile) {
+        const hx = hoverTile.bx * bw * scaleX;
+        const hy = hoverTile.by * bh * scaleY;
+        const hw = bw * scaleX;
+        const hh = bh * scaleY;
+        ctxOverlay.strokeStyle = '#f59e0b';
+        ctxOverlay.lineWidth = 2;
+        ctxOverlay.strokeRect(hx + 1, hy + 1, Math.max(2, hw - 2), Math.max(2, hh - 2));
+      }
+
+      document.getElementById('statResText').textContent =
+        frame.par > 1 ? `${frame.width}×${frame.height} (Display ${frame.width * frame.par}×${frame.height})` : `${frame.width} × ${frame.height}`;
+      document.getElementById('statColorsText').textContent = `${frame.usedColorsCount} Colors`;
+      document.getElementById('statBlockText').textContent = `${bw}×${bh} px Block`;
+    }
+
+    /*************************************************************************
+     * 9. BUILT-IN PROCEDURAL DEMO GENERATORS (Animated GIFs & Test Scenes)
+     *************************************************************************/
+    function generateDemoFrames(type) {
+      const frames = [];
+      const w = 256, h = 240;
+
+      if (type === 'synth') {
+        const numFrames = 16;
+        for (let f = 0; f < numFrames; f++) {
+          const c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          const ctx = c.getContext('2d');
+          const t = f / numFrames;
+
+          const sky = ctx.createLinearGradient(0, 0, 0, 145);
+          sky.addColorStop(0, '#090426');
+          sky.addColorStop(0.45, '#3b0d54');
+          sky.addColorStop(0.8, '#a3195b');
+          sky.addColorStop(1, '#f77622');
+          ctx.fillStyle = sky;
+          ctx.fillRect(0, 0, w, 145);
+
+          const starSeeds = [[24,22],[68,18],[115,35],[195,16],[230,42],[44,62],[158,28],[212,68]];
+          starSeeds.forEach(([sx, sy], idx) => {
+            const bright = ((f + idx * 3) % 4 === 0) ? '#ffffff' : '#94a3b8';
+            ctx.fillStyle = bright;
+            ctx.fillRect(sx, sy, 2, 2);
+          });
+
+          const sunGrad = ctx.createLinearGradient(0, 50, 0, 138);
+          sunGrad.addColorStop(0, '#ffee55');
+          sunGrad.addColorStop(0.5, '#ff6b2b');
+          sunGrad.addColorStop(1, '#e01171');
+          ctx.fillStyle = sunGrad;
+          ctx.beginPath();
+          ctx.arc(128, 96, 44, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#3b0d54';
+          for (let y = 98; y < 140; y += 8) {
+            const offset = ((y - 98) + Math.floor(t * 8)) % 40;
+            const stripeH = Math.max(1, Math.floor((y - 94) / 9));
+            ctx.fillRect(80, 96 + offset, 96, stripeH);
+          }
+
+          ctx.fillStyle = '#180930';
+          ctx.beginPath();
+          ctx.moveTo(0, 145);
+          const peaks = [0, 118, 35, 98, 70, 125, 105, 112, 145, 128, 185, 95, 225, 120, 256, 110, 256, 145];
+          for (let i = 0; i < peaks.length; i += 2) ctx.lineTo(peaks[i], peaks[i + 1]);
+          ctx.closePath();
+          ctx.fill();
+
+          const ground = ctx.createLinearGradient(0, 145, 0, h);
+          ground.addColorStop(0, '#1a0633');
+          ground.addColorStop(1, '#05020d');
+          ctx.fillStyle = ground;
+          ctx.fillRect(0, 145, w, h - 145);
+
+          ctx.strokeStyle = '#00f0ff';
+          ctx.lineWidth = 1.5;
+          for (let gx = -180; gx <= 180; gx += 30) {
+            ctx.beginPath();
+            ctx.moveTo(128 + gx * 0.18, 145);
+            ctx.lineTo(128 + gx * 1.4, h);
+            ctx.stroke();
+          }
+          for (let i = 0; i < 8; i++) {
+            const p = ((i + t) / 8);
+            const gy = 145 + Math.pow(p, 1.8) * (h - 145);
+            ctx.strokeStyle = i % 2 === 0 ? '#ff2a85' : '#00f0ff';
+            ctx.beginPath();
+            ctx.moveTo(0, gy);
+            ctx.lineTo(w, gy);
+            ctx.stroke();
+          }
+
+          const carY = 186 + (f % 2 === 0 ? 0 : 1);
+          ctx.fillStyle = '#111827';
+          ctx.fillRect(86, carY, 84, 26);
+          ctx.fillStyle = '#e11d48';
+          ctx.fillRect(82, carY + 8, 92, 14);
+          ctx.fillStyle = '#fef08a';
+          ctx.fillRect(86, carY + 11, 18, 6);
+          ctx.fillRect(152, carY + 11, 18, 6);
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillRect(118, carY + 12, 20, 7);
+
+          frames.push({ imageData: ctx.getImageData(0, 0, w, h), delay: 90 });
+        }
+      } else if (type === 'slime') {
+        const numFrames = 12;
+        for (let f = 0; f < numFrames; f++) {
+          const c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          const ctx = c.getContext('2d');
+          const phase = (f / numFrames) * Math.PI * 2;
+
+          ctx.fillStyle = '#14182e';
+          ctx.fillRect(0, 0, w, h);
+          for (let y = 16; y < 150; y += 16) {
+            for (let x = 0; x < w; x += 32) {
+              const shift = (y / 16) % 2 === 0 ? 0 : 16;
+              ctx.fillStyle = '#1e294b';
+              ctx.fillRect((x + shift) % w, y, 28, 13);
+            }
+          }
+
+          [46, 210].forEach((tx, idx) => {
+            const flicker = Math.sin(phase + idx) * 4;
+            const glow = ctx.createRadialGradient(tx, 64, 4, tx, 64, 34 + flicker);
+            glow.addColorStop(0, '#fff7ed');
+            glow.addColorStop(0.35, '#f97316');
+            glow.addColorStop(1, 'rgba(249,115,22,0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(tx, 64, 36, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(tx - 4, 68, 8, 22);
+          });
+
+          const bounceY = Math.round(Math.abs(Math.sin(phase)) * 18);
+          const squashX = bounceY < 4 ? 1.12 : 0.94;
+          const squashY = bounceY < 4 ? 0.88 : 1.06;
+
+          ctx.save();
+          ctx.translate(128, 136 - bounceY);
+          ctx.scale(squashX, squashY);
+
+          ctx.fillStyle = '#facc15';
+          ctx.beginPath();
+          ctx.moveTo(-24, -40);
+          ctx.lineTo(-18, -60);
+          ctx.lineTo(-6, -46);
+          ctx.lineTo(0, -64);
+          ctx.lineTo(6, -46);
+          ctx.lineTo(18, -60);
+          ctx.lineTo(24, -40);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = '#ef4444';
+          ctx.fillRect(-4, -52, 8, 8);
+
+          const slimeGrad = ctx.createRadialGradient(-10, -24, 6, 0, -10, 46);
+          slimeGrad.addColorStop(0, '#7dd3fc');
+          slimeGrad.addColorStop(0.55, '#0284c7');
+          slimeGrad.addColorStop(1, '#1e3a8a');
+          ctx.fillStyle = slimeGrad;
+          ctx.beginPath();
+          ctx.arc(0, -10, 42, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(-14, -14, 8, 0, Math.PI * 2);
+          ctx.arc(14, -14, 8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#0f172a';
+          const pupilShift = Math.round(Math.cos(phase) * 2);
+          ctx.fillRect(-16 + pupilShift, -16, 5, 5);
+          ctx.fillRect(12 + pupilShift, -16, 5, 5);
+
+          ctx.fillStyle = '#f43f5e';
+          ctx.beginPath();
+          ctx.arc(0, 2, 12, 0, Math.PI);
+          ctx.fill();
+          ctx.restore();
+
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(14, 162, 228, 66);
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(16, 164, 224, 62);
+
+          ctx.fillStyle = '#22c55e';
+          ctx.fillRect(28, 178, 85, 10);
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillRect(28, 198, 68, 10);
+
+          if (f % 2 === 0) {
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.moveTo(136, 180);
+            ctx.lineTo(148, 186);
+            ctx.lineTo(136, 192);
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillRect(154, 182, 64, 8);
+          ctx.fillRect(154, 200, 48, 8);
+
+          frames.push({ imageData: ctx.getImageData(0, 0, w, h), delay: 100 });
+        }
+      } else if (type === 'cyber') {
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+
+        const bg = ctx.createLinearGradient(0, 0, 0, h);
+        bg.addColorStop(0, '#070b19');
+        bg.addColorStop(0.6, '#1e1b4b');
+        bg.addColorStop(1, '#311042');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, w, h);
+
+        const blds = [
+          { x: 0, y: 20, w: 64, h: 170, c: '#0f172a', win: '#38bdf8' },
+          { x: 58, y: 45, w: 52, h: 145, c: '#1e293b', win: '#f43f5e' },
+          { x: 155, y: 30, w: 56, h: 160, c: '#172554', win: '#facc15' },
+          { x: 200, y: 12, w: 56, h: 178, c: '#090d16', win: '#2dd4bf' }
+        ];
+        blds.forEach(b => {
+          ctx.fillStyle = b.c;
+          ctx.fillRect(b.x, b.y, b.w, b.h);
+          ctx.fillStyle = b.win;
+          for (let wy = b.y + 10; wy < b.y + b.h - 20; wy += 14) {
+            for (let wx = b.x + 8; wx < b.x + b.w - 10; wx += 12) {
+              if ((wx + wy) % 3 !== 0) ctx.fillRect(wx, wy, 6, 8);
+            }
+          }
+        });
+
+        ctx.fillStyle = '#ec4899';
+        ctx.fillRect(28, 74, 48, 22);
+        ctx.fillStyle = '#06b6d4';
+        ctx.fillRect(168, 62, 54, 26);
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(92, 92, 72, 24);
+
+        const road = ctx.createLinearGradient(0, 185, 0, h);
+        road.addColorStop(0, '#0f172a');
+        road.addColorStop(1, '#020617');
+        ctx.fillStyle = road;
+        ctx.fillRect(0, 185, w, h - 185);
+
+        const reflColors = ['#ec4899', '#06b6d4', '#facc15', '#22c55e'];
+        for (let y = 190; y < h; y += 4) {
+          ctx.fillStyle = reflColors[(y / 4) % 4];
+          ctx.fillRect(30 + ((y * 7) % 160), y, 36, 2);
+        }
+
+        frames.push({ imageData: ctx.getImageData(0, 0, w, h), delay: 100 });
+      } else {
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+
+        for (let y = 0; y < 140; y++) {
+          for (let x = 0; x < w; x++) {
+            const hue = (x / w) * 360;
+            const light = 15 + (y / 140) * 70;
+            ctx.fillStyle = `hsl(${hue}, 85%, ${light}%)`;
+            ctx.fillRect(x, y, 1, 1);
+          }
+        }
+
+        for (let x = 0; x < w; x++) {
+          const v = Math.round((x / w) * 255);
+          ctx.fillStyle = `rgb(${v},${v},${v})`;
+          ctx.fillRect(x, 140, 1, 32);
+        }
+
+        const bars = ['#ffffff', '#eab308', '#06b6d4', '#22c55e', '#d946ef', '#ef4444', '#3b82f6', '#000000'];
+        const bw = w / bars.length;
+        bars.forEach((col, idx) => {
+          ctx.fillStyle = col;
+          ctx.fillRect(idx * bw, 172, bw, 68);
+        });
+
+        const sph = ctx.createRadialGradient(116, 76, 6, 128, 90, 48);
+        sph.addColorStop(0, '#fff1f2');
+        sph.addColorStop(0.4, '#fb7185');
+        sph.addColorStop(0.8, '#9f1239');
+        sph.addColorStop(1, '#1e1b4b');
+        ctx.fillStyle = sph;
+        ctx.beginPath();
+        ctx.arc(128, 90, 48, 0, Math.PI * 2);
+        ctx.fill();
+
+        frames.push({ imageData: ctx.getImageData(0, 0, w, h), delay: 100 });
+      }
+
+      return frames;
+    }
+
+    /*************************************************************************
+     * 10. UPLOADED IMAGE & BINARY GIF89a DECODER
+     *************************************************************************/
+    function updateOriginalAspectBadge() {
+      const f0 = state.sourceFrames[0];
+      if (!f0) return;
+      const w = f0.imageData.width;
+      const h = f0.imageData.height;
+      const g = gcd(w, h);
+      const rw = Math.round(w / g);
+      const rh = Math.round(h / g);
+      const ratioStr = (rw <= 64 && rh <= 64) ? `${rw}:${rh}` : `${(w / h).toFixed(2)}:1`;
+      document.getElementById('origRatioHint').textContent =
+        state.lang === 'zh' ? `原图 ${w}×${h} (${ratioStr})` : `Orig ${w}×${h} (${ratioStr})`;
+    }
+
+    function syncReferenceFrameSlider() {
+      const activeList = getActiveSourceFrames();
+      const total = Math.max(1, activeList.length);
+      state.previewRefFrameIdx = Math.min(total - 1, Math.max(0, state.previewRefFrameIdx));
+      const rangeEl = document.getElementById('rangeRefFrame');
+      rangeEl.max = Math.max(0, total - 1);
+      rangeEl.value = state.previewRefFrameIdx;
+      document.getElementById('lblRefFrameVal').textContent =
+        state.lang === 'zh'
+          ? `第 ${state.previewRefFrameIdx + 1} 帧 / 共 ${total} 帧`
+          : `Frame ${state.previewRefFrameIdx + 1} / ${total}`;
+    }
+
+    async function handleFileUpload(file) {
+      if (!file) return;
+      updateProgressUI(true, 10, state.lang === 'zh' ? '正在解析图像 / GIF 数据...' : 'Decoding Image / GIF...', file.name);
+
+      try {
+        const buffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        const isGif = bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46;
+
+        if (isGif && typeof window.GifReader === 'function') {
+          const reader = new window.GifReader(bytes);
+          const gw = reader.width;
+          const gh = reader.height;
+          const numFrames = reader.numFrames();
+          const decodedFrames = [];
+
+          const framePixels = new Uint8ClampedArray(gw * gh * 4);
+          for (let i = 0; i < framePixels.length; i += 4) {
+            framePixels[i] = 15; framePixels[i + 1] = 20; framePixels[i + 2] = 28; framePixels[i + 3] = 255;
+          }
+
+          const maxFramesToProcess = Math.min(numFrames, 80);
+          for (let f = 0; f < maxFramesToProcess; f++) {
+            const info = reader.frameInfo(f);
+            const prevCopy = info.disposal === 3 ? new Uint8ClampedArray(framePixels) : null;
+
+            reader.decodeAndBlitFrameRGBA(f, framePixels);
+            for (let i = 3; i < framePixels.length; i += 4) {
+              if (framePixels[i] < 128) {
+                framePixels[i - 3] = 15;
+                framePixels[i - 2] = 20;
+                framePixels[i - 1] = 28;
+              }
+              framePixels[i] = 255;
+            }
+
+            const snap = new Uint8ClampedArray(framePixels);
+            decodedFrames.push({
+              imageData: new ImageData(snap, gw, gh),
+              delay: Math.max(30, (info.delay || 8) * 10)
+            });
+
+            if (info.disposal === 2) {
+              for (let y = info.y; y < info.y + info.height; y++) {
+                for (let x = info.x; x < info.x + info.width; x++) {
+                  const idx = (y * gw + x) * 4;
+                  framePixels[idx] = 15; framePixels[idx + 1] = 20; framePixels[idx + 2] = 28; framePixels[idx + 3] = 255;
+                }
+              }
+            } else if (info.disposal === 3 && prevCopy) {
+              framePixels.set(prevCopy);
+            }
+          }
+
+          state.sourceFrames = decodedFrames;
+          state.currentFrameIdx = 0;
+          state.previewRefFrameIdx = 0;
+          state.isPlaying = decodedFrames.length > 1;
+          document.getElementById('inputBadgeInfo').textContent = `${decodedFrames.length} Frames GIF (${gw}×${gh})`;
+        } else {
+          const blob = new Blob([buffer], { type: file.type || 'image/png' });
+          const url = URL.createObjectURL(blob);
+          const img = await new Promise((resolve, reject) => {
+            const im = new Image();
+            im.onload = () => resolve(im);
+            im.onerror = reject;
+            im.src = url;
+          });
+          URL.revokeObjectURL(url);
+
+          const c = document.createElement('canvas');
+          c.width = img.naturalWidth || img.width;
+          c.height = img.naturalHeight || img.height;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = '#0f141c';
+          ctx.fillRect(0, 0, c.width, c.height);
+          ctx.drawImage(img, 0, 0);
+
+          state.sourceFrames = [{
+            imageData: ctx.getImageData(0, 0, c.width, c.height),
+            delay: 100
+          }];
+          state.currentFrameIdx = 0;
+          state.previewRefFrameIdx = 0;
+          state.isPlaying = false;
+          document.getElementById('inputBadgeInfo').textContent = `Static (${c.width}×${c.height})`;
+        }
+
+        updateOriginalAspectBadge();
+        syncReferenceFrameSlider();
+        await runFullAsyncConversionPipeline(true);
+        showToast(state.lang === 'zh' ? `已加载: ${file.name}` : `Loaded: ${file.name}`);
+      } catch (err) {
+        console.error(err);
+        updateProgressUI(false);
+        showToast(state.lang === 'zh' ? '图像解析失败，请尝试其他图片或GIF' : 'Failed to decode image');
+      }
+    }
+
+    /*************************************************************************
+     * 11. THEME ENGINE (LIGHT / DARK / SYSTEM) & DEVICE UI AUTO-DETECTION
+     *************************************************************************/
+    const darkMediaQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+    function applyThemeMode() {
+      let useDark = true;
+      if (state.themeMode === 'system') {
+        useDark = darkMediaQuery ? darkMediaQuery.matches : true;
+      } else {
+        useDark = state.themeMode === 'dark';
+      }
+      const root = document.documentElement;
+      if (useDark) {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+      try { localStorage.setItem('retro8bit_theme', state.themeMode); } catch (e) {}
+    }
+
+    function detectIsMobileBrowser() {
+      const ua = navigator.userAgent || '';
+      const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+      const isNarrow = window.innerWidth < 768;
+      const isCoarseTouch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches && window.innerWidth < 1024;
+      return isMobileUA || isNarrow || isCoarseTouch;
+    }
+
+    function applyDeviceAndComplexityLayout() {
+      const autoDetectedMobile = detectIsMobileBrowser();
+      if (state.deviceMode === 'auto') {
+        state.isMobileEffective = autoDetectedMobile;
+      } else {
+        state.isMobileEffective = state.deviceMode === 'mobile';
+      }
+
+      const badge = document.getElementById('deviceDetectedBadge');
+      const modeTag = state.deviceMode === 'auto' ? 'Auto' : 'Manual';
+      if (state.isMobileEffective) {
+        badge.textContent = `📱 Mobile UI (${modeTag})`;
+        badge.className = 'px-1.5 py-0.5 text-[10px] font-mono rounded bg-amber-500/15 text-amber-400 border border-amber-500/30';
+        document.body.classList.add('mobile-ui');
+      } else {
+        badge.textContent = `🖥️ Desktop UI (${modeTag})`;
+        badge.className = 'px-1.5 py-0.5 text-[10px] font-mono rounded bg-cyan-500/15 text-cyan-400 border border-cyan-500/30';
+        document.body.classList.remove('mobile-ui');
+      }
+
+      const mobileStepNav = document.getElementById('mobileStepNav');
+      const rightViewportCol = document.getElementById('rightViewportCol');
+      const leftSidebar = document.getElementById('leftSidebar');
+
+      const secRenderControlCard = document.getElementById('secRenderControlCard');
+      const secInputCard = document.getElementById('secInputCard');
+      const secHardwareCard = document.getElementById('secHardwareCard');
+      const secDitherCard = document.getElementById('secDitherCard');
+      const secAdjustCard = document.getElementById('secAdjustCard');
+      const secPalInspectorCard = document.getElementById('secPalInspectorCard');
+      const secExportCard = document.getElementById('secExportCard');
+      const simpleModeBanner = document.getElementById('simpleModeBanner');
+      const proClashContainer = document.getElementById('proClashContainer');
+
+      const btnSimple = document.getElementById('btnUiModeSimple');
+      const btnPro = document.getElementById('btnUiModePro');
+      if (state.uiComplexity === 'simple') {
+        btnSimple.className = 'px-2.5 py-1 rounded-md bg-emerald-500 text-slate-950 font-semibold transition';
+        btnPro.className = 'px-2.5 py-1 rounded-md text-slate-300 hover:text-white transition';
+      } else {
+        btnPro.className = 'px-2.5 py-1 rounded-md bg-emerald-500 text-slate-950 font-semibold transition';
+        btnSimple.className = 'px-2.5 py-1 rounded-md text-slate-300 hover:text-white transition';
+      }
+
+      if (state.isMobileEffective) {
+        rightViewportCol.classList.add('-order-1');
+        leftSidebar.classList.add('order-1');
+        mobileStepNav.classList.remove('hidden');
+
+        secRenderControlCard.classList.remove('hidden');
+        secInputCard.classList.toggle('hidden', state.activeMobileTab !== 'input');
+        secHardwareCard.classList.toggle('hidden', state.activeMobileTab !== 'hardware');
+        secDitherCard.classList.toggle('hidden', state.activeMobileTab !== 'dither');
+        secAdjustCard.classList.toggle('hidden', state.activeMobileTab !== 'dither');
+        secPalInspectorCard.classList.toggle('hidden', state.activeMobileTab !== 'dither' || state.uiComplexity === 'simple');
+        secExportCard.classList.toggle('hidden', state.activeMobileTab !== 'export');
+        simpleModeBanner.classList.add('hidden');
+      } else {
+        rightViewportCol.classList.remove('-order-1');
+        leftSidebar.classList.remove('order-1');
+        mobileStepNav.classList.add('hidden');
+
+        secRenderControlCard.classList.remove('hidden');
+        secInputCard.classList.remove('hidden');
+        secHardwareCard.classList.remove('hidden');
+        secExportCard.classList.remove('hidden');
+
+        const isSimple = state.uiComplexity === 'simple';
+        secDitherCard.classList.toggle('hidden', isSimple);
+        secAdjustCard.classList.toggle('hidden', isSimple);
+        secPalInspectorCard.classList.toggle('hidden', isSimple);
+        proClashContainer.classList.toggle('hidden', isSimple);
+        simpleModeBanner.classList.toggle('hidden', !isSimple);
+
+        if (isSimple) {
+          secExportCard.className = 'xl:col-span-12 bg-retro-panel border border-retro-border rounded-xl p-3.5 shadow-lg flex flex-col justify-between gap-3';
+        } else {
+          secExportCard.className = 'xl:col-span-5 bg-retro-panel border border-retro-border rounded-xl p-3.5 shadow-lg flex flex-col justify-between gap-3';
+        }
+      }
+
+      document.querySelectorAll('.pro-export-btn').forEach(btn => {
+        btn.classList.toggle('hidden', state.uiComplexity === 'simple');
+      });
+
+      renderCurrentFrameToViewport();
+    }
+
+    /*************************************************************************
+     * 12. UI UPDATES, PALETTE SWATCHES & EXPORT HANDLERS
+     *************************************************************************/
+    function rgbToHex(c) {
+      return '#' + [c[0], c[1], c[2]].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+    }
+
+    function updateExportFinalResolutionPreview() {
+      const sys = HARDWARE_SYSTEMS[state.systemId];
+      const { targetW, targetH } = computeTargetDimensions(sys);
+      const mult = Math.max(1, Math.min(20, Math.round(Number(state.exportScaleMult) || 1)));
+      const finalW = targetW * sys.par * mult;
+      const finalH = targetH * mult;
+      const previewEl = document.getElementById('exportFinalResPreview');
+      if (previewEl) {
+        previewEl.textContent = state.lang === 'zh'
+          ? `最终导出: ${finalW} × ${finalH} px`
+          : `Export: ${finalW} × ${finalH} px`;
+      }
+    }
+
+    function updateHardwareSpecUI() {
+      const sys = HARDWARE_SYSTEMS[state.systemId];
+      const { targetW, targetH } = computeTargetDimensions(sys);
+      document.getElementById('hwYearBadge').textContent = sys.year;
+      document.getElementById('specResVal').textContent =
+        sys.par > 1
+          ? `${targetW} × ${targetH} (Display ${targetW * sys.par}×${targetH})`
+          : `${targetW} × ${targetH} px`;
+      document.getElementById('specPalVal').textContent = sys.palDesc;
+      document.getElementById('specClashVal').textContent =
+        state.lang === 'zh' ? sys.ruleDescZh : sys.ruleDescEn;
+
+      document.getElementById('customRatioInputs').classList.toggle('hidden', state.aspectMode !== 'custom_ratio');
+      document.getElementById('customPxInputs').classList.toggle('hidden', state.aspectMode !== 'custom_px');
+      document.getElementById('resScaleAndFitRow').classList.toggle('hidden', state.aspectMode === 'custom_px');
+
+      updateExportFinalResolutionPreview();
+
+      const isOrdered = ['bayer2', 'bayer4', 'bayer8', 'cluster4', 'scanline', 'none'].includes(state.ditherAlgo);
+      const badge = document.getElementById('ditherStabilityBadge');
+      if (isOrdered) {
+        badge.textContent = state.lang === 'zh' ? 'GIF 零闪烁推荐' : 'Temporal Stable';
+        badge.className = 'text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+      } else {
+        badge.textContent = state.lang === 'zh' ? '适合静态图' : 'Best for Static';
+        badge.className = 'text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30';
+      }
+    }
+
+    function renderPalettesInspector() {
+      const sys = HARDWARE_SYSTEMS[state.systemId];
+      const frame = state.processedFrames[state.currentFrameIdx] || state.processedFrames[0];
+      if (!frame) return;
+
+      const subContainer = document.getElementById('subPalettesContainer');
+      subContainer.innerHTML = '';
+      const subPals = frame.hwConfig.subPalettes || [];
+      subPals.forEach(sp => {
+        const card = document.createElement('div');
+        card.className = 'bg-retro-bg border border-retro-border rounded-lg p-2 flex flex-col gap-1.5';
+        const title = document.createElement('div');
+        title.className = 'text-[11px] font-mono text-slate-300 flex justify-between';
+        title.innerHTML = `<span>${sp.name}</span><span class="text-slate-500">${sp.colors.length}c</span>`;
+        const row = document.createElement('div');
+        row.className = 'flex flex-wrap gap-1';
+        sp.colors.forEach(c => {
+          const hex = rgbToHex(c);
+          const sw = document.createElement('div');
+          sw.className = 'h-5 flex-1 min-w-[20px] rounded border border-slate-700 cursor-pointer transition hover:scale-105';
+          sw.style.backgroundColor = hex;
+          sw.title = `${hex} (Click to copy)`;
+          sw.addEventListener('click', () => copyTextToClipboard(hex));
+          row.appendChild(sw);
+        });
+        card.appendChild(title);
+        card.appendChild(row);
+        subContainer.appendChild(card);
+      });
+
+      const masterStrip = document.getElementById('masterPaletteStrip');
+      masterStrip.innerHTML = '';
+      document.getElementById('masterPaletteCount').textContent = `${sys.palette.length} Colors`;
+      sys.palette.forEach(c => {
+        const hex = rgbToHex(c);
+        const dot = document.createElement('div');
+        dot.className = 'w-4 h-4 rounded-sm border border-slate-700/80 cursor-pointer hover:scale-125 transition';
+        dot.style.backgroundColor = hex;
+        dot.title = hex;
+        dot.addEventListener('click', () => copyTextToClipboard(hex));
+        masterStrip.appendChild(dot);
+      });
+    }
+
+    function syncTimelineControls() {
+      const count = state.processedFrames.length;
+      const scrub = document.getElementById('rangeFrameScrub');
+      scrub.max = Math.max(0, count - 1);
+      scrub.value = state.currentFrameIdx;
+      document.getElementById('lblFrameCounter').textContent = `Frame ${state.currentFrameIdx + 1} / ${count}`;
+      document.getElementById('iconPlayPause').textContent = state.isPlaying ? '⏸' : '▶';
+      document.getElementById('txtPlayPause').textContent =
+        state.isPlaying ? (state.lang === 'zh' ? '暂停' : 'Pause') : (state.lang === 'zh' ? '播放' : 'Play');
+    }
+
+    function restartPlaybackLoop() {
+      if (state.playTimer) {
+        clearTimeout(state.playTimer);
+        state.playTimer = null;
+      }
+      if (!state.isPlaying || state.processedFrames.length <= 1) return;
+
+      const frame = state.processedFrames[state.currentFrameIdx] || state.processedFrames[0];
+      const waitMs = Math.max(25, Math.round((frame.delay || 90) / state.gifSpeed));
+
+      state.playTimer = setTimeout(() => {
+        state.currentFrameIdx = (state.currentFrameIdx + 1) % state.processedFrames.length;
+        renderCurrentFrameToViewport();
+        syncTimelineControls();
+        restartPlaybackLoop();
+      }, waitMs);
+    }
+
+    function renderFrameForExport(frame, scaleMult, includeCrt) {
+      const mult = Math.max(1, Math.min(20, Math.round(Number(scaleMult) || 1)));
+      const outW = frame.width * frame.par * mult;
+      const outH = frame.height * mult;
+      const c = document.createElement('canvas');
+      c.width = outW;
+      c.height = outH;
+      const ctx = c.getContext('2d');
+
+      const tmp = document.createElement('canvas');
+      tmp.width = frame.width;
+      tmp.height = frame.height;
+      tmp.getContext('2d').putImageData(frame.imageData, 0, 0);
+
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(tmp, 0, 0, outW, outH);
+
+      if (includeCrt && mult >= 2) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+        for (let y = 0; y < outH; y += mult) {
+          ctx.fillRect(0, y + mult - 1, outW, 1);
+        }
+      }
+      return c;
+    }
+
+    function triggerDownload(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }
+
+    async function exportCurrentPng() {
+      if (state.sourceFrames.length === 0) return;
+      if (state.hasUnrenderedManualChanges) {
+        renderSinglePreviewFrameOnly();
+      }
+      const scale = Math.max(1, Math.min(20, Math.round(Number(state.exportScaleMult) || 1)));
+      const crt = document.getElementById('selectExportCrt').value === 'crt';
+      const frame = state.processedFrames[state.currentFrameIdx] || state.processedFrames[0];
+      const c = renderFrameForExport(frame, scale, crt);
+      c.toBlob(blob => {
+        if (blob) {
+          triggerDownload(blob, `8bit_${state.systemId}_${c.width}x${c.height}.png`);
+          showToast(state.lang === 'zh' ? `已导出 PNG (${c.width}×${c.height} px)！` : `PNG Exported (${c.width}×${c.height})!`);
+        }
+      }, 'image/png');
+    }
+
+    async function exportAnimatedGif() {
+      if (state.sourceFrames.length === 0) return;
+
+      // If not all frames are synced (e.g. user was in single_preview or manual_button mode), render all frames first with progress!
+      if (!state.allFramesSynced || state.hasUnrenderedManualChanges) {
+        const ok = await runFullAsyncConversionPipeline(false);
+        if (!ok) return;
+      }
+
+      const myToken = ++state.activeTaskToken;
+      const scale = Math.max(1, Math.min(20, Math.round(Number(state.exportScaleMult) || 1)));
+      const crt = document.getElementById('selectExportCrt').value === 'crt';
+      const sys = HARDWARE_SYSTEMS[state.systemId];
+      const total = state.processedFrames.length;
+
+      updateProgressUI(
+        true,
+        5,
+        state.lang === 'zh' ? '正在准备 GIF89a 编码器...' : 'Initializing GIF89a Encoder...',
+        `${total} Frames`
+      );
+      await new Promise(r => setTimeout(r, 20));
+
+      try {
+        const colorMap = new Map();
+        const globalPalette = [];
+        const registerColor = (r, g, b) => {
+          const key = (r << 16) | (g << 8) | b;
+          if (!colorMap.has(key) && globalPalette.length < 256) {
+            colorMap.set(key, globalPalette.length);
+            globalPalette.push([r, g, b]);
+          }
+          return colorMap.get(key) ?? 0;
+        };
+
+        sys.palette.forEach(c => {
+          registerColor(c[0], c[1], c[2]);
+          if (crt) {
+            registerColor(Math.round(c[0] * 0.72), Math.round(c[1] * 0.72), Math.round(c[2] * 0.72));
+          }
+        });
+
+        const firstExportCanvas = renderFrameForExport(state.processedFrames[0], scale, crt);
+        const outW = firstExportCanvas.width;
+        const outH = firstExportCanvas.height;
+        const encoder = new Gif89Encoder(outW, outH, globalPalette);
+
+        for (let f = 0; f < total; f++) {
+          if (myToken !== state.activeTaskToken) {
+            updateProgressUI(false);
+            return;
+          }
+
+          const pct = Math.round(((f + 1) / total) * 100);
+          updateProgressUI(
+            true,
+            pct,
+            state.lang === 'zh' ? `正在编码 GIF 第 ${f + 1} / ${total} 帧...` : `Encoding GIF Frame ${f + 1} / ${total}...`,
+            `${outW} × ${outH} px`
+          );
+
+          const pf = state.processedFrames[f];
+          const c = f === 0 ? firstExportCanvas : renderFrameForExport(pf, scale, crt);
+          const rgba = c.getContext('2d').getImageData(0, 0, outW, outH).data;
+          const indexed = new Uint8Array(outW * outH);
+
+          for (let i = 0, p = 0; i < rgba.length; i += 4, p++) {
+            const key = (rgba[i] << 16) | (rgba[i + 1] << 8) | rgba[i + 2];
+            let idx = colorMap.get(key);
+            if (idx === undefined) {
+              idx = findNearestInPalette(rgba[i], rgba[i + 1], rgba[i + 2], globalPalette, 'euclidean');
+            }
+            indexed[p] = idx;
+          }
+          const delayMs = Math.max(30, Math.round((pf.delay || 90) / state.gifSpeed));
+          encoder.addFrame(indexed, delayMs);
+
+          await new Promise(r => setTimeout(r, 8));
+        }
+
+        const gifBytes = encoder.finish();
+        const blob = new Blob([gifBytes], { type: 'image/gif' });
+        triggerDownload(blob, `8bit_${state.systemId}_${outW}x${outH}.gif`);
+        showToast(state.lang === 'zh' ? `已成功导出 GIF (${outW}×${outH} px)！` : `GIF Exported (${outW}×${outH})!`);
+      } catch (err) {
+        console.error(err);
+        showToast(state.lang === 'zh' ? 'GIF 导出出错' : 'GIF Export Failed');
+      } finally {
+        updateProgressUI(false);
+      }
+    }
+
+    async function exportSpriteSheet() {
+      if (state.sourceFrames.length === 0) return;
+      if (!state.allFramesSynced || state.hasUnrenderedManualChanges) {
+        const ok = await runFullAsyncConversionPipeline(false);
+        if (!ok) return;
+      }
+      const scale = Math.max(1, Math.min(20, Math.round(Number(state.exportScaleMult) || 1)));
+      const crt = document.getElementById('selectExportCrt').value === 'crt';
+      const count = state.processedFrames.length;
+      const cols = Math.min(8, count);
+      const rows = Math.ceil(count / cols);
+
+      const sample = renderFrameForExport(state.processedFrames[0], scale, crt);
+      const fw = sample.width;
+      const fh = sample.height;
+
+      const sheet = document.createElement('canvas');
+      sheet.width = fw * cols;
+      sheet.height = fh * rows;
+      const ctx = sheet.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+
+      state.processedFrames.forEach((pf, idx) => {
+        const fc = renderFrameForExport(pf, scale, crt);
+        const cx = (idx % cols) * fw;
+        const cy = Math.floor(idx / cols) * fh;
+        ctx.drawImage(fc, cx, cy);
+      });
+
+      sheet.toBlob(blob => {
+        if (blob) {
+          triggerDownload(blob, `8bit_${state.systemId}_spritesheet_${sheet.width}x${sheet.height}.png`);
+          showToast(state.lang === 'zh' ? '已导出序列帧精灵表 PNG！' : 'Sprite Sheet Exported!');
+        }
+      }, 'image/png');
+    }
+
+    function exportHardwareJson() {
+      if (state.processedFrames.length === 0) return;
+      const sys = HARDWARE_SYSTEMS[state.systemId];
+      const frame = state.processedFrames[state.currentFrameIdx];
+      const payload = {
+        generator: '8-Bit Retro Hardware Studio v2.5',
+        system: {
+          id: sys.id,
+          name: sys.name,
+          aspectMode: state.aspectMode,
+          outputResolution: [frame.width, frame.height],
+          exportMultiplier: state.exportScaleMult,
+          finalExportResolution: [frame.width * frame.par * state.exportScaleMult, frame.height * state.exportScaleMult],
+          pixelAspectRatio: frame.par,
+          attributeBlockSize: [frame.blockMap.bw, frame.blockMap.bh],
+          clashMode: state.clashMode
+        },
+        dithering: {
+          algorithm: state.ditherAlgo,
+          strength: state.ditherStrength,
+          colorMetric: state.colorMetric
+        },
+        activeSubPalettes: frame.hwConfig.subPalettes.map(sp => ({
+          name: sp.name,
+          hexColors: sp.colors.map(rgbToHex)
+        })),
+        systemMasterPaletteHex: sys.palette.map(rgbToHex)
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      triggerDownload(blob, `8bit_${state.systemId}_hardware_spec.json`);
+      showToast(state.lang === 'zh' ? '已导出硬件色盘与瓦片配置 JSON！' : 'Hardware JSON Exported!');
+    }
+
+    /*************************************************************************
+     * 13. UTILITIES: PROGRESS BAR, CLIPBOARD, TOAST, I18N & EVENT LISTENERS
+     *************************************************************************/
+    function updateProgressUI(visible, percent = 0, titleText = '', subDetail = '') {
+      const modalEl = document.getElementById('loadingOverlay');
+      const inlineBox = document.getElementById('inlineProgressBox');
+      if (!visible) {
+        modalEl.classList.add('hidden');
+        inlineBox.classList.add('hidden');
+        return;
+      }
+      modalEl.classList.remove('hidden');
+      inlineBox.classList.remove('hidden');
+
+      const clamped = Math.max(0, Math.min(100, Math.round(percent)));
+      if (titleText) {
+        document.getElementById('loadingText').textContent = titleText;
+        document.getElementById('inlineProgressText').textContent = titleText;
+      }
+      if (subDetail) {
+        document.getElementById('loadingSubDetail').textContent = subDetail;
+      }
+      document.getElementById('loadingPercent').textContent = `${clamped}%`;
+      document.getElementById('inlineProgressPct').textContent = `${clamped}%`;
+      document.getElementById('loadingProgressBarFill').style.width = `${clamped}%`;
+      document.getElementById('inlineProgressBar').style.width = `${clamped}%`;
+    }
+
+    function showLoading(visible, text = '') {
+      updateProgressUI(visible, visible ? 50 : 0, text);
+    }
+
+    function copyTextToClipboard(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(state.lang === 'zh' ? `已复制色值: ${text}` : `Copied: ${text}`);
+        }).catch(() => fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      showToast(state.lang === 'zh' ? `已复制色值: ${text}` : `Copied: ${text}`);
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const box = document.getElementById('toastBox');
+      document.getElementById('toastMsg').textContent = msg;
+      box.classList.remove('opacity-0', 'translate-y-2');
+      box.classList.add('opacity-100', 'translate-y-0');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        box.classList.add('opacity-0', 'translate-y-2');
+        box.classList.remove('opacity-100', 'translate-y-0');
+      }, 2400);
+    }
+
+    const I18N_DICT = {
+      zh: {
+        appTitle: '8-Bit Retro Hardware Studio',
+        appSubtitle: '硬件级分辨率 · 真实主机色盘 · 瓦片属性冲突 (Attribute Clash) · GIF 动图防卡顿引擎',
+        modeSimple: '✨ 极简模式',
+        modePro: '🛠️ 专业模式',
+        themeSystem: '🌗 主题: 跟随系统',
+        themeDark: '🌙 主题: 黑夜模式',
+        themeLight: '☀️ 主题: 白天模式',
+        devAuto: '📱/🖥️ 自动识别终端',
+        devDesktop: '🖥️ 桌面端工作台 UI',
+        devMobile: '📱 移动端触控 UI',
+        demoLabel: '内置演示:',
+        demoSynth: '🌅 落日飞车 (GIF动图)',
+        demoSlime: '👾 勇者战史莱姆 (GIF动图)',
+        demoCyber: '🏙️ 霓虹街景 (静态图)',
+        demoPortrait: '🎨 色阶测试卡',
+        btnSpecInfo: '硬件原理说明',
+        secRenderMode: '防卡顿渲染与静帧调参',
+        lblRenderTrigger: '参数调节响应模式 (防卡顿核心设置)',
+        lblRefFrame: '当前调参基准静帧:',
+        refFrameTip: '改参数时仅实时计算该静帧（毫秒级响应）；调满意后点下方按钮合成全部动图帧。',
+        btnRenderAllNow: '应用参数并渲染全部 GIF 帧',
+        msgPendingFrames: '当前仅实时预览了调参静帧（防卡顿模式），其余动画帧待渲染。',
+        btnRenderAllBanner: '立即渲染全部动画帧',
+        secInput: '输入图像 / GIF 动图',
+        dropPrompt: '点击或拖拽上传 PNG / JPG / WebP / GIF',
+        dropSub: '支持多帧动画 GIF 自动拆帧与硬件级重编码',
+        secHardware: '目标 8-Bit 硬件平台',
+        lblSystem: '选择游戏主机 / 视频芯片规格',
+        lblAspectMode: '生成画幅横纵比 (Aspect Ratio)',
+        lblCustomRatioInput: '输入自定义宽高比 (W : H)',
+        lblCustomPxInput: '自定义横纵分辨率 (16 ~ 2560 px)',
+        lblLockRatio: '锁定原图比例',
+        lblResMode: '分辨率倍数 (快捷档位)',
+        lblManualScaleInput: '手动输入倍数 (x)',
+        lblCustomScale: '拖动滑块微调倍数 (0.2x ~ 10.0x)',
+        specRes: '实际生成分辨率:',
+        specPal: '系统总色盘:',
+        specClash: '硬件色块限制:',
+        lblClashMode: '硬件属性块限制等级',
+        lblFitMode: '画面裁切/适配方式',
+        secDither: '抖动算法与色彩匹配',
+        lblDitherAlgo: '抖动矩阵 / 误差扩散算法',
+        lblDitherStrength: '抖动强度 (Dither Spread)',
+        lblColorMetric: '色彩匹配距离模型',
+        lblTemporalLock: 'GIF 跨帧子色板锁定 (防色彩跳变)',
+        lblTemporalLockSub: '基于首帧锁定 NES/C64/GBC 全局硬件子色板，避免动图闪烁',
+        secAdjust: '画面预处理调节',
+        btnReset: '重置参数',
+        lblBrightness: '亮度 (Brightness)',
+        lblContrast: '对比度 (Contrast)',
+        lblSaturation: '饱和度 (Saturation)',
+        simpleBannerText: '当前为极简模式，已自动配置最优防闪烁抖动与调色参数。',
+        btnSwitchPro: '展开高级调节',
+        viewSingle: '8-Bit 硬件画面',
+        viewSide: '双栏对比',
+        viewSplit: '滑动对比',
+        lblZoom: '视图缩放:',
+        lblShowGrid: '显示硬件属性网格',
+        lblCRT: 'CRT 扫描线滤镜',
+        lblOrigPreview: '原始输入画面',
+        lblRetroPreview: '8-Bit 硬件渲染输出',
+        statOutputRes: '当前生成尺寸:',
+        statUsedColors: '当前帧实际用色:',
+        statBlockRule: '属性块规格:',
+        inspectorHint: '鼠标悬停画布查看瓦片属性色板',
+        lblSpeed: '速率:',
+        lblFrameStep: '抽帧:',
+        secPalInspector: '当前激活硬件子色板与系统色盘',
+        btnCopyHex: '📋 复制当前色板 HEX',
+        lblMasterPalette: '硬件全局系统色盘 (Master Hardware ROM Palette)',
+        secExport: '导出 8-Bit 图像与动画成品',
+        lblExportScale: '导出尺寸与放大倍数',
+        lblCustomExportMult: '手动导出倍数',
+        lblExportCrt: '扫描线效果导出',
+        btnExportGif: '导出 8-Bit GIF 动图',
+        btnExportPng: '导出当前帧 PNG',
+        btnExportSheet: '导出序列帧精灵表 (Sprite Sheet)',
+        btnExportJson: '导出硬件色板与瓦片数据 JSON'
+      },
+      en: {
+        appTitle: '8-Bit Retro Hardware Studio',
+        appSubtitle: 'Authentic Resolutions · Real ROM Palettes · Hardware Attribute Clash · Anti-Lag GIF Engine',
+        modeSimple: '✨ Simple Mode',
+        modePro: '🛠️ Pro Studio',
+        themeSystem: '🌗 Theme: System',
+        themeDark: '🌙 Theme: Dark',
+        themeLight: '☀️ Theme: Light',
+        devAuto: '📱/🖥️ Auto Device UI',
+        devDesktop: '🖥️ Desktop UI',
+        devMobile: '📱 Mobile Touch UI',
+        demoLabel: 'Presets:',
+        demoSynth: '🌅 Outrun Sunset (GIF)',
+        demoSlime: '👾 RPG Slime Boss (GIF)',
+        demoCyber: '🏙️ Cyber Street (Static)',
+        demoPortrait: '🎨 Color Test Card',
+        btnSpecInfo: 'Hardware Specs',
+        secRenderMode: 'Anti-Lag Render & Reference Frame',
+        lblRenderTrigger: 'Parameter Render Trigger Mode',
+        lblRefFrame: 'Reference Preview Frame:',
+        refFrameTip: 'Adjusting controls updates only this frame instantly; click below to render all GIF frames.',
+        btnRenderAllNow: 'Apply & Render All GIF Frames',
+        msgPendingFrames: 'Single frame previewed (Anti-Lag Mode). Other GIF frames pending render.',
+        btnRenderAllBanner: 'Render All Frames Now',
+        secInput: 'Input Image / Animated GIF',
+        dropPrompt: 'Click or Drag & Drop PNG / JPG / WebP / GIF',
+        dropSub: 'Automatic multi-frame GIF extraction & hardware re-encoding',
+        secHardware: 'Target 8-Bit Hardware System',
+        lblSystem: 'Select Console / Video Chip Architecture',
+        lblAspectMode: 'Output Aspect Ratio & Resolution Mode',
+        lblCustomRatioInput: 'Custom Aspect Ratio (W : H)',
+        lblCustomPxInput: 'Custom Pixel Resolution (16 ~ 2560 px)',
+        lblLockRatio: 'Lock Orig Ratio',
+        lblResMode: 'Resolution Scale Preset',
+        lblManualScaleInput: 'Manual Scale (x)',
+        lblCustomScale: 'Fine-Tune Scale Slider (0.2x ~ 10.0x)',
+        specRes: 'Generated Res:',
+        specPal: 'System Palette:',
+        specClash: 'Block Constraint:',
+        lblClashMode: 'Attribute Clash Strictness',
+        lblFitMode: 'Aspect Fit Mode',
+        secDither: 'Dithering & Color Matching',
+        lblDitherAlgo: 'Dither Matrix / Error Diffusion',
+        lblDitherStrength: 'Dither Spread Strength',
+        lblColorMetric: 'Color Distance Metric',
+        lblTemporalLock: 'GIF Temporal Sub-Palette Lock',
+        lblTemporalLockSub: 'Locks NES/C64/GBC hardware sub-palettes across frames to prevent flicker',
+        secAdjust: 'Pre-Processing Adjustments',
+        btnReset: 'Reset',
+        lblBrightness: 'Brightness',
+        lblContrast: 'Contrast',
+        lblSaturation: 'Saturation',
+        simpleBannerText: 'Simple Mode active with optimal anti-flicker dithering enabled.',
+        btnSwitchPro: 'Show Pro Controls',
+        viewSingle: '8-Bit Output',
+        viewSide: 'Side-by-Side',
+        viewSplit: 'Split Slider',
+        lblZoom: 'View Zoom:',
+        lblShowGrid: 'Tile Attribute Grid',
+        lblCRT: 'CRT Scanlines',
+        lblOrigPreview: 'Original Input',
+        lblRetroPreview: '8-Bit Hardware Output',
+        statOutputRes: 'Generated Res:',
+        statUsedColors: 'Active Colors:',
+        statBlockRule: 'Attribute Cell:',
+        inspectorHint: 'Hover canvas to inspect tile palette',
+        lblSpeed: 'Speed:',
+        lblFrameStep: 'Frame Step:',
+        secPalInspector: 'Active Hardware Sub-Palettes & ROM Palette',
+        btnCopyHex: '📋 Copy Palette HEX',
+        lblMasterPalette: 'Master Hardware ROM Palette',
+        secExport: 'Export 8-Bit Artwork & GIF',
+        lblExportScale: 'Export Scale Mode',
+        lblCustomExportMult: 'Export Multiplier',
+        lblExportCrt: 'Scanline Filter on Export',
+        btnExportGif: 'Export 8-Bit Animated GIF',
+        btnExportPng: 'Export Current Frame PNG',
+        btnExportSheet: 'Export Sprite Sheet PNG',
+        btnExportJson: 'Export Hardware Spec JSON'
+      }
+    };
+
+    function applyLanguage() {
+      const dict = I18N_DICT[state.lang];
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.textContent = dict[key];
+      });
+      updateOriginalAspectBadge();
+      syncReferenceFrameSlider();
+      updateHardwareSpecUI();
+      updateRenderStatusUI();
+      syncTimelineControls();
+    }
+
+    async function loadBuiltInDemo(demoKey) {
+      state.activeDemo = demoKey;
+      ['Synth', 'Slime', 'Cyber', 'Portrait'].forEach(k => {
+        const btn = document.getElementById('demoBtn' + k);
+        if (k.toLowerCase() === demoKey) {
+          btn.className = 'px-2 py-1 rounded-md bg-emerald-500/20 text-emerald-300 font-medium transition hover:bg-emerald-500/30 whitespace-nowrap';
+        } else {
+          btn.className = 'px-2 py-1 rounded-md text-slate-300 hover:bg-slate-800 transition whitespace-nowrap';
+        }
+      });
+
+      state.sourceFrames = generateDemoFrames(demoKey);
+      state.currentFrameIdx = 0;
+      state.previewRefFrameIdx = 0;
+      state.isPlaying = state.sourceFrames.length > 1;
+      document.getElementById('inputBadgeInfo').textContent =
+        state.sourceFrames.length > 1 ? `${state.sourceFrames.length} Frames GIF` : 'Static Image (256×240)';
+
+      updateOriginalAspectBadge();
+      syncReferenceFrameSlider();
+      await runFullAsyncConversionPipeline(true);
+    }
+
+    function syncResScaleInputs(newScaleVal) {
+      const clamped = Math.max(0.1, Math.min(12, Math.round(newScaleVal * 100) / 100));
+      state.resScale = clamped;
+      document.getElementById('inputManualResScale').value = clamped;
+      document.getElementById('rangeCustomResScale').value = Math.min(10, Math.max(0.2, clamped));
+      document.getElementById('valCustomResScale').textContent = `${clamped.toFixed(2)}x`;
+
+      const presetSelect = document.getElementById('selectResScale');
+      const presetValues = ['0.25', '0.5', '0.75', '1', '1.5', '2', '3', '4', '6', '8'];
+      if (presetValues.includes(String(clamped))) {
+        presetSelect.value = String(clamped);
+      } else {
+        presetSelect.value = 'custom';
+        document.getElementById('customScaleSliderBox').classList.remove('hidden');
+      }
+    }
+
+    function initEventListeners() {
+      // Cancel Task Button on Progress Modal
+      document.getElementById('btnCancelTask').addEventListener('click', () => {
+        state.activeTaskToken++;
+        updateProgressUI(false);
+        showToast(state.lang === 'zh' ? '已取消当前渲染任务' : 'Task Cancelled');
+      });
+
+      // Anti-Lag Render Trigger Mode & Reference Frame Controls
+      document.getElementById('selectRenderTriggerMode').addEventListener('change', e => {
+        state.renderTriggerMode = e.target.value;
+        updateRenderStatusUI();
+      });
+
+      document.getElementById('rangeRefFrame').addEventListener('input', e => {
+        state.previewRefFrameIdx = parseInt(e.target.value, 10) || 0;
+        syncReferenceFrameSlider();
+        renderSinglePreviewFrameOnly();
+      });
+
+      document.getElementById('btnApplyRenderNow').addEventListener('click', () => {
+        runFullAsyncConversionPipeline(true);
+      });
+      document.getElementById('btnRenderAllFromBanner').addEventListener('click', () => {
+        runFullAsyncConversionPipeline(true);
+      });
+
+      // UI Complexity Mode (Simple vs Pro)
+      document.getElementById('btnUiModeSimple').addEventListener('click', () => {
+        state.uiComplexity = 'simple';
+        applyDeviceAndComplexityLayout();
+      });
+      document.getElementById('btnUiModePro').addEventListener('click', () => {
+        state.uiComplexity = 'pro';
+        applyDeviceAndComplexityLayout();
+      });
+      document.getElementById('btnExpandProFromBanner').addEventListener('click', () => {
+        state.uiComplexity = 'pro';
+        applyDeviceAndComplexityLayout();
+      });
+
+      // Theme Mode
+      document.getElementById('selectThemeMode').addEventListener('change', e => {
+        state.themeMode = e.target.value;
+        applyThemeMode();
+      });
+      if (darkMediaQuery && darkMediaQuery.addEventListener) {
+        darkMediaQuery.addEventListener('change', () => {
+          if (state.themeMode === 'system') applyThemeMode();
+        });
+      }
+
+      // Device UI Mode
+      document.getElementById('selectDeviceMode').addEventListener('change', e => {
+        state.deviceMode = e.target.value;
+        applyDeviceAndComplexityLayout();
+      });
+
+      // Mobile Step Tabs
+      document.querySelectorAll('.mob-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.activeMobileTab = btn.getAttribute('data-mobtab');
+          document.querySelectorAll('.mob-tab-btn').forEach(b => {
+            b.className = b === btn
+              ? 'mob-tab-btn py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-semibold text-center'
+              : 'mob-tab-btn py-1.5 rounded-lg text-slate-300 bg-retro-bg text-center';
+          });
+          applyDeviceAndComplexityLayout();
+        });
+      });
+
+      // Demo buttons
+      document.getElementById('demoBtnSynth').addEventListener('click', () => loadBuiltInDemo('synth'));
+      document.getElementById('demoBtnSlime').addEventListener('click', () => loadBuiltInDemo('slime'));
+      document.getElementById('demoBtnCyber').addEventListener('click', () => loadBuiltInDemo('cyber'));
+      document.getElementById('demoBtnPortrait').addEventListener('click', () => loadBuiltInDemo('portrait'));
+
+      // File Upload & Drag-and-Drop
+      const fileInput = document.getElementById('fileInput');
+      const dropZone = document.getElementById('dropZone');
+      fileInput.addEventListener('change', e => {
+        if (e.target.files && e.target.files[0]) handleFileUpload(e.target.files[0]);
+      });
+      dropZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        dropZone.classList.add('border-emerald-400');
+      });
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-emerald-400');
+      });
+      dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropZone.classList.remove('border-emerald-400');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          handleFileUpload(e.dataTransfer.files[0]);
+        }
+      });
+
+      // Hardware System & Aspect Ratio / Resolution Controls
+      document.getElementById('selectSystem').addEventListener('change', e => {
+        state.systemId = e.target.value;
+        onParameterChanged(false);
+      });
+
+      document.getElementById('selectAspectMode').addEventListener('change', e => {
+        state.aspectMode = e.target.value;
+        if (state.aspectMode === 'original') {
+          state.fitMode = 'contain';
+          document.getElementById('selectFitMode').value = 'contain';
+        } else if (state.aspectMode === 'custom_px' && state.lockCustomPxRatio && state.sourceFrames[0]) {
+          const s0 = state.sourceFrames[0].imageData;
+          state.customPxH = Math.max(16, Math.round(state.customPxW * (s0.height / s0.width)));
+          document.getElementById('inputCustomH').value = state.customPxH;
+        }
+        onParameterChanged(false);
+      });
+
+      document.getElementById('inputRatioW').addEventListener('input', e => {
+        state.customRatioW = Math.max(0.1, parseFloat(e.target.value) || 16);
+        onParameterChanged(true);
+      });
+      document.getElementById('inputRatioH').addEventListener('input', e => {
+        state.customRatioH = Math.max(0.1, parseFloat(e.target.value) || 9);
+        onParameterChanged(true);
+      });
+
+      document.getElementById('chkLockCustomPxRatio').addEventListener('change', e => {
+        state.lockCustomPxRatio = e.target.checked;
+      });
+      document.getElementById('inputCustomW').addEventListener('input', e => {
+        state.customPxW = Math.max(16, Math.min(2560, parseInt(e.target.value, 10) || 256));
+        if (state.lockCustomPxRatio && state.sourceFrames[0]) {
+          const s0 = state.sourceFrames[0].imageData;
+          state.customPxH = Math.max(16, Math.min(2560, Math.round(state.customPxW * (s0.height / s0.width))));
+          document.getElementById('inputCustomH').value = state.customPxH;
+        }
+        onParameterChanged(true);
+      });
+      document.getElementById('inputCustomH').addEventListener('input', e => {
+        state.customPxH = Math.max(16, Math.min(2560, parseInt(e.target.value, 10) || 240));
+        if (state.lockCustomPxRatio && state.sourceFrames[0]) {
+          const s0 = state.sourceFrames[0].imageData;
+          state.customPxW = Math.max(16, Math.min(2560, Math.round(state.customPxH * (s0.width / s0.height))));
+          document.getElementById('inputCustomW').value = state.customPxW;
+        }
+        onParameterChanged(true);
+      });
+
+      document.getElementById('selectClashMode').addEventListener('change', e => {
+        state.clashMode = e.target.value;
+        const hints = {
+          strict: 'Authentic Tile Clash',
+          fine_tile: 'Fine 8×8 Tile Mode',
+          global_palette: 'Global Palette Only'
+        };
+        document.getElementById('clashModeHint').textContent = hints[state.clashMode] || '';
+        onParameterChanged(false);
+      });
+
+      // Resolution Scale Preset Dropdown, Manual Number Input & Slider
+      document.getElementById('selectResScale').addEventListener('change', e => {
+        const val = e.target.value;
+        const customBox = document.getElementById('customScaleSliderBox');
+        if (val === 'custom') {
+          customBox.classList.remove('hidden');
+        } else {
+          customBox.classList.add('hidden');
+          syncResScaleInputs(parseFloat(val) || 1);
+          onParameterChanged(false);
+        }
+      });
+
+      document.getElementById('inputManualResScale').addEventListener('input', e => {
+        const v = parseFloat(e.target.value);
+        if (!isNaN(v) && v >= 0.1) {
+          syncResScaleInputs(v);
+          onParameterChanged(true);
+        }
+      });
+
+      document.getElementById('rangeCustomResScale').addEventListener('input', e => {
+        const v = parseFloat(e.target.value) || 1;
+        syncResScaleInputs(v);
+        onParameterChanged(true);
+      });
+
+      document.getElementById('selectFitMode').addEventListener('change', e => {
+        state.fitMode = e.target.value;
+        onParameterChanged(false);
+      });
+
+      // Dithering & Pre-processing
+      document.getElementById('selectDither').addEventListener('change', e => {
+        state.ditherAlgo = e.target.value;
+        onParameterChanged(false);
+      });
+      document.getElementById('rangeDitherStrength').addEventListener('input', e => {
+        state.ditherStrength = parseInt(e.target.value, 10);
+        document.getElementById('valDitherStrength').textContent = `${state.ditherStrength}%`;
+        onParameterChanged(true);
+      });
+      document.getElementById('selectColorMetric').addEventListener('change', e => {
+        state.colorMetric = e.target.value;
+        onParameterChanged(false);
+      });
+      document.getElementById('chkTemporalLock').addEventListener('change', e => {
+        state.temporalLock = e.target.checked;
+        onParameterChanged(false);
+      });
+
+      document.getElementById('rangeBrightness').addEventListener('input', e => {
+        state.brightness = parseInt(e.target.value, 10);
+        document.getElementById('valBrightness').textContent = (state.brightness > 0 ? '+' : '') + state.brightness;
+        onParameterChanged(true);
+      });
+      document.getElementById('rangeContrast').addEventListener('input', e => {
+        state.contrast = parseInt(e.target.value, 10);
+        document.getElementById('valContrast').textContent = (state.contrast > 0 ? '+' : '') + state.contrast;
+        onParameterChanged(true);
+      });
+      document.getElementById('rangeSaturation').addEventListener('input', e => {
+        state.saturation = parseInt(e.target.value, 10);
+        document.getElementById('valSaturation').textContent = (state.saturation > 0 ? '+' : '') + state.saturation + '%';
+        onParameterChanged(true);
+      });
+      document.getElementById('btnResetAdjust').addEventListener('click', () => {
+        state.brightness = 0;
+        state.contrast = 10;
+        state.saturation = 15;
+        document.getElementById('rangeBrightness').value = 0;
+        document.getElementById('rangeContrast').value = 10;
+        document.getElementById('rangeSaturation').value = 15;
+        document.getElementById('valBrightness').textContent = '0';
+        document.getElementById('valContrast').textContent = '+10';
+        document.getElementById('valSaturation').textContent = '+15%';
+        onParameterChanged(false);
+      });
+
+      // View mode buttons
+      const setViewMode = mode => {
+        state.viewMode = mode;
+        const map = { output: 'viewModeOutput', side: 'viewModeSide', split: 'viewModeSplit' };
+        Object.entries(map).forEach(([k, id]) => {
+          const btn = document.getElementById(id);
+          if (k === mode) {
+            btn.className = 'px-2.5 py-1 rounded-md bg-emerald-500 text-slate-950 font-semibold transition';
+          } else {
+            btn.className = 'px-2.5 py-1 rounded-md text-slate-300 hover:text-white transition';
+          }
+        });
+        renderCurrentFrameToViewport();
+      };
+      document.getElementById('viewModeOutput').addEventListener('click', () => setViewMode('output'));
+      document.getElementById('viewModeSide').addEventListener('click', () => setViewMode('side'));
+      document.getElementById('viewModeSplit').addEventListener('click', () => setViewMode('split'));
+
+      // Zoom buttons
+      document.querySelectorAll('.zoom-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.zoomMode = btn.getAttribute('data-zoom');
+          document.querySelectorAll('.zoom-btn').forEach(b => {
+            b.className = b === btn
+              ? 'zoom-btn px-1.5 py-0.5 rounded bg-slate-700 text-white font-mono'
+              : 'zoom-btn px-1.5 py-0.5 rounded text-slate-400 hover:text-white font-mono';
+          });
+          renderCurrentFrameToViewport();
+        });
+      });
+
+      // Grid & CRT toggles
+      document.getElementById('chkShowGrid').addEventListener('change', e => {
+        state.showGrid = e.target.checked;
+        renderCurrentFrameToViewport();
+      });
+      document.getElementById('chkCRT').addEventListener('change', e => {
+        state.crtEnabled = e.target.checked;
+        const crtDiv = document.getElementById('crtOverlayDiv');
+        if (state.crtEnabled) crtDiv.classList.remove('hidden');
+        else crtDiv.classList.add('hidden');
+      });
+
+      // Split Slider & Tile Hover Inspector on Canvas Stack
+      const canvasStack = document.getElementById('canvasStack');
+      let isDraggingSplit = false;
+
+      const handlePointerOnCanvas = clientX => {
+        if (state.processedFrames.length === 0) return;
+        const rect = canvasOutput.getBoundingClientRect();
+        const relX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        if (isDraggingSplit && state.viewMode === 'split') {
+          state.splitPos = relX;
+          renderCurrentFrameToViewport();
+        }
+      };
+
+      const handleInspectOnCanvas = (clientX, clientY) => {
+        if (state.processedFrames.length === 0) return;
+        const frame = state.processedFrames[state.currentFrameIdx];
+        const rect = canvasOutput.getBoundingClientRect();
+        const relX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        const relY = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+
+        if (isDraggingSplit && state.viewMode === 'split') {
+          state.splitPos = relX;
+        }
+
+        const px = Math.min(frame.width - 1, Math.floor(relX * frame.width));
+        const py = Math.min(frame.height - 1, Math.floor(relY * frame.height));
+        const bx = Math.floor(px / frame.blockMap.bw);
+        const by = Math.floor(py / frame.blockMap.bh);
+        const blockPal = frame.blockMap.getBlockPalette(bx, by);
+
+        document.getElementById('inspectorCoords').textContent = `Block (${bx},${by}) [${blockPal.id}]`;
+        const swBox = document.getElementById('inspectorSwatches');
+        swBox.innerHTML = '';
+        blockPal.colors.slice(0, 8).forEach(c => {
+          const s = document.createElement('span');
+          s.className = 'w-3.5 h-3.5 rounded-sm border border-slate-600 inline-block';
+          s.style.backgroundColor = rgbToHex(c);
+          swBox.appendChild(s);
+        });
+
+        renderCurrentFrameToViewport({ bx, by });
+      };
+
+      canvasStack.addEventListener('mousedown', e => {
+        if (state.viewMode === 'split') {
+          isDraggingSplit = true;
+          handleInspectOnCanvas(e.clientX, e.clientY);
+        }
+      });
+      window.addEventListener('mouseup', () => { isDraggingSplit = false; });
+      canvasStack.addEventListener('mousemove', e => handleInspectOnCanvas(e.clientX, e.clientY));
+      canvasStack.addEventListener('touchstart', e => {
+        if (e.touches && e.touches[0]) {
+          if (state.viewMode === 'split') isDraggingSplit = true;
+          handleInspectOnCanvas(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: true });
+      canvasStack.addEventListener('touchmove', e => {
+        if (e.touches && e.touches[0]) {
+          handlePointerOnCanvas(e.touches[0].clientX);
+        }
+      }, { passive: true });
+      window.addEventListener('touchend', () => { isDraggingSplit = false; });
+      canvasStack.addEventListener('mouseleave', () => {
+        renderCurrentFrameToViewport(null);
+      });
+
+      // GIF Timeline Controls
+      document.getElementById('btnPlayPause').addEventListener('click', async () => {
+        if (state.sourceFrames.length <= 1) return;
+        if (!state.allFramesSynced) {
+          await runFullAsyncConversionPipeline(true);
+          return;
+        }
+        state.isPlaying = !state.isPlaying;
+        syncTimelineControls();
+        restartPlaybackLoop();
+      });
+      document.getElementById('btnPrevFrame').addEventListener('click', () => {
+        state.isPlaying = false;
+        state.currentFrameIdx = (state.currentFrameIdx - 1 + state.processedFrames.length) % state.processedFrames.length;
+        state.previewRefFrameIdx = state.currentFrameIdx;
+        syncReferenceFrameSlider();
+        renderCurrentFrameToViewport();
+        renderPalettesInspector();
+        syncTimelineControls();
+      });
+      document.getElementById('btnNextFrame').addEventListener('click', () => {
+        state.isPlaying = false;
+        state.currentFrameIdx = (state.currentFrameIdx + 1) % state.processedFrames.length;
+        state.previewRefFrameIdx = state.currentFrameIdx;
+        syncReferenceFrameSlider();
+        renderCurrentFrameToViewport();
+        renderPalettesInspector();
+        syncTimelineControls();
+      });
+      document.getElementById('rangeFrameScrub').addEventListener('input', e => {
+        state.isPlaying = false;
+        state.currentFrameIdx = parseInt(e.target.value, 10) || 0;
+        state.previewRefFrameIdx = state.currentFrameIdx;
+        syncReferenceFrameSlider();
+        if (!state.allFramesSynced) {
+          renderSinglePreviewFrameOnly();
+        } else {
+          renderCurrentFrameToViewport();
+          renderPalettesInspector();
+          syncTimelineControls();
+        }
+      });
+      document.getElementById('selectGifSpeed').addEventListener('change', e => {
+        state.gifSpeed = parseFloat(e.target.value) || 1;
+        restartPlaybackLoop();
+      });
+      document.getElementById('selectFrameStep').addEventListener('change', e => {
+        state.frameStep = parseInt(e.target.value, 10) || 1;
+        syncReferenceFrameSlider();
+        runFullAsyncConversionPipeline(true);
+      });
+
+      // Export Scale Select & Manual Input Sync
+      document.getElementById('selectExportScale').addEventListener('change', e => {
+        const val = e.target.value;
+        if (val === 'custom') {
+          document.getElementById('inputCustomExportScale').focus();
+        } else {
+          state.exportScaleMult = parseInt(val, 10) || 1;
+          document.getElementById('inputCustomExportScale').value = state.exportScaleMult;
+          updateExportFinalResolutionPreview();
+        }
+      });
+
+      document.getElementById('inputCustomExportScale').addEventListener('input', e => {
+        const v = Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 1));
+        state.exportScaleMult = v;
+        const presetOpts = ['1', '2', '3', '4', '6', '8', '10'];
+        document.getElementById('selectExportScale').value = presetOpts.includes(String(v)) ? String(v) : 'custom';
+        updateExportFinalResolutionPreview();
+      });
+
+      document.getElementById('btnCopyPaletteHex').addEventListener('click', () => {
+        const sys = HARDWARE_SYSTEMS[state.systemId];
+        const hexList = sys.palette.map(rgbToHex).join(', ');
+        copyTextToClipboard(hexList);
+      });
+
+      // Export Buttons
+      document.getElementById('btnExportGif').addEventListener('click', exportAnimatedGif);
+      document.getElementById('btnExportPng').addEventListener('click', exportCurrentPng);
+      document.getElementById('btnExportSheet').addEventListener('click', exportSpriteSheet);
+      document.getElementById('btnExportJson').addEventListener('click', exportHardwareJson);
+
+      // Modal & Language Toggle
+      const modal = document.getElementById('modalSpec');
+      document.getElementById('btnArchitectureModal').addEventListener('click', () => modal.classList.remove('hidden'));
+      document.getElementById('btnCloseModal').addEventListener('click', () => modal.classList.add('hidden'));
+      document.getElementById('btnCloseModalBottom').addEventListener('click', () => modal.classList.add('hidden'));
+
+      document.getElementById('btnToggleLang').addEventListener('click', () => {
+        state.lang = state.lang === 'zh' ? 'en' : 'zh';
+        applyLanguage();
+      });
+
+      window.addEventListener('resize', () => {
+        if (state.deviceMode === 'auto') {
+          applyDeviceAndComplexityLayout();
+        } else if (state.zoomMode === 'fit') {
+          renderCurrentFrameToViewport();
+        }
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        const savedTheme = localStorage.getItem('retro8bit_theme');
+        if (savedTheme && ['system', 'dark', 'light'].includes(savedTheme)) {
+          state.themeMode = savedTheme;
+          document.getElementById('selectThemeMode').value = savedTheme;
+        }
+      } catch (e) {}
+
+      if (detectIsMobileBrowser()) {
+        state.uiComplexity = 'simple';
+      }
+
+      applyThemeMode();
+      initEventListeners();
+      loadBuiltInDemo('synth');
+      applyDeviceAndComplexityLayout();
+    });
+  </script>
+</body>
+</html>
