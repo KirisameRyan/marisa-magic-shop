@@ -14,7 +14,7 @@ RULES = [
     ('literal-secret', re.compile(r'''["']?('''+SECRET_NAME+r''')["']?\s*(?:=>|:|=|,)\s*["']([^"'\r\n]{8,})["']''', re.I)),
 ]
 SKIP_VALUES = re.compile(r'^(?:your[_ -]|example|placeholder|change[_ -]|replace[_ -]|\$|<|getenv|process\.|os\.|window\.|undefined|null|password[_ -]?hash|api/|https?://)', re.I)
-TEXT_EXT = {'.php','.js','.mjs','.json','.html','.md','.txt','.yml','.yaml','.toml','.ini','.xml','.gradle','.properties','.ps1','.py','.sh','.env','.conf'}
+TEXT_EXT = {'.php','.js','.mjs','.cjs','.json','.html','.md','.txt','.yml','.yaml','.toml','.ini','.xml','.gradle','.properties','.ps1','.py','.sh','.env','.conf'}
 
 def scan_text(text, name):
     findings=[]

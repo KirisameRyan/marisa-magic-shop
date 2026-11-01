@@ -12,7 +12,7 @@ DATA_FILES = {
 library=json.loads((ROOT/'js/catalog.js').read_text(encoding='utf-8').split('window.MMS_LIBRARY = ',1)[1].split(';\nwindow.MMS_CATALOG',1)[0])
 ROOT_PAGES={item['href'] for item in library['items'] if '/' not in item['href']} | {
     'index.html','games.html','tests.html','stories.html','tools.html','explore.html',
-    '404.html','mine.html','leaderboard.html','collect.html','feedback.html','reset.html','polo_pick.html','human-star.html','quiz-drowning.html'
+    '404.html','mine.html','leaderboard.html','collect.html','feedback.html','reset.html','verify-email.html','polo_pick.html','human-star.html','quiz-drowning.html'
 }
 def public_file(name):
     path=Path(name);parts=path.parts

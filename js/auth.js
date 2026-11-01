@@ -45,12 +45,13 @@
     if (token) headers['Authorization'] = 'Bearer ' + token;
     var cfg = { method: opts.method || 'GET', headers: headers };
     if (opts.body) cfg.body = opts.body;
-    return fetch(API_BASE + path, cfg).then(function(r) {
+    return fetch((window.API_BASE || '') + path, cfg).then(function(r) {
       return r.json().then(function(j) {
-        if (r.status === 401 && !opts.silent) clearSession();
+        j.unauthorized = r.status === 401;
+        if (j.unauthorized && !opts.silent) clearSession();
         return j;
       });
-    });
+    }).catch(function() { return { ok: false, error: '网络连接失败，请稍后重试' }; });
   }
 
   function formAction(action, extra) {
@@ -90,9 +91,11 @@
   }
   // 打开页面时校验一次会话
   function verify() {
-    if (!isLoggedIn()) return;
-    api('api/auth.php', { silent: true }).then(function(res) {
-      if (!res.ok) clearSession();
+    if (!isLoggedIn()) return Promise.resolve({ ok: false });
+    return api('api/auth.php', { silent: true }).then(function(res) {
+      if (res.unauthorized) clearSession();
+      else if (res.ok && res.user) { try { localStorage.setItem(USER_KEY, JSON.stringify(res.user)); } catch(e) {} notify(); }
+      return res;
     });
   }
   function onAuth(fn) {
@@ -127,14 +130,15 @@
         '</form>' +
         '<form id="mmsAuthRegForm" class="mms-auth-view" style="display:none">' +
           '<input name="username" maxlength="12" autocomplete="username" placeholder="用户名（2-12位 中英文/数字/_）">' +
-          '<input name="email" type="email" maxlength="100" autocomplete="email" placeholder="邮箱（找回密码用）">' +
-          '<input name="password" type="password" maxlength="32" autocomplete="new-password" placeholder="密码（6-32位）">' +
+          '<input name="email" type="email" maxlength="100" autocomplete="email" placeholder="邮箱（可选，仅用于找回密码）">' +
+          '<div class="mms-auth-hint">邮箱可不填写。不填写邮箱，忘记密码后将无法通过本站找回账户，关联的游戏资产也无法恢复。请自行保管密码。</div>' +
+          '<input name="password" type="password" maxlength="32" autocomplete="new-password" placeholder="密码（8-32位，不超过72字节）">' +
           '<label class="mms-auth-terms"><input type="checkbox" id="mmsAuthAgree">我已阅读并同意<a href="javascript:void(0)" id="mmsAuthTermsLink">《用户须知》</a></label>' +
           '<div class="mms-auth-terms-box" id="mmsAuthTermsBox">' +
             '<b>账户用途</b><br>' +
-            '账号用于排行榜身份、游戏成绩，以及未来的记账等新功能。<br>' +
+            '账号用于排行榜、游戏交易账户、游戏成绩及本站记账等功能。<br>' +
             '<b>邮箱用途</b><br>' +
-            '仅用于找回密码，不会发送广告或营销邮件。<br>' +
+            '邮箱可选，仅用于找回密码。不填写邮箱，忘记密码后无法通过本站找回账户及关联游戏资产。不会发送广告或营销邮件。<br>' +
             '<b>数据存储</b><br>' +
             '你的用户名、邮箱和成绩仅保存在本站服务器（azureflame.cloud），不会提供给任何第三方。<br>' +
             '<b>账号安全</b><br>' +
@@ -289,6 +293,7 @@
 
   // ═══════════ 右上角入口 ═══════════
   function injectEntry() {
+    if (document.documentElement.dataset.authEntry === 'false') { verify(); return; }
     var btn = document.createElement('button');
     btn.id = 'mmsAuthEntry';
     btn.className = 'mms-auth-entry';
@@ -350,6 +355,7 @@
     register: register,
     logout: logout,
     forgot: forgot,
+    sendVerification: function() { return api('api/auth.php', { method: 'POST', body: formAction('request_verification') }); },
     reset: reset,
     verify: verify,
     onAuth: onAuth,

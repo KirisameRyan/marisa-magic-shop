@@ -23,7 +23,7 @@ function mms_db(): PDO {
             "CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT NOT NULL UNIQUE,
-                email TEXT NOT NULL UNIQUE,
+                email TEXT UNIQUE,
                 pass_hash TEXT NOT NULL,
                 created_at TEXT NOT NULL
             )"
@@ -70,6 +70,17 @@ function mms_db(): PDO {
             )"
         );
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)');
+        $columns = array_column($pdo->query('PRAGMA table_info(users)')->fetchAll(PDO::FETCH_ASSOC), 'name');
+        if (!in_array('email_verified_at', $columns, true)) {
+            $pdo->exec('BEGIN IMMEDIATE');
+            try {
+                $columns = array_column($pdo->query('PRAGMA table_info(users)')->fetchAll(PDO::FETCH_ASSOC), 'name');
+                if (!in_array('email_verified_at', $columns, true)) $pdo->exec('ALTER TABLE users ADD COLUMN email_verified_at INTEGER');
+                $pdo->exec('COMMIT');
+            } catch (Throwable $error) { $pdo->exec('ROLLBACK'); throw $error; }
+        }
+        mms_migrate_optional_email($pdo);
+        $pdo->exec('CREATE TABLE IF NOT EXISTS email_verifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, token_hash TEXT NOT NULL UNIQUE, expires_at INTEGER NOT NULL, used INTEGER NOT NULL DEFAULT 0)');
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_resets_user ON resets(user_id)');
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_tx_user_time ON transactions(user_id, happened_at)');
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_tx_user_upd ON transactions(user_id, updated_at)');
@@ -90,6 +101,40 @@ function mms_db(): PDO {
         }
     }
     return $pdo;
+}
+
+// SQLite cannot drop NOT NULL in-place. Preserve IDs, sequence, columns and indexes.
+function mms_migrate_optional_email(PDO $db): void {
+    $info = $db->query('PRAGMA table_info(users)')->fetchAll(PDO::FETCH_ASSOC);
+    $emailColumn = array_values(array_filter($info, fn($c) => $c['name'] === 'email'))[0] ?? null;
+    if (!$emailColumn || !$emailColumn['notnull']) return;
+    $foreignKeys = (int)$db->query('PRAGMA foreign_keys')->fetchColumn();
+    $db->exec('PRAGMA foreign_keys=OFF');
+    $db->exec('BEGIN IMMEDIATE');
+    try {
+        $info = $db->query('PRAGMA table_info(users)')->fetchAll(PDO::FETCH_ASSOC);
+        $emailColumn = array_values(array_filter($info, fn($c) => $c['name'] === 'email'))[0];
+        if ($emailColumn['notnull']) {
+            $sql = $db->query("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'")->fetchColumn();
+            $sql = preg_replace('/\bemail\s+TEXT\s+NOT\s+NULL\b/i', 'email TEXT', $sql, 1, $changed);
+            if ($changed !== 1) throw new RuntimeException('Unsupported users schema; migration required');
+            $sql = preg_replace('/^CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?["`\[]?users["`\]]?/i', 'CREATE TABLE mms_users_optional', $sql, 1);
+            $indexes = $db->query("SELECT sql FROM sqlite_master WHERE tbl_name='users' AND type IN ('index','trigger') AND sql IS NOT NULL")->fetchAll(PDO::FETCH_COLUMN);
+            $sequence = (int)$db->query("SELECT seq FROM sqlite_sequence WHERE name='users'")->fetchColumn();
+            $quote = fn($name) => '"' . str_replace('"', '""', $name) . '"';
+            $names = implode(',', array_map(fn($c) => $quote($c['name']), $info));
+            $values = implode(',', array_map(fn($c) => $c['name'] === 'email' ? "NULLIF(email,'')" : $quote($c['name']), $info));
+            $db->exec($sql);
+            $db->exec("INSERT INTO mms_users_optional ($names) SELECT $values FROM users");
+            $db->exec('DROP TABLE users');
+            $db->exec('ALTER TABLE mms_users_optional RENAME TO users');
+            foreach ($indexes as $indexSql) $db->exec($indexSql);
+            $db->exec("UPDATE sqlite_sequence SET seq=MAX(seq,$sequence) WHERE name='users'");
+            if ($db->query('PRAGMA foreign_key_check')->fetch()) throw new RuntimeException('Foreign key check failed');
+        }
+        $db->exec('COMMIT');
+    } catch (Throwable $error) { $db->exec('ROLLBACK'); throw $error; }
+    finally { $db->exec('PRAGMA foreign_keys=' . $foreignKeys); }
 }
 
 function mms_json_error(int $code, string $msg): void {
@@ -130,7 +175,7 @@ function mms_auth_user(): ?array {
     $token = mms_bearer_token();
     if ($token === '') return null;
     $st = mms_db()->prepare(
-        'SELECT u.id, u.username, u.email FROM sessions s
+        'SELECT u.id, u.username, u.email, u.email_verified_at FROM sessions s
          JOIN users u ON u.id = s.user_id
          WHERE s.token = ? AND s.expire > ?'
     );
@@ -187,8 +232,8 @@ function mms_validate_email(string $email): string {
 }
 
 function mms_validate_password(string $password): string {
-    if (mb_strlen($password) < 6 || mb_strlen($password) > 32) {
-        mms_json_error(400, '密码需为 6-32 位');
+    if (mb_strlen($password) < 8 || mb_strlen($password) > 32 || strlen($password) > 72 || strpos($password, "\0") !== false) {
+        mms_json_error(400, '新密码需为 8-32 位，UTF-8编码不超过72字节');
     }
     return $password;
 }
@@ -212,45 +257,32 @@ function mms_ip_key(): string {
 }
 
 // 登录失败 5 次 → 封 IP 10 分钟
-function mms_login_blocked(): bool {
-    $d = mms_rate_read();
-    $k = mms_ip_key();
-    if (isset($d['block'][$k]) && $d['block'][$k] > time()) return true;
-    if (($d['fail'][$k] ?? 0) >= 5) {
-        $d['block'][$k] = time() + 600;
-        $d['fail'][$k] = 0;
-        mms_rate_write($d);
-        return true;
-    }
-    return false;
+function mms_login_blocked(string $username = ''): bool {
+    return !mms_quota('login-ip', mms_ip_key(), 50, 600)
+        || ($username !== '' && !mms_quota('login-name', $username, 10, 600));
 }
 
 function mms_login_failed(): void {
-    $d = mms_rate_read();
-    $k = mms_ip_key();
-    $d['fail'][$k] = ($d['fail'][$k] ?? 0) + 1;
-    mms_rate_write($d);
+    // Attempts are counted atomically before password verification.
 }
 
 function mms_login_ok(): void {
-    $d = mms_rate_read();
-    $k = mms_ip_key();
-    unset($d['fail'][$k], $d['block'][$k]);
-    mms_rate_write($d);
+    // A successful login must not clear another request's shared IP quota.
 }
 
 // 忘记密码限速: 同邮箱 5 分钟一次 / 同 IP 每小时 5 次
 function mms_forgot_blocked(string $email): bool {
-    $d = mms_rate_read();
-    $ek = 'fmail_' . md5($email);
-    if (($d['forgot'][$ek] ?? 0) > time()) return true;
-    $ik = 'fip_' . mms_ip_key();
-    $now = time();
-    $hist = array_values(array_filter($d['fhist'][$ik] ?? [], function ($t) use ($now) { return $t > $now - 3600; }));
-    if (count($hist) >= 5) return true;
-    $d['fhist'][$ik] = $hist;
-    $d['fhist'][$ik][] = $now;
-    $d['forgot'][$ek] = $now + 300;
-    mms_rate_write($d);
-    return false;
+    return !mms_quota('forgot-ip', mms_ip_key(), 5, 3600) || !mms_quota('forgot-mail', $email, 1, 300);
+}
+
+function mms_post_string(string $name, int $max = 256, string $default = ''): string {
+    $value = $_POST[$name] ?? $default;
+    if (!is_string($value) || strlen($value) > $max) mms_json_error(400, '请求字段格式不正确');
+    return $value;
+}
+
+function mms_account_link(string $page, string $token): string {
+    $origin = rtrim(mms_env('MMS_PUBLIC_ORIGIN', 'https://www.azureflame.cloud'), '/');
+    if (!preg_match('~^https://[a-z0-9.-]+(?::[0-9]+)?$~i', $origin)) throw new RuntimeException('Invalid public origin');
+    return $origin . '/' . $page . '?t=' . rawurlencode($token);
 }

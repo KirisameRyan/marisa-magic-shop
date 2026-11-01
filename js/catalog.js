@@ -28,6 +28,14 @@ window.MMS_LIBRARY = {
   },
   "items": [
     {
+      "href": "gensokyo_exchange.html",
+      "name": "幻想乡交易所",
+      "category": "games",
+      "tag": "策略经营",
+      "desc": "东方产业练习盘：普通买卖与独立杠杆合约，每分钟撮合、多周期K线与MACD。本地保存，尚未接入多人服务器。",
+      "badge": "原型"
+    },
+    {
       "href": "quiz-heartprint.html",
       "name": "二次元心动说明书",
       "category": "tests",

@@ -1,0 +1,34 @@
+'use strict';
+const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),{gzipSync}=require('node:zlib');
+const {Store}=require('./store.cjs'),M=require('./market.cjs');
+const root=path.resolve(__dirname,'../..');
+const assets=new Set(['gensokyo_exchange.html','verify-email.html','reset.html','css/gensokyo-exchange.css','css/gensokyo-auth.css','css/common.css','js/gensokyo-engine.js','js/gensokyo-market-data.js','js/gensokyo-exchange.js','js/gensokyo-network.js','js/echarts.min.js','js/api-config.js','js/auth.js','js/page-base.js','js/catalog.js','nav.js','css/vendor/fontawesome/css/all.min.css',...['fa-solid-900','fa-regular-400','fa-brands-400','fa-v4compatibility'].map(n=>'css/vendor/fontawesome/webfonts/'+n+'.woff2')]);
+function createServer({dataDir,origins=['http://127.0.0.1:8098','https://www.azureflame.cloud','https://azureflame.cloud'],authUpstream='',resume=false,now=Date.now(),environment='production'}={}){
+ if(!dataDir)throw Error('必须配置私有数据库目录 MMS_PRIVATE_DIR');const store=new Store(dataDir,{resume,now}),limits=new Map();
+ function rate(subject,limit,ms){const now=Date.now(),old=limits.get(subject);if(!old||old.until<=now){limits.set(subject,{until:now+ms,count:1});return true;}return ++old.count<=limit;}
+ function send(req,res,status,data,etag){res.setHeader('Content-Type','application/json; charset=utf-8');if(etag){res.setHeader('ETag',etag);if(req.headers['if-none-match']===etag){res.writeHead(304).end();return;}}const raw=Buffer.from(JSON.stringify(data));if((req.headers['accept-encoding']||'').includes('gzip')){res.setHeader('Content-Encoding','gzip');res.setHeader('Vary','Origin, Accept-Encoding');res.writeHead(status).end(gzipSync(raw));}else res.writeHead(status).end(raw);}
+ const server=http.createServer(async(req,res)=>{res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');const origin=req.headers.origin;if(origin&&!origins.includes(origin)){send(req,res,403,{ok:false,error:'Origin not allowed'});return;}if(origin){res.setHeader('Access-Control-Allow-Origin',origin);res.setHeader('Vary','Origin');}res.setHeader('Access-Control-Allow-Headers','Authorization, Content-Type, Idempotency-Key, If-None-Match');res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS');if(req.method==='OPTIONS'){res.writeHead(204).end();return;}
+  try{const url=new URL(req.url,'http://localhost'),name=decodeURIComponent(url.pathname).slice(1)||'gensokyo_exchange.html';
+   if(name==='api/auth.php'&&authUpstream){const upstream=new URL('/api/auth.php',authUpstream);if(!['127.0.0.1','localhost','[::1]'].includes(upstream.hostname))throw Error('本地鉴权代理只允许回环地址');const headers={};for(const key of ['authorization','content-type','origin'])if(req.headers[key])headers[key]=req.headers[key];const proxy=http.request(upstream,{method:req.method,headers},up=>{res.writeHead(up.statusCode,{'Content-Type':'application/json; charset=utf-8'});up.pipe(res);});proxy.on('error',()=>send(req,res,503,{ok:false,error:'网站登录服务未启动'}));req.pipe(proxy);return;}
+   if(name.startsWith('api/exchange/')){
+    const route=name.slice('api/exchange/'.length);const user=store.authenticate(req.headers.authorization);if(req.headers.authorization&&!user){send(req,res,401,{ok:false,error:'登录已失效，请重新登录'});return;}
+    if(!rate('read-'+(user?.id||req.socket.remoteAddress),300,60000)){send(req,res,429,{ok:false,error:'请求过于频繁'});return;}
+    store.advance();
+    if(req.method==='GET'&&route==='state'){const id=url.searchParams.get('asset')||'kappa';if(!store.state.assets.some(a=>a.id===id)){send(req,res,400,{ok:false,error:'未知交易标的'});return;}send(req,res,200,{...M.snapshot(store.state,id,user),environment},`"${store.state.revision}:${user?.id||0}:${id}"`);return;}
+    if(req.method==='GET'&&route==='leaderboard'){const all=M.ranking(store.state);send(req,res,200,{ok:true,updatedAt:store.state.lastTick,rows:all.slice(0,100),total:all.length,self:user?all.find(r=>r.userId===user.id)||null:null},`"rank:${store.state.revision}:${user?.id||0}"`);return;}
+    if(req.method!=='POST'||!['join','order','cancel','margin'].includes(route)){send(req,res,404,{ok:false,error:'接口不存在'});return;}
+    if(!user){send(req,res,401,{ok:false,error:'请先登录网站账户'});return;}
+    if(!rate('write-'+user.id,60,60000)){send(req,res,429,{ok:false,error:'操作过于频繁'});return;}
+    const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>8192){send(req,res,413,{ok:false,error:'请求过大'});return;}chunks.push(chunk);}let body;try{body=JSON.parse(Buffer.concat(chunks).toString()||'{}');}catch{send(req,res,400,{ok:false,error:'请求格式不正确'});return;}if(!body||typeof body!=='object'||Array.isArray(body)){send(req,res,400,{ok:false,error:'请求格式不正确'});return;}
+    const result=store.mutate(user,req.headers['idempotency-key'],route,body);send(req,res,200,result);return;
+   }
+   if(req.method!=='GET'){res.writeHead(405).end();return;}
+   if(name==='games.html'){res.writeHead(302,{Location:'/gensokyo_exchange.html'}).end();return;}
+   if(!assets.has(name)){res.writeHead(404).end('Not found');return;}
+   fs.readFile(path.join(root,name),(err,buf)=>{if(err){res.writeHead(404).end();return;}res.setHeader('Content-Type',name.endsWith('.html')?'text/html; charset=utf-8':name.endsWith('.css')?'text/css; charset=utf-8':name.endsWith('.woff2')?'font/woff2':'text/javascript; charset=utf-8');res.writeHead(200).end(buf);});
+  }catch(error){const status=error.status||(/尚未|请选择|请输入|不足|委托|仓位|杠杆|保险|高风险|反向|追加|价格/.test(error.message)?400:500);if(status===500)console.error('Exchange request failed:',error.constructor.name);send(req,res,status,{ok:false,error:status===500?'交易服务暂时不可用，请稍后重试':error.message});}
+ });
+ const timer=setInterval(()=>{try{store.heartbeat();store.advance();}catch(e){console.error('Market scheduler paused:',e.constructor.name);process.exitCode=1;server.close();}},1000);timer.unref();server.on('close',()=>{clearInterval(timer);store.close();});server.store=store;return server;
+}
+if(require.main===module){const server=createServer({dataDir:process.env.MMS_PRIVATE_DIR,origins:(process.env.MMS_ALLOWED_ORIGINS||'http://127.0.0.1:8098,https://www.azureflame.cloud,https://azureflame.cloud').split(',').map(s=>s.trim()),authUpstream:process.env.MMS_AUTH_UPSTREAM||'',resume:process.env.MMS_EXCHANGE_RESUME==='1'});server.listen(Number(process.env.MMS_EXCHANGE_PORT||8098),'127.0.0.1',()=>console.log('Exchange service listening on loopback port '+server.address().port));for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>server.close(()=>process.exit()));}
+module.exports={createServer};

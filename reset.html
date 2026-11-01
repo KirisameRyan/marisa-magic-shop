@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>重置密码 · 霧雨魔法店</title>
-<script src="js/analytics.js"></script>
+<meta name="referrer" content="no-referrer">
+<script>window.MMS_RESET_TOKEN = new URLSearchParams(location.search).get('t') || ''; history.replaceState(null, '', location.pathname);</script>
 <script src="js/page-base.js"></script>
 <link rel="stylesheet" href="css/common.css">
 <style>
@@ -46,7 +47,7 @@
     <h1>🔑 重置密码</h1>
     <p class="sub">设置一个新密码，之后用新密码登录。</p>
 
-    <div class="form-group"><label>新密码（6-32位）</label><input type="password" id="inpPwd1" maxlength="32" placeholder="输入新密码" autocomplete="new-password"></div>
+    <div class="form-group"><label>新密码（8-32位，最多72字节）</label><input type="password" id="inpPwd1" maxlength="32" placeholder="输入新密码" autocomplete="new-password"></div>
     <div class="form-group"><label>确认新密码</label><input type="password" id="inpPwd2" maxlength="32" placeholder="再输一遍" autocomplete="new-password"></div>
 
     <div class="msg" id="msgBox"></div>
@@ -64,7 +65,7 @@
 
 <script>
 (function() {
-  var token = new URLSearchParams(location.search).get('t') || '';
+  var token = window.MMS_RESET_TOKEN || '';
   var msgBox = document.getElementById('msgBox');
 
   function showMsg(ok, text) {
@@ -77,7 +78,7 @@
     var p1 = document.getElementById('inpPwd1').value;
     var p2 = document.getElementById('inpPwd2').value;
     if (!token) { showMsg(false, '链接无效或已过期，请重新申请重置。'); return; }
-    if (p1.length < 6 || p1.length > 32) { showMsg(false, '密码需为 6-32 位'); return; }
+    if (p1.length < 8 || p1.length > 32 || new TextEncoder().encode(p1).length > 72) { showMsg(false, '密码需为8-32位，最多72字节'); return; }
     if (p1 !== p2) { showMsg(false, '两次输入的密码不一致'); return; }
 
     var btn = document.getElementById('btnReset');

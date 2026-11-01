@@ -1,0 +1,19 @@
+[Unit]
+Description=Gensokyo shared exchange
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/srv/mms-site
+EnvironmentFile=/etc/mms-exchange.env
+ExecStart=/usr/bin/node /srv/mms-site/services/exchange/server.cjs
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

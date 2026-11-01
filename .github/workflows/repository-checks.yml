@@ -12,9 +12,10 @@ jobs:
           python-version: '3.12'
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
       - run: python scripts/security-scan.py
       - run: python scripts/test-publication.py
       - run: node scripts/check-catalog.mjs
       - run: find api scripts -name '*.php' -print0 | xargs -0 -n1 php -l
       - run: php -d extension=pdo_sqlite -d extension=mbstring scripts/test-api.php
+      - run: node --test scripts/test-gensokyo-engine.cjs scripts/test-gensokyo-market-data.cjs scripts/test-gensokyo-risk-etf.cjs scripts/test-auth-registration.cjs scripts/test-exchange-server.cjs
