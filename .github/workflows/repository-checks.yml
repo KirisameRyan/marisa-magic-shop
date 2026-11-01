@@ -18,4 +18,5 @@ jobs:
       - run: node scripts/check-catalog.mjs
       - run: find api scripts -name '*.php' -print0 | xargs -0 -n1 php -l
       - run: php -d extension=pdo_sqlite -d extension=mbstring scripts/test-api.php
-      - run: node --test scripts/test-gensokyo-engine.cjs scripts/test-gensokyo-market-data.cjs scripts/test-gensokyo-risk-etf.cjs scripts/test-auth-registration.cjs scripts/test-exchange-server.cjs
+      - run: node --test scripts/test-gensokyo-engine.cjs scripts/test-gensokyo-market-data.cjs scripts/test-gensokyo-risk-etf.cjs scripts/test-auth-registration.cjs scripts/test-exchange-server.cjs scripts/test-exchange-gateway.cjs
+      - run: bash -n deploy/install-exchange.sh

@@ -1,6 +1,6 @@
 'use strict';
 const E=require('../../js/gensokyo-engine.js'),D=require('../../js/gensokyo-market-data.js');
-function create(now=Date.now()){const s=D.prepare(E.create(),now);s.randomSeed=require('node:crypto').randomBytes(4).readUInt32LE();s.accounts={};s.businessDay=day(now);s.revision=0;s.serverVersion=1;return s;}
+function create(now=Date.now()){const s=D.prepare(E.create(),now);require('./seed.cjs').applySeed(s,now);E.refreshEtf(s);s.randomSeed=require('node:crypto').randomBytes(4).readUInt32LE();s.accounts={};s.businessDay=day(now);s.revision=0;s.serverVersion=1;return s;}
 function day(t){return new Date(t+4*3600000).toISOString().slice(0,10);}
 function context(s,id){const a=s.accounts[String(id)];if(!a)throw Error('尚未开通交易账户');const c={assets:s.assets,system:s.system,flow:s.flow,insurance:s.insurance};for(const k of ['cash','fees','realized','positions','spotPositions','orders','fills'])Object.defineProperty(c,k,{get:()=>a[k],set:v=>{a[k]=v;},enumerable:true});for(const k of ['seq','round','executionTime'])Object.defineProperty(c,k,{get:()=>s[k],set:v=>{s[k]=v;}});return c;}
 function join(s,user,now=Date.now()){const id=String(user.id);if(s.accounts[id]){s.accounts[id].username=user.username;return false;}s.accounts[id]={id:Number(user.id),username:user.username,createdAt:now,cash:100000,fees:0,realized:0,positions:{},spotPositions:{},orders:[],fills:[],dayStartEquity:100000};s._journal ||= [];s._journal.push({event:'initial-'+id,userId:Number(id),time:now,kind:'initial-funding',cashDelta:100000,cashAfter:100000});return true;}

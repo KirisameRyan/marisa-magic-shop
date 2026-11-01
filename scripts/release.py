@@ -35,6 +35,10 @@ def main():
                 if path.name in {'mail-config.php','bot.php','bot_token.php'} or '.local.' in path.name or '.example.' in path.name:continue
                 if scanner.scan_text(path.read_text(encoding='utf-8'),path.relative_to(ROOT).as_posix()):raise RuntimeError('Server credential scan failed')
                 (dest/'api').mkdir(exist_ok=True);shutil.copy2(path,dest/'api'/path.name)
+            # This game requires a Node service in addition to the PHP account API.
+            # Explicit paths only: never package live databases or local account data.
+            for name in ['services/exchange/market.cjs','services/exchange/store.cjs','services/exchange/server.cjs','services/exchange/seed.cjs','services/exchange/initial-market.json','services/exchange/README.md','deploy/install-exchange.sh','deploy/mms-exchange.service','deploy/exchange.nginx.conf','deploy/nginx-security.conf']:
+                check([ROOT/name]);target=dest/name;target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(ROOT/name,target)
     elif args.target=='android':
         archive=dest/'www.zip'
         with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED) as z:
