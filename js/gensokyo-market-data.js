@@ -12,9 +12,17 @@ const events=[
  {asset:'hakugyoku',title:'白玉楼开放新赏樱路线，旅游预订增长',body:'冥界向导增加接待班次，商会披露短期预订有所改善。',category:'文旅动态',source:'白玉楼接待处',direction:'利好',strength:'较弱',delta:.3,reason:'接待量增加有望带动文旅收入。',risk:'花期与实际客流仍存在不确定性。',duration:'1—2小时'},
  {asset:'tengu',title:'天狗传媒推出产业专刊，广告订单增加',body:'新闻社公布新版发行计划，多家商户表达广告投放意向。',category:'公司公告',source:'天狗传媒公告',direction:'利好',strength:'较弱',delta:.3,reason:'发行与广告需求有望改善营收。',risk:'广告意向尚未全部转为付费订单。',duration:'30—90分钟'},
  {asset:'chirei',title:'地灵矿业矿道检修，部分产能暂缓',body:'旧地狱矿道将分段进行安全检修，近期出货计划调整。',category:'生产动态',source:'地灵矿业生产部',direction:'利空',strength:'中等',delta:-.4,reason:'短期矿石供给减少，交付与收入可能承压。',risk:'检修可能提前结束，库存也可缓冲影响。',duration:'1—3小时'},
- {asset:'myouren',title:'命莲物流新增跨区域航线',body:'命莲寺商运航线开放预约，增加山地与人间之里之间的运力。',category:'产业观察',source:'命莲物流运务处',direction:'利好',strength:'中等',delta:.4,reason:'覆盖范围扩大有利于货运订单增长。',risk:'新航线利用率与运营成本仍待验证。',duration:'1—2小时'}
+ {asset:'myouren',title:'命莲物流新增跨区域航线',body:'命莲寺商运航线开放预约，增加山地与人间之里之间的运力。',category:'产业观察',source:'命莲物流运务处',direction:'利好',strength:'中等',delta:.4,reason:'覆盖范围扩大有利于货运订单增长。',risk:'新航线利用率与运营成本仍待验证。',duration:'1—2小时'},
+ {"asset":"kourin","title":"香霖古物鉴定订单增长","body":"收藏展带动外界旧物鉴定与修复需求。","direction":"利好","delta":0.4,"reason":"鉴定订单增加，服务收入预期上升。","risk":"展会需求可能是短期的，真伪判断也存在争议。","category":"公司公告","source":"幻想乡商会公告栏","strength":"中等","duration":"1—2小时"},
+ {"asset":"kourin","title":"香霖古物部分藏品复核","body":"商店将复核一批旧物来源，暂缓出售。","direction":"利空","delta":-0.4,"reason":"库存周转放缓，回款时间可能延后。","risk":"复核完成后可能恢复销售，影响取决于库存价值。","category":"公司公告","source":"幻想乡商会公告栏","strength":"中等","duration":"1—2小时"},
+ {"asset":"kazami","title":"花田农业获得花卉长单","body":"多家商户预约采购下一季花卉与种苗。","direction":"利好","delta":0.4,"reason":"长期采购意向改善销量预期。","risk":"实际收成受天气与栽培成本影响。","category":"公司公告","source":"幻想乡商会公告栏","strength":"中等","duration":"1—2小时"},
+ {"asset":"kazami","title":"花田农业遭遇异常降雨","body":"花田部分区域积水，采收和运输计划调整。","direction":"利空","delta":-0.4,"reason":"产量与交付面临短期压力。","risk":"天气可能很快改善，减产程度尚未确定。","category":"公司公告","source":"幻想乡商会公告栏","strength":"中等","duration":"1—2小时"},
+ {"asset":"mistlake","title":"冰湖冷链新增保鲜订单","body":"药铺与餐馆增加低温仓储预约。","direction":"利好","delta":0.4,"reason":"仓储利用率改善，有望增加收入。","risk":"制冷维护与魔力消耗可能侵蚀利润。","category":"公司公告","source":"幻想乡商会公告栏","strength":"中等","duration":"1—2小时"},
+ {"asset":"mistlake","title":"冰湖冷链设备检修","body":"部分保鲜设施检修，临时减少接单量。","direction":"利空","delta":-0.4,"reason":"可用仓储容量下降，交付成本增加。","risk":"检修工期与备用容量仍存在不确定性。","category":"公司公告","source":"幻想乡商会公告栏","strength":"中等","duration":"1—2小时"},
+ {"asset":"forest","title":"魔森工坊取得魔导器采购意向","body":"工坊披露便携魔导器试用反馈改善。","direction":"利好","delta":0.4,"reason":"产品需求改善，有望带动制造与授权收入。","risk":"采购仍需验收，新技术也可能出现故障。","category":"公司公告","source":"幻想乡商会公告栏","strength":"中等","duration":"1—2小时"},
+ {"asset":"forest","title":"魔森工坊延长安全复测","body":"新品增加一轮稳定性检测，上市时间推迟。","direction":"利空","delta":-0.4,"reason":"研发费用增加，销售兑现延后。","risk":"复测结果若优于预期，负面影响可能缓解。","category":"公司公告","source":"幻想乡商会公告栏","strength":"中等","duration":"1—2小时"}
 ];
-function news(event,t){return {...event,time:t,effectiveAt:t+MINUTE,analysisSource:'交易所研究栏 · 游戏内估计',confidence:'中等',id:t+'-'+event.asset};}
+function news(event,t){const window=event.duration.match(/\d+/g).map(Number),impactMinutes=Math.round((window[0]+window[1])/2*(event.duration.includes('小时')?60:1));return {...event,impactPct:event.delta/.6*.04,impactMinutes,time:t,effectiveAt:t+MINUTE,analysisSource:'交易所研究栏 · 游戏内估计',confidence:'中等',id:t+'-'+event.asset};}
 function aggregate(bars,period){const out=[],offset=period>=86400000?8*3600000:0;for(const b of bars){if(!Number.isFinite(b.t)||(b.resolution||TICK)>period)continue;const t=Math.floor((b.t+offset)/period)*period-offset;let x=out.at(-1);if(!x||x.t!==t){x={t,o:b.o,h:b.h,l:b.l,c:b.c,v:b.v,demo:!!b.demo,resolution:period,...(Number.isFinite(b.iopv)?{iopv:b.iopv}:{})};out.push(x);}else{x.h=Math.max(x.h,b.h);x.l=Math.min(x.l,b.l);x.c=b.c;x.v+=b.v;x.demo=x.demo||!!b.demo;if(Number.isFinite(b.iopv))x.iopv=b.iopv;}}return out;}
 function movingAverage(bars,n){let sum=0;return bars.map((b,i)=>{sum+=b.c;if(i>=n)sum-=bars[i-n].c;return i>=n-1?sum/n:null;});}
 function macd(bars){let fast=bars[0]?.c||0,slow=fast,signal=0;return bars.map((b,i)=>{if(i){fast+=(b.c-fast)*2/13;slow+=(b.c-slow)*2/27;}const dif=fast-slow;signal+=(dif-signal)*2/10;return {dif,dea:signal,hist:2*(dif-signal)};});}
@@ -43,9 +51,9 @@ function advance(s,now=Date.now(),options={}){
  prepare(s,now);let steps=0,result={tradeCount:0,systemTradeCount:0,warnings:[]};const max=options.maxSteps||360;
  while(s.lastTick+TICK<=now&&steps<max){const t=s.lastTick+TICK;
   s.pendingEffects ||= [];
-  for(const effect of s.pendingEffects.filter(n=>n.effectiveAt<=t)){const a=s.assets.find(a=>a.id===effect.asset);a.fair=E.round(Math.max(1,a.fair+effect.delta));}
-  s.pendingEffects=s.pendingEffects.filter(n=>n.effectiveAt>t);
-  if(t%(15*MINUTE)===0){const index=options.eventIndex?options.eventIndex(events.length):Math.floor(t/(15*MINUTE))%events.length,event=events[index],n=news(event,t);s.news.unshift(n);s.news=s.news.slice(0,32);s.pendingEffects.push(n);}
+  for(const effect of s.pendingEffects.filter(n=>n.effectiveAt<=t)){const a=s.assets.find(a=>a.id===effect.asset);if(!Number.isFinite(effect.impactPct)){a.fair=E.round(Math.max(1,a.fair+effect.delta));effect.finished=true;continue;}effect.stepChange ??= a.fair*effect.impactPct/effect.impactMinutes;a.fair=Math.max(1,a.fair+effect.stepChange);a.newsPressure=(a.newsPressure||0)+effect.impactPct/effect.impactMinutes;effect.appliedSteps=(effect.appliedSteps||0)+1;effect.finished=effect.appliedSteps>=effect.impactMinutes;}
+  s.pendingEffects=s.pendingEffects.filter(n=>!n.finished);
+  if(t%(15*MINUTE)===0){const index=options.eventIndex?options.eventIndex(events.length):Math.floor(t/(15*MINUTE))%events.length,event=events[index],n=news(event,t);s.news.unshift(n);s.news=s.news.slice(0,64);s.pendingEffects.push(n);}
   const random=()=>{s.randomSeed=(Math.imul(1664525,s.randomSeed)+1013904223)>>>0;return s.randomSeed/4294967296;};
   const boundary=t%MINUTE===0,r=(options.settle||E.settle)(s,{time:t,processPlayer:boundary,endRound:boundary,random});s.lastTick=t;steps++;
   result.tradeCount+=r.tradeCount;result.systemTradeCount+=r.systemTradeCount;result.warnings.push(...r.warnings);

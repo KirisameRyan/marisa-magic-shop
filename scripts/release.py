@@ -37,7 +37,7 @@ def main():
                 (dest/'api').mkdir(exist_ok=True);shutil.copy2(path,dest/'api'/path.name)
             # This game requires a Node service in addition to the PHP account API.
             # Explicit paths only: never package live databases or local account data.
-            for name in ['services/exchange/market.cjs','services/exchange/store.cjs','services/exchange/server.cjs','services/exchange/seed.cjs','services/exchange/initial-market.json','services/exchange/README.md','deploy/install-exchange.sh','deploy/mms-exchange.service','deploy/exchange.nginx.conf','deploy/nginx-security.conf']:
+            for name in ['scripts/backup-exchange.cjs','docs/幻想乡交易所-新增挂牌与更新数据说明.md','services/exchange/market.cjs','services/exchange/store.cjs','services/exchange/server.cjs','services/exchange/seed.cjs','services/exchange/initial-market.json','services/exchange/README.md','deploy/install-exchange.sh','deploy/mms-exchange.service','deploy/exchange.nginx.conf','deploy/nginx-security.conf']:
                 check([ROOT/name]);target=dest/name;target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(ROOT/name,target)
     elif args.target=='android':
         archive=dest/'www.zip'

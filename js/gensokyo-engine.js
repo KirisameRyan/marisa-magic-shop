@@ -1,12 +1,12 @@
 /* Local practice engine. No network or real-money transactions. */
 (function(root){
  'use strict';
- const specs=[['kappa','河童重工','KAPPA · 001',101.3],['moriya','守矢能源','MORIYA · 002',86.7],['eientei','永远亭制药','EIENTEI · 003',128.4],['scarlet','红魔商事','SCARLET · 004',65.2],['hakugyoku','白玉楼文旅','HAKU · 005',72.5],['tengu','天狗传媒','TENGU · 006',58.6],['chirei','地灵矿业','CHIREI · 007',94.8],['myouren','命莲物流','MYOUREN · 008',46.3]];
+ const specs=[['kappa','河童重工','KAPPA · 001',101.3],['moriya','守矢能源','MORIYA · 002',86.7],['eientei','永远亭制药','EIENTEI · 003',128.4],['scarlet','红魔商事','SCARLET · 004',65.2],['hakugyoku','白玉楼文旅','HAKU · 005',72.5],['tengu','天狗传媒','TENGU · 006',58.6],['chirei','地灵矿业','CHIREI · 007',94.8],['myouren','命莲物流','MYOUREN · 008',46.3],['kourin','香霖古物','KOURIN · 010',38.8],['kazami','花田农业','KAZAMI · 011',52.6],['mistlake','冰湖冷链','MIST · 012',31.2],['forest','魔森工坊','FOREST · 013',118.5]];
  const LEVERAGES=[2,3,5,10,20],MMR=.01,FEE=.0005;
  const round=n=>Math.round(n*100)/100;
  function expandMarket(s){
   for(const [id,name,code,price] of specs)if(!s.assets.some(a=>a.id===id))s.assets.push({id,name,code,price,prev:price,fair:price,mark:price,history:[],volume:0});
-  if(!s.assets.some(a=>a.id==='gensokyo-etf'))s.assets.push({id:'gensokyo-etf',name:'幻想乡产业ETF',code:'GSKY · ETF009',kind:'etf',price:100,prev:100,fair:100,mark:100,history:[],volume:0,basket:specs.map(([id,,,base])=>({asset:id,quantity:100/specs.length/base,initialWeight:1/specs.length}))});
+  if(!s.assets.some(a=>a.id==='gensokyo-etf'))s.assets.push({id:'gensokyo-etf',name:'幻想乡产业ETF',code:'GSKY · ETF009',kind:'etf',price:100,prev:100,fair:100,mark:100,history:[],volume:0,basket:specs.slice(0,8).map(([id,,,base])=>({asset:id,quantity:100/8/base,initialWeight:1/8}))});
   s.insurance ||= {balance:100000,paid:0,uncovered:0};refreshEtf(s);return s;
  }
  function iopv(s,etf){return etf.basket.reduce((v,b)=>v+b.quantity*s.assets.find(a=>a.id===b.asset).price,0);}
@@ -22,7 +22,7 @@
  function submit(s,asset,intent,price,qty,leverage,product='contract',time=Date.now()){
   if(product==='spot')return submitSpot(s,asset,intent,Number(price),Number(qty),time);
   const a=s.assets.find(x=>x.id===asset),p=s.positions[asset];price=Number(price);qty=Number(qty);leverage=Number(leverage);
-  if(!a||!['long','short','close'].includes(intent)||!(LEVERAGES.includes(leverage)||(intent==='close'&&p?.leverage===1&&leverage===1))||!Number.isFinite(price)||price<=0||Math.abs(price*10-Math.round(price*10))>1e-6||!Number.isSafeInteger(qty)||qty<1||qty>10000)throw Error('请选择2／3／5／10／20倍杠杆，并输入有效价格和整数数量');
+  if(!a||!['long','short','close'].includes(intent)||!(LEVERAGES.includes(leverage)||(intent==='close'&&p?.leverage===1&&leverage===1))||!Number.isFinite(price)||price<=0||Math.abs(price*10-Math.round(price*10))>1e-6||!Number.isSafeInteger(qty)||qty<1||qty>100000)throw Error('请选择2／3／5／10／20倍杠杆，并输入有效价格和整数数量');
   if(s.orders.length>=30)throw Error('最多保留30笔有效委托');
   if(price<a.price*.8||price>a.price*1.2)throw Error('委托价格须在最新价的±20%以内');
   const sign=intent==='close'?-(p?.sign||0):intent==='long'?1:-1;
@@ -43,7 +43,7 @@
  }
  function submitSpot(s,asset,intent,price,qty,time){
   s.spotPositions ||= {};const a=s.assets.find(x=>x.id===asset),p=s.spotPositions[asset];
-  if(!a||!['buy','sell'].includes(intent)||!Number.isFinite(price)||price<=0||Math.abs(price*10-Math.round(price*10))>1e-6||!Number.isSafeInteger(qty)||qty<1||qty>10000)throw Error('请输入有效价格和整数数量');
+  if(!a||!['buy','sell'].includes(intent)||!Number.isFinite(price)||price<=0||Math.abs(price*10-Math.round(price*10))>1e-6||!Number.isSafeInteger(qty)||qty<1||qty>100000)throw Error('请输入有效价格和整数数量');
   if(s.orders.length>=30)throw Error('最多保留30笔有效委托');
   if(price<a.price*.8||price>a.price*1.2)throw Error('委托价格须在最新价的±20%以内');
   if(intent==='buy'&&available(s)<price*qty+Math.ceil(price*qty*.0005*100)/100+.05)throw Error('可用资金不足，普通买入需要全额货款及手续费');

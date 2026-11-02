@@ -34,7 +34,7 @@ After=network.target
 [Service]
 Type=simple
 User=$service_user
-WorkingDirectory="$site_root"
+WorkingDirectory=$site_root
 EnvironmentFile=/etc/mms-exchange.env
 ExecStart="$node_bin" "$site_root/services/exchange/server.cjs"
 Restart=on-failure
@@ -46,6 +46,7 @@ UMask=0077
 [Install]
 WantedBy=multi-user.target
 UNIT
+systemd-analyze verify /etc/systemd/system/mms-exchange.service
 systemctl daemon-reload
 systemctl enable mms-exchange.service
 systemctl restart mms-exchange.service
