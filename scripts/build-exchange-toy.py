@@ -37,12 +37,12 @@ def build(api='https://www.azureflame.cloud/',output=None):
             data=re.sub(r',url\([^)]*\.ttf\) format\("truetype"\)','',data)
         if name=='js/auth.js':
             data=data.replace('    isLoggedIn: isLoggedIn,','    toySetSession: setSession,\n    isLoggedIn: isLoggedIn,')
-            data=data.replace("  var TOKEN_KEY =", "  var toyMemory = new Map();\n  var toySession = {getItem:k=>toyMemory.get(k)||null,setItem:(k,v)=>toyMemory.set(k,String(v)),removeItem:k=>toyMemory.delete(k)};\n  var TOKEN_KEY =").replace('localStorage','toySession')
+            data=data.replace("  var TOKEN_KEY =", "  var toyMemory = new Map();\n  var toySession = {getItem:k=>toyMemory.get(k)||null,setItem:(k,v)=>toyMemory.set(k,String(v)),removeItem:k=>toyMemory.delete(k)};\n  var TOKEN_KEY =").replace('localStorage','toySession').replace('api/auth.php','api/toy.php')
         if name=='js/gensokyo-exchange.js':
             data=data.replace("Auth.openModal('login')","document.getElementById('toy-enter').click()").replace('网站账户登录','B站授权进入').replace('登录网站账户，进入幻想乡市场。','通过B站授权进入幻想乡市场。')
         if name=='js/gensokyo-tools.js':
             data=data.replace("function guide(){wizard=false;", "function guide(){wizard=false;")
-            data=data.replace('<b>游客账户</b>是真实保存在游戏服务器里的随机账户，名字是“游客＋六位数字”，不与现有名字重复。','<b>Toy版账户提示：</b>点击B站一键进入，经平台授权后读取你在当前Toy的私有云存档，恢复同一个游戏账户。首次使用会自动创建。凭证保存在Toy私有存档，资金与条件单保存在游戏服务器；授权失败或存档读取失败不会覆盖旧存档。存档凭证一年未使用会过期，可提前转为正式账户保留密码找回方式。<br><br><b>下文浏览器长期保存说明适用于网页版：</b><br><b>游客账户</b>是真实保存在游戏服务器里的随机账户，名字是“游客＋六位数字”，不与现有名字重复。')
+            data=data.replace('<b>游客账户</b>是真实保存在游戏服务器里的随机账户，名字是“游客＋六位数字”，不与现有名字重复。','<b>Toy版账户提示：</b>点击B站一键进入，经平台授权后读取你在当前Toy的私有云存档，恢复同一个游戏账户。首次使用会自动创建。凭证保存在Toy私有存档，资金与条件单保存在游戏服务器；授权失败或存档读取失败不会覆盖旧存档。存档凭证一年未使用会过期，请保留同一B站账户与Toy云存档。<br><br><b>下文浏览器长期保存说明适用于网页版：</b><br><b>游客账户</b>是真实保存在游戏服务器里的随机账户，名字是“游客＋六位数字”，不与现有名字重复。')
             data=data.replace('游客刷新不会丢，但建议升级为正式账户，避免浏览器凭证丢失。','Toy版刷新后点B站一键进入，可从私有云存档恢复账户；资金和条件单保存在服务器。')
         if name=='css/gensokyo-exchange.css':
             data+='\n.toy-entry #gate-guest,.toy-entry #gate-register,.toy-entry #gate-login,.toy-entry #guest-note{display:none!important}.toy-account{margin:16px 0}.toy-profile{display:flex;align-items:center;gap:10px;margin-bottom:14px}.toy-profile img{border-radius:50%}.toy-account>button{padding:12px 20px;border-radius:5px;color:#fff;background:#d8443f}.toy-account p{font-size:12px;line-height:1.8;margin-top:12px;color:var(--muted)}\n'
