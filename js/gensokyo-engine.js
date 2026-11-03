@@ -70,7 +70,7 @@
   else s.positions[o.asset]={asset:o.asset,sign:o.sign,qty,entry:price,margin:round(price*qty/o.leverage),leverage:o.leverage};
   }
   counterparty.inventory[o.asset]=(counterparty.inventory[o.asset]||0)-o.sign*qty;
-  o.remaining-=qty;s.fills.unshift({id:s.seq++,asset:o.asset,intent:o.intent,product:o.product||'contract',price,qty,round:s.round,time:s.executionTime||Date.now(),fee});s.fills=s.fills.slice(0,100);
+  o.remaining-=qty;s.fills.unshift({id:s.seq++,orderId:o.id,asset:o.asset,intent:o.intent,product:o.product||'contract',price,qty,round:s.round,time:s.executionTime||Date.now(),fee});s.fills=s.fills.slice(0,100);
  }
  function settle(s,opts={}){
   const results=[],rng=opts.random||Math.random;let tradeCount=0,systemTradeCount=0;s.executionTime=opts.time||Date.now();

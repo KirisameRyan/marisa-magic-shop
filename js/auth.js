@@ -9,6 +9,7 @@
 (function() {
   var TOKEN_KEY = 'mms_token';
   var USER_KEY  = 'mms_user';
+  var GUEST_KEY = 'mms_guest_session';
   var listeners = [];
   var loginCb   = null;
 
@@ -22,6 +23,7 @@
     try {
       localStorage.setItem(TOKEN_KEY, token);
       localStorage.setItem(USER_KEY, JSON.stringify(user));
+      if(user.is_guest) localStorage.setItem(GUEST_KEY,JSON.stringify({token:token,user:user}));
     } catch (e) {}
     notify();
   }
@@ -80,7 +82,7 @@
     });
   }
   function logout() {
-    api('api/auth.php', { method: 'POST', silent: true, body: formAction('logout') });
+    if (!getUser()?.is_guest) api('api/auth.php', { method: 'POST', silent: true, body: formAction('logout') });
     clearSession();
   }
   function forgot(email) {
@@ -94,7 +96,7 @@
     if (!isLoggedIn()) return Promise.resolve({ ok: false });
     return api('api/auth.php', { silent: true }).then(function(res) {
       if (res.unauthorized) clearSession();
-      else if (res.ok && res.user) { try { localStorage.setItem(USER_KEY, JSON.stringify(res.user)); } catch(e) {} notify(); }
+      else if (res.ok && res.user) setSession(res.token || getToken(),res.user);
       return res;
     });
   }
@@ -353,6 +355,8 @@
     token: getToken,
     login: login,
     register: register,
+    guest: function() { var saved;try{saved=JSON.parse(localStorage.getItem(GUEST_KEY)||'null');}catch(e){}return api('api/auth.php', {method:'POST', silent:true,headers:saved?{Authorization:'Bearer '+saved.token}:{},body:formAction('guest')}).then(function(res) { if(res.ok) setSession(res.token,res.user); return res; }); },
+    upgradeGuest: function(username,email,password) { return api('api/auth.php',{method:'POST',silent:true,body:formAction('upgrade_guest',{username:username,email:email,password:password})}).then(function(res){if(res.ok){try{localStorage.removeItem(GUEST_KEY);}catch(e){}setSession(res.token,res.user);}return res;}); },
     logout: logout,
     forgot: forgot,
     sendVerification: function() { return api('api/auth.php', { method: 'POST', body: formAction('request_verification') }); },

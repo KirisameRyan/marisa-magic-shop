@@ -37,6 +37,7 @@ function mms_cors(): void {
         header('Access-Control-Allow-Origin: ' . $origin);
         header('Vary: Origin');
     }
+    header('Access-Control-Expose-Headers: ETag');
     header('Access-Control-Allow-Headers: Authorization, Content-Type');
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
     header('Cache-Control: no-store');

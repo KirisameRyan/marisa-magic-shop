@@ -1,12 +1,30 @@
 'use strict';
-const E=require('../../js/gensokyo-engine.js'),D=require('../../js/gensokyo-market-data.js');
+const E=require('../../js/gensokyo-engine.js'),D=require('../../js/gensokyo-market-data.js'),C=require('./conditions.cjs');
 function create(now=Date.now()){const s=D.prepare(E.create(),now);require('./seed.cjs').applySeed(s,now);E.refreshEtf(s);s.randomSeed=require('node:crypto').randomBytes(4).readUInt32LE();s.accounts={};s.businessDay=day(now);s.revision=0;s.serverVersion=1;return s;}
 function day(t){return new Date(t+4*3600000).toISOString().slice(0,10);}
 function context(s,id){const a=s.accounts[String(id)];if(!a)throw Error('尚未开通交易账户');const c={assets:s.assets,system:s.system,flow:s.flow,insurance:s.insurance};for(const k of ['cash','fees','realized','positions','spotPositions','orders','fills'])Object.defineProperty(c,k,{get:()=>a[k],set:v=>{a[k]=v;},enumerable:true});for(const k of ['seq','round','executionTime'])Object.defineProperty(c,k,{get:()=>s[k],set:v=>{s[k]=v;}});return c;}
 function join(s,user,now=Date.now()){const id=String(user.id);if(s.accounts[id]){s.accounts[id].username=user.username;return false;}s.accounts[id]={id:Number(user.id),username:user.username,createdAt:now,cash:100000,fees:0,realized:0,positions:{},spotPositions:{},orders:[],fills:[],dayStartEquity:100000};s._journal ||= [];s._journal.push({event:'initial-'+id,userId:Number(id),time:now,kind:'initial-funding',cashDelta:100000,cashAfter:100000});return true;}
 function order(s,user,body,now=Date.now()){if(!['spot','contract'].includes(body.product))throw Error('请选择普通交易或杠杆合约');const c=context(s,user.id),a=s.assets.find(a=>a.id===body.asset),position=body.product==='spot'?c.spotPositions[body.asset]:c.positions[body.asset],legacyExit=['sell','close'].includes(body.intent)&&position&&body.qty===position.qty&&position.qty%100!==0;if(a?.pausedUntil>now)throw Object.assign(Error('该标的临时停牌，恢复后再下单'),{status:409});if(!Number.isSafeInteger(body.qty)||body.qty<=0||(body.qty%100!==0&&!legacyExit))throw Object.assign(Error('数量必须是100份的整数倍；旧零股仓位只能整笔退出'),{status:400});const o=E.submit(c,body.asset,body.intent,body.price,body.qty,body.leverage,body.product,now);o.userId=user.id;o.resting=false;o.lotSize=100;o.legacyExit=!!legacyExit;return o;}
 function makerLimit(s,id){const exposure=Object.values(s.accounts).reduce((n,u)=>n+(u.positions[id]?.qty||0)+(u.spotPositions[id]?.qty||0),0);return Math.min(100000,20000+2*exposure);}
-function makerBook(s,id){if(s.system.cash<=0)return {asks:[],bids:[]};const a=s.assets.find(a=>a.id===id),inv=s.system.inventory[id]||0,step=Math.max(.1,Math.round(a.price*.0015*10)/10),center=Math.max(step*6,Math.round((a.price*.85+a.fair*.15+(a.sentiment||0)-inv*a.price*.0000003)*10)/10);const side=sign=>{let left=sign===1?Math.max(0,makerLimit(s,id)-inv):Math.max(0,makerLimit(s,id)+inv),cash=s.system.cash;return Array.from({length:5},(_,i)=>{const price=E.round(center-sign*(i+1)*step),qty=Math.max(0,Math.floor(Math.min(left,1000+i*1000,sign===1?Math.floor(cash/price):Infinity)/100)*100);left-=qty;if(sign===1)cash-=price*qty;return {price,qty};}).filter(l=>l.qty>0);};return {asks:side(-1),bids:side(1)};}
+// Quotes are deterministic within a minute: polling cannot reroll liquidity.
+function quoteNoise(s,id,salt){let h=2166136261;for(const c of id+':'+s.lastTick+':'+salt)h=Math.imul(h^c.charCodeAt(0),16777619);h=Math.imul(h^(h>>>16),2246822507);h=Math.imul(h^(h>>>13),3266489909);return ((h^(h>>>16))>>>0)/4294967296;}
+function makerBook(s,id){
+ if(s.system.cash<=0)return {asks:[],bids:[]};
+ const a=s.assets.find(a=>a.id===id),inv=s.system.inventory[id]||0,limit=makerLimit(s,id);
+ const bars=a.history.slice(-10),vol=Math.min(.03,bars.reduce((n,b)=>n+(b.h-b.l)/Math.max(b.c,1),0)/Math.max(bars.length,1));
+ const pending=Object.values(s.accounts).flatMap(u=>u.orders).filter(o=>o.asset===id&&o.remaining>0&&Math.abs(o.price/a.price-1)<.03);
+ const pressure=Math.max(-1,Math.min(1,pending.reduce((n,o)=>n+o.sign*o.remaining,0)/30000));
+ const step=Math.max(.1,Math.round(a.price*(.0007+vol*.15)*10)/10);
+ const center=Math.max(step*6,a.price+Math.max(-a.price*.0015,Math.min(a.price*.0015,(a.fair-a.price)*.08))+(a.sentiment||0)+pressure*a.price*.0005-inv/limit*a.price*.0015);
+ const bestBid=Math.max(.1,Math.floor(center*10)/10),bestAsk=E.round(bestBid+.1);
+ const side=sign=>{let left=sign===1?Math.max(0,limit-inv):Math.max(0,limit+inv),cash=s.system.cash,gap=0;return Array.from({length:5},(_,i)=>{
+  if(i)gap+=step*(quoteNoise(s,id,'gap:'+i)<.85?1:2);
+  const price=E.round((sign===1?bestBid:bestAsk)-sign*gap),noise=quoteNoise(s,id,sign+':'+i);
+  const depth=(1800+i*500)*(.45+noise*1.8)*(1-vol*8)*(1-sign*inv/limit*.25);
+  const qty=Math.max(0,Math.floor(Math.min(left,depth,sign===1?Math.floor(cash/price):Infinity)/100)*100);
+  left-=qty;if(sign===1)cash-=price*qty;return {price,qty};
+ }).filter(l=>l.qty>0);};return {asks:side(-1),bids:side(1)};
+}
 function report(s,a,time,title,body,extra={}){s.news.unshift({id:'report-'+s.seq++,kind:'market-report',asset:a.id,time,category:'交易动态',source:'交易所行情监测',title,body,delta:0,...extra});s.news=s.news.slice(0,64);}
 function orderSummary(s,account){const active=account.orders.filter(o=>o.remaining>0),groups=new Map();for(const o of active){const key=JSON.stringify([o.asset,o.product,o.intent,o.price]);let row=groups.get(key);if(!row){row={asset:o.asset,name:s.assets.find(a=>a.id===o.asset)?.name||o.asset,product:o.product||'contract',intent:o.intent,price:o.price,remaining:0};groups.set(key,row);}row.remaining+=o.remaining;}return {count:active.length,totalQty:active.reduce((n,o)=>n+o.remaining,0),buyQty:active.filter(o=>o.sign===1).reduce((n,o)=>n+o.remaining,0),sellQty:active.filter(o=>o.sign===-1).reduce((n,o)=>n+o.remaining,0),groupCount:groups.size,majorOrders:[...groups.values()].sort((a,b)=>b.remaining-a.remaining||b.price-a.price).slice(0,5)};}
 function tick(s,{time,random=Math.random}){
@@ -16,7 +34,7 @@ function tick(s,{time,random=Math.random}){
  function capacity(o,price,wanted){if(o.userId){const c=context(s,o.userId);if(reduce(o)){const p=o.product==='spot'?c.spotPositions[o.asset]:c.positions[o.asset];return Math.min(wanted,p?.qty||0);}if(price>o.price){const extra=(price-o.price)*(1/o.leverage+.0005);return Math.min(wanted,Math.max(0,Math.floor((E.available(c)-.02)/extra)));}return wanted;}
   const actor=s[o.actor],inv=actor.inventory[o.asset]||0,limit=o.actor==='flow'?20000:makerLimit(s,o.asset);let q=Math.min(wanted,Math.max(0,o.sign===1?limit-inv:limit+inv));if(o.sign===1)q=Math.min(q,Math.floor(actor.cash/price));return q;
  }
- function userFill(o,other,price,q,tradeId){const c=context(s,o.userId),before=c.cash,marginBefore=E.margin(c);E.applyFill(c,o,price,q,other.userId?s.system:s[other.actor]);const f=c.fills[0];f.marketTradeId=tradeId;s._journal.push({event:'fill-'+f.id,userId:o.userId,time,kind:o.liquidation?'liquidation':'trade',cashDelta:E.round(c.cash-before),cashAfter:c.cash,fillId:f.id,marketTradeId:tradeId,orderId:o.id,intent:o.intent,product:o.product,leverage:o.leverage,marginDelta:E.round(E.margin(c)-marginBefore),asset:o.asset,qty:q,price});}
+ function userFill(o,other,price,q,tradeId){const c=context(s,o.userId),before=c.cash,marginBefore=E.margin(c);E.applyFill(c,o,price,q,other.userId?s.system:s[other.actor]);const f=c.fills[0];s.accounts[o.userId].hasTraded=true;f.marketTradeId=tradeId;if(o.conditionId){const condition=s.accounts[o.userId].conditions?.find(c=>c.id===o.conditionId);if(condition)condition.filledQty=(condition.filledQty||0)+q;}s._journal.push({event:'fill-'+f.id,userId:o.userId,time,kind:o.liquidation?'liquidation':'trade',cashDelta:E.round(c.cash-before),cashAfter:c.cash,fillId:f.id,marketTradeId:tradeId,orderId:o.id,intent:o.intent,product:o.product,leverage:o.leverage,marginDelta:E.round(E.margin(c)-marginBefore),asset:o.asset,qty:q,price});}
  for(const a of s.assets){if(a.kind==='etf')E.refreshEtf(s);if(a.pausedUntil>time){a.history.push({t:time,o:a.price,h:a.price,l:a.price,c:a.price,v:0,resolution:60000,...(a.kind==='etf'?{iopv:a.iopv}:{})});continue;}if(a.pausedUntil){report(s,a,time,a.name+'恢复交易','临时停牌结束，本分钟恢复撮合，原有余单继续有效。');a.volatilityAnchor={time,price:a.price};delete a.pausedUntil;delete a.pauseReason;}const cutoff=time-5*60000,anchor=a.volatilityAnchor,reference=anchor&&anchor.time>cutoff?anchor.price:(a.history.findLast(b=>b.t<=cutoff)?.c||a.price);const bids=[],asks=[],trades=[];const sort=side=>side.sort((x,y)=>(side===bids?y.price-x.price:x.price-y.price)||x.id-y.id);
   function process(incoming){if(a.pausedUntil>time)return;const opposing=incoming.sign===1?asks:bids;sort(opposing);while(incoming.remaining>0&&opposing.length){const passive=opposing[0];if(incoming.sign===1?passive.price>incoming.price:passive.price<incoming.price)break;
     if(incoming.userId&&incoming.userId===passive.userId){incoming.remaining=0;break;}
@@ -41,8 +59,20 @@ function tick(s,{time,random=Math.random}){
   if(inventory>=16000)sign=-1;else if(inventory<=-16000)sign=1;
   const feasible=dir=>((dir===1?quotes.asks:quotes.bids).length>0)&&(dir!==1||s.flow.cash>=Math.max(a.price,...quotes.asks.map(l=>l.price))*100)&&(dir===1?inventory<20000:inventory>-20000);
   if(!feasible(sign)&&feasible(-sign))sign=-sign;
-  const levels=sign===1?quotes.asks:quotes.bids;
-  if(feasible(sign)){const level=levels[Math.min(levels.length-1,Math.floor(random()*5))];process({id:s.seq++,actor:'flow',asset:a.id,sign,price:level.price,remaining:1000+Math.floor(random()*40)*100});}
+  const attempts=1+Math.floor(random()*3);
+  for(let i=0;i<attempts;i++){
+   const currentInventory=s.flow.inventory[a.id]||0;
+   const style=Math.floor(random()*3),valueBias=Math.max(-.4,Math.min(.4,(a.fair/a.price-1)*4)),trendBias=Math.max(-.4,Math.min(.4,(a.lastReturn||0)*20+a.newsPressure*20));
+   let direction=i===0?sign:(random()<.5+(style===0?valueBias:style===1?trendBias:0)-currentInventory/80000?1:-1);
+   if(currentInventory>=16000)direction=-1;else if(currentInventory<=-16000)direction=1;
+   const availableLevels=direction===1?quotes.asks:quotes.bids;
+   if(!availableLevels.length)continue;
+   const level=availableLevels[Math.min(availableLevels.length-1,Math.floor(random()*availableLevels.length))];
+   const room=direction===1?20000-currentInventory:20000+currentInventory;
+   const cashRoom=direction===1?Math.floor(s.flow.cash/level.price):Infinity;
+   const qty=Math.floor(Math.min(500+Math.floor(random()*55)*100,room,cashRoom)/100)*100;
+   if(qty>=100)process({id:s.seq++,actor:'flow',asset:a.id,sign:direction,price:level.price,remaining:qty});
+  }
   a.sentiment=E.round(Math.max(-a.price*.006,Math.min(a.price*.006,(a.sentiment||0)*.6+(random()-.5)*a.price*.006)));
   const priorPrice=a.price;
   if(trades.length){a.price=trades.at(-1).price;const v=trades.reduce((n,t)=>n+t.qty,0);a.volume+=v;a.history.push({t:time,o:trades[0].price,h:Math.max(...trades.map(t=>t.price)),l:Math.min(...trades.map(t=>t.price)),c:a.price,v,resolution:60000,...(a.kind==='etf'?{iopv:a.iopv}:{})});}else a.history.push({t:time,o:a.price,h:a.price,l:a.price,c:a.price,v:0,resolution:60000,...(a.kind==='etf'?{iopv:a.iopv}:{})});a.lastReturn=a.price/priorPrice-1;
@@ -51,10 +81,14 @@ function tick(s,{time,random=Math.random}){
   a.mark=E.round(.7*a.mark+.3*a.price);
  }
  for(const a of Object.values(s.accounts)){a.orders=a.orders.filter(o=>o.remaining>0);for(const o of a.orders)o.resting=true;warnings.push(...E.checkRisk(context(s,a.id)));for(const o of a.orders)if(o.liquidation){o.userId=a.id;o.resting=false;}}
- s.round++;return {tradeCount,systemTradeCount,warnings};
+ C.evaluate(s,time,order,book);s.round++;return {tradeCount,systemTradeCount,warnings};
 }
 function book(s,id){if(s.assets.find(a=>a.id===id).pausedUntil>s.lastTick)return {asks:[],bids:[]};const b=makerBook(s,id);for(const u of Object.values(s.accounts))for(const o of u.orders.filter(o=>o.asset===id)){const levels=o.sign===1?b.bids:b.asks,l=levels.find(l=>l.price===o.price);if(l)l.qty+=o.remaining;else levels.push({price:o.price,qty:o.remaining});}b.asks.sort((a,b)=>a.price-b.price);b.bids.sort((a,b)=>b.price-a.price);return {asks:b.asks.slice(0,5),bids:b.bids.slice(0,5)};}
-function ranking(s){return Object.values(s.accounts).map(a=>{const c=context(s,a.id),equity=E.equity(c);return {userId:a.id,name:a.username,equity,returnPct:E.round((equity/100000-1)*100),pnl:E.round(equity-100000),createdAt:a.createdAt,orders:orderSummary(s,a)};}).sort((a,b)=>b.equity-a.equity||a.createdAt-b.createdAt||a.userId-b.userId).map((a,i)=>({...a,rank:i+1}));}
+function ranking(s,board='assets'){
+ const rows=Object.values(s.accounts).map(a=>{const c=context(s,a.id),equity=E.equity(c),pnl=E.round(equity-100000),dailyPnl=E.round(equity-(a.dayStartEquity??100000)),engaged=!!(a.hasTraded||a.fills.length||a.orders.length||Object.keys(a.positions).length||Object.keys(a.spotPositions).length||pnl!==0);return {userId:a.id,name:a.username,equity,returnPct:E.round(pnl/100000*100),pnl,dailyPnl,dailyReturnPct:(a.dayStartEquity??100000)>0?E.round(dailyPnl/(a.dayStartEquity??100000)*100):null,createdAt:a.createdAt,orders:orderSummary(s,a),engaged};}).filter(a=>a.engaged&&(board==='profit'?a.dailyPnl>0:board==='loss'?a.dailyPnl<0:true));
+ rows.sort((a,b)=>(board==='profit'?b.dailyPnl-a.dailyPnl:board==='loss'?a.dailyPnl-b.dailyPnl:b.equity-a.equity)||a.createdAt-b.createdAt||a.userId-b.userId);
+ return rows.map(({engaged,...a},i)=>({...a,rank:i+1}));
+}
 function overview(s){return {ok:true,updatedAt:s.lastTick,halted:!!s.halted,assets:s.assets.map(a=>{const base=a.history.findLast(b=>b.t<=s.lastTick-86400000)?.c||a.prev;return {id:a.id,name:a.name,kind:a.kind||'stock',price:a.price,changePct:E.round((a.price/base-1)*100),pausedUntil:a.pausedUntil||0};})};}
-function snapshot(s,assetId,user){const assets=s.assets.map(a=>({...a,history:a.id===assetId?a.history:[]}));const account=user&&s.accounts[String(user.id)];return {ok:true,mode:'online',serverTime:Date.now(),revision:s.revision,market:{assets,news:s.news,round:s.round,lastTick:s.lastTick,books:Object.fromEntries(s.assets.map(a=>[a.id,book(s,a.id)])),marketTrades:(s.marketTrades||[]).map(({buyUserId,sellUserId,...t})=>t),insurance:s.insurance,halted:s.halted||false},account:account?JSON.parse(JSON.stringify(account)):null,identity:user?{id:user.id,username:user.username}:null,rank:user?ranking(s).find(r=>r.userId===user.id)?.rank||null:null};}
+function snapshot(s,assetId,user){const assets=s.assets.map(a=>({...a,history:a.id===assetId?a.history:[]}));const account=user&&s.accounts[String(user.id)];return {ok:true,mode:'online',serverTime:Date.now(),revision:s.revision,market:{assets,news:s.news,round:s.round,lastTick:s.lastTick,books:Object.fromEntries(s.assets.map(a=>[a.id,book(s,a.id)])),marketTrades:(s.marketTrades||[]).map(({buyUserId,sellUserId,...t})=>t),insurance:s.insurance,halted:s.halted||false},account:account?JSON.parse(JSON.stringify({...account,conditions:C.list(account)})):null,identity:user?{id:user.id,username:user.username}:null,rank:user?ranking(s).find(r=>r.userId===user.id)?.rank||null:null};}
 module.exports={overview,create,context,join,order,tick,ranking,snapshot,day};

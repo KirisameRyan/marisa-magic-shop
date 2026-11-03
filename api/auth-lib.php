@@ -80,6 +80,8 @@ function mms_db(): PDO {
             } catch (Throwable $error) { $pdo->exec('ROLLBACK'); throw $error; }
         }
         mms_migrate_optional_email($pdo);
+        $pdo->exec('CREATE TABLE IF NOT EXISTS guest_accounts (user_id INTEGER PRIMARY KEY REFERENCES users(id))');
+        $pdo->exec('CREATE TABLE IF NOT EXISTS toy_credentials (credential_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), expire INTEGER NOT NULL)');
         $pdo->exec('CREATE TABLE IF NOT EXISTS email_verifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, token_hash TEXT NOT NULL UNIQUE, expires_at INTEGER NOT NULL, used INTEGER NOT NULL DEFAULT 0)');
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_resets_user ON resets(user_id)');
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_tx_user_time ON transactions(user_id, happened_at)');
@@ -175,7 +177,7 @@ function mms_auth_user(): ?array {
     $token = mms_bearer_token();
     if ($token === '') return null;
     $st = mms_db()->prepare(
-        'SELECT u.id, u.username, u.email, u.email_verified_at FROM sessions s
+        'SELECT u.id, u.username, u.email, u.email_verified_at, EXISTS(SELECT 1 FROM guest_accounts g WHERE g.user_id=u.id) AS is_guest FROM sessions s
          JOIN users u ON u.id = s.user_id
          WHERE s.token = ? AND s.expire > ?'
     );
@@ -285,4 +287,11 @@ function mms_account_link(string $page, string $token): string {
     $origin = rtrim(mms_env('MMS_PUBLIC_ORIGIN', 'https://www.azureflame.cloud'), '/');
     if (!preg_match('~^https://[a-z0-9.-]+(?::[0-9]+)?$~i', $origin)) throw new RuntimeException('Invalid public origin');
     return $origin . '/' . $page . '?t=' . rawurlencode($token);
+}
+
+// Opaque game credential stored in Toy's per-user private cloud, not an asserted Toy ID.
+function mms_toy_credential(int $uid): string {
+    $credential=bin2hex(random_bytes(32));
+    mms_db()->prepare('INSERT INTO toy_credentials(credential_hash,user_id,expire) VALUES(?,?,?)')->execute([hash('sha256',$credential),$uid,time()+365*86400]);
+    return $credential;
 }

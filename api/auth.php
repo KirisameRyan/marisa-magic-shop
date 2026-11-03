@@ -26,6 +26,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($action === '' || $action === 'me')
     // ── 校验会话 ──
     $u = mms_auth_user();
     if (!$u) mms_json_error(401, '需要登录');
+    if (!empty($u['is_guest'])) {
+        $st=mms_db()->prepare('SELECT expire FROM sessions WHERE token=?');$st->execute([hash('sha256',mms_bearer_token())]);
+        if ((int)$st->fetchColumn()<time()+7*86400) { $token=mms_issue_token((int)$u['id']); mms_revoke_token(mms_bearer_token()); mms_json_ok(['user'=>$u,'token'=>$token]); }
+    }
     mms_json_ok(['user' => $u]);
 }
 
@@ -36,6 +40,56 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $db = mms_db();
 
 switch ($action) {
+
+    case 'upgrade_guest': {
+        $u=mms_require_user();if(empty($u['is_guest']))mms_json_error(400,'当前账户不是游客');
+        if(!mms_quota('upgrade-ip',mms_ip_key(),10,600))mms_json_error(429,'操作过于频繁');
+        $username=mms_validate_username(mms_post_string('username',48));$input=trim(mms_post_string('email',100));$email=$input===''?null:mms_validate_email($input);
+        $hash=password_hash(mms_validate_password(mms_post_string('password',128)),PASSWORD_DEFAULT);
+        $db->exec('BEGIN IMMEDIATE');
+        $guestCheck=$db->prepare('SELECT user_id FROM guest_accounts WHERE user_id=?');$guestCheck->execute([$u['id']]);if(!$guestCheck->fetch()){$db->exec('ROLLBACK');mms_json_error(409,'游客已升级，请重新登录');}
+        $check=$db->prepare('SELECT id FROM users WHERE id<>? AND (username=? OR email=?)');$check->execute([$u['id'],$username,$email]);
+        if($check->fetch()){$db->exec('ROLLBACK');mms_json_error(409,'用户名或邮箱已被注册');}
+        $db->prepare('UPDATE users SET username=?,email=?,pass_hash=?,email_verified_at=NULL WHERE id=?')->execute([$username,$email,$hash,$u['id']]);
+        $db->prepare('DELETE FROM guest_accounts WHERE user_id=?')->execute([$u['id']]);$db->prepare('DELETE FROM sessions WHERE user_id=?')->execute([$u['id']]);
+        $token=mms_issue_token((int)$u['id']);$db->exec('COMMIT');mms_json_ok(['user'=>['id'=>(int)$u['id'],'username'=>$username,'email'=>$email,'is_guest'=>0],'token'=>$token]);
+    }
+    case 'toy_login':
+    case 'guest': {
+        if ($action === 'toy_login') {
+            $credential=mms_post_string('credential',64);
+            if ($credential !== '') {
+                if(!preg_match('/^[a-f0-9]{64}$/',$credential))mms_json_error(401,'游戏存档凭证无效');
+                $db->exec('BEGIN IMMEDIATE');
+                $st=$db->prepare('SELECT u.id,u.username,u.email,EXISTS(SELECT 1 FROM guest_accounts g WHERE g.user_id=u.id) AS is_guest FROM toy_credentials c JOIN users u ON u.id=c.user_id WHERE c.credential_hash=? AND c.expire>?');
+                $st->execute([hash('sha256',$credential),time()]);$saved=$st->fetch(PDO::FETCH_ASSOC);
+                if(!$saved){$db->exec('ROLLBACK');mms_json_error(401,'游戏存档凭证已失效，请联系作者或使用已升级的网站账户登录');}
+                $db->prepare('UPDATE toy_credentials SET expire=? WHERE credential_hash=?')->execute([time()+365*86400,hash('sha256',$credential)]);
+                $token=mms_issue_token((int)$saved['id']);$db->exec('COMMIT');mms_json_ok(['user'=>$saved,'token'=>$token,'credential'=>$credential]);
+            }
+        }
+        $existing = mms_auth_user();
+        if ($existing) { $result=['user'=>$existing,'token'=>mms_bearer_token()];if($action==='toy_login')$result['credential']=mms_toy_credential((int)$existing['id']);mms_json_ok($result); }
+        if (!mms_quota('register-ip', mms_ip_key(), 10, 3600)) mms_json_error(429, '创建账户过于频繁，请稍后重试');
+        $hash = password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT);
+        $db->exec('BEGIN IMMEDIATE');
+        $uid = null;
+        for ($attempt = 0; $attempt < 100; $attempt++) {
+            $username = '游客' . str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $check = $db->prepare('SELECT id FROM users WHERE username = ?');
+            $check->execute([$username]);
+            if ($check->fetch()) continue;
+            $db->prepare('INSERT INTO users(username,email,pass_hash,created_at) VALUES (?,NULL,?,?)')->execute([$username,$hash,gmdate('Y-m-d H:i:s')]);
+            $uid = (int)$db->lastInsertId();
+            break;
+        }
+        if ($uid === null) { $db->exec('ROLLBACK'); mms_json_error(503, '游客名称分配繁忙，请稍后重试'); }
+        $db->prepare('INSERT INTO guest_accounts(user_id) VALUES (?)')->execute([$uid]);
+        $token = mms_issue_token($uid);
+        $result=['user'=>['id'=>$uid,'username'=>$username,'email'=>null,'is_guest'=>1],'token'=>$token];if($action==='toy_login')$result['credential']=mms_toy_credential($uid);
+        $db->exec('COMMIT');
+        mms_json_ok($result);
+    }
 
     case 'register': {
         if (!mms_quota('register-ip', mms_ip_key(), 10, 3600)) mms_json_error(429, '注册过于频繁，请稍后重试');
@@ -130,6 +184,7 @@ switch ($action) {
         $db->prepare('UPDATE users SET pass_hash = ?, email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?')
             ->execute([$hash, time(), (int)$r['user_id']]);
         $db->prepare('DELETE FROM sessions WHERE user_id = ?')->execute([(int)$r['user_id']]);
+        $db->prepare('DELETE FROM toy_credentials WHERE user_id = ?')->execute([(int)$r['user_id']]);
         $db->exec('COMMIT');
 
         mms_json_ok(['msg' => '密码已重置，请重新登录']);
