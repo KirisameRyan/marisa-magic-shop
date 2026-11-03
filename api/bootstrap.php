@@ -28,7 +28,7 @@ function mms_cors(bool $allowToy = false): void {
     $allowed = array_filter(array_map('trim', explode(',', mms_env('MMS_ALLOWED_ORIGINS',
         'https://www.azureflame.cloud,https://azureflame.cloud,https://appassets.androidapp.net'))));
     if ($allowToy) {
-        $toyOrigins=array_filter(array_map('trim',explode(',',mms_env('MMS_TOY_ORIGINS','https://www.bilibili.com'))));
+        $toyOrigins=array_merge(['https://www.bilibili.com','https://www.bilibilitoy.com'],array_filter(array_map('trim',explode(',',mms_env('MMS_TOY_ORIGINS','')))));
         foreach($toyOrigins as $candidate) if(preg_match('~^https://[^/?#]+$~',$candidate)) $allowed[]=$candidate;
     }
     if ($origin !== '') {
