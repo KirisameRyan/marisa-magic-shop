@@ -17,7 +17,8 @@ function add(s,u,body,now){
  if(!Number.isSafeInteger(body.qty)||body.qty<100||body.qty>100000||body.qty%100)fail('数量须为100份整数倍');
  const leverage=product==='spot'?1:body.leverage;if(product==='contract'&&!E.LEVERAGES.includes(leverage))fail('杠杆倍数不正确');
  if(!['limit','opponent'].includes(body.execution))fail('请选择委托方式');
- const c={id:s.seq++,asset,product,intent,type,qty:body.qty,leverage,execution:body.execution,createdAt:now,status:'watching',reference:a.price,extreme:a.price};
+ if(body.marginMode!==undefined&&!['isolated','cross'].includes(body.marginMode))fail('保证金模式不正确');
+ const c={marginMode:body.marginMode||'isolated',id:s.seq++,asset,product,intent,type,qty:body.qty,leverage,execution:body.execution,createdAt:now,status:'watching',reference:a.price,extreme:a.price};
  if(c.execution==='limit'){c.limitPrice=positive(body.limitPrice,'限价');if(Math.abs(c.limitPrice*10-Math.round(c.limitPrice*10))>1e-6)fail('委托价格须以0.1递增');}else{c.slippage=positive(body.slippage,'最大滑点');if(c.slippage>10)fail('最大滑点不能超过10%');}
  const p=position(u,c);
  if(reducing(c)){if(!p)fail('没有可卖出或平仓的持仓');c.positionSign=p.sign||1;const locked=u.conditions.filter(x=>active(x)&&reducing(x)&&x.asset===asset&&x.product===product).reduce((n,x)=>n+x.qty,0);if(c.qty>availableExit(u,c)-locked)fail('持仓数量不足或已被其他条件单保护');}
@@ -60,7 +61,7 @@ function evaluate(s,time,place,quotes){updateIndicators(s,time);const cache=new 
  if(!hit)continue;c.triggeredAt=time;c.reason=reason;
  try{const p=position(u,c),buy=c.intent==='buy'||c.intent==='long'||c.intent==='close'&&p?.sign===-1;let price=c.limitPrice;
  if(c.execution==='opponent'){const b=quotes(s,c.asset),level=(buy?b.asks:b.bids)[0];if(!level)throw Error('无可用对手报价');price=buy?Math.min(level.price,a.price*(1+c.slippage/100)):Math.max(level.price,a.price*(1-c.slippage/100));price=buy?Math.floor(price*10+1e-7)/10:Math.ceil(price*10-1e-7)/10;if(price<=0)throw Error('委托价格无效');}
- const o=place(s,{id:u.id},{asset:c.asset,product:c.product,intent:c.intent,qty:c.qty,price,leverage:c.leverage},time+1);o.conditionId=c.id;c.orderId=o.id;c.submittedQty=c.qty;c.filledQty=0;c.status='triggered';
+ const o=place(s,{id:u.id},{asset:c.asset,product:c.product,intent:c.intent,qty:c.qty,price,leverage:c.leverage,marginMode:c.marginMode||'isolated'},time+1);o.conditionId=c.id;c.orderId=o.id;c.submittedQty=c.qty;c.filledQty=0;c.status='triggered';
  }catch(e){c.status='failed';c.reason=reason+'：'+e.message;}
  }}}
 function list(u){return (u.conditions||[]).map(c=>{if(c.status!=='triggered')return c;const o=u.orders.find(o=>o.id===c.orderId);return {...c,remaining:o?.remaining||0,executionStatus:o?(o.remaining<c.submittedQty?'部分成交':'待撮合'):((c.filledQty||0)>=c.submittedQty?'全部成交':c.filledQty?'部分成交，余量已结束':'委托已结束')};});}

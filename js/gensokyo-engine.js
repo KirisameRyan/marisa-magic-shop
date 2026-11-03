@@ -7,19 +7,32 @@
  function expandMarket(s){
   for(const [id,name,code,price] of specs)if(!s.assets.some(a=>a.id===id))s.assets.push({id,name,code,price,prev:price,fair:price,mark:price,history:[],volume:0});
   if(!s.assets.some(a=>a.id==='gensokyo-etf'))s.assets.push({id:'gensokyo-etf',name:'幻想乡产业ETF',code:'GSKY · ETF009',kind:'etf',price:100,prev:100,fair:100,mark:100,history:[],volume:0,basket:specs.slice(0,8).map(([id,,,base])=>({asset:id,quantity:100/8/base,initialWeight:1/8}))});
-  s.insurance ||= {balance:100000,paid:0,uncovered:0};refreshEtf(s);return s;
+  s.insurance ||= {balance:10000000,paid:0,uncovered:0,initialCapital:10000000};refreshEtf(s);return s;
  }
  function iopv(s,etf){return etf.basket.reduce((v,b)=>v+b.quantity*s.assets.find(a=>a.id===b.asset).price,0);}
  function refreshEtf(s){for(const a of s.assets.filter(a=>a.kind==='etf')){a.iopv=iopv(s,a);a.fair=a.iopv;}}
- function risk(s,p){const a=s.assets.find(a=>a.id===p.asset),notional=a.mark*p.qty,equity=p.margin+(a.mark-p.entry)*p.qty*p.sign,maintenance=notional*MMR,feeReserve=notional*FEE;return {notional,equity,maintenance,feeReserve,initialRate:1/p.leverage,maintenanceRate:MMR,marginRate:equity/notional,riskRate:equity>0?(maintenance+feeReserve)/equity:Infinity,liquidationPrice:Math.max(0,(p.entry*p.qty-p.sign*p.margin)/(p.qty*(1-p.sign*(MMR+FEE))))};}
- function addMargin(s,asset,amount){const p=s.positions[asset];amount=Number(amount);if(!p||!Number.isFinite(amount)||amount<=0||Math.abs(amount*100-Math.round(amount*100))>1e-6)throw Error('请输入有效追加金额（最多两位小数）');if(amount>available(s))throw Error('可用资金不足');p.margin=round(p.margin+amount);if(risk(s,p).riskRate<1){p.liquidating=false;s.orders=s.orders.filter(o=>!(o.asset===asset&&o.liquidation));}}
+ function isCross(p){return p.marginMode==='cross';}
+ function isolatedMargin(s){return Object.values(s.positions).filter(p=>!isCross(p)).reduce((n,p)=>n+p.margin,0);}
+ function crossPnl(s){return Object.values(s.positions).filter(isCross).reduce((n,p)=>n+(s.assets.find(a=>a.id===p.asset).mark-p.entry)*p.qty*p.sign,0);}
+ function otherCrossPnl(s,asset){return Object.values(s.positions).filter(p=>isCross(p)&&p.asset!==asset).reduce((n,p)=>n+(s.assets.find(a=>a.id===p.asset).mark-p.entry)*p.qty*p.sign,0);}
+ function crossFunds(s){return Math.max(0,s.cash-isolatedMargin(s)-frozen(s));}
+ function risk(s,p){const a=s.assets.find(a=>a.id===p.asset),ownNotional=a.mark*p.qty,cross=isCross(p),group=cross?Object.values(s.positions).filter(isCross):[p],notional=group.reduce((n,x)=>n+s.assets.find(a=>a.id===x.asset).mark*x.qty,0),equity=cross?crossFunds(s)+crossPnl(s):p.margin+(a.mark-p.entry)*p.qty*p.sign,maintenance=notional*MMR,feeReserve=notional*FEE;
+ const otherPnl=cross?crossPnl(s)-(a.mark-p.entry)*p.qty*p.sign:0,effectiveMargin=cross?crossFunds(s)+otherPnl-(notional-ownNotional)*(MMR+FEE):p.margin;
+ return {notional,equity,maintenance,feeReserve,initialRate:1/p.leverage,maintenanceRate:MMR,marginRate:equity/notional,riskRate:equity>0?(maintenance+feeReserve)/equity:Infinity,marginMode:cross?'cross':'isolated',liquidationPrice:Math.max(0,(p.entry*p.qty-p.sign*effectiveMargin)/(p.qty*(1-p.sign*(MMR+FEE))))};}
+ function setMarginMode(s,asset,mode){const p=s.positions[asset];if(!p||!['isolated','cross'].includes(mode))throw Error('请选择有效的保证金模式');if((p.marginMode||'isolated')===mode)return;
+ if(s.orders.some(o=>o.asset===asset&&o.product!=='spot'))throw Error('切换模式前请先撤销该合约委托');
+ if(Object.values(s.positions).some(x=>x.liquidating||risk(s,x).riskRate>=.8)||available(s)<0)throw Error('仓位风险过高，暂时不能切换模式');
+ const old=p.marginMode;p.marginMode=mode;
+ if(Object.values(s.positions).some(x=>risk(s,x).riskRate>=.8)||available(s)<0){p.marginMode=old;throw Error('切换后保证金不足或风险过高，请先减仓或增加资金');}
+ }
+ function addMargin(s,asset,amount){const p=s.positions[asset];if(p&&isCross(p))throw Error('全仓共享可用现金，无需追加逐仓保证金');amount=Number(amount);if(!p||!Number.isFinite(amount)||amount<=0||Math.abs(amount*100-Math.round(amount*100))>1e-6)throw Error('请输入有效追加金额（最多两位小数）');if(amount>available(s))throw Error('可用资金不足');p.margin=round(p.margin+amount);if(risk(s,p).riskRate<1){p.liquidating=false;delete p.liquidationEventId;s.orders=s.orders.filter(o=>!(o.asset===asset&&o.liquidation));}}
  function createBase(){return {version:1,round:1,cash:100000,fees:0,realized:0,seq:1,orders:[],positions:{},fills:[],system:{cash:10000000,inventory:{}},news:[{round:1,title:'守矢神社公布能源项目建设计划',body:'项目仍在筹备阶段，设备订单有望流向河童重工。投产时间和实际成本尚未确定。',tag:'建设计划 · 公开消息'}],assets:specs.map(([id,name,code,price],idx)=>{let history=[],v=price*(1-.013*(idx%2? -1:1));for(let i=0;i<45;i++){let o=v;v=round(price+(i-44)*.025+Math.sin(i*.57+idx)*.45);history.push({o,h:round(Math.max(o,v)+.2),l:round(Math.min(o,v)-.2),c:v,v:200+((i*137+idx*53)%900)});}return{id,name,code,price,prev:history[0].o,fair:price,mark:price,history,volume:history.reduce((n,b)=>n+b.v,0)};})};}
  function create(){return expandMarket(createBase());}
  function equity(s){return round(s.cash+Object.values(s.positions).reduce((n,p)=>n+(s.assets.find(a=>a.id===p.asset).mark-p.entry)*p.qty*p.sign,0)+Object.values(s.spotPositions||{}).reduce((n,p)=>n+s.assets.find(a=>a.id===p.asset).price*p.qty,0));}
  function margin(s){return round(Object.values(s.positions).reduce((n,p)=>n+p.margin,0));}
  function frozen(s){return round(s.orders.filter(o=>o.intent!=='close'&&o.intent!=='sell').reduce((n,o)=>n+o.price*o.remaining/o.leverage+Math.ceil(o.price*o.remaining*.0005*100)/100+.05,0));}
- function available(s){return round(s.cash-margin(s)-frozen(s));}
- function submit(s,asset,intent,price,qty,leverage,product='contract',time=Date.now()){
+ function available(s){return round(s.cash-margin(s)-frozen(s)+Math.min(0,crossPnl(s)));}
+ function submit(s,asset,intent,price,qty,leverage,product='contract',time=Date.now(),marginMode='isolated'){
   if(product==='spot')return submitSpot(s,asset,intent,Number(price),Number(qty),time);
   const a=s.assets.find(x=>x.id===asset),p=s.positions[asset];price=Number(price);qty=Number(qty);leverage=Number(leverage);
   if(!a||!['long','short','close'].includes(intent)||!(LEVERAGES.includes(leverage)||(intent==='close'&&p?.leverage===1&&leverage===1))||!Number.isFinite(price)||price<=0||Math.abs(price*10-Math.round(price*10))>1e-6||!Number.isSafeInteger(qty)||qty<1||qty>100000)throw Error('请选择2／3／5／10／20倍杠杆，并输入有效价格和整数数量');
@@ -29,8 +42,11 @@
   if(intent==='close'){
    const reserved=s.orders.filter(o=>o.asset===asset&&o.intent==='close').reduce((n,o)=>n+o.remaining,0);
    if(!p||qty>p.qty-reserved)throw Error('可平数量不足，请检查已有平仓委托');
-   leverage=p.leverage;
+   leverage=p.leverage;if(isCross(p)&&(-(price-p.entry)*qty*p.sign+price*qty*FEE)>Math.max(0,s.cash-isolatedMargin(s))+.01&&otherCrossPnl(s,asset)>.01)throw Error('全仓结算现金不足，请先平盈利仓位释放现金');
   }else{
+   if(!['isolated','cross'].includes(marginMode))throw Error('保证金模式不正确');
+   if(p&&(p.marginMode||'isolated')!==marginMode)throw Error('追加仓位请使用现有保证金模式');
+   if(s.orders.some(o=>o.asset===asset&&o.product!=='spot'&&o.intent!=='close'&&(o.marginMode||'isolated')!==marginMode))throw Error('同一合约挂单不能混用保证金模式');
    if(s.insurance?.uncovered>0)throw Error('保险资金存在待处理缺口，暂时停止合约新开仓');
    if(Object.values(s.positions).some(pos=>risk(s,pos).riskRate>=.8||pos.liquidating))throw Error('存在高风险合约，请先追加保证金或减仓');
    if((p&&p.sign!==sign)||s.orders.some(o=>o.asset===asset&&o.product!=='spot'&&o.intent!=='close'&&o.sign!==sign))throw Error('请先平掉反向持仓并撤销反向开仓单');
@@ -39,7 +55,7 @@
    if(available(s)<price*qty/leverage+Math.ceil(price*qty*.0005*100)/100+.05)throw Error('可用资金不足，保证金和手续费已计入');
    if(equity(s)<margin(s)*.1)throw Error('账户处于风险状态，请先减仓');
   }
-  const o={id:s.seq++,asset,intent,sign,price:round(price),qty,remaining:qty,leverage,product:'contract',submittedAt:time};s.orders.push(o);return o;
+  const o={id:s.seq++,asset,intent,sign,price:round(price),qty,remaining:qty,leverage,marginMode:intent==='close'?(p.marginMode||'isolated'):marginMode,product:'contract',submittedAt:time};s.orders.push(o);return o;
  }
  function submitSpot(s,asset,intent,price,qty,time){
   s.spotPositions ||= {};const a=s.assets.find(x=>x.id===asset),p=s.spotPositions[asset];
@@ -56,6 +72,8 @@
  function cancel(s,id){if(s.orders.some(o=>o.id===id&&o.liquidation))throw Error('强平委托不能直接撤销，请追加保证金降低风险');s.orders=s.orders.filter(o=>o.id!==id);}
  function book(s,asset){const a=s.assets.find(x=>x.id===asset),inv=s.system.inventory[asset]||0;const center=Math.max(1,Math.round((a.fair*.35+a.price*.65+(a.sentiment||0)-inv*.00002)*10)/10);const capacity=Math.max(0,Math.floor(s.system.cash/(Math.max(center,1)*5)));return {asks:Array.from({length:5},(_,i)=>({price:round(center+(i+1)*.1),qty:Math.min(capacity,100+i*100)})),bids:Array.from({length:5},(_,i)=>({price:round(center-(i+1)*.1),qty:Math.min(capacity,120+i*110)}))};}
  function applyFill(s,o,price,qty,counterparty=s.system){
+  if(o.intent==='close'&&isCross(s.positions[o.asset]||{})){const p=s.positions[o.asset],cost=-(price-p.entry)*qty*p.sign+round(price*qty*FEE);if(cost>crossFunds(s))s.orders=s.orders.filter(x=>x.intent==='close'||x.intent==='sell');if(cost>crossFunds(s)+.01&&otherCrossPnl(s,o.asset)>.01)throw Error('全仓结算现金不足，请先平盈利仓位释放现金');}
+  const crossBudget=o.intent==='close'&&isCross(s.positions[o.asset]||{})?crossFunds(s):null;
   const fee=round(price*qty*.0005);s.cash=round(s.cash-fee);s.fees=round(s.fees+fee);let p=s.positions[o.asset];
   if(o.product==='spot'){
    p=s.spotPositions[o.asset];s.cash=round(s.cash-o.sign*price*qty);counterparty.cash=round(counterparty.cash+o.sign*price*qty);
@@ -63,11 +81,11 @@
    else{s.realized=round(s.realized+(price-p.entry)*qty);p.qty-=qty;if(!p.qty)delete s.spotPositions[o.asset];}
   }else{
   if(o.intent==='close'){
-   const rawPnl=round((price-p.entry)*qty*p.sign),allocated=p.margin*qty/p.qty,pnl=Math.max(rawPnl,round(-allocated+fee)),gap=round(pnl-rawPnl);s.cash=round(s.cash+pnl);counterparty.cash=round(counterparty.cash-rawPnl);s.realized=round(s.realized+pnl);
-   if(gap>0){s.insurance ||= {balance:100000,paid:0,uncovered:0};const paid=Math.min(gap,s.insurance.balance);s.insurance.balance=round(s.insurance.balance-paid);s.insurance.paid=round(s.insurance.paid+paid);s.insurance.uncovered=round(s.insurance.uncovered+gap-paid);}
+   const rawPnl=round((price-p.entry)*qty*p.sign),allocated=p.margin*qty/p.qty,pnl=Math.max(rawPnl,round(-(crossBudget===null?allocated:crossBudget)+fee)),gap=round(pnl-rawPnl);s.cash=round(s.cash+pnl);counterparty.cash=round(counterparty.cash-rawPnl);s.realized=round(s.realized+pnl);
+   if(gap>0){s.insurance ||= {balance:10000000,paid:0,uncovered:0,initialCapital:10000000};const paid=Math.min(gap,s.insurance.balance);s.insurance.balance=round(s.insurance.balance-paid);s.insurance.paid=round(s.insurance.paid+paid);s.insurance.uncovered=round(s.insurance.uncovered+gap-paid);}
    p.margin=round(p.margin*(1-qty/p.qty));p.qty-=qty;if(!p.qty)delete s.positions[o.asset];
   }else if(p){p.entry=(p.entry*p.qty+price*qty)/(p.qty+qty);p.qty+=qty;p.margin=round(p.margin+price*qty/o.leverage);}
-  else s.positions[o.asset]={asset:o.asset,sign:o.sign,qty,entry:price,margin:round(price*qty/o.leverage),leverage:o.leverage};
+  else s.positions[o.asset]={asset:o.asset,sign:o.sign,qty,entry:price,margin:round(price*qty/o.leverage),leverage:o.leverage,marginMode:o.marginMode||'isolated'};
   }
   counterparty.inventory[o.asset]=(counterparty.inventory[o.asset]||0)-o.sign*qty;
   o.remaining-=qty;s.fills.unshift({id:s.seq++,orderId:o.id,asset:o.asset,intent:o.intent,product:o.product||'contract',price,qty,round:s.round,time:s.executionTime||Date.now(),fee});s.fills=s.fills.slice(0,100);
@@ -122,12 +140,13 @@
   if(opts.endRound!==false)s.round++;return {tradeCount,systemTradeCount,warnings:results};
  }
  function checkRisk(s){const results=[];
+  if(Object.values(s.positions).some(p=>risk(s,p).riskRate>=1||p.liquidating))s.orders=s.orders.filter(o=>o.intent==='close'||o.intent==='sell');
   for(const p of Object.values(s.positions)){
    const a=s.assets.find(x=>x.id===p.asset);
-   if(risk(s,p).riskRate>=1){p.liquidating=true;s.orders=s.orders.filter(o=>o.asset!==p.asset||o.product==='spot');s.orders.push({id:s.seq++,asset:p.asset,intent:'close',sign:-p.sign,price:p.sign===1?Math.max(.1,round(a.price*.8)):round(a.price*1.2),qty:p.qty,remaining:p.qty,leverage:p.leverage,product:'contract',submittedAt:s.executionTime,liquidation:true});results.push(a.name+'风险率达到100%，已排入强平委托');}
-   else if(p.liquidating){p.liquidating=false;s.orders=s.orders.filter(o=>!(o.asset===p.asset&&o.liquidation));}
+   if(risk(s,p).riskRate>=1){p.liquidating=true;const existing=s.orders.find(o=>o.asset===p.asset&&o.liquidation&&o.remaining>0);if(existing){existing.price=p.sign===1?.1:1000000000;existing.submittedAt=s.executionTime;continue;}s.orders=s.orders.filter(o=>o.asset!==p.asset||o.product==='spot');s.orders.push({id:s.seq++,asset:p.asset,intent:'close',sign:-p.sign,price:p.sign===1?.1:1000000000,qty:p.qty,remaining:p.qty,leverage:p.leverage,product:'contract',submittedAt:s.executionTime,liquidation:true});p.liquidationEventId ||= s.orders.at(-1).id;results.push(a.name+'风险率达到100%，已排入强平委托');}
+   else if(p.liquidating){p.liquidating=false;delete p.liquidationEventId;s.orders=s.orders.filter(o=>!(o.asset===p.asset&&o.liquidation));}
   }
   return results;
  }
- const api={create,submit,cancel,settle,book,equity,margin,frozen,available,round,expandMarket,refreshEtf,iopv,risk,addMargin,LEVERAGES,MMR,applyFill,checkRisk};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.GensokyoEngine=api;
+ const api={create,submit,cancel,settle,book,equity,margin,frozen,available,round,expandMarket,refreshEtf,iopv,risk,addMargin,setMarginMode,isCross,crossFunds,otherCrossPnl,LEVERAGES,MMR,applyFill,checkRisk};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.GensokyoEngine=api;
 })(typeof window!=='undefined'?window:globalThis);
