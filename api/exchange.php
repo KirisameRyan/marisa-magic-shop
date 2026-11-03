@@ -1,7 +1,7 @@
 <?php
 // Same-origin PHP gateway for existing PHP sites. The market still runs in Node.
 require_once __DIR__ . '/bootstrap.php';
-mms_cors();
+mms_cors(true);
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Headers: Authorization, Content-Type, Idempotency-Key, If-None-Match');
 function exchange_error(int $status, string $code, string $message): void {

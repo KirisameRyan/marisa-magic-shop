@@ -14,8 +14,13 @@
 
 必须先把本次更新的 api/auth.php、api/auth-lib.php、api/bootstrap.php、api/exchange.php、js/gensokyo-network.js 和交易后端文件部署到网站。新增 toy_credentials 私有表会自动创建，旧账户和K线不重置。
 
-PHP-FPM环境和Node的 /etc/mms-exchange.env 都要将实际Toy页面来源加入 MMS_ALLOWED_ORIGINS，保留原网站来源。按当前官方地址预计包含 https://www.bilibili.com；正式预览若运行于不同内容来源，应核对真实 Origin 后加入该精确来源，不使用通配符，不允许 null。只配Node不配PHP会无法登录，只配PHP不配Node会无法交易。PHP-FPM环境配置可通过宝塔对应PHP进程管理配置env项；更新后重载PHP服务，并 systemctl restart mms-exchange。仅改Node的EnvironmentFile不会自动传给PHP。
+当前修复版已经在PHP登录/交易接口和Node交易服务中默认追加精确来源 https://www.bilibili.com，且不会被原有 MMS_ALLOWED_ORIGINS 覆盖。PHP其他业务接口不因此放宽来源。
 
+上传最新 api/bootstrap.php、api/auth.php、api/exchange.php、api/auth-lib.php 和 services/exchange/server.cjs 后，执行 systemctl restart mms-exchange；若PHP配置不检查文件更新，请在宝塔重载对应PHP服务。单独重启但不更新代码不会改变旧白名单。
+
+若真实Toy的请求Origin不同于 https://www.bilibili.com，按页面错误提示核对真实来源，再通过 PHP-FPM 环境与 Node 的 /etc/mms-exchange.env 同时配置 MMS_TOY_ORIGINS，逗号分隔精确HTTPS来源。不要使用通配符或 null。Node EnvironmentFile 不会自动传给PHP。
+
+本次线上只读检查已确认：无Origin访问overview为200，B站来源访问为403 Origin not allowed，登录预检同样403。这是未放行来源导致的浏览器跨域拒绝，不是Toy不支持联网。新版Toy包在失败时显示具体来源，便于定位。
 API固定为 https://www.azureflame.cloud/，没有将域名或凭证放进查询参数；CORS同时暴露ETag用于减少重复响应。ZIP不包含数据库、PHP、Node服务、私有配置或密钥。
 
 ## 检查与限制

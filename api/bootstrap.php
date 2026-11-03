@@ -23,10 +23,14 @@ function mms_private_dir(): string {
     return rtrim($dir, '/\\');
 }
 
-function mms_cors(): void {
+function mms_cors(bool $allowToy = false): void {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
     $allowed = array_filter(array_map('trim', explode(',', mms_env('MMS_ALLOWED_ORIGINS',
         'https://www.azureflame.cloud,https://azureflame.cloud,https://appassets.androidapp.net'))));
+    if ($allowToy) {
+        $toyOrigins=array_filter(array_map('trim',explode(',',mms_env('MMS_TOY_ORIGINS','https://www.bilibili.com'))));
+        foreach($toyOrigins as $candidate) if(preg_match('~^https://[^/?#]+$~',$candidate)) $allowed[]=$candidate;
+    }
     if ($origin !== '') {
         if (!in_array($origin, $allowed, true)) {
             http_response_code(403);
