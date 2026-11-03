@@ -19,7 +19,9 @@ def build(api='https://www.azureflame.cloud/',output=None):
     (app/'toy-entry.js').write_text((ROOT/'packages/toy/src/gensokyo_exchange/toy-entry.js').read_text(encoding='utf-8-sig'),encoding='utf-8')
     html=(ROOT/'gensokyo_exchange.html').read_text(encoding='utf-8-sig')
     html=html.replace('<script src="js/api-config.js" defer></script>','<script src="toy-config.js" defer></script>')
-    html=html.replace('href="games.html"','href="'+api+'gensokyo_exchange.html" target="_blank" rel="noopener noreferrer"').replace('aria-label="返回游戏室"','aria-label="打开网页版交易所"')
+    back='<a href="games.html" class="back" aria-label="返回游戏室">‹</a>'
+    if back not in html:raise ValueError('Exchange back button changed; update Toy navigation mapping')
+    html=html.replace(back,'<button type="button" id="toy-home-back" class="back" aria-label="返回交易所首页">‹</button>')
     html=html.replace('游客身份保存在本浏览器，刷新不丢失；可升级正式账户，避免清理浏览器后无法找回。','Toy版通过B站授权并使用私有云存档恢复游戏账户。')
     html=html.replace('<body','<body class="toy-entry"',1)
     html=html.replace('<script src="toy-config.js"','<script src="https://s1.hdslb.com/bfs/seed/toy/app/sdk/toy-sdk.js" defer></script><script src="toy-config.js"')

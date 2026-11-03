@@ -21,5 +21,6 @@ async function enter(){if(busy)return;busy=true;const b=document.getElementById(
  finally{busy=false;b.disabled=false;}
 }
 const gate=document.getElementById('market-gate'),box=document.createElement('div');box.className='toy-account';box.innerHTML='<div class="toy-profile"><img id="toy-profile-avatar" hidden alt="B站头像" width="32" height="32"><strong id="toy-profile-name">使用B站账户游玩</strong></div><button type="button" id="toy-enter">B站一键进入</button><p id="toy-status" role="status">首次授权后自动保存游戏账户，下次使用同一B站账户恢复。</p>';gate.insertBefore(box,gate.querySelector('.gate-actions'));document.getElementById('toy-enter').onclick=enter;
+const back=document.getElementById('toy-home-back');if(back)back.onclick=()=>document.getElementById('home-open').click();
 Auth.onAuth(user=>{document.getElementById('toy-enter').hidden=!!user;});
 })();

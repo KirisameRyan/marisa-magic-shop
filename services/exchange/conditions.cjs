@@ -15,7 +15,7 @@ function add(s,u,body,now){
  if(!a||!['spot','contract'].includes(product)||!['bracket','macd','rebound','pullback'].includes(type))fail('条件单类型或标的不正确');
  if(!(product==='spot'?['buy','sell']:['long','short','close']).includes(intent))fail('交易方向不正确');
  if(!Number.isSafeInteger(body.qty)||body.qty<100||body.qty>100000||body.qty%100)fail('数量须为100份整数倍');
- const leverage=product==='spot'?1:body.leverage;if(product==='contract'&&!E.LEVERAGES.includes(leverage))fail('杠杆倍数不正确');
+ const leverage=product==='spot'?1:body.leverage;if(product==='contract'&&!E.leverages(a).includes(leverage))fail('杠杆倍数不正确');
  if(!['limit','opponent'].includes(body.execution))fail('请选择委托方式');
  if(body.marginMode!==undefined&&!['isolated','cross'].includes(body.marginMode))fail('保证金模式不正确');
  const c={marginMode:body.marginMode||'isolated',id:s.seq++,asset,product,intent,type,qty:body.qty,leverage,execution:body.execution,createdAt:now,status:'watching',reference:a.price,extreme:a.price};

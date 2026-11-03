@@ -32,3 +32,6 @@ API固定为 https://www.azureflame.cloud/，没有将域名或凭证放进查�
 本地逻辑测试覆盖首次授权、私有存档恢复、拒绝授权、读写失败不覆盖、重试幂等、服务端恢复与重置失效。SDK真实授权弹窗和平台环境必须在真实Toy预览及B站App中验证，不能以模拟测试宣称已经上线可用。没有用普通B站登录Cookie、昵称或伪造OpenID替代授权。
 
 官方资料：[SDK](https://www.bilibili.com/toy/publish/sdk)，[官方SDK脚本](https://s1.hdslb.com/bfs/seed/toy/app/sdk/toy-sdk.js)，[官方包体检查说明](https://github.com/bilibili/toy/blob/main/skills/toy/references/content-checklist.md)。
+
+
+Toy版左上角返回按钮只调用游戏内“首页”，保留本页会话，不跳转或打开网站。网页版的游戏室返回入口不变。作者B站主页仍保留为明确标注的外部链接。
