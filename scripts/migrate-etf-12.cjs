@@ -57,12 +57,16 @@ function checkLease(db) {
 }
 
 function backupDb(privateDir) {
+  const os = require('node:os');
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const root = process.env.MMS_BACKUP_DIR || path.join(os.homedir(), 'mms-exchange-backups');
+  fs.mkdirSync(root, { recursive: true, mode: 0o700 });
   const src = path.join(privateDir, 'exchange.db');
   try {
     const { backup } = require('./backup-exchange.cjs');
-    return backup(privateDir, path.join(privateDir, 'etf-migration-backup-' + new Date().toISOString().replace(/[:.]/g, '-')));
+    return backup(privateDir, root);
   } catch (e) {
-    const dir = path.join(privateDir, 'etf-migration-backup-' + new Date().toISOString().replace(/[:.]/g, '-'));
+    const dir = path.join(root, 'etf-migration-backup-' + stamp);
     fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
     for (const s of ['', '-wal', '-shm']) if (fs.existsSync(src + s)) fs.copyFileSync(src + s, path.join(dir, 'exchange.db' + s));
     console.warn('[提醒] 官方备份未执行（' + e.message + '），已退化为文件拷贝：' + dir);
@@ -158,3 +162,4 @@ function main() {
 
 if (require.main === module) main();
 module.exports = { buildBasket, KEY };
+

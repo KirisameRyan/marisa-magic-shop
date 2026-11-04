@@ -73,15 +73,18 @@ function privateDirectory() {
 }
 
 function backupDb(privateDir) {
+  const os = require('node:os');
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const dir = path.join(privateDir, 'settlement-backup-' + stamp);
-  fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+  const root = process.env.MMS_BACKUP_DIR || path.join(os.homedir(), 'mms-exchange-backups');
+  fs.mkdirSync(root, { recursive: true, mode: 0o700 });
   const src = path.join(privateDir, 'exchange.db');
   try {
     const { backup } = require('./backup-exchange.cjs');
-    return backup(privateDir, dir);
+    return backup(privateDir, root);
   } catch (e) {
-    // site.db 不可用时（本机演练），退化为文件拷贝
+    // site.db 不可用时（本机演练），退化为文件拷贝，仍写到网站目录之外
+    const dir = path.join(root, 'settlement-backup-' + stamp);
+    fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
     for (const suffix of ['', '-wal', '-shm']) {
       const f = src + suffix;
       if (fs.existsSync(f)) fs.copyFileSync(f, path.join(dir, 'exchange.db' + suffix));
@@ -301,3 +304,4 @@ function main() {
 
 if (require.main === module) main();
 module.exports = { plan, applySettlement, KEY, ASSET };
+
