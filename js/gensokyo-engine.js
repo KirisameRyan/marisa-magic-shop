@@ -10,7 +10,7 @@
   for(const [id,name,code,price] of COINS)if(!s.assets.some(a=>a.id===id))s.assets.push({id,name,code,kind:'crypto',price,prev:price,fair:price,mark:price,history:[],volume:0});
   for(const [id,name,code,price] of specs)if(!s.assets.some(a=>a.id===id))s.assets.push({id,name,code,price,prev:price,fair:price,mark:price,history:[],volume:0});
   if(!s.assets.some(a=>a.id==='gensokyo-etf'))s.assets.push({id:'gensokyo-etf',name:'幻想乡产业ETF',code:'GSKY · ETF009',kind:'etf',price:100,prev:100,fair:100,mark:100,history:[],volume:0,basket:specs.slice(0,8).map(([id,,,base])=>({asset:id,quantity:100/8/base,initialWeight:1/8}))});
-  s.insurance ||= {balance:10000000,paid:0,uncovered:0,initialCapital:10000000};refreshEtf(s);s.assets.sort((a,b)=>(a.kind==='crypto')-(b.kind==='crypto'));return s;
+  s.insurance ||= {balance:10000000,paid:0,uncovered:0,initialCapital:10000000};refreshEtf(s);for(const a of s.assets)a.referenceFloat ||= a.kind==='etf'||a.kind==='crypto'?10000000:5000000;s.assets.sort((a,b)=>(a.kind==='crypto')-(b.kind==='crypto'));return s;
  }
  function iopv(s,etf){return etf.basket.reduce((v,b)=>v+b.quantity*s.assets.find(a=>a.id===b.asset).price,0);}
  function refreshEtf(s){for(const a of s.assets.filter(a=>a.kind==='etf')){a.iopv=iopv(s,a);a.fair=a.iopv;}}
