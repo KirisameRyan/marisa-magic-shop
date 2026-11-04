@@ -27,11 +27,11 @@ test('cross can survive a move that liquidates isolated; cash exhaustion still f
  const s=E.create();s.positions.kappa=position('kappa','cross');s.assets[0].mark=96;E.checkRisk(s);assert.equal(s.positions.kappa.liquidating,undefined);s.cash=500;E.checkRisk(s);assert.equal(s.positions.kappa.liquidating,true);assert.ok(s.orders[0].liquidation);assert.equal(s.orders[0].price,.1);
 });
 
-test('a trade that crosses the risk threshold triggers liquidation before the current batch ends',()=>{
+test('a small trade crossing the last-price threshold cannot by itself force liquidation',()=>{
  const now=Math.floor(Date.now()/60000)*60000,s=M.create(now),u={id:1,username:'风险仓位'},buyer={id:2,username:'对手买盘'},seller={id:3,username:'普通卖盘'};
  for(const p of [u,buyer,seller])M.join(s,p,now);s.system.cash=0;s.flow={cash:0,inventory:{}};const a=s.assets[0];a.price=a.mark=a.fair=100;for(const b of a.history.slice(-10))b.c=100;s.accounts[1].positions.kappa=position();s.accounts[3].spotPositions.kappa={asset:'kappa',qty:100,entry:100,product:'spot'};
  M.order(s,buyer,{asset:'kappa',product:'spot',intent:'buy',qty:200,price:95,leverage:1},now+1);M.order(s,seller,{asset:'kappa',product:'spot',intent:'sell',qty:100,price:95,leverage:1},now+2);
- M.tick(s,{time:now+60000,random:()=>0});assert.equal(s.accounts[1].positions.kappa,undefined);assert.equal(s.accounts[2].spotPositions.kappa.qty,200);assert.equal(s.accounts[1].fills[0].time,now+60000);assert.ok(s.accounts[1].cash>=99500);
+ M.tick(s,{time:now+60000,random:()=>0});assert.equal(s.accounts[1].positions.kappa.qty,100);assert.equal(s.accounts[2].spotPositions.kappa.qty,100);assert.equal(s.accounts[1].fills.length,0);assert.ok(s.accounts[1].cash>=99500);
 });
 
 test('cross cannot take an insurance subsidy while another cross position has unrealized profit',()=>{

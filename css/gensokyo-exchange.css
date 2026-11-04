@@ -49,3 +49,5 @@
 #circuit-dialog{width:min(480px,calc(100vw - 32px))}#circuit-dialog p{line-height:1.9;margin:16px 0}#circuit-dialog h2{color:var(--red)}
 
 .quote-reference{display:flex;gap:24px;justify-content:flex-end;padding:0 24px 12px;color:var(--muted);font-size:12px}.quote-reference b{color:var(--text);font-weight:500}#amount{font-size:14px;overflow-wrap:anywhere}
+
+.quote-reference{flex-wrap:wrap;gap:8px 20px}
