@@ -7,7 +7,7 @@ function begin(a,time){
  if(p.time!==time){p.marks.push({t:p.time,price:p.mark});const cutoff=time-300000,prior=p.marks.findLast(x=>x.t<=cutoff);p.marks=p.marks.filter(x=>x.t>cutoff);if(prior)p.marks.unshift(prior);p.time=time;p.reference=(Number.isFinite(a.fair)&&a.fair>0)?p.mark+(a.fair-p.mark)*.35:p.mark;p.points={};p.weights={};p.pairs={};}
  return p;
 }
-function bands(a){const p=a.priceProtection,reference=p?.reference||a.mark||a.price,width=a.kind==='crypto'?.10:.05;return {reference,lower:Math.ceil(reference*(1-width)*10-1e-8)/10,upper:Math.floor(reference*(1+width)*10+1e-8)/10};}
+function bands(a){const p=a.priceProtection,reference=p?.reference||a.mark||a.price,width=(a.kind==='crypto'?.10:.05)*(a.bandFactor||1);return {reference,lower:Math.ceil(reference*(1-width)*10-1e-8)/10,upper:Math.floor(reference*(1+width)*10+1e-8)/10};}
 function allowed(a,price){const b=bands(a);return Number.isFinite(price)&&price>=b.lower-1e-8&&price<=b.upper+1e-8;}
 function baseline(a,time){const p=a.priceProtection;return p.marks.findLast(x=>x.t<=time-300000)?.price||p.marks[0]?.price||p.reference;}
 function observe(a,trade){const p=a.priceProtection,ids=[...new Set([trade.buyUserId,trade.sellUserId].filter(x=>x!==null&&x!==undefined))],cap=a.kind==='crypto'?1000:500,anchor=cap*2,keys=ids.length?ids.map(id=>'u:'+id):['system'],limit=ids.length===2?cap:anchor*4;

@@ -1,6 +1,6 @@
 /* Online exchange UI. Balances, orders and matching are authoritative on the server. */
 (()=>{'use strict';
-const E=window.GensokyoEngine,D=window.GensokyoMarketData,$=id=>document.getElementById(id);
+const E=window.GensokyoEngine,D=window.GensokyoMarketData,RS=window.RedMistStory||{},$=id=>document.getElementById(id);
 const fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
 const compactMarketNumber=(n,d=2)=>Math.abs(n)>=1e8?fmt(n/1e8,d)+'亿':Math.abs(n)>=1e4?fmt(n/1e4,d)+'万':fmt(n,d);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -11,7 +11,7 @@ function toast(msg){$('toast').textContent=msg;$('toast').style.display='block';
 function showGate(message,error=false){homeVisible=true;$('exchange-home').hidden=false;$('home-enter').hidden=!Auth.isLoggedIn();online=false;s=null;remoteEtag='';remoteRank=null;$('exchange-content').hidden=true;$('exchange-nav').hidden=true;$('exchange-session').hidden=true;$('market-gate').hidden=false;$('gate-title').textContent=error?'暂时无法进入市场':Auth.isLoggedIn()?'正在连接交易所':'登录幻想乡交易所';$('gate-status').textContent=message;$('gate-retry').hidden=!error||!Auth.isLoggedIn();$('gate-login').hidden=Auth.isLoggedIn();$('gate-register').hidden=Auth.isLoggedIn();$('gate-guest').hidden=Auth.isLoggedIn();$('guest-note').hidden=Auth.isLoggedIn();$('connection-status').textContent=error?'交易服务连接失败':Auth.isLoggedIn()?'正在连接共享市场':'请先登录网站账户';if(chart){chart.dispose();chart=null;}for(const id of ['orders','positions','fills','ranking-rows','account-summary'])$(id).replaceChildren();}
 function reportError(error){if(error.status===401){sessionToken='';ExchangeNetwork.clearPending();showGate('登录已失效，请重新登录。');Auth.verify();}else if(!s||!online)showGate(error.message,true);else{$('connection-status').textContent=error.message;toast(error.message);}}
 async function refreshRemote(force=false){if(!online)return;if(polling){await pollPromise;if(force&&online)return refreshRemote(true);return;}polling=true;let done;pollPromise=new Promise(r=>done=r);const target=selected,token=Auth.token();lastRemotePoll=Date.now();try{const data=await ExchangeNetwork.request('state?asset='+encodeURIComponent(target),{etag:force?'':remoteEtag});if(data.unchanged||!online||target!==selected||token!==Auth.token())return;if(!data.account)throw Error('交易账户尚未开通，请重试连接');remoteEtag=data.etag;serverOffset=data.serverTime-Date.now();serverBooks=data.market.books;remoteRank=data.rank;s={version:1,...data.market,...data.account};const cs=$('connection-status');if(cs){cs.textContent=data.market.halted||'';cs.hidden=!data.market.halted;}$('exchange-home').hidden=!homeVisible;$('exchange-content').hidden=homeVisible;$('exchange-session').hidden=homeVisible;$('exchange-nav').hidden=homeVisible;render();if(!homeVisible)showRiskWarning();if(!homeVisible)chart?.resize();if(view==='ranking')refreshRanking();}finally{polling=false;done();}}
-async function enterOnline(){if(!E||typeof E.isCross!=='function'||typeof E.setMarginMode!=='function'||typeof E.leverages!=='function')throw Error('页面资源版本不一致，请刷新页面后重试；若仍失败，请清除本站缓存。');wantsMarket=true;const token=Auth.token();if(!token){Auth.openModal('login');return;}if(joinToken===token)return joining;showGate('正在验证账户并连接共享市场…');homeVisible=false;joinToken=token;joining=(async()=>{await ExchangeNetwork.request('join',{body:{}});if(token!==Auth.token())return;sessionToken=token;online=true;remoteEtag='';await refreshRemote(true);if(s){navigate(view);$('order-price').value=asset().price.toFixed(1);estimate();}})().finally(()=>{if(joinToken===token){joinToken='';joining=null;}});return joining;}
+async function enterOnline(){if(!E||typeof E.isCross!=='function'||typeof E.setMarginMode!=='function'||typeof E.leverages!=='function')throw Error('页面资源版本不一致，请刷新页面后重试；若仍失败，请清除本站缓存。');wantsMarket=true;const token=Auth.token();if(!token){Auth.openModal('login');return;}if(joinToken===token)return joining;showGate('正在验证账户并连接共享市场…');homeVisible=false;joinToken=token;joining=(async()=>{await ExchangeNetwork.request('join',{body:{}});if(token!==Auth.token())return;sessionToken=token;online=true;remoteEtag='';await refreshRemote(true);if(s){navigate(view);$('order-price').value=asset().price.toFixed(1);estimate();showEventPromo();}})().finally(()=>{if(joinToken===token){joinToken='';joining=null;}});return joining;}
 async function remoteMutation(route,body){if(!online||!s)throw Error('请先登录并连接交易所');$('submit-order').disabled=true;try{await ExchangeNetwork.request(route,{body});await refreshRemote(true);if(view==='ranking')await refreshRanking();}finally{$('submit-order').disabled=false;pauseStatus();}}
 async function refreshRanking(){
  if(!online||!s)return;if(rankingPending){rankingRefreshQueued=true;return;}rankingPending=true;lastRankingPoll=Date.now();const token=Auth.token(),board=rankingBoard,titles={assets:'总资产榜',profit:'今日盈利榜',loss:'今日亏损榜',liquidation:'爆仓榜'},daily=board!=='assets';
@@ -70,10 +70,10 @@ async function select(id){if(!online||!s)return;selected=id;try{await refreshRem
 function orderQuantity(){const p=holding();return ['sell','close'].includes(intent)&&p&&p.qty%100?p.qty:Number($('order-qty').value);}
 function quantityText(q){return fmt(q,0)+'份';}
 const pauseNotices=new Map();let pauseOwner=null;
-function pauseStatus(){if(!s)return;const a=asset(),paused=a.pausedUntil>Date.now()+serverOffset;$('asset-pause').hidden=!paused;$('asset-pause').textContent=paused?'本股触发熔断暂停 · '+D.time(a.pausedUntil)+' 恢复 · 未成交委托已撤回':'';$('submit-order').disabled=paused;
- const conditionAsset=$('cond-asset')?.value,conditionPaused=s.assets.find(x=>x.id===conditionAsset)?.pausedUntil>Date.now()+serverOffset;if($('condition-submit'))$('condition-submit').disabled=!!conditionPaused;
+function pauseStatus(){if(!s)return;const a=asset(),circuit=a.pausedUntil>Date.now()+serverOffset,suspended=!!a.suspended,paused=circuit||suspended;$('asset-pause').hidden=!paused;$('asset-pause').textContent=suspended?('本股停牌 · '+(a.suspended.reason||'异变影响')+' · 复牌时间以公告为准 · 未成交委托已撤回'):circuit?('本股触发熔断暂停 · '+D.time(a.pausedUntil)+' 恢复 · 未成交委托已撤回'):'';$('submit-order').disabled=paused;
+ const conditionAsset=$('cond-asset')?.value,conditionAssetObj=s.assets.find(x=>x.id===conditionAsset),conditionPaused=conditionAssetObj&&((conditionAssetObj.pausedUntil||0)>Date.now()+serverOffset||conditionAssetObj.suspended);if($('condition-submit'))$('condition-submit').disabled=!!conditionPaused;
  const owner=Auth.user()?.id;if(owner!==pauseOwner){pauseNotices.clear();pauseOwner=owner;}
- let dialog=$('circuit-dialog');if(!paused||homeVisible||!['market','conditions'].includes(view)){if(dialog?.open)dialog.close();return;}
+ let dialog=$('circuit-dialog');if(!circuit||homeVisible||!['market','conditions'].includes(view)){if(dialog?.open)dialog.close();return;}
  const key=a.id+':'+a.pausedUntil;if(pauseNotices.has(key))return;pauseNotices.set(key,true);
  if(!dialog){dialog=document.createElement('dialog');dialog.id='circuit-dialog';dialog.setAttribute('aria-labelledby','circuit-title');dialog.innerHTML='<h2 id="circuit-title">本股触发熔断暂停</h2><p id="circuit-message"></p><button type="button" id="circuit-close" class="submit-order">我知道了</button>';document.body.appendChild(dialog);$('circuit-close').onclick=()=>dialog.close();}
  $('circuit-title').textContent=a.kind==='crypto'?'本币触发熔断暂停':'本股触发熔断暂停';$('circuit-message').textContent=a.name+'：'+(a.pauseReason||'价格异常波动')+'。暂停期间不成交任何订单，全部未成交委托已撤回，已成交部分保留。预计北京时间 '+D.time(a.pausedUntil,true)+' 恢复交易，届时需重新下单。';if(!dialog.open)dialog.showModal();
@@ -107,6 +107,8 @@ function render(){if(!s||!online)return;const a=asset(),base=a.history.findLast(
  $('insurance-status').textContent=`模拟保险金 ${fmt(s.insurance.balance)} · 已承担缺口 ${fmt(s.insurance.paid)} · 未覆盖缺口 ${fmt(s.insurance.uncovered)} · 手续费入池 ${fmt(s.insurance.feeIncome||0)}${s.insurance.uncovered>0?' · 已暂停合约新开仓':''}`;const positions=[...Object.values(s.spotPositions),...Object.values(s.positions)];$('positions').innerHTML=positions.length?positions.map(p=>{const spot=p.product==='spot';return `<article class="position-card"><div class="row-line"><b>${s.assets.find(a=>a.id===p.asset).name} <span class="${spot||p.sign===1?'up':'down'}">${spot?'普通持仓':(p.sign===1?'多':'空')+' '+p.leverage+'×合约'}</span></b><button class="cancel" data-close="${p.asset}" data-closeproduct="${spot?'spot':'contract'}">${spot?'卖出':'平仓'}</button></div><div class="position-meta"><span>${spot?'全额资金':E.isCross(p)?'全仓':'逐仓'}</span><span>数量 ${quantityText(p.qty)}</span>${spot?'':`<span>保证金 ${fmt(p.margin)}</span>`}</div><div class="position-numbers">${metric('成本 / 份',fmt(p.entry))}${metric(spot?'最新价':'标记价',fmt(s.assets.find(a=>a.id===p.asset)[spot?'price':'mark']))}${metric('持仓盈亏',fmt(positionPnl(p)),cls(positionPnl(p)))}</div>${spot?'':positionRisk(p)}</article>`;}).join(''):'<div class="empty">暂无持仓<br>普通交易与杠杆合约分别记仓</div>';
  $('fills').innerHTML=s.fills.length?s.fills.slice(0,20).map(f=>`<div class="order-row"><div class="row-line"><b>${s.assets.find(a=>a.id===f.asset).name} · ${label(f)}</b><span>${fmt(f.price)} × ${quantityText(f.qty)}</span></div><small>${f.time?D.time(f.time,true):'旧版成交'} · ${f.product==='spot'?'普通交易':'合约'} · 手续费 ${fmt(f.fee)}</small></div>`).join(''):'<div class="empty">暂无个人成交</div>';
  $('market-fills').innerHTML=(s.marketTrades||[]).filter(f=>f.asset===selected).slice(0,8).map(f=>`<div class="tape-row"><span>${f.time?D.time(f.time,true):'旧版成交'}</span><span class="${f.sign===1?'up':'down'}">${fmt(f.price)}</span><span>${quantityText(f.qty)}</span><span>${f.source==='system'?'系统交易':'玩家成交'}</span></div>`).join('')||'<div class="empty">等待市场成交</div>';renderNews();window.ExchangeTools.render(s);
+ renderActivity();
+ renderBulletin();
 }
 function synchronize(notify=false){if(!online||!s)return;pauseStatus();if(view==='ranking'&&Date.now()-lastRankingPoll>60000)refreshRanking();if(notify||Date.now()-lastRemotePoll>10000)refreshRemote(notify).catch(reportError);const seconds=Math.ceil((60000-(Date.now()+serverOffset)%60000)/1000);$('clock').textContent=seconds===60?'01:00':'00:'+String(seconds).padStart(2,'0');}
 document.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.homeKind){homeKind=b.dataset.homeKind;renderOverviewMap();return;}if(!online||!s)return;
@@ -140,5 +142,149 @@ $('site-login').onclick=()=>{if(Auth.isLoggedIn())Auth.logout();else{wantsMarket
 window.ExchangeTools.init({state:()=>s,mutate:remoteMutation,error:reportError,toast,selected:()=>selected,select:select,setPeriod:value=>{period=value;document.querySelectorAll('[data-period]').forEach(b=>b.classList.toggle('active',Number(b.dataset.period)===value));if(['market','conditions'].includes(view))renderChart();}});
 Auth.onAuth(user=>{$('guest-upgrade').hidden=!user?.is_guest;const token=Auth.token();$('site-login').textContent=user?user.username+(user.is_guest?' · 切换账户':' · 退出'):'网站账户登录';if(!token){sessionToken='';ExchangeNetwork.clearPending();showGate('登录网站账户，进入幻想乡市场。');openHome();return;}if(!wantsMarket){openHome();return;}if((online&&sessionToken===token)||joinToken===token)return;enterOnline().catch(reportError);});
 refreshOverview();setInterval(()=>synchronize(),1000);setInterval(refreshOverview,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){synchronize();if(homeVisible)refreshOverview();}});window.addEventListener('resize',()=>{overviewChart?.resize();if(s&&['market','conditions'].includes(view)&&!homeVisible){chart?.resize();renderChart();}});
-})();
 
+function phaseLabel(p){return ({p1:'第一阶段 · 雾之湖调查',vote1:'投票 · 护盘目标',p2:'第二阶段 · 护盘战',vote2:'投票 · 决战增益',p3a:'决战 · 破盾',p3c:'决战 · 逼多',resolved:'已结束'})[p]||p;}
+function incNumber(n){return Number(n||0).toLocaleString('zh-CN');}
+function incBar(v,m){const p=Math.max(0,Math.min(100,m>0?v/m*100:0));return '<div class="inc-bar"><i style="width:'+p+'%"></i></div>';}
+function incLeft(deadline){if(!deadline)return '';const ms=deadline-Date.now();if(ms<=0)return '已到时限';const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000);return h>0?h+' 小时 '+m+' 分':m+' 分';}
+var activityTab='overview',activityVote='';
+function phaseStory(inc){if(inc.phase==='resolved')return inc.won?(RS.end&&RS.end.win):(RS.end&&RS.end.fail);const r=RS[inc.phase];if(r&&r.hero)return r.hero;return inc.won===true?'红雾散去，异变被退治。':inc.won===false?'红雾暂时退去，异变没有被彻底解决。':'';}
+function incidentNotice(inc){try{const promo=$('event-promo');if(promo&&promo.open)return;const key='mms-incident-notice-'+inc.phase;if(localStorage.getItem(key))return;let dlg=$('incident-notice');if(dlg&&dlg.open)return;if(!dlg){dlg=document.createElement('dialog');dlg.id='incident-notice';document.body.appendChild(dlg);}dlg.innerHTML='<h2>'+phaseLabel(inc.phase)+'</h2><p>'+phaseStory(inc)+'</p><button id="incident-notice-close" class="submit-order">知道了</button>';const btn=$('incident-notice-close');if(btn)btn.onclick=()=>{localStorage.setItem(key,'1');dlg.close();};if(typeof dlg.showModal==='function')dlg.showModal();}catch(e){}}
+function phaseTitle(ph){
+ return ({p1:'P1 · 调查准备',vote1:'V1 · 战略投票',p2:'P2 · 雾之湖调查',vote2:'V2 · 决战投票',p3a:'P3 · 红魔馆决战',p3c:'P3 · 绯红轧空战',resolved:'事件结束'})[ph]||ph;
+}
+function phaseOrder(ph){return ({p1:0,vote1:1,p2:2,vote2:3,p3a:4,p3c:4,resolved:5})[ph]??-1;}
+function rm(n){return Number(n||0).toLocaleString('zh-CN');}
+function rmPct(v,m){return Math.max(0,Math.min(100,m>0?v/m*100:0));}
+function rmBar(v,m,green){return '<div class="rm-track"><div class="rm-fill'+(green?' green':'')+'" style="width:'+rmPct(v,m)+'%"></div></div>';}
+function rmLeft(deadline){if(!deadline)return '—';const ms=deadline-Date.now();if(ms<=0)return '已到时限';const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000);return (h>0?h+' 时 ':'')+m+' 分';}
+function rmMission(o){
+ return '<article class="rm-card"><div class="rm-card-head"><div class="rm-card-title"><span class="rm-icon">'+o.icon+'</span>'+o.title+'</div><span class="rm-pill">'+(o.state||'进行中')+'</span></div><p>'+o.detail+'</p><div class="rm-progress"><span>'+o.label+'</span><b>'+o.valueText+'</b></div>'+rmBar(o.value,o.goal)+'<div class="rm-card-foot"><span class="rm-hint">全服共同推进</span><button class="rm-btn" data-tab="actions">'+o.action+' →</button></div></article>';
+}
+function rmBulletin(inc){
+ const title={p1:'红雾蔓延，神社宣布紧急募资',vote1:'全服战略会议召开',p2:'雾之湖调查深入，新的做空潮正在形成',vote2:'决战前夜，最后的选择',p3a:'红魔馆主人亲自下场，红魔商事出现异常行情',p3c:'交易所最高级别警报：绯红轧空战',resolved:'红雾异变，正式结束'}[inc.phase]||'战役简报';
+ const r=RS[inc.phase];const body=r&&r.report?r.report.map(function(p){return '<p>'+p+'</p>';}).join(''):'<p>'+phaseStory(inc)+'</p>';return '<article class="rm-bulletin"><span class="rm-date">号外 · 世界事件第 001 号</span><h3>'+title+'</h3>'+body+'<div class="rm-source">射命丸文 · 文文。财经资讯</div></article>';
+}
+function rmOverview(inc){
+ const ph=inc.phase;let missions='';
+ if(ph==='p1'){
+  missions=rmMission({icon:'¥',title:'博丽神社紧急募资',detail:(RS.p1&&RS.p1.missions&&RS.p1.missions.fund)||'全服集资，为灵梦与魔理沙提供调查经费。',label:'募资进度',valueText:rm(inc.raised)+' / '+rm(inc.donateGoal),value:inc.raised,goal:inc.donateGoal,action:'参与募资'})+
+   rmMission({icon:'↗',title:'冰湖冷链保卫战',detail:((RS.p1&&RS.p1.missions&&RS.p1.missions.protect)||'')+' 守住 '+inc.defend.floor+' 的地板，累计 '+inc.defend.required+' 分钟，至少 '+inc.defend.defendersRequired+' 个账户净买入。',label:'已守住分钟',valueText:inc.defend.minutes+' / '+inc.defend.required,value:inc.defend.minutes,goal:inc.defend.required,action:'参与护盘'});
+ }else if(ph==='vote1'||ph==='vote2'){
+  const b=Object.keys(inc.vote.ballots||{}).length;
+  missions=rmMission({icon:'◉',title:ph==='vote1'?'选定重点护盘产业':'决定最终支援战略',detail:ph==='vote1'?'每位合格玩家一票，结果决定 P2 的护盘标的。':'每位合格玩家一票，资金多少不影响票权。',label:'已参与投票',valueText:rm(b)+' / '+rm(Math.max(1,inc.participants)),value:b,goal:Math.max(1,inc.participants),action:'前往投票'});
+ }else if(ph==='p2'){
+  const d=inc.defend;
+  missions=rmMission({icon:'↗',title:'重点产业护盘',detail:((RS.p2&&RS.p2.missions&&RS.p2.missions.protect)||'')+' 累计守住 '+d.required+' 分钟并保证足够账户参与。',label:'已守住分钟',valueText:d.minutes+' / '+d.required,value:d.minutes,goal:d.required,action:'查看护盘'})+
+   rmMission({icon:'⌖',title:'红雾联合巡逻',detail:((RS.p2&&RS.p2.missions&&RS.p2.missions.patrol)||'')+' 每日最多 8 次，全服累计 1,000 次有效巡逻可削弱最终敌人。',label:'全服有效巡逻',valueText:rm(inc.patrols)+' / 1,000',value:inc.patrols,goal:1000,action:'参与巡逻'});
+ }else if(ph==='p3a'){
+  missions=rmMission({icon:'✦',title:'Boss 第一战 · 红雾之主',detail:(RS.p3a&&RS.p3a.goal)||'通过捐款与巡逻削减蕾米莉亚的生命值。',label:'已造成伤害',valueText:rm(inc.hpMax-inc.hp)+' / '+rm(inc.hpMax),value:inc.hpMax-inc.hp,goal:inc.hpMax,action:'查看决战'});
+ }else if(ph==='p3c'){
+  missions=rmMission({icon:'↗',title:'Boss 第二战 · 绯红轧空战',detail:(RS.p3c&&RS.p3c.goal)||'蕾米莉亚的巨额空头压在红魔商事上。全服合力买入，把价格推过目标价，逼她回补。',label:'Boss 空头',valueText:rm(inc.boss.qty)+' / '+rm(inc.boss.total),value:inc.boss.qty,goal:inc.boss.total,action:'查看决战'});
+ }
+ const pct=ph==='p3c'?('目标价 ≥ '+inc.p3Target+' · 现价 '+(inc.scarletPrice||'—')):'';
+ return '<div class="rm-metrics"><div class="rm-metric"><label>全服参与人数</label><strong>'+rm(inc.participants)+'</strong><small>人</small></div><div class="rm-metric"><label>个人活动贡献</label><strong>'+rm(inc.myPoints)+'</strong><small>分</small></div><div class="rm-metric"><label>本阶段剩余</label><strong>'+rmLeft(inc.deadline)+'</strong></div></div>'+
+  '<div class="rm-h2">当前战略命令<small>'+(missions? '':'事件已结束')+'</small></div><div class="rm-grid">'+missions+'</div>'+
+  (pct?'<div class="rm-target">'+pct+'</div>':'')+
+  '<div class="rm-h2">文文。财经战报<small>EVENT BULLETIN</small></div>'+rmBulletin(inc);
+}
+function rmActions(inc){
+ const ph=inc.phase;
+ if(ph==='p1'){
+  const d=inc.defend,s=inc.short;
+  return '<div class="rm-action"><h3>01 / 博丽神社紧急募资</h3><p>捐款支持神社的调查经费。单笔至少 1,000，捐后余额至少保留 10 万。</p><div class="rm-amounts"><button data-amount="1000">1,000</button><button data-amount="10000">10,000</button><button data-amount="50000">50,000</button><button data-amount="100000">100,000</button></div><input id="rm-amount" class="rm-input" type="number" min="1000" step="1000" placeholder="输入金额（单人上限 '+Math.round(inc.donateCap/10000)+' 万）"><button class="rm-btn primary full" data-act="donate">捐款</button><div class="rm-note">捐款 70% 销毁、30% 进保险池，不给现金奖励。</div></div>'+
+   '<div class="rm-action"><h3>02 / 冰湖冷链保卫战</h3><p>守住 '+d.floor+' 的地板，累计 '+d.required+' 分钟；至少 '+d.defendersRequired+' 个账户净买入。异变空头已卖出 '+rm(s.qty)+' / '+rm(s.total)+' 份。</p><div class="rm-progress"><span>已守住</span><b>'+d.minutes+' / '+d.required+' 分钟</b></div>'+rmBar(d.minutes,d.required)+'<div class="rm-note">净买入账户：'+d.defenders+' / '+d.defendersRequired+'。单账户不会无限计入护盘进度。</div><button class="rm-btn primary full" data-act="goto" data-asset="mistlake">查看冰湖冷链行情</button></div>';
+ }
+ if(ph==='p3a'){
+  return '<div class="rm-action"><h3>01 / 决战支援</h3><p>捐款直接削减 Boss 生命值，并计入个人贡献。单笔至少 1,000，捐后余额至少保留 10 万。</p><div class="rm-amounts"><button data-amount="1000">1,000</button><button data-amount="10000">10,000</button><button data-amount="50000">50,000</button><button data-amount="100000">100,000</button></div><input id="rm-amount" class="rm-input" type="number" min="1000" step="1000" placeholder="输入金额（单人上限 '+Math.round(inc.donateCap/10000)+' 万）"><button class="rm-btn primary full" data-act="donate">捐款</button><div class="rm-note">捐款 70% 销毁、30% 进保险池，不给现金奖励。</div></div>'+
+   '<div class="rm-action"><h3>02 / 巡逻与调查</h3><p>巡逻每次 +1,000 伤害并增加全服巡逻计数；调查只在 P1 开放。冷却 10 分钟，每天 8 次巡逻 / 5 次调查。</p><div class="rm-row"><button class="rm-btn" data-act="patrol">执行巡逻</button>'+(ph==='p1'?'<button class="rm-btn" data-act="investigate">执行调查</button>':'')+'</div></div>';
+ }
+ if(ph==='p2'){
+  const d=inc.defend;
+  return '<div class="rm-action"><h3>01 / 重点产业护盘</h3><p>守住 '+d.floor+' 的地板，累计 '+d.required+' 分钟；至少 '+d.defendersRequired+' 个账户净买入。异变空头已卖出 '+rm(inc.short.qty)+' / '+rm(inc.short.total)+' 份。</p><div class="rm-progress"><span>已守住</span><b>'+d.minutes+' / '+d.required+' 分钟</b></div>'+rmBar(d.minutes,d.required)+'<div class="rm-note">净买入账户：'+d.defenders+' / '+d.defendersRequired+'。单账户的买入不会无限计入护盘进度。</div></div>'+
+   '<div class="rm-action"><h3>02 / 联合巡逻</h3><p>每日最多 8 次，全服累计 1,000 次有效巡逻可削弱最终敌人。</p><div class="rm-counter">'+rm(inc.patrols)+' / 1,000</div>'+rmBar(inc.patrols,1000)+'<button class="rm-btn primary full" data-act="patrol">执行一次巡逻</button></div>';
+ }
+ if(ph==='p3c'){
+  const b=inc.boss;
+  return '<div class="rm-boss"><div class="rm-eyebrow">FINAL BATTLE / PHASE 02</div><div class="rm-boss-name">蕾米莉亚 · 斯卡蕾特</div><div class="rm-progress"><span>Boss 空头</span><b>'+rm(b.qty)+' / '+rm(b.total)+' 份</b></div>'+rmBar(b.qty,b.total)+'<p class="rm-boss-rule">目标：把红魔商事价格推过 <b>'+inc.p3Target+'</b>，迫使蕾米莉亚回补空头。空头仓位在独立战斗账本中，不会向公共订单簿无保护砸单。</p><div class="rm-note">当前红魔商事：'+(inc.scarletPrice||'—')+'</div></div>';
+ }
+ return '<div class="rm-empty">当前阶段没有可执行的行动。</div>';
+}
+function rmVote(inc){
+ const ph=inc.phase;if(ph!=='vote1'&&ph!=='vote2')return '';
+ const names=(RS[ph]&&RS[ph].options)||{hakugyokurou:['白玉楼文旅','维护冥界相关产业的正常运转。'],myouren:['命莲物流','保障救助与物资运输相关产业。'],kazami:['花田农业','守护花卉产业。'],limit:['放宽投资限制','只调整活动专用参与额度。'],difficulty:['降低决战难度','降低 Boss 血量或削弱特殊能力。']};
+ const pool=inc.vote.candidates||[];
+ return '<div class="rm-action"><h3>'+(ph==='vote1'?'选择下一阶段需要优先支援的产业':'决战前夜 · 最终战略决策')+'</h3><p>'+(ph==='vote1'?'投票结果决定 P2 的重点护盘标的，每位合格玩家一票。':'两个选项都有明确取舍，资金多少不影响票权。')+'</p><div class="rm-options">'+pool.map(function(c){const n=names[c]||[c,''];return '<label class="rm-vote"><input type="radio" name="rm-vote" value="'+c+'"'+(activityVote===c?' checked':'')+'><strong>'+n[0]+'</strong><small>'+n[1]+'</small></label>';}).join('')+'</div><button class="rm-btn primary full" data-act="vote">提交投票</button><div class="rm-note">本轮捐款满 1 万才有投票资格，一人一票。</div></div>';
+}
+function rmArchive(inc){
+ const log=(inc.log||[]).slice().reverse().map(function(l){return '<div class="rm-archive-item"><b>'+(l.phase?String(l.phase).toUpperCase()+' · ':'')+'战役记录</b><small>'+l.text+'</small></div>';}).join('');
+ const out=[];if(inc.p1Won===true)out.push.apply(out,RS.p1.win||[]);if(inc.p1Won===false)out.push.apply(out,RS.p1.fail||[]);if(inc.p2Won===true)out.push.apply(out,RS.p2.win||[]);if(inc.p2Won===false)out.push.apply(out,RS.p2.fail||[]);if(inc.won===true)out.push(RS.p3a.win,RS.p3c.win,RS.end.win,RS.end.notice);if(inc.won===false)out.push(RS.p3c.fail,RS.end.fail);const outcome=out.filter(Boolean).map(function(p){return '<div class="rm-archive-item"><b>战役结果</b><small>'+p+'</small></div>';}).join('');
+ const stages=[['P1','调查准备'],['V1','战略投票'],['P2','雾之湖调查'],['V2','决战投票'],['P3','红魔馆决战']];
+ const cur=phaseOrder(inc.phase);
+ return '<div class="rm-h2">异变档案<small>GENSOKYO CHRONICLE</small></div><div class="rm-archive"><div class="rm-archive-item"><b>EVENT 001 · 红雾异变</b><small>'+(inc.won===true?'已退治':inc.won===false?'已结束':'进行中')+' · 战役过程将在这里永久保存</small></div>'+log+outcome+'</div>'+
+  '<div class="rm-h2">战役时间线<small>REAL RECORD</small></div><div class="rm-timeline">'+stages.map(function(x,i){return '<div class="rm-timeline-item '+(i===Math.min(cur,4)?'on':i<cur?'done':'')+'"><b>'+x[0]+' · '+x[1]+'</b><small>'+(i===Math.min(cur,4)?'进行中':i<cur?'已完成':'未开始')+'</small></div>';}).join('')+'</div>';
+}
+function renderActivity(){
+ const box=$('activity-body');if(!box)return;const inc=s&&s.incident;
+ if(!inc){box.innerHTML='<div class="rm-empty">异变尚未开始。</div>';return;}
+ incidentNotice(inc);
+ const ae=document.activeElement;
+ if(ae&&ae.id==='rm-amount'&&ae.closest&&ae.closest('#activity-body'))return;
+ const prev=$('rm-amount')?$('rm-amount').value:'';
+ const ph=inc.phase;const stages=[['P1','准备'],['V1','投票'],['P2','调查'],['V2','投票'],['P3','决战']];
+ const order=phaseOrder(ph);
+ const tabs=[['overview','战役总览'],['actions','行动中心'],['archive','异变档案']];
+ const body=activityTab==='actions'?rmActions(inc)+rmVote(inc):activityTab==='archive'?rmArchive(inc):rmOverview(inc);
+ box.innerHTML='<div class="rm-wrap"><section class="rm-hero"><div class="rm-hero-top"><span class="rm-tag">WORLD EVENT 001</span><span class="rm-live"><i></i>全服事件进行中</span></div><h1>红雾异变</h1><p>'+phaseStory(inc)+'</p><div class="rm-hero-meta"><span>当前阶段 <b>'+phaseTitle(ph)+'</b></span><span>阶段剩余 <b>'+rmLeft(inc.deadline)+'</b></span></div></section>'+
+  '<nav class="rm-stages">'+stages.map(function(x,i){return '<div class="rm-stage '+(i===Math.min(order,4)?'on':i<order?'done':'')+'"><b>'+x[0]+'</b><span>'+x[1]+'</span></div>';}).join('')+'</nav>'+
+  '<div class="rm-tabs">'+tabs.map(function(t){return '<button class="rm-tab '+(activityTab===t[0]?'on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>';}).join('')+'</div>'+
+  '<div class="rm-tab-body">'+body+'</div></div>';if(prev){const el=$('rm-amount');if(el)el.value=prev;}
+}
+
+function renderBulletin(){
+ const box=$('bulletin-body');if(!box)return;
+ const inc=s&&s.incident;
+ const items=((s&&s.news)||[]).filter(function(n){return n.category==='异变通告'||String(n.id).indexOf('incident-')===0;});
+ let h='<div class="rm-wrap"><section class="rm-hero"><div class="rm-hero-top"><span class="rm-tag">EVENT 001</span><span class="rm-live"><i></i>异变通告</span></div><h1>红雾异变</h1><p>'+(inc?phaseStory(inc):'红雾异变的全部通告将在这里归档。')+'</p><div class="rm-hero-meta"><span>当前阶段 <b>'+(inc?phaseTitle(inc.phase):'—')+'</b></span><span>通告 <b>'+items.length+'</b> 条</span></div></section>';
+ h+='<div class="rm-tabs"><button class="rm-tab on">异变通告</button><button class="rm-tab" data-go="activity">前往活动 →</button></div>';
+ h+='<div class="bl-list">'+(items.length?items.map(function(n){return '<article class="rm-bulletin"><span class="rm-date">'+D.time(n.time||Date.now(),true)+' · 异变通告</span><h3>'+n.title+'</h3><p>'+n.body+'</p></article>';}).join(''):'<div class="rm-empty">还没有异变通告。</div>')+'</div>';
+ if(inc&&inc.log&&inc.log.length)h+='<div class="rm-h2">战役记录<small>ARCHIVE</small></div>'+inc.log.slice().reverse().map(function(l){return '<div class="rm-archive-item"><small>'+l.text+'</small></div>';}).join('');
+ h+='</div>';box.innerHTML=h;
+}
+let promoShown=false;
+function showEventPromo(){
+ if(promoShown)return;promoShown=true;
+ try{
+  if(!s||!s.incident||s.incident.phase==='resolved')return;
+  const day=new Date(Date.now()+8*3600000).toISOString().slice(0,10),key='mms-event-promo-'+day;
+  if(localStorage.getItem(key))return;
+  let dlg=$('event-promo');
+  if(!dlg){dlg=document.createElement('dialog');dlg.id='event-promo';document.body.appendChild(dlg);}
+  dlg.innerHTML='<div class="promo-tag">WORLD EVENT 001</div><h2>红雾异变</h2><p>诡异的红雾笼罩幻想乡。博丽神社发起联合支援行动，交易所启动全服战役：募资、护盘、巡逻、投票，以及最后的绯红轧空战。</p><p class="promo-sub">活动期间完成全服目标，可获得限定称号与异变积分。</p><div class="promo-actions"><button id="promo-go">前往活动</button><button id="promo-later">稍后再说</button></div>';
+  if(typeof dlg.showModal==='function')dlg.showModal();
+  $('promo-go').onclick=function(){localStorage.setItem(key,'1');dlg.close();navigate('activity');};
+  $('promo-later').onclick=function(){localStorage.setItem(key,'1');dlg.close();};
+ }catch(e){}
+}
+
+async function incidentAction(btn){
+ const act=btn.dataset.act;
+ try{
+  if(act==='donate'){const amount=Number($('rm-amount')&&$('rm-amount').value);if(!amount)return toast('请输入金额');await remoteMutation('support',{amount});toast('捐款成功');}
+  else if(act==='vote'){const opt=activityVote||(btn.dataset.option||'');if(!opt)return toast('请先选择一个选项');await remoteMutation('vote',{option:opt});toast('投票成功');}
+  else if(act==='patrol'){await remoteMutation('patrol',{});toast('巡逻完成');}
+  else if(act==='investigate'){await remoteMutation('investigate',{});toast('调查完成');}
+  else if(act==='goto'){await select(btn.dataset.asset);navigate('market');}
+ }catch(e){reportError(e);}
+}
+document.addEventListener('click',function(e){
+ const tab=e.target.closest('[data-tab]');
+ if(tab){activityTab=tab.dataset.tab;renderActivity();return;}
+ const amt=e.target.closest('[data-amount]');
+ if(amt){const el=$('rm-amount');if(el)el.value=amt.dataset.amount;return;}
+ const btn=e.target.closest('[data-act]');
+ if(btn)incidentAction(btn);
+});
+document.addEventListener('change',function(e){if(e.target.name==='rm-vote')activityVote=e.target.value;});
+
+})();

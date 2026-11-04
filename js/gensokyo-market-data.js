@@ -51,7 +51,7 @@ const CATEGORIES=Object.keys(TEMPLATES);
 function drawSigma(random){const r=random();return r<.70?.003:r<.95?.010:.020;}
 function strengthOf(sigma){return sigma>=.015?'较强':sigma>=.006?'中等':'较弱';}
 function pickAsset(s,random,lastByAsset,time){
- const pool=s.assets.filter(a=>a.kind!=='etf'&&!a.pausedUntil);
+ const pool=s.assets.filter(a=>a.kind!=='etf'&&!a.pausedUntil&&!a.suspended);
  if(!pool.length)return null;
  const fresh=pool.filter(a=>!lastByAsset[a.id]||time-lastByAsset[a.id]>=20*MINUTE);
  const list=fresh.length?fresh:pool;
