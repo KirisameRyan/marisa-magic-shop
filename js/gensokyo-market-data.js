@@ -33,7 +33,7 @@ function ensureAssets(s){for(const a of s.assets)ensureAsset(a);return s;}
 
 function inventory(s,a){return (s.system&&s.system.inventory&&s.system.inventory[a.id]||0)+(s.flow&&s.flow.inventory&&s.flow.inventory[a.id]||0);}
 /* P = A · exp(m + s − γI) */
-function reservePrice(s,a){const base=a.model.limit,raw=inventory(s,a),inv=Math.max(-base,Math.min(base,raw)),delta=a.model.kind==='crypto'?.08:.03;return a.fair*Math.exp((a.momentum||0)+(a.sentimentDev||0)-Math.log(1+delta)*inv/base);}
+function reservePrice(s,a){const base=a.model.limit,raw=(s.system&&s.system.inventory&&s.system.inventory[a.id])||0,inv=Math.max(-base,Math.min(base,raw)),delta=a.model.kind==='crypto'?.08:.03;return a.fair*Math.exp((a.momentum||0)+(a.sentimentDev||0)-Math.log(1+delta)*inv/base);}
 function pe(a){return Number.isFinite(a.eps)&&a.eps>0?a.price/a.eps:null;}
 
 /* ---------- 消息模板（盘中，泊松到达） ---------- */

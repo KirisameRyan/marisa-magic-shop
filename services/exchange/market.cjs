@@ -16,13 +16,13 @@ function order(s,user,body,now=Date.now()){if(!['spot','contract'].includes(body
   if(Math.abs(next)>cap)throw Object.assign(Error('该标的净持仓已达上限（'+cap+' 份），暂不接受同向开仓'),{status:409});
  }
  if(a&&['buy','long'].includes(body.intent)){const b=G.bands(a);if(Number(body.price)>b.upper+1e-8)throw Object.assign(Error('委托价格超出动态价格保护上界 '+b.upper.toFixed(1)),{status:400});}if(a&&['sell','short'].includes(body.intent)&&Number(body.price)<G.bands(a).lower-1e-8)throw Object.assign(Error('委托价格超出动态价格保护下界'),{status:400});const o=E.submit(c,body.asset,body.intent,body.price,body.qty,body.leverage,body.product,now,body.marginMode||'isolated');o.userId=user.id;o.resting=false;o.lotSize=100;o.legacyExit=!!legacyExit;return o;}
-function makerLimit(s,id){const a=s.assets.find(a=>a.id===id);D.ensureAsset(a);const inv=Math.abs(D.inventory(s,a));return inv>a.model.limit?Math.max(a.model.limit,Math.ceil(inv*1.15/100)*100):a.model.limit;}
+function makerLimit(s,id){const a=s.assets.find(a=>a.id===id);D.ensureAsset(a);const inv=Math.abs((s.system.inventory&&s.system.inventory[a.id])||0);return inv>a.model.limit?Math.max(a.model.limit,Math.ceil(inv*1.15/100)*100):a.model.limit;}
 // Quotes are deterministic within a minute: polling cannot reroll liquidity.
 function quoteNoise(s,id,salt){let h=2166136261;for(const c of id+':'+s.lastTick+':'+salt)h=Math.imul(h^c.charCodeAt(0),16777619);h=Math.imul(h^(h>>>16),2246822507);h=Math.imul(h^(h>>>13),3266489909);return ((h^(h>>>16))>>>0)/4294967296;}
 function clamp(v,lo,hi){return Math.min(hi,Math.max(lo,v));}
 function makerBook(s,id){
  const a=s.assets.find(a=>a.id===id);D.ensureAsset(a);
- const band=G.bands(a),inv=D.inventory(s,a),limit=makerLimit(s,id),P=clamp(D.reservePrice(s,a),band.lower,band.upper);
+ const band=G.bands(a),inv=(s.system.inventory&&s.system.inventory[a.id])||0,limit=makerLimit(s,id),P=clamp(D.reservePrice(s,a),band.lower,band.upper);
  const half=a.model.spread/2*(1+2*(a.newsShock||0));
  const bestBid=Math.max(.1,Math.floor(P*(1-half)*10)/10);
  const bestAsk=Math.max(bestBid+.1,Math.ceil(P*(1+half)*10)/10);
@@ -69,7 +69,7 @@ function tick(s,{time,random=Math.random}){
  }
  function userFill(o,other,price,q,tradeId){const c=context(s,o.userId),before=c.cash,marginBefore=E.margin(c),insuranceBefore=(s.insurance?.paid||0)+(s.insurance?.uncovered||0),position=c.positions[o.asset],direction=position?.sign===1?'long':'short',leverage=position?.leverage||o.leverage,liquidationEventId=position?.liquidationEventId||o.id;E.applyFill(c,o,price,q,other.userId?s.system:s[other.actor]);const f=c.fills[0];s.accounts[o.userId].hasTraded=true;f.marketTradeId=tradeId;if(o.conditionId){const condition=s.accounts[o.userId].conditions?.find(c=>c.id===o.conditionId);if(condition)condition.filledQty=(condition.filledQty||0)+q;}s._journal.push({event:'fill-'+f.id,userId:o.userId,time,kind:o.liquidation?'liquidation':'trade',cashDelta:E.round(c.cash-before),cashAfter:c.cash,fillId:f.id,marketTradeId:tradeId,orderId:o.id,intent:o.intent,product:o.product,leverage:o.leverage,marginDelta:E.round(E.margin(c)-marginBefore),asset:o.asset,qty:q,price,insuranceFee:f.insuranceFee||0,...(o.liquidation||((s.insurance?.paid||0)+(s.insurance?.uncovered||0)>insuranceBefore)?{liquidation:{orderId:liquidationEventId,direction,leverage,extraLoss:E.round((s.insurance?.paid||0)+(s.insurance?.uncovered||0)-insuranceBefore),complete:o.remaining===0}}:{})});}
  for(const a of s.assets){if(a.kind==='etf')E.refreshEtf(s);if(a.pausedUntil>time){cancelPausedOrders(s,a.id,time);a.history.push({t:time,o:a.price,h:a.price,l:a.price,c:a.price,v:0,resolution:60000,...(a.kind==='etf'?{iopv:a.iopv}:{})});continue;}if(a.pausedUntil){report(s,a,time,a.name+'恢复交易','熔断暂停结束，本分钟恢复撮合。原未成交委托已撤回，需要重新下单。');G.resume(a,time);a.volatilityAnchor={time,price:a.mark};delete a.pausedUntil;delete a.pauseReason;}const reference=G.baseline(a,time);const bids=[],asks=[],trades=[];const sort=side=>side.sort((x,y)=>(side===bids?y.price-x.price:x.price-y.price)||x.id-y.id);
-  const invBefore=D.inventory(s,a);
+  const invBefore=(s.system.inventory&&s.system.inventory[a.id])||0;
   let sweeping=false;
   function urgent(){if(sweeping||a.pausedUntil>time)return;sweeping=true;try{checkAllRisk();for(const account of Object.values(s.accounts))for(const o of [...account.orders])if(o.asset===a.id&&o.liquidation&&o.remaining>0)process(o);}finally{sweeping=false;}}
   let bookedQty=0;
@@ -117,7 +117,7 @@ function tick(s,{time,random=Math.random}){
    if(qty>=100)process({id:s.seq++,actor:'flow',asset:a.id,sign:direction,price:level.price,remaining:qty});
   }
   urgent();
-  const invAfter=D.inventory(s,a),netFlow=-(invAfter-invBefore);
+  const invAfter=(s.system.inventory&&s.system.inventory[a.id])||0,netFlow=-(invAfter-invBefore);
   a.momentum=E.round((a.model.rho*(a.momentum||0)+a.model.lambda*(netFlow/a.model.depth))*1e6)/1e6;
   if(trades.length){a.price=trades.at(-1).price;const v=trades.reduce((n,t)=>n+t.qty,0);a.volume+=v;a.history.push({t:time,o:trades[0].price,h:Math.max(...trades.map(t=>t.price)),l:Math.min(...trades.map(t=>t.price)),c:a.price,v,resolution:60000,...(a.kind==='etf'?{iopv:a.iopv}:{})});}else a.history.push({t:time,o:a.price,h:a.price,l:a.price,c:a.price,v:0,resolution:60000,...(a.kind==='etf'?{iopv:a.iopv}:{})});a.lastReturn=a.price/priorPrice-1;
   const playerTrades=trades.filter(t=>t.source==='player'),playerQty=playerTrades.reduce((n,t)=>n+t.qty,0),changePct=(a.price/priorPrice-1)*100,windowChangePct=(a.price/reference-1)*100;
