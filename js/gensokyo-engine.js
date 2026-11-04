@@ -9,7 +9,7 @@
  function expandMarket(s){
   for(const [id,name,code,price] of COINS)if(!s.assets.some(a=>a.id===id))s.assets.push({id,name,code,kind:'crypto',price,prev:price,fair:price,mark:price,history:[],volume:0});
   for(const [id,name,code,price] of specs)if(!s.assets.some(a=>a.id===id))s.assets.push({id,name,code,price,prev:price,fair:price,mark:price,history:[],volume:0});
-  if(!s.assets.some(a=>a.id==='gensokyo-etf'))s.assets.push({id:'gensokyo-etf',name:'幻想乡产业ETF',code:'GSKY · ETF009',kind:'etf',price:100,prev:100,fair:100,mark:100,history:[],volume:0,basket:specs.slice(0,8).map(([id,,,base])=>({asset:id,quantity:100/8/base,initialWeight:1/8}))});
+  if(!s.assets.some(a=>a.id==='gensokyo-etf'))s.assets.push({id:'gensokyo-etf',name:'幻想乡产业ETF',code:'GSKY · ETF009',kind:'etf',price:100,prev:100,fair:100,mark:100,history:[],volume:0,basket:specs.slice(0,12).map(([id,,,base])=>({asset:id,quantity:100/12/base,initialWeight:1/12}))});
   s.insurance ||= {balance:10000000,paid:0,uncovered:0,initialCapital:10000000};refreshEtf(s);for(const a of s.assets)a.referenceFloat ||= a.kind==='etf'||a.kind==='crypto'?10000000:5000000;s.assets.sort((a,b)=>(a.kind==='crypto')-(b.kind==='crypto'));return s;
  }
  function iopv(s,etf){return etf.basket.reduce((v,b)=>v+b.quantity*s.assets.find(a=>a.id===b.asset).price,0);}
@@ -147,11 +147,12 @@
   if(Object.values(s.positions).some(p=>risk(s,p).riskRate>=1||p.liquidating))s.orders=s.orders.filter(o=>o.intent==='close'||o.intent==='sell');
   for(const p of Object.values(s.positions)){
    const a=s.assets.find(x=>x.id===p.asset);
-   if(a.pausedUntil>(s.executionTime||0)){s.orders=s.orders.filter(o=>o.asset!==p.asset||!o.liquidation);continue;}
-   if(risk(s,p).riskRate>=1){p.liquidating=true;const existing=s.orders.find(o=>o.asset===p.asset&&o.liquidation&&o.remaining>0);if(existing){existing.price=p.sign===1?.1:1000000000;existing.submittedAt=s.executionTime;continue;}s.orders=s.orders.filter(o=>o.asset!==p.asset||o.product==='spot');s.orders.push({id:s.seq++,asset:p.asset,intent:'close',sign:-p.sign,price:p.sign===1?.1:1000000000,qty:p.qty,remaining:p.qty,leverage:p.leverage,product:'contract',submittedAt:s.executionTime,liquidation:true});p.liquidationEventId ||= s.orders.at(-1).id;results.push(a.name+'风险率达到100%，已排入强平委托');}
+   const rr=risk(s,p).riskRate;if(rr>=1){p.liquidating=true;const px=p.sign===1?Math.max(.1,round(a.mark*(1-.05))):round(a.mark*(1+.05));const qty=rr>=1.2?p.qty:Math.max(100,Math.min(p.qty,Math.floor(p.qty/2/100)*100));const existing=s.orders.find(o=>o.asset===p.asset&&o.liquidation&&o.remaining>0);if(existing){existing.price=px;existing.submittedAt=s.executionTime;existing.qty=Math.min(existing.remaining,qty);continue;}s.orders=s.orders.filter(o=>o.asset!==p.asset||o.product==='spot');s.orders.push({id:s.seq++,asset:p.asset,intent:'close',sign:-p.sign,price:px,qty,remaining:qty,leverage:p.leverage,product:'contract',submittedAt:s.executionTime,liquidation:true});p.liquidationEventId ||= s.orders.at(-1).id;results.push(a.name+'风险率达到100%，已排入强平委托');}
    else if(p.liquidating){p.liquidating=false;delete p.liquidationEventId;s.orders=s.orders.filter(o=>!(o.asset===p.asset&&o.liquidation));}
   }
   return results;
  }
  const api={create,submit,cancel,settle,book,equity,margin,frozen,available,round,expandMarket,refreshEtf,iopv,risk,addMargin,setMarginMode,isCross,crossFunds,otherCrossPnl,leverages,maintenanceRate,contributeInsurance,CRYPTO_LEVERAGES,LEVERAGES,MMR,applyFill,checkRisk};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.GensokyoEngine=api;
 })(typeof window!=='undefined'?window:globalThis);
+
+
