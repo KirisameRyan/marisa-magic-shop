@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 const E=require('../../js/gensokyo-engine.js'),D=require('../../js/gensokyo-market-data.js'),C=require('./conditions.cjs'),G=require('./price-guard.cjs'),T=require('./treasury.cjs');
 function create(now=Date.now()){const s=D.prepare(E.create(),now);require('./seed.cjs').applySeed(s,now);E.refreshEtf(s);D.ensureAssets(s);s.randomSeed=require('node:crypto').randomBytes(4).readUInt32LE();s.accounts={};s.businessDay=day(now);s.revision=0;s.serverVersion=3;return s;}
 function day(t){return new Date(t+4*3600000).toISOString().slice(0,10);}
@@ -16,13 +16,13 @@ function order(s,user,body,now=Date.now()){if(!['spot','contract'].includes(body
   if(Math.abs(next)>cap)throw Object.assign(Error('该标的净持仓已达上限（'+cap+' 份），暂不接受同向开仓'),{status:409});
  }
  if(a&&['buy','long'].includes(body.intent)){const b=G.bands(a);if(Number(body.price)>b.upper+1e-8)throw Object.assign(Error('委托价格超出动态价格保护上界 '+b.upper.toFixed(1)),{status:400});}if(a&&['sell','short'].includes(body.intent)&&Number(body.price)<G.bands(a).lower-1e-8)throw Object.assign(Error('委托价格超出动态价格保护下界'),{status:400});const o=E.submit(c,body.asset,body.intent,body.price,body.qty,body.leverage,body.product,now,body.marginMode||'isolated');o.userId=user.id;o.resting=false;o.lotSize=100;o.legacyExit=!!legacyExit;return o;}
-function makerLimit(s,id){const a=s.assets.find(a=>a.id===id);D.ensureAsset(a);return a.model.limit;}
+function makerLimit(s,id){const a=s.assets.find(a=>a.id===id);D.ensureAsset(a);const inv=Math.abs(D.inventory(s,a));return inv>a.model.limit?Math.max(a.model.limit,Math.ceil(inv*1.15/100)*100):a.model.limit;}
 // Quotes are deterministic within a minute: polling cannot reroll liquidity.
 function quoteNoise(s,id,salt){let h=2166136261;for(const c of id+':'+s.lastTick+':'+salt)h=Math.imul(h^c.charCodeAt(0),16777619);h=Math.imul(h^(h>>>16),2246822507);h=Math.imul(h^(h>>>13),3266489909);return ((h^(h>>>16))>>>0)/4294967296;}
 function clamp(v,lo,hi){return Math.min(hi,Math.max(lo,v));}
 function makerBook(s,id){
  const a=s.assets.find(a=>a.id===id);D.ensureAsset(a);
- const P=D.reservePrice(s,a),band=G.bands(a),inv=D.inventory(s,a),limit=a.model.limit;
+ const band=G.bands(a),inv=D.inventory(s,a),limit=makerLimit(s,id),P=clamp(D.reservePrice(s,a),band.lower,band.upper);
  const half=a.model.spread/2*(1+2*(a.newsShock||0));
  const bestBid=Math.max(.1,Math.floor(P*(1-half)*10)/10);
  const bestAsk=Math.max(bestBid+.1,Math.ceil(P*(1+half)*10)/10);
@@ -140,6 +140,7 @@ function liquidityDiagnostics(s){return {makerCash:s.system.cash,flowCash:s.flow
 function quoteStats(s,a){const since=a.tradeStatsSince??s.lastTick,cutoff=s.lastTick-86400000,bars=a.history.filter(b=>b.t>cutoff&&b.t>since&&b.t<=s.lastTick&&Number.isFinite(b.amount)),volume=bars.reduce((n,b)=>n+b.v,0),spotVolume=bars.reduce((n,b)=>n+(b.spotV||0),0),amount=E.round(bars.reduce((n,b)=>n+b.amount,0)),referenceFloat=a.referenceFloat||(a.kind==='etf'||a.kind==='crypto'?10000000:5000000);return {volume,spotVolume,amount,referenceFloat,turnover:spotVolume/referenceFloat*100,since,partial:s.lastTick-since<86400000};}
 function snapshot(s,assetId,user){const assets=s.assets.map(a=>({...a,priceProtection:undefined,priceBand:G.bands(a),quoteStats:a.id===assetId?quoteStats(s,a):undefined,history:a.id===assetId?a.history:[],pe:D.pe(a)}));const account=user&&s.accounts[String(user.id)];return {ok:true,mode:'online',serverTime:Date.now(),revision:s.revision,announcement:s.announcement||null,maintenance:s.maintenanceUntil?{until:s.maintenanceUntil}:null,market:{assets,news:s.news,round:s.round,lastTick:s.lastTick,books:Object.fromEntries(s.assets.map(a=>[a.id,book(s,a.id)])),marketTrades:(s.marketTrades||[]).map(({buyUserId,sellUserId,...t})=>t),insurance:{...s.insurance,target:insuranceTarget(s)},halted:s.halted||false},account:account?JSON.parse(JSON.stringify({...account,conditions:C.list(account)})):null,identity:user?{id:user.id,username:user.username}:null,rank:user?ranking(s).find(r=>r.userId===user.id)?.rank||null:null};}
 module.exports={liquidityDiagnostics,quoteStats,overview,create,context,join,order,tick,ranking,snapshot,day,netExposure};
+
 
 
 
