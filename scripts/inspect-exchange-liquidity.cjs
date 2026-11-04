@@ -1,0 +1,3 @@
+'use strict';
+const {DatabaseSync}=require('node:sqlite'),fs=require('node:fs'),path=require('node:path'),{privateDirectory}=require('./repair-exchange-liquidity.cjs'),M=require('../services/exchange/market.cjs');
+try{const file=path.join(privateDirectory(),'exchange.db');if(!fs.existsSync(file))throw Error('未找到市场数据库');const db=new DatabaseSync(file,{readOnly:true});try{const s=JSON.parse(db.prepare('SELECT json FROM state WHERE id=1').get().json);console.log(JSON.stringify({ok:true,lastTick:s.lastTick,...M.liquidityDiagnostics(s)},null,2));}finally{db.close();}}catch(e){console.error(e.message);process.exitCode=1;}
