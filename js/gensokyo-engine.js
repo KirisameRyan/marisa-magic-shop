@@ -147,6 +147,7 @@
   if(Object.values(s.positions).some(p=>risk(s,p).riskRate>=1||p.liquidating))s.orders=s.orders.filter(o=>o.intent==='close'||o.intent==='sell');
   for(const p of Object.values(s.positions)){
    const a=s.assets.find(x=>x.id===p.asset);
+   if(a.pausedUntil>(s.executionTime||0)){s.orders=s.orders.filter(o=>o.asset!==p.asset||!o.liquidation);continue;}
    if(risk(s,p).riskRate>=1){p.liquidating=true;const existing=s.orders.find(o=>o.asset===p.asset&&o.liquidation&&o.remaining>0);if(existing){existing.price=p.sign===1?.1:1000000000;existing.submittedAt=s.executionTime;continue;}s.orders=s.orders.filter(o=>o.asset!==p.asset||o.product==='spot');s.orders.push({id:s.seq++,asset:p.asset,intent:'close',sign:-p.sign,price:p.sign===1?.1:1000000000,qty:p.qty,remaining:p.qty,leverage:p.leverage,product:'contract',submittedAt:s.executionTime,liquidation:true});p.liquidationEventId ||= s.orders.at(-1).id;results.push(a.name+'风险率达到100%，已排入强平委托');}
    else if(p.liquidating){p.liquidating=false;delete p.liquidationEventId;s.orders=s.orders.filter(o=>!(o.asset===p.asset&&o.liquidation));}
   }

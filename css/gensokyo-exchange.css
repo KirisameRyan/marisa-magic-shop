@@ -45,3 +45,5 @@
 
 /* Rectangular market heatmap; the canvas owns tile sizing. */
 .sector-map{display:block;position:relative;height:430px;min-height:300px;padding:0;overflow:hidden;border-radius:4px;background:var(--panel)}.universe-tabs{display:flex;gap:8px;padding:12px 0;flex-wrap:wrap}.universe-tabs button{padding:8px 16px;border:1px solid var(--line);border-radius:4px;color:var(--muted)}.universe-tabs button.active{color:var(--text);border-color:var(--gold);background:var(--panel)}.market-kind-tabs{padding:8px 24px;border-bottom:1px solid var(--line)}@media(max-width:600px){.sector-map{height:400px}.market-kind-tabs{padding:8px 16px}}
+
+#circuit-dialog{width:min(480px,calc(100vw - 32px))}#circuit-dialog p{line-height:1.9;margin:16px 0}#circuit-dialog h2{color:var(--red)}
