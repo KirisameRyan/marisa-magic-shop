@@ -53,7 +53,7 @@ function signal(bars,c){const i=bars.length-1,b=bars[i];if(i<1||!b.ready)return 
  if(pivots.length<2||pivots.at(-1)!==i-2)return null;const k=pivots.at(-1),j=pivots.at(-2),a=bars[j],z=bars[k];if(k-j>60)return null;if(high?z.h>a.h&&z.dif<a.dif:z.l<a.l&&z.dif>a.dif)return a.t+':'+z.t;return null;
 }
 function evaluate(s,time,place,quotes){updateIndicators(s,time);const cache=new Map();for(const u of Object.values(s.accounts)){reconcile(u);for(const c of (u.conditions||[]).filter(active)){
- if(c.createdAt>=time)continue;const a=s.assets.find(a=>a.id===c.asset);if(a.pausedUntil>time)continue;let hit=false,reason='';
+ if(c.createdAt>=time)continue;const a=s.assets.find(a=>a.id===c.asset);if(a.pausedUntil>time||a.suspended)continue;let hit=false,reason='';
  if(c.type==='bracket'){const sign=c.positionSign;if(c.stopPrice&&(a.price-c.stopPrice)*sign<=0){hit=true;reason='止损触发';}else if(c.takePrice&&(a.price-c.takePrice)*sign>=0){hit=true;reason='止盈触发';}}
  else if(c.type==='macd'){const bars=s.indicators[c.asset][c.period].bars,b=bars.at(-1);if(!b||b.t+c.period<=c.createdAt||b.t<=c.lastBar)continue;c.lastBar=b.t;const key=[c.asset,c.period,c.signal,c.window,c.zero].join(':');if(!cache.has(key))cache.set(key,signal(bars,c));const id=cache.get(key);hit=!!id;reason='MACD形态触发';if(!b.ready)c.note='等待至少35根完整K线';else delete c.note;}
  else{const rebound=c.type==='rebound';if(!c.activated){if(rebound?a.price<=c.reference*(1-c.activationPct/100):a.price>=c.reference*(1+c.activationPct/100)){c.activated=true;c.extreme=a.price;}else continue;}

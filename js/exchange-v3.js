@@ -1,81 +1,13 @@
-/* Exchange extras: announcement button in the header + 04:00 settlement countdown. */
-(function () {
-  'use strict';
-  var API = 'api/exchange.php?route=overview';
-  var POLL = 10000;
-  var $ = function (sel) { return document.querySelector(sel); };
-  var current = null;
-
-  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-
-  function ensureButton() {
-    if ($('#v3-announce')) return;
-    var home = $('#home-open');
-    if (!home || !home.parentElement) return;
-    var b = document.createElement('button');
-    b.id = 'v3-announce';
-    b.className = 'theme-toggle';
-    b.textContent = '更新公告';
-    b.hidden = true;
-    b.style.cssText = 'border-color:#7a3b3b;color:#ffb4a8';
-    b.onclick = openDialog;
-    home.parentElement.insertBefore(b, home.nextSibling);
-  }
-
-  function openDialog() {
-    if (!current) return;
-    var dlg = $('#v3-announce-dialog');
-    if (!dlg) {
-      dlg = document.createElement('dialog');
-      dlg.id = 'v3-announce-dialog';
-      document.body.appendChild(dlg);
-    }
-    dlg.innerHTML = '<h2>' + esc(current.title) + '</h2><p>' + esc(current.body) + '</p>' +
-      '<button id="v3-announce-close" class="submit-order">知道了</button>';
-    var close = $('#v3-announce-close');
-    if (close) close.onclick = function () { dlg.close(); };
-    if (typeof dlg.showModal === 'function') dlg.showModal();
-  }
-
-  function render(d) {
-    ensureButton();
-    var btn = $('#v3-announce');
-    current = d.announcement || null;
-    if (btn) btn.hidden = !current;
-
-    var el = $('#v3-banner');
-    var now = Date.now();
-    var m = d.maintenance;
-    if (m && m.until > now) {
-      if (!el) {
-        el = document.createElement('div');
-        el.id = 'v3-banner';
-        el.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:9999;font:13px/1.5 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif';
-        document.body.appendChild(el);
-      }
-      var left = Math.max(0, Math.ceil((m.until - now) / 1000));
-      el.style.display = 'block';
-      el.innerHTML = '<div style="background:linear-gradient(90deg,#3a2d12,#6b5220);color:#ffe9b8;padding:10px 18px;text-align:center;' +
-        'border-bottom:1px solid #8a6b2a">日终结算中 · 交易所暂停撮合，约 <b>' + left + '</b> 秒后开盘</div>';
-      document.body.style.paddingTop = '42px';
-      return;
-    }
-    if (el) el.style.display = 'none';
-    document.body.style.paddingTop = '';
-  }
-
-  function tick() {
-    fetch(API, { cache: 'no-store', credentials: 'same-origin' })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) { if (d && d.ok) render(d); })
-      .catch(function () {});
-  }
-
-  function init() {
-    ensureButton();
-    tick();
-    setInterval(tick, POLL);
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
+/* Persistent release notice, server-clock activation and same backend in Toy. */
+(function(){'use strict';
+ var POLL=10000,$=function(s){return document.querySelector(s);},last=null,connected=false,offset=0,current=null,dialogKey='';
+ function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+ function ensureButton(){var home=$('#home-open'),b=$('#v3-announce');if(!b&&home&&home.parentElement){b=document.createElement('button');b.id='v3-announce';b.className='theme-toggle';home.parentElement.insertBefore(b,home.nextSibling);}if(b){b.hidden=false;b.textContent='公告';b.onclick=openDialog;}return b;}
+ function updateCurrent(){var copy=window.GensokyoRelease;if(copy){var release=Object.assign({},last&&last.release||{},{known:connected});current=copy.notice(Date.now()+offset,release);}else current=last&&last.releaseAnnouncement||last&&last.announcement||{title:'更新公告',state:'正在读取更新内容',paragraphs:['暂时无法读取，请刷新页面重试。']};}
+ function drawDialog(){var dlg=$('#v3-announce-dialog');if(!dlg)return;var key=JSON.stringify(current);if(key===dialogKey)return;dialogKey=key;var paragraphs=current.paragraphs||[current.body||''];dlg.innerHTML='<h2 id="v3-announce-title">'+esc(current.title)+'</h2>'+(current.state?'<p class="release-state">'+esc(current.state)+'</p>':'')+paragraphs.map(function(p){return '<p>'+esc(p)+'</p>';}).join('')+'<button id="v3-announce-close" type="button" class="submit-order">知道了</button>';$('#v3-announce-close').onclick=function(){dlg.close();};}
+ function openDialog(){updateCurrent();var dlg=$('#v3-announce-dialog');if(!dlg){dlg=document.createElement('dialog');dlg.id='v3-announce-dialog';dlg.setAttribute('aria-labelledby','v3-announce-title');document.body.appendChild(dlg);}drawDialog();if(!dlg.open)dlg.showModal();}
+ function render(){ensureButton();updateCurrent();var dialog=$('#v3-announce-dialog');if(dialog&&dialog.open)drawDialog();var el=$('#v3-banner'),m=last&&last.maintenance,now=Date.now()+offset;if(m&&m.until>now){if(!el){el=document.createElement('div');el.id='v3-banner';el.className='settlement-banner';document.body.appendChild(el);}el.hidden=false;el.innerHTML='日终归档中 · 暂停撮合，约 <b>'+Math.max(0,Math.ceil((m.until-now)/1000))+'</b> 秒后恢复';document.body.style.paddingTop='42px';}else{if(el)el.hidden=true;document.body.style.paddingTop='';}}
+ function tick(){var url;try{url=new URL('api/exchange.php',window.API_BASE?new URL(window.API_BASE,document.baseURI):document.baseURI);url.searchParams.set('route','overview');}catch(e){connected=false;render();return;}fetch(url,{cache:'no-store',credentials:'same-origin'}).then(function(r){if(!r.ok)throw Error('announcement unavailable');return r.json();}).then(function(d){if(!d||!d.ok)throw Error('announcement unavailable');last=d;connected=true;if(Number.isFinite(d.serverTime))offset=d.serverTime-Date.now();render();}).catch(function(){connected=false;render();});}
+ function init(){ensureButton();render();tick();setInterval(tick,POLL);setInterval(render,1000);}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();

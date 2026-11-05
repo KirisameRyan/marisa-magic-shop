@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime,timezone
 from urllib.parse import urlparse
 ROOT=Path(__file__).resolve().parents[1]
-ASSETS=['css/gensokyo-exchange.css','css/gensokyo-auth.css','js/gensokyo-engine.js','js/gensokyo-market-data.js','js/gensokyo-exchange.js','js/gensokyo-tools.js','js/gensokyo-network.js','js/auth.js','js/echarts.min.js','css/vendor/fontawesome/css/all.min.css','css/vendor/fontawesome/LICENSE.txt']+['css/vendor/fontawesome/webfonts/'+n+'.woff2' for n in ['fa-solid-900','fa-regular-400','fa-brands-400','fa-v4compatibility']]
+ASSETS=['css/gensokyo-exchange.css','css/gensokyo-auth.css','js/gensokyo-engine.js','js/gensokyo-market-data.js','js/gensokyo-exchange.js','js/exchange-v3.js','js/gensokyo-release.js','js/polyfills.js','js/redmist-story.js','js/gensokyo-tools.js','js/gensokyo-network.js','js/auth.js','js/echarts.min.js','css/vendor/fontawesome/css/all.min.css','css/vendor/fontawesome/LICENSE.txt']+['css/vendor/fontawesome/webfonts/'+n+'.woff2' for n in ['fa-solid-900','fa-regular-400','fa-brands-400','fa-v4compatibility']]
 def build(api='https://www.azureflame.cloud/',output=None):
     u=urlparse(api)
     if u.scheme!='https' and not(u.scheme=='http' and u.hostname in ['127.0.0.1','localhost']):raise ValueError('API must use HTTPS (loopback HTTP is allowed for local tests)')

@@ -182,6 +182,7 @@ function advance(s,now=Date.now(),options={}){
   const dayKey=new Date(t+4*3600000).toISOString().slice(0,10);
   if(!s.businessDay)s.businessDay=dayKey;else if(s.businessDay!==dayKey)dailyRollover(s,t);
   if(s.maintenanceUntil&&t<s.maintenanceUntil){
+   if(s.incident&&s.incident.phase!=='resolved')s.incident.deadline+=TICK;
    for(const a of s.assets){a.fair+=(a.anchorTarget-a.fair)*.35;a.history.push({t,o:a.price,h:a.price,l:a.price,c:a.price,v:0,resolution:60000,...(a.kind==='etf'?{iopv:a.iopv}:{})});}
    s.lastTick=t;steps++;continue;
   }
