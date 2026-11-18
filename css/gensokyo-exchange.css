@@ -263,3 +263,5 @@ dialog button,dialog input,dialog select,dialog .submit-order{border-radius:2px}
 .book-battle-note{font-size:10px;line-height:1.7;color:var(--gold);border-bottom:1px solid var(--line);padding:0 0 8px;margin:0 0 6px}.book-row.event-order{border-left:2px solid var(--gold)}
 
 #v3-announce-dialog{width:min(620px,calc(100vw - 32px));max-height:85vh;overflow:auto;border-radius:2px}#v3-announce-dialog h2{font-size:20px;margin-bottom:16px}#v3-announce-dialog .release-state{color:var(--gold);border-block:1px solid var(--line);padding:10px 0;margin:0 0 16px}#v3-announce-dialog .submit-order{background:var(--red);color:#fff;border:1px solid var(--red);margin-top:10px}.settlement-banner{position:fixed;inset:0 0 auto;z-index:9999;padding:10px 18px;text-align:center;background:var(--panel);color:var(--gold);border-bottom:1px solid var(--line);font-size:12px}
+
+.book-product-tabs{margin:6px 0}.book-product-tabs button{padding:4px 8px;font-size:12px}

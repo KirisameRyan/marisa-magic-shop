@@ -1,0 +1,23 @@
+<includeonly>
+{| class="wikitable"
+! 作品
+| {{{名称|{{PAGENAME}}}}}
+|-
+! 类型
+| {{{类型|待补充}}}
+|-
+! 入口
+| {{{入口|待补充}}}
+|}
+[[Category:作品]]
+</includeonly><noinclude>
+在作品条目开头插入下列代码，再填写简介和玩法。
+
+<pre>
+{{作品条目
+ | 名称 =
+ | 类型 =
+ | 入口 =
+}}
+</pre>
+</noinclude>

@@ -16,7 +16,7 @@ window.MMS_LIBRARY = {
     "stories": {
       "name": "故事角",
       "english": "READ",
-      "description": "一些离奇的虚构故事，留给愿意多坐一会儿的人。",
+      "description": "青年人的个人采访、投稿故事与互动叙事。",
       "icon": "fa-book-open"
     },
     "tools": {
@@ -208,10 +208,10 @@ window.MMS_LIBRARY = {
     },
     {
       "href": "human-stars.html",
-      "name": "类人群星闪耀时",
+      "name": "丙午东海道",
       "category": "stories",
-      "tag": "虚构故事",
-      "desc": "外星人落地那天留了个任务：一天一条逆天小故事，不给就抓走。这里全是真的——因为全是编的。所有故事均为完全虚构。",
+      "tag": "青年故事",
+      "desc": "雾雨 Wiki 的青年故事频道，收录个人采访与投稿故事，每篇标明稿件性质。",
       "featured": true
     },
     {

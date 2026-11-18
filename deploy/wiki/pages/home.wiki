@@ -1,0 +1,41 @@
+__NOTOC__
+<div class="marisa-wiki-home">
+<div class="marisa-home-sidebar" role="navigation" aria-label="Wiki 导航">
+<h2>Wiki 导航</h2>
+* [[首页|首页]]
+* [[游戏]]
+* [[测试]]
+* [[工具]]
+* [[故事]]
+* [[Special:RecentChanges|最近更新]]
+
+<h3>作品与主站</h3>
+* [[幻想乡交易所]]
+* [[Template:作品条目|作品条目模板]]
+* [https://www.azureflame.cloud/ 霧雨魔法店]
+</div>
+
+<div class="marisa-home-content">
+<div class="marisa-home-hero">
+<div class="marisa-hero-copy">
+<h2>雾雨 Wiki</h2>
+<p>霧雨魔法店的作品百科与故事档案。</p>
+<div class="marisa-hero-action">[[游戏|浏览游戏目录]]</div>
+</div>
+<div class="marisa-hero-art" aria-hidden="true"></div>
+</div>
+
+<div class="marisa-home-sections">
+<div class="marisa-home-card marisa-home-feature">
+<h2>作品指南</h2>
+<h3>[[幻想乡交易所]]</h3>
+<p>了解如何查看模拟行情与盘口、提交限价单和跟踪挂单。</p>
+</div>
+<div class="marisa-home-card">
+<h2>参与编辑</h2>
+<p>编辑者可以套用作品条目模板，添加作品简介、入口和玩法。</p>
+[[Template:作品条目|查看作品条目模板]]
+</div>
+</div>
+</div>
+</div>

@@ -1,0 +1,252 @@
+:is(.skin-citizen, .skin-vector-2022) {
+    --marisa-paper: #f7f3ea;
+    --marisa-card: #fffcf5;
+    --marisa-sidebar: #edece0;
+    --marisa-line: #d8d8c7;
+    --marisa-ink: #252d25;
+    --marisa-muted: #515c51;
+    --marisa-link: #315c47;
+    --marisa-serif: "Songti SC", "STSong", SimSun, serif;
+}
+
+html.skin-theme-clientpref-night :is(.skin-citizen, .skin-vector-2022) {
+    --marisa-paper: #1a211c;
+    --marisa-card: #232d25;
+    --marisa-sidebar: #283429;
+    --marisa-line: #495849;
+    --marisa-ink: #f3f0e3;
+    --marisa-muted: #c0c9bb;
+    --marisa-link: #badbc5;
+}
+
+@media (prefers-color-scheme: dark) {
+    html.skin-theme-clientpref-os :is(.skin-citizen, .skin-vector-2022) {
+        --marisa-paper: #1a211c;
+        --marisa-card: #232d25;
+        --marisa-sidebar: #283429;
+        --marisa-line: #495849;
+        --marisa-ink: #f3f0e3;
+        --marisa-muted: #c0c9bb;
+        --marisa-link: #badbc5;
+    }
+}
+
+.skin-vector-2022 .mw-page-container,
+.skin-citizen {
+    background-color: var(--marisa-paper);
+}
+
+.skin-citizen .citizen-header {
+    --color-surface-0: var(--marisa-sidebar);
+    --border-color-base: var(--marisa-line);
+}
+
+.skin-citizen .citizen-drawer__card {
+    --color-surface-1: var(--marisa-card);
+}
+
+.skin-vector-2022 .vector-header-container {
+    background: var(--marisa-card);
+    border-bottom: 1px solid var(--marisa-line);
+}
+
+.skin-vector-2022 .mw-logo-wordmark {
+    color: var(--marisa-ink);
+}
+
+.skin-vector-2022 .mw-body-header .mw-first-heading {
+    font-family: var(--marisa-serif);
+    color: var(--marisa-ink);
+}
+
+.skin-vector-2022 .vector-main-menu .vector-menu-heading {
+    color: var(--marisa-muted);
+    font-weight: 700;
+}
+
+.skin-vector-2022 .vector-main-menu .vector-menu-content a {
+    color: var(--marisa-link);
+}
+
+:is(.skin-citizen, .skin-vector-2022).action-view:has(.marisa-wiki-home) .mw-first-heading {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+}
+
+.marisa-wiki-home {
+    display: grid;
+    grid-template-columns: minmax(150px, 0.25fr) minmax(0, 1fr);
+    grid-template-areas: "navigation content";
+    align-items: start;
+    gap: clamp(14px, 2.4vw, 28px);
+    margin-block: 22px 40px;
+    color: var(--marisa-ink);
+}
+
+.marisa-home-content { grid-area: content; }
+
+.marisa-home-sidebar {
+    grid-area: navigation;
+    padding: 14px;
+    background: var(--marisa-sidebar);
+    border: 1px solid var(--marisa-line);
+    border-radius: 10px;
+}
+
+.marisa-wiki-home .marisa-home-sidebar h2,
+.marisa-wiki-home .marisa-home-sidebar h3 {
+    margin: 5px 8px 8px;
+    padding: 0;
+    border: 0;
+    color: var(--marisa-muted);
+    font: 700 .82rem/1.45 system-ui, sans-serif;
+}
+
+.marisa-home-sidebar ul {
+    margin: 0 0 14px;
+    padding: 0;
+    list-style: none;
+}
+
+.marisa-home-sidebar ul:last-child { margin-bottom: 0; }
+.marisa-home-sidebar li { margin: 0; }
+
+.marisa-home-sidebar a,
+.marisa-home-sidebar .mw-selflink {
+    display: block;
+    padding: 7px 8px;
+    border-radius: 5px;
+    font-size: .875rem;
+    overflow-wrap: anywhere;
+}
+
+.marisa-home-sidebar a,
+.marisa-home-card a { color: var(--marisa-link); }
+
+.marisa-home-sidebar a:hover,
+.marisa-home-sidebar .mw-selflink { background: var(--marisa-card); }
+
+.marisa-home-hero {
+    isolation: isolate;
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(148px, .76fr);
+    align-items: center;
+    min-height: 282px;
+    overflow: hidden;
+    background: linear-gradient(115deg, #20382e 0%, #304f3f 100%);
+    border: 1px solid #345443;
+    border-radius: 12px;
+    color: #fff8e8;
+}
+
+.marisa-hero-copy {
+    z-index: 1;
+    padding: clamp(22px, 4vw, 50px);
+    padding-inline-end: 5px;
+}
+
+.marisa-wiki-home .marisa-hero-copy h2 {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    color: inherit;
+    font: 700 clamp(2rem, 4.6vw, 3.8rem)/1.06 var(--marisa-serif);
+}
+
+.marisa-hero-copy p {
+    margin: 17px 0 20px;
+    color: #eee9d7;
+    line-height: 1.65;
+}
+
+.marisa-hero-action a {
+    display: inline-block;
+    padding: 8px 14px;
+    color: #243427;
+    background: #f2dc9d;
+    border-radius: 5px;
+    font-size: .875rem;
+    font-weight: 700;
+}
+
+.marisa-hero-action a:visited { color: #243427; }
+.marisa-hero-action a:hover { background: #ffeab0; }
+.marisa-hero-action a:focus-visible { outline: 2px solid #fff8e8; outline-offset: 4px; }
+
+.marisa-hero-art {
+    align-self: stretch;
+    background:
+        url("shop-logo.png") center / min(88%, 300px) auto no-repeat,
+        radial-gradient(circle, #dacf8850 0%, #dacf882b 45%, transparent 69%);
+    image-rendering: pixelated;
+}
+
+.marisa-home-sections {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.marisa-home-card {
+    min-width: 0;
+    padding: clamp(17px, 2.5vw, 28px);
+    background: var(--marisa-card);
+    border: 1px solid var(--marisa-line);
+    border-radius: 10px;
+}
+
+.marisa-home-feature { border-top: 3px solid #ad7346; }
+
+.marisa-wiki-home .marisa-home-card h2 {
+    margin: 0 0 10px;
+    padding: 0;
+    border: 0;
+    color: var(--marisa-muted);
+    font: 700 .82rem/1.5 system-ui, sans-serif;
+}
+
+.marisa-wiki-home .marisa-home-card h3 {
+    margin: 0;
+    font: 700 1.45rem/1.4 var(--marisa-serif);
+}
+
+.marisa-home-card p { margin: 8px 0; line-height: 1.75; }
+.marisa-home-card p:last-child { margin-bottom: 0; }
+
+@media (max-width: 850px) {
+    .marisa-wiki-home {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: "navigation" "content";
+        margin-top: 14px;
+    }
+
+    .marisa-home-sidebar {
+        padding: 10px;
+    }
+
+    .marisa-home-sidebar ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px 6px;
+        margin-bottom: 8px;
+    }
+}
+
+@media (max-width: 490px) {
+    .marisa-home-hero {
+        grid-template-columns: minmax(0, 1fr) minmax(94px, .58fr);
+        min-height: 234px;
+    }
+
+    .marisa-wiki-home .marisa-hero-copy h2 {
+        font-size: clamp(1.45rem, 5.6vw, 2rem);
+    }
+
+    .marisa-hero-copy p { font-size: .875rem; }
+    .marisa-home-sections { grid-template-columns: minmax(0, 1fr); }
+}

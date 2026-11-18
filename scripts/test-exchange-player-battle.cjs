@@ -13,3 +13,35 @@ test('stage three boss needs player buys and later player sells to complete the 
 test('public event quotes do not mint capital and ordinary asset depth is unchanged by another asset battle',()=>{const {s,a}=setup();const before=JSON.stringify(s);const plans=I.publicBook(s,a);assert.ok(plans.length);assert.equal(JSON.stringify(s),before);const ordinary=s.assets.find(a=>a.id==='kappa');assert.equal(I.battlePolicy(s,ordinary),null);const active=M.snapshot(s,'kappa',null).market.books.kappa;s.incident.phase='resolved';const normal=M.snapshot(s,'kappa',null).market.books.kappa;assert.deepEqual(active,normal);});
 
 test('defense time advances only with actual net player absorption, not merely holding an old position',()=>{const {s,i,id}=setup();buy(s,id,1000);tick(s);assert.equal(i.defend.minutes,1);s.accounts[1].orders=[];tick(s,now+120000);assert.equal(i.defend.minutes,1);assert.ok(i.defend.defenders[1]);assert.equal(s._trades.filter(t=>t.asset===id&&t.time===now+120000).length,0);});
+
+test('spot and contract books do not mix an event ask with an incompatible contract bid',()=>{
+ const {s,i,id}=setup('p1',27);M.order(s,{id:1},{asset:id,product:'contract',intent:'long',qty:7000,price:28.3,leverage:20},now+1);
+ const books=M.snapshot(s,id,{id:1}).market.books[id];
+ assert.equal(books.spot.asks[0].price,26.9);assert.equal(books.spot.asks[0].eventQty,300);
+ assert.ok(!books.spot.bids.some(l=>l.price===28.3));assert.equal(books.contract.bids[0].price,28.3);
+ assert.ok(books.contract.asks.every(l=>!l.eventQty));
+ buy(s,id,300,28.3,2);tick(s);
+ assert.equal(i.short.opened,300);assert.equal(s.accounts[2].spotPositions[id].qty,300);
+ assert.equal(s.accounts[1].spotPositions[id],undefined);assert.ok((s.accounts[1].positions[id]?.qty||0)<=100);
+ assert.equal(s.accounts[2].fills.find(f=>f.price===26.9).qty,300);
+});
+
+test('resting same-product player orders are reconsidered each minute without cross-product fills',()=>{
+ const {s,id}=setup();s.accounts[2].spotPositions[id]={asset:id,product:'spot',qty:500,entry:100};
+ const b=buy(s,id,500,100,1),sell=M.order(s,{id:2},{asset:id,product:'spot',intent:'sell',qty:500,price:100,leverage:1},now+2);
+ b.resting=sell.resting=true;
+ // No event/maker orders are available to wake the two resting orders.
+ s.incident.phase='resolved';tickWithoutMaker(s);
+ assert.equal(s.accounts[1].spotPositions[id].qty,500);assert.equal(s.accounts[2].spotPositions[id],undefined);
+ assert.equal(s._trades.filter(t=>t.asset===id&&t.buyUserId===1&&t.sellUserId===2).length,1);
+});
+function tickWithoutMaker(s){M.tick(s,{time:now+60000,marketMaking:false,random:()=>.4});s.lastTick=now+60000;}
+
+test('spot sells and contract longs remain in their own matching books',()=>{
+ const {s,id}=setup();s.incident.phase='resolved';s.accounts[2].spotPositions[id]={asset:id,product:'spot',qty:500,entry:100};
+ M.order(s,{id:1},{asset:id,product:'contract',intent:'long',qty:500,price:100,leverage:20},now+1);
+ M.order(s,{id:2},{asset:id,product:'spot',intent:'sell',qty:500,price:100,leverage:1},now+2);
+ tickWithoutMaker(s);assert.equal(s._trades.filter(t=>t.asset===id).length,0);
+ assert.equal(s.accounts[1].positions[id],undefined);assert.equal(s.accounts[2].spotPositions[id].qty,500);
+ assert.equal(s.accounts[1].orders[0].remaining,500);assert.equal(s.accounts[2].orders[0].remaining,500);
+});

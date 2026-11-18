@@ -1,0 +1,23 @@
+[[首页|雾雨 Wiki]] · [[游戏]] · [[测试]] · [[工具]] · [[故事]]
+
+== 策略经营 ==
+* [[幻想乡交易所]]：东方产业练习盘：普通买卖与独立杠杆合约，每分钟撮合、多周期K线与MACD。本地保存，尚未接入多人服务器。
+* [https://www.azureflame.cloud/marisa_landlord.html 魔理沙的赛钱危机]：灵梦上门收租了！转动祈愿转盘，58 种符号自由构筑：幽幽子吃料理永久成长，琪露诺冻青蛙……撑过 12 次收租！
+* [https://www.azureflame.cloud/marisa_auction.html 幻想乡拍卖会]：对标《竞拍之王》：盲拍货柜只看格数，5 轮暗标+情报技能+假情报坑人，拍下仓库即刻开箱，先废铁后传说！
+* [https://www.azureflame.cloud/street_survival.html 流浪模拟器]：你是李明，兜里剩 8 块钱。每天早中晚三个时段，打工、翻垃圾、乞讨……突发事件随时降临，活到攒够 1000 元那天。
+* [https://www.azureflame.cloud/kongcheng.html 空城计]：你是许家印。拿地→预售圈钱→财务魔术，把空城卖给后来者，看崩盘时你卷走了几个许家印。
+
+== 动作街机 ==
+* [https://www.azureflame.cloud/marisa_dash.html 魔理沙快跑]：↑↓ 切换通道躲避蘑菇和妖精。擦弹连击触发爆发，冲刺撞碎一切障碍。触屏+键盘双支持。
+* [https://www.azureflame.cloud/marisa_survivor.html 魔理沙幸存者]：攻击全自动，只管走位！收集P点升级，17 种强化卡三选一，在琪露诺大军里活下去。
+* [https://www.azureflame.cloud/deer_battle.html 鹿管大作战]：60 秒狂点硬币!蓝色+1、粉色+3、金色+10、紫色加时间、红色扣 10 秒——点错就鹿萎了,点对就鹿爽了!触屏+鼠标。
+* [https://www.azureflame.cloud/polo_ball.html 抽象角色大乱斗]：玩法模仿 Polo 小球：选人即开打，纯观战物理大战。残血狂暴，90 秒按血量定生死。
+* [https://www.azureflame.cloud/demo_roulette.html 轮盘赌局]：一把左轮六枚弹膛。装弹、留话、朝谁开枪？三局两胜，挑战 AI 或匹配真人，读完对面再扣扳机。
+* [https://www.azureflame.cloud/baka.html 合成大BAKA]：相同的琪露诺碰到一起就会合体进化！从⑨一路合成到大BAKA。连锁 3 连获得小锤子敲掉挡路的笨蛋，立绘大特写等着你。
+* [https://www.azureflame.cloud/stg.html 星之魔弹]：躲过、擦过、击碎！魔理沙的弹幕就是她的语言：擦弹连击得分，每关道中强敌 + Boss 符卡战，升级三选一构筑，三种主炮由你决定。触屏+键盘双支持。
+* [https://www.azureflame.cloud/marisa_pachinko.html 魔理沙的弹珠台]：10 天租金 Roguelike：弹珠从顶部中央供球喉落入左右对称钉阵；单次发射和每日弹珠仓分别成长，落槽、升级与租金结算。
+* [https://www.azureflame.cloud/tuoluo.html 抽陀螺模拟器]：陀螺自己转,转速会掉!音符落过判定线的瞬间挥鞭抽打——完美一鞭让它疯狂旋转,抽歪了就减速。转速归零,陀螺倒地,游戏结束。真 3D 陀螺 + 130BPM 鼓点。
+
+== 剧情实验 ==
+* [https://www.azureflame.cloud/band-story.html 乐队人生]：18 岁，高考落榜，你决定把人生押给一把吉他。20 个节点，16 种结局，滚圈黑话浓度预警。
+* [https://www.azureflame.cloud/hypno-app.html 催眠APP模拟器]：视觉与音效互动模拟，包含闪烁效果。

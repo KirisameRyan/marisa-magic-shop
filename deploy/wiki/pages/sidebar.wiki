@@ -1,0 +1,13 @@
+* Wiki 导航
+** mainpage|首页
+** recentchanges-url|最近更新
+* 作品目录
+** 游戏|游戏
+** 测试|测试
+** 工具|工具
+** 故事|故事
+* 编辑与主站
+** Template:作品条目|作品条目模板
+** https://www.azureflame.cloud/|霧雨魔法店
+* SEARCH
+* TOOLBOX

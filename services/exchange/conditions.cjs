@@ -60,7 +60,7 @@ function evaluate(s,time,place,quotes){updateIndicators(s,time);const cache=new 
  c.extreme=rebound?Math.min(c.extreme,a.price):Math.max(c.extreme,a.price);const distance=c.mode==='percent'?c.extreme*c.distance/100:c.distance;hit=rebound?a.price>=c.extreme+distance:a.price<=c.extreme-distance;reason=rebound?'反弹买入触发':'回落卖出触发';}
  if(!hit)continue;c.triggeredAt=time;c.reason=reason;
  try{const p=position(u,c),buy=c.intent==='buy'||c.intent==='long'||c.intent==='close'&&p?.sign===-1;let price=c.limitPrice;
- if(c.execution==='opponent'){const b=quotes(s,c.asset),level=(buy?b.asks:b.bids)[0];if(!level)throw Error('无可用对手报价');price=buy?Math.min(level.price,a.price*(1+c.slippage/100)):Math.max(level.price,a.price*(1-c.slippage/100));price=buy?Math.floor(price*10+1e-7)/10:Math.ceil(price*10-1e-7)/10;if(price<=0)throw Error('委托价格无效');}
+ if(c.execution==='opponent'){const b=quotes(s,c.asset,c.product),level=(buy?b.asks:b.bids)[0];if(!level)throw Error('无可用对手报价');price=buy?Math.min(level.price,a.price*(1+c.slippage/100)):Math.max(level.price,a.price*(1-c.slippage/100));price=buy?Math.floor(price*10+1e-7)/10:Math.ceil(price*10-1e-7)/10;if(price<=0)throw Error('委托价格无效');}
  const o=place(s,{id:u.id},{asset:c.asset,product:c.product,intent:c.intent,qty:c.qty,price,leverage:c.leverage,marginMode:c.marginMode||'isolated'},time+1);o.conditionId=c.id;c.orderId=o.id;c.submittedQty=c.qty;c.filledQty=0;c.status='triggered';
  }catch(e){c.status='failed';c.reason=reason+'：'+e.message;}
  }}}
