@@ -8,14 +8,10 @@ services:
       - "127.0.0.1:${WIKI_PORT:-8099}:80"
     environment:
       WIKI_SERVER: "${WIKI_SERVER:-http://127.0.0.1:${WIKI_PORT:-8099}}"
-      WIKI_SSO_SITE: "${WIKI_SSO_SITE:-}"
-      WIKI_SSO_BACKEND: "${WIKI_SSO_BACKEND:-}"
-      MMS_WIKI_SSO_SECRET: "${MMS_WIKI_SSO_SECRET:-}"
     volumes:
       - wiki-state:/var/lib/mediawiki
       - ./bootstrap.sh:/opt/wiki/bootstrap.sh:ro
       - ./site.php:/opt/wiki/site.php:ro
-      - ./ShopLogin.php:/opt/wiki/ShopLogin.php:ro
       - ./wiki-theme.css:/var/www/html/resources/assets/wiki-theme.css:ro
       - ./pages:/opt/wiki/pages:ro
       - ../../images/logo.png:/var/www/html/resources/assets/shop-logo.png:ro

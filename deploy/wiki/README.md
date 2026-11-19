@@ -6,12 +6,16 @@
 
 | 身份 | Wiki 权限 |
 | --- | --- |
-| 未登录访客、官网游客账号 | 浏览和搜索 |
-| 已登录的普通官网账号 | 浏览和搜索，使用登录后的个人功能 |
-| 编辑者 | 创建和编辑条目 |
-| 管理员 | 管理 Wiki，可授予或撤销编辑者权限 |
+| 未登录访客 | 浏览和搜索 |
+| 管理员创建的普通账号 | 浏览和个人关注列表 |
+| 管理员授权的编辑者 | 新建、编辑条目和讨论页 |
+| 管理员 | 创建账号、管理 Wiki、授予或撤销编辑权限 |
 
-首次从 Wiki 点「使用官网账号登录」后，Wiki 会按官网账号 ID 自动建立对应用户，名称为 `官网用户-<账号 ID>`。管理员登录 Wiki 后，可在 `Special:UserRights` 搜索该用户，增减 `editor` 用户组。Wiki 和官网各自维护会话，退出时分别操作。
+管理员使用独立的 Wiki 用户名和密码登录。进入 `Special:CreateAccount` 为受邀者创建账号，再到 `Special:UserRights` 为其分配 `editor` 组。未获授权者无法注册，也无法编辑或发表讨论。
+
+官网账号接入已关闭。更新服务器代码后，执行 `docker compose --env-file deploy/wiki/.env -f deploy/wiki/compose.yaml up -d --force-recreate` 应用新配置。官网服务器也需更新 `api/wiki-auth.php`，该旧入口现在返回 410。可以移除运行环境中旧的 `WIKI_SSO_SITE`、`WIKI_SSO_BACKEND`、`MMS_WIKI_SSO_SECRET` 配置。
+
+若之前已经通过官网登录过 Wiki，原有 Wiki 用户及编辑历史会保留。上线前在用户列表检查这些账号，通过封禁或调整用户组撤销不再授权的访问。已存在的会话可能持续到失效或退出。
 
 ## 本地启动
 
@@ -21,6 +25,8 @@
 docker compose -f deploy/wiki/compose.yaml up -d --build
 docker compose -f deploy/wiki/compose.yaml logs -f wiki
 ```
+
+构建会优先使用 `deploy/wiki/citizen-3.23.0.tar.gz`。如果服务器无法下载 Citizen，可以把该版本的官方源码包按此文件名上传，再重新构建。两种方式都校验同一份 SHA-256。
 
 初始化完成后打开 [本地 Wiki](http://127.0.0.1:8099)。管理员用户名为 `WikiAdmin`，初始密码可以在本机读取：
 
@@ -44,11 +50,6 @@ Wiki 默认只监听本机。上线时为 Wiki 配置独立 HTTPS 域名，把�
 
 旧故事地址 `human-stars.html` 和 `human-star.html?id=hs-001` 在本地跳转至 8099，线上跳转至 `wiki.azureflame.cloud`。发布官网跳转页前，先让该域名可以访问 Wiki 的合集和正文。若使用其他域名，同步修改两个跳转页的备用链接及 `js/human-stars-redirect.js`。
 
-1. 更新官网 PHP 后端及静态资源，包含 `api/wiki-auth.php` 和 `js/wiki-sign-in.js`。
-2. 在官网 PHP 和 Wiki Compose 的运行环境中设置同一个独立随机密钥 `MMS_WIKI_SSO_SECRET`，至少 32 字符。
-3. 在 Wiki 环境中设置 `WIKI_SSO_SITE=https://www.azureflame.cloud`，使用官网登录所在的实际来源。若容器需要走另一条受信任的内部访问路径，可另设 `WIKI_SSO_BACKEND`。
-4. 执行 `docker compose -f deploy/wiki/compose.yaml up -d` 应用新环境。通过 Wiki 登录页上的「使用官网账号登录」测试登录，再用 `WikiAdmin` 给对应账号授予编辑权限。
+Wiki 使用独立账号系统，由管理员在 Wiki 内创建和授权账号。
 
-统一登录凭证只能使用一次，签发后一分钟失效。Wiki 使用官网账号 ID 建立对应用户，不接触官网密码。Wiki 管理员仍可通过本地登录入口管理权限。
-
-[MediaWiki 官方容器说明](https://hub.docker.com/_/mediawiki) · [Vector 2022 皮肤](https://www.mediawiki.org/wiki/Skin:Vector/2022)
+[MediaWiki 官方容器说明](https://hub.docker.com/_/mediawiki) · [Citizen 皮肤](https://www.mediawiki.org/wiki/Skin:Citizen)
