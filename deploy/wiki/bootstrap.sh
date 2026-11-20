@@ -43,6 +43,7 @@ if [ ! -f "$state/pages-initialized" ]; then
     seed '丙午东海道' 'story-channel.wiki'
     seed 'Z先生异闻录' 'human-stars-hs-001.wiki'
     seed '故事创作准则' 'story-guidelines.wiki'
+    seed '编辑招募与采访邀请' 'recruitment.wiki'
     seed '故事' 'directory-stories.wiki'
     seed 'MediaWiki:Citizen-footer-desc' 'footer-description.wiki'
     seed 'MediaWiki:Citizen-footer-tagline' 'footer-tagline.wiki'

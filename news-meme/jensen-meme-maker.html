@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>黄仁勋梗图制作器</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="generator.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <h1>黄仁勋梗图制作器</h1>
+    </div>
+    <button id="export" class="primary" type="button" disabled>下载 PNG</button>
+  </header>
+
+  <main class="workspace">
+    <section class="editor" aria-labelledby="edit-title">
+      <h2 id="edit-title">编辑梗图</h2>
+      <label for="preset">参考样式</label>
+      <select id="preset">
+        <option value="azur">碧蓝航线</option>
+        <option value="warships">战舰世界</option>
+        <option value="tarkov">逃离塔科夫</option>
+      </select>
+      <label for="category">栏目名</label>
+      <input id="category" maxlength="40" autocomplete="off">
+      <label for="headline">标题</label>
+      <textarea id="headline" rows="3" maxlength="240"></textarea>
+      <label for="quote">引语</label>
+      <textarea id="quote" rows="4" maxlength="400"></textarea>
+      <label for="date">日期</label>
+      <input id="date" maxlength="48" autocomplete="off">
+      <label for="picture">右侧配图</label>
+      <input id="picture" type="file" accept="image/*">
+      <button id="restore" class="secondary" type="button">恢复示例</button>
+      <p id="status" role="status"></p>
+    </section>
+
+    <section class="stage" aria-labelledby="preview-title">
+      <div class="stage-heading">
+        <h2 id="preview-title">实时预览</h2>
+        <span id="dimensions"></span>
+      </div>
+      <canvas id="preview" width="1280" height="1039" aria-label="新闻梗图预览"></canvas>
+    </section>
+  </main>
+</body>
+</html>
